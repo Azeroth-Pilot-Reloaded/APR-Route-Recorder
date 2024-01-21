@@ -1,0 +1,26 @@
+## Interface: 100205
+## X-Min-Interface: 100205
+
+## Title: Azeroth Pilot Reloaded - Route Recorder
+## Notes: A route recorder for Azeroth Pilot Reloaded
+## Author: Neogeekmo
+## IconTexture: Interface\AddOns\assets\logo
+## Version: @project-version@
+
+## RequiredDeps: APR
+
+## SavedVariables: AprRCData
+
+## X-License: All Rights Reserved: You are free to fork and modify on GitHub, please ask us about anything else.
+## X-Github: https://github.com/Azeroth-Pilot-Reloaded/APR-Route-Recorder
+## X-Discord: https://discord.gg/YgcdybKdWX
+## X-Curse-Project-ID: 965240
+## X-Wago-ID: rN4VYvKD
+## X-WoWI-ID: ------
+
+libs/embeds.xml
+locales/locales.xml
+
+Core.lua
+Config.lua
+Commands.lua
