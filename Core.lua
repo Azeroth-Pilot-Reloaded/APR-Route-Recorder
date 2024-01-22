@@ -78,6 +78,19 @@ end
 -- - DoIHaveFlight
 -- - DroppableQuest
 -- - Fillers
+-- - Dontskipvid
+-- - RaidIcon
+-- - Button
+-- - SpellButton
+-- - Gossip
+-- - ChromiePick
+-- - SpellTrigger
+
+-- -- only in route check if needed
+-- - ExtraActionB
+
+-- - ButtonSpellId -- Deleted
+-- - BlockQuests -- Deleted
 
 AprRC.EventFrame = CreateFrame("Frame")
 AprRC.EventFrame:RegisterAllEvents("ADDON_LOADED")
