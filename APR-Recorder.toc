@@ -24,3 +24,6 @@ locales/locales.xml
 Core.lua
 Config.lua
 Commands.lua
+Event.lua
+RecorderBar.lua
+StepOptionBar.lua
