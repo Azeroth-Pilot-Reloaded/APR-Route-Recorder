@@ -1,4 +1,4 @@
-package-as: APR-Route-Recorder
+package-as: APR-Recorder
 
 ignore:
   - README.md
