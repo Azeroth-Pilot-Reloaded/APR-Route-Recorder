@@ -9,7 +9,7 @@
 
 ## RequiredDeps: APR
 
-## SavedVariables: AprRCData
+## SavedVariables: AprRCData, AprRCSettings
 
 ## X-License: All Rights Reserved: You are free to fork and modify on GitHub, please ask us about anything else.
 ## X-Github: https://github.com/Azeroth-Pilot-Reloaded/APR-Route-Recorder

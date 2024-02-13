@@ -5,10 +5,17 @@ AprRC = {}
 AprRC = _G.LibStub("AceAddon-3.0"):NewAddon(addon, "APR-Route-Recorder", "AceEvent-3.0")
 
 function AprRC:OnInitialize()
+    local GetAddOnMetadata = C_AddOns and C_AddOns.GetAddOnMetadata or _G.GetAddOnMetadata
+
     -- Init on TOC
     AprRC.title = C_AddOns.GetAddOnMetadata("APR-Route-Recorder", "Title")
     AprRC.version = C_AddOns.GetAddOnMetadata("APR-Route-Recorder", "Version")
-
+    AprRC.github = GetAddOnMetadata("APR-Route-Recorder", "X-Github")
+    AprRC.discord = GetAddOnMetadata("APR-Route-Recorder", "X-Discord")
+    AprRC.Color = {
+        white = { 1, 1, 1 },
+        red = { 1, 0, 0 },
+    }
 
     -- Init Settings
     -- APR.settings:InitializeBlizOptions()
@@ -90,6 +97,9 @@ end
 -- - SpellTrigger
 -- - NoAutoFlightMap
 -- - DenyNPC
+-- - TrigText
+-- - Emote
+-- - InstanceQuest
 
 -- -- only in route check if needed
 -- - ExtraActionB
