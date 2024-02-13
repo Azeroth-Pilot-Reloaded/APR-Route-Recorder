@@ -76,7 +76,7 @@ AprRC.EventFrame:RegisterEvent("ZONE_CHANGED")
 AprRC.EventFrame:RegisterEvent("ZONE_CHANGED_INDOORS")
 AprRC.EventFrame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
 AprRC.EventFrame:SetScript("OnEvent", function(self, event, ...)
-    if event then
-        return
+    if event == "PET_BATTLE_OPENING_START" or event == "PET_BATTLE_CLOSE" then
+        AprRC.record:RefreshFrameAnchor()
     end
 end)

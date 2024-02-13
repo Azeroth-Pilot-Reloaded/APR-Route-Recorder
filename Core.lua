@@ -1,20 +1,30 @@
-local L = LibStub("AceLocale-3.0"):GetLocale("APR-Route-Recorder")
+local L = LibStub("AceLocale-3.0"):GetLocale("APR-Recorder")
 local L_APR = LibStub("AceLocale-3.0"):GetLocale("APR")
 
 AprRC = {}
-AprRC = _G.LibStub("AceAddon-3.0"):NewAddon(addon, "APR-Route-Recorder", "AceEvent-3.0")
+AprRC = _G.LibStub("AceAddon-3.0"):NewAddon(AprRC, "APR-Recorder", "AceEvent-3.0")
+AprRC.Color = {
+    white = { 1, 1, 1 },
+    red = { 1, 0, 0 },
+    defaultBackdrop = { 0, 0, 0, 0.4 },
+
+}
 
 function AprRC:OnInitialize()
+    local GetAddOnMetadata = C_AddOns and C_AddOns.GetAddOnMetadata or _G.GetAddOnMetadata
+
     -- Init on TOC
-    AprRC.title = C_AddOns.GetAddOnMetadata("APR-Route-Recorder", "Title")
-    AprRC.version = C_AddOns.GetAddOnMetadata("APR-Route-Recorder", "Version")
-
-
-    -- Init Settings
-    -- APR.settings:InitializeBlizOptions()
+    AprRC.title = C_AddOns.GetAddOnMetadata("APR-Recorder", "Title")
+    AprRC.version = C_AddOns.GetAddOnMetadata("APR-Recorder", "Version")
+    AprRC.github = GetAddOnMetadata("APR-Recorder", "X-Github")
+    AprRC.discord = GetAddOnMetadata("APR-Recorder", "X-Discord")
 
     -- Init Saved variable
     AprRCData = AprRCData or {}
+
+    -- Init module
+    AprRC.settings:InitializeBlizOptions()
+    AprRC.record:OnInit()
 
     -- Init Global Variables, UI oriented
     BINDING_HEADER_APR_ROUTE_RECORDER = AprRC.title -- Header text for APR's main frame
@@ -90,6 +100,9 @@ end
 -- - SpellTrigger
 -- - NoAutoFlightMap
 -- - DenyNPC
+-- - TrigText
+-- - Emote
+-- - InstanceQuest
 
 -- -- only in route check if needed
 -- - ExtraActionB

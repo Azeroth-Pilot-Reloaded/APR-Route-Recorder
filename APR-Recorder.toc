@@ -4,12 +4,12 @@
 ## Title: Azeroth Pilot Reloaded - Route Recorder
 ## Notes: A route recorder for Azeroth Pilot Reloaded
 ## Author: Neogeekmo
-## IconTexture: Interface\AddOns\assets\logo
+## IconTexture: Interface\AddOns\APR-Recorder\assets\logo
 ## Version: @project-version@
 
 ## RequiredDeps: APR
 
-## SavedVariables: AprRCData
+## SavedVariables: AprRCData, AprRCSettings
 
 ## X-License: All Rights Reserved: You are free to fork and modify on GitHub, please ask us about anything else.
 ## X-Github: https://github.com/Azeroth-Pilot-Reloaded/APR-Route-Recorder
@@ -25,5 +25,6 @@ Core.lua
 Config.lua
 Commands.lua
 Event.lua
+QuestionPopUp.lua
 RecorderBar.lua
-StepOptionBar.lua
+# StepOptionBar.lua
