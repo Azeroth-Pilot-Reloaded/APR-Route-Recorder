@@ -39,7 +39,10 @@ function AprRC.settings:InitializeSettings()
     local settingsDBDefaults = {
         profile = {
             -- frame
-            recordBarFrame = {},
+            recordBarFrame = {
+                rotation = "HORIZONTAL",
+                position = {}
+            },
             stepOptionBarFrame = {},
             --debug
             enableMinimapButton = true,
@@ -238,3 +241,4 @@ function AprRC.settings:OpenSettings(name)
         end
     end
 end
+

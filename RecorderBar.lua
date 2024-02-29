@@ -6,7 +6,6 @@ AprRC.record = AprRC:NewModule('Recorder')
 
 local isRecording = false
 local isPaused = false
-local orientation = "HORIZONTAL"
 
 local FRAME_WIDTH = 105
 local FRAME_HEIGHT = 35
@@ -72,11 +71,12 @@ updateBtn:SetScript("OnClick", function()
     AprRC.settings:OpenSettings(AprRC.title)
 end)
 
-local orientationBtn = CreateButton(RecordBarFrame, "interface/buttons/ui-rotationleft-button-up",
+local rotationBtn = CreateButton(RecordBarFrame, "interface/buttons/ui-rotationleft-button-up",
     AprRC.Color.white)
-orientationBtn:SetScript("OnClick", function()
-    orientation = orientation == "HORIZONTAL" and "VERTICAL" or "HORIZONTAL"
-    AprRC.record:AdjustBarOrientation(RecordBarFrame)
+rotationBtn:SetScript("OnClick", function()
+    AprRC.settings.profile.recordBarFrame.rotation = AprRC.settings.profile.recordBarFrame.rotation == "HORIZONTAL" and
+        "VERTICAL" or "HORIZONTAL"
+    AprRC.record:AdjustBarRotation(RecordBarFrame)
 end)
 ---------------------------------------------------------------------------------------
 ----------------------------- Function Recorder Frames --------------------------------
@@ -84,7 +84,7 @@ end)
 
 
 function AprRC.record:OnInit()
-    LibWindow.RegisterConfig(RecordBarFrame, AprRC.settings.profile.recordBarFrame)
+    LibWindow.RegisterConfig(RecordBarFrame, AprRC.settings.profile.recordBarFrame.position)
     RecordBarFrame.RegisteredForLibWindow = true
     LibWindow.MakeDraggable(RecordBarFrame)
     RecordBarFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
@@ -98,19 +98,19 @@ function AprRC.record:RefreshFrameAnchor()
         return
     end
     RecordBarFrame:EnableMouse(true)
-    self:AdjustBarOrientation(RecordBarFrame)
+    self:AdjustBarRotation(RecordBarFrame)
     UpdateRecordButton(recordBtn)
     LibWindow.RestorePosition(RecordBarFrame)
     RecordBarFrame:Show()
 end
 
-function AprRC.record:AdjustBarOrientation(bar)
-    local buttons = { recordBtn, pauseBtn, updateBtn, orientationBtn }
+function AprRC.record:AdjustBarRotation(bar)
+    local buttons = { recordBtn, pauseBtn, updateBtn, rotationBtn }
     local spacing = 10
     local offsetX, offsetY = 5, -5
-
+    local rotation = AprRC.settings.profile.recordBarFrame.rotation
     for i, btn in ipairs(buttons) do
-        if orientation == "HORIZONTAL" then
+        if rotation == "HORIZONTAL" then
             btn:SetPoint("TOPLEFT", offsetX, offsetY)
             offsetX = offsetX + btn:GetWidth() + spacing
         else -- VERTICAL
@@ -118,7 +118,7 @@ function AprRC.record:AdjustBarOrientation(bar)
             offsetY = offsetY - btn:GetHeight() - spacing
         end
     end
-    if orientation == "HORIZONTAL" then
+    if rotation == "HORIZONTAL" then
         bar:SetHeight(FRAME_HEIGHT)
         bar:SetWidth(FRAME_WIDTH + (#buttons - 1) * spacing)
     else
