@@ -41,7 +41,9 @@ function AprRC.settings:InitializeSettings()
             -- frame
             recordBarFrame = {
                 rotation = "HORIZONTAL",
-                position = {}
+                position = {},
+                isRecording = false,
+                pause = false,
             },
             stepOptionBarFrame = {},
             --debug
@@ -196,7 +198,7 @@ function AprRC.settings:CreateMiniMapButton()
             else
                 toggleAddon = "|c33ecc00f " .. L_APR["ENABLE"] .. "|r"
             end
-            tooltip:AddLine(APR.title)
+            tooltip:AddLine(AprRC.title)
             tooltip:AddLine(L_APR["LEFT_CLICK"] .. ": |cffeda55f" .. L_APR["SHOW_MENU"] .. "|r",
                 unpack(AprRC.Color.white))
             tooltip:AddLine(L_APR["RIGHT_CLICK"] .. ": " .. toggleAddon .. "|cffeda55f " .. L_APR["ADDON"] .. "|r",
@@ -241,4 +243,3 @@ function AprRC.settings:OpenSettings(name)
         end
     end
 end
-

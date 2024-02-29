@@ -4,9 +4,6 @@ local LibWindow = LibStub("LibWindow-1.1")
 
 AprRC.record = AprRC:NewModule('Recorder')
 
-local isRecording = false
-local isPaused = false
-
 local FRAME_WIDTH = 105
 local FRAME_HEIGHT = 35
 ---------------------------------------------------------------------------------------
@@ -25,7 +22,7 @@ RecordBarFrame:SetBackdrop({
 RecordBarFrame:SetBackdropColor(unpack(AprRC.Color.defaultBackdrop))
 
 local function UpdateRecordButton(button)
-    if isRecording then
+    if AprRC.settings.profile.recordBarFrame.isRecording then
         button.icon:SetTexture("interface/buttons/ui-stopbutton")
     else
         button.icon:SetTexture("interface/timemanager/resetbutton")
@@ -52,17 +49,17 @@ end
 
 local recordBtn = CreateButton(RecordBarFrame, "interface/timemanager/resetbutton", AprRC.Color.red)
 recordBtn:SetScript("OnClick", function()
-    isRecording = not isRecording
-    if not isRecording then
-        isPaused = false
+    AprRC.settings.profile.recordBarFrame.isRecording = not AprRC.settings.profile.recordBarFrame.isRecording
+    if not AprRC.settings.profile.recordBarFrame.isRecording then
+        AprRC.settings.profile.recordBarFrame.pause = false
     end
     UpdateRecordButton(recordBtn)
 end)
 
 local pauseBtn = CreateButton(RecordBarFrame, "interface/timemanager/pausebutton", AprRC.Color.white)
 pauseBtn:SetScript("OnClick", function()
-    if isRecording then
-        isPaused = not isPaused
+    if AprRC.settings.profile.recordBarFrame.isRecording then
+        AprRC.settings.profile.recordBarFrame.pause = not AprRC.settings.profile.recordBarFrame.pause
     end
 end)
 
