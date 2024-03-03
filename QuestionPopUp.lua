@@ -2,60 +2,47 @@ local _G = _G
 
 AprRC.questionDialog = AprRC:NewModule("QuestionDialog")
 
----------------------------------------------------------------------------------------
---------------------------- Dialog for some actions xD --------------------------------
----------------------------------------------------------------------------------------
-function AprRC.questionDialog:CreateQuestionPopup(text, onAcceptFunction, onCancelFunction, acceptButtonText,
-                                                  cancelButtonText, hideOnEscape)
-    local dialogName = "QUESTION_DIALOG"
-    StaticPopupDialogs[dialogName] = {
-        text = text or CONFIRM_CONTINUE,
-        button1 = acceptButtonText or ACCEPT,
-        button2 = cancelButtonText or CANCEL,
-        OnAccept = onAcceptFunction,
-        OnCancel = onCancelFunction,
-        timeout = 0,
-        whileDead = true,
-        hideOnEscape = hideOnEscape or true,
-    }
-
-    StaticPopup_Show(dialogName)
-end
-
-function AprRC.questionDialog:CreateMessagePopup(text, closeButtonText)
-    local dialogName = "MESSAGE_DIALOG"
-    StaticPopupDialogs[dialogName] = {
-        text = text or CONFIRM_CONTINUE,
-        button1 = closeButtonText or OKAY,
-        timeout = 0,
-        whileDead = true,
-        hideOnEscape = true,
-    }
-
-    StaticPopup_Show(dialogName)
-end
-
-function AprRC.questionDialog:CreateEditBoxPopup(text, closeButtonText, editBoxText)
+function AprRC.questionDialog:CreateEditBoxPopup(text, onAcceptCallback)
     local dialogName = "EDITBOX_DIALOG"
     StaticPopupDialogs[dialogName] = {
         text = text or "General Kenobi",
-        hasEditBox = 1,
-        button1 = closeButtonText or OKAY,
+        hasEditBox = true,
+        button1 = CONTINUE,
         OnShow = function(self)
-            if editBoxText then
-                local box = getglobal(self:GetName() .. "EditBox")
-                if box then
-                    box:SetWidth(275)
-                    box:SetText(editBoxText)
-                    box:HighlightText()
-                    box:SetFocus()
+            local box = _G[self:GetName() .. "EditBox"]
+            local button = _G[self:GetName() .. "Button1"] -- Récupère le bouton OK
+
+            if box then
+                box:SetWidth(275)
+                box:SetText('')
+                box:HighlightText()
+                box:SetFocus()
+
+                if box:GetText() == "" then
+                    button:Disable()
+                else
+                    button:Enable()
                 end
+
+                box:SetScript("OnTextChanged", function(self)
+                    if self:GetText() == "" then
+                        button:Disable()
+                    else
+                        button:Enable()
+                    end
+                end)
             end
         end,
-        EditBoxOnEscapePressed = function(self) self:GetParent():Hide() end,
+        OnAccept = function(self)
+            local editBox = _G[self:GetName() .. "EditBox"]
+            local text = editBox:GetText()
+            if text ~= "" and onAcceptCallback and type(onAcceptCallback) == "function" then
+                onAcceptCallback(text)
+            end
+        end,
         timeout = 0,
         whileDead = true,
-        hideOnEscape = true,
+        hideOnEscape = false,
     }
 
     StaticPopup_Show(dialogName)

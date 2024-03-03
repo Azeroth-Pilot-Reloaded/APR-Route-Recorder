@@ -6,8 +6,7 @@ AprRC = _G.LibStub("AceAddon-3.0"):NewAddon(AprRC, "APR-Recorder", "AceEvent-3.0
 AprRC.Color = {
     white = { 1, 1, 1 },
     red = { 1, 0, 0 },
-    defaultBackdrop = { 0, 0, 0, 0.4 },
-
+    defaultBackdrop = { 0, 0, 0, 0.4 }
 }
 
 function AprRC:OnInitialize()
@@ -21,8 +20,7 @@ function AprRC:OnInitialize()
 
     -- Init Saved variable
     AprRCData = AprRCData or {}
-    AprRCData.CurrentRoute = AprRCData.CurrentRoute or {}
-    AprRCData.CurrentStep = AprRCData.CurrentStep or {}
+    AprRCData.CurrentRoute = AprRCData.CurrentRoute or { name = "", steps = {} }
     AprRCData.Routes = AprRCData.Routes or {}
 
     -- Init module
@@ -42,30 +40,67 @@ end
 ---------------------------------- Route Management -----------------------------------
 ---------------------------------------------------------------------------------------
 
-function AprRC:InitRoute()
-    AprRCData.CurrentRoute.name = ''
-    AprRCData.CurrentRoute.steps = {}
+function AprRC:ResetData()
+    AprRCData = {}
+    AprRCData.CurrentRoute = { name = "", steps = {} }
+    AprRCData.Routes = {}
+end
+
+function AprRC:InitRoute(name)
+    AprRCData.CurrentRoute = { name = name, steps = {} }
+    tinsert(AprRCData.Routes, AprRCData.CurrentRoute)
+end
+
+function AprRC:UpdateRoute()
+    local currentRouteName = AprRCData.CurrentRoute.name
+    for i, route in ipairs(AprRCData.Routes) do
+        if route.name == currentRouteName then
+            AprRCData.Routes[i] = AprRCData.CurrentRoute
+            break
+        end
+    end
 end
 
 function AprRC:NewStep(step)
     tinsert(AprRCData.CurrentRoute.steps, step)
 end
 
-function AprRC:GetSteByIndex(index)
+function AprRC:GetStepByIndex(index)
     return AprRCData.CurrentRoute.steps[index]
 end
 
 function AprRC:HasStepOption(stepOption)
-    -- //TODO Ajouter un check sur la distance car si distance trop grande entre current step coord et moi alors new step (ajouter directement dans HasStepOption ??)
-    if AprRCData.CurrentStep[stepOption] then
+    local step = self:GetLastStep()
+    if step and step[stepOption] then
         return true
     end
     return false
 end
 
 function AprRC:SetStepCoord(step)
-    local x, y, z, mapID = UnitPosition("player")
+    local y, x, z, mapID = UnitPosition("player")
     if x and y then
         step.Coord = { x = x, y = y }
+        step.Zone = C_Map.GetBestMapForUnit("player")
     end
+end
+
+-- Check if the your are to far away from the current step to create a new one
+-- Distance = 5 by default
+function AprRC:IsCurrentStepFarAway(distance)
+    local step = self:GetLastStep()
+    if not step or not step.Coord then
+        return
+    end
+
+    distance = distance or 5
+    local playerY, playerX = UnitPosition("player")
+    local deltaX, deltaY = playerX - step.Coord.x, step.Coord.y - playerY
+    local currentDistance = (deltaX * deltaX + deltaY * deltaY) ^ 0.5
+
+    return currentDistance > distance
+end
+
+function AprRC:GetLastStep()
+    return AprRCData.CurrentRoute.steps[#AprRCData.CurrentRoute.steps]
 end

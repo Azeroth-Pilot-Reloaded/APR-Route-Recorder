@@ -4,7 +4,7 @@ local LibWindow = LibStub("LibWindow-1.1")
 
 AprRC.record = AprRC:NewModule('Recorder')
 
-local FRAME_WIDTH = 105
+local FRAME_WIDTH = 80
 local FRAME_HEIGHT = 35
 ---------------------------------------------------------------------------------------
 --------------------------------- Recorder Frames -------------------------------------
@@ -38,9 +38,7 @@ local function CreateButton(parent, iconPath, color)
     btn.icon:SetTexture(iconPath)
     btn.icon:SetVertexColor(unpack(color))
 
-    -- btn:GetNormalTexture():SetTexCoord(0, 0.5, 0.5, 1)
-    btn:SetPushedTexture([[Interface\Buttons\UI-Panel-QuestHideButton]])
-    -- btn:GetPushedTexture():SetTexCoord(0.5, 1, 0.5, 1)
+    btn:SetPushedTexture([[Interface\Buttons\heckbuttonglow]])
     btn:SetHighlightTexture([[Interface\Buttons\UI-Panel-MinimizeButton-Highlight]])
     btn:SetDisabledTexture([[Interface\Buttons\UI-Panel-QuestHideButton-disabled]])
 
@@ -50,16 +48,25 @@ end
 local recordBtn = CreateButton(RecordBarFrame, "interface/timemanager/resetbutton", AprRC.Color.red)
 recordBtn:SetScript("OnClick", function()
     AprRC.settings.profile.recordBarFrame.isRecording = not AprRC.settings.profile.recordBarFrame.isRecording
-    if not AprRC.settings.profile.recordBarFrame.isRecording then
-        AprRC.settings.profile.recordBarFrame.pause = false
-    end
-    UpdateRecordButton(recordBtn)
-end)
-
-local pauseBtn = CreateButton(RecordBarFrame, "interface/timemanager/pausebutton", AprRC.Color.white)
-pauseBtn:SetScript("OnClick", function()
     if AprRC.settings.profile.recordBarFrame.isRecording then
-        AprRC.settings.profile.recordBarFrame.pause = not AprRC.settings.profile.recordBarFrame.pause
+        APR.questionDialog:CreateQuestionPopup(
+            "New Route?",
+            function()
+                AprRC.questionDialog:CreateEditBoxPopup("Route Name", function(text)
+                    AprRC:InitRoute(text)
+                    UpdateRecordButton(recordBtn)
+                end)
+            end,
+            function()
+                UpdateRecordButton(recordBtn)
+            end,
+            YES,
+            NO,
+            false
+        )
+    else
+        UpdateRecordButton(recordBtn)
+        AprRC:UpdateRoute()
     end
 end)
 
@@ -102,7 +109,7 @@ function AprRC.record:RefreshFrameAnchor()
 end
 
 function AprRC.record:AdjustBarRotation(bar)
-    local buttons = { recordBtn, pauseBtn, updateBtn, rotationBtn }
+    local buttons = { recordBtn, updateBtn, rotationBtn }
     local spacing = 10
     local offsetX, offsetY = 5, -5
     local rotation = AprRC.settings.profile.recordBarFrame.rotation

@@ -43,7 +43,6 @@ function AprRC.settings:InitializeSettings()
                 rotation = "HORIZONTAL",
                 position = {},
                 isRecording = false,
-                pause = false,
             },
             stepOptionBarFrame = {},
             --debug
@@ -82,7 +81,7 @@ function AprRC.settings:createBlizzOptions()
                 type = "execute",
                 width = 0.75,
                 func = function()
-                    AprRC.questionDialog:CreateEditBoxPopup(L_APR["COPY_HELPER"], L_APR["CLOSE"], AprRC.discord)
+                    APR.questionDialog:CreateEditBoxPopup(L_APR["COPY_HELPER"], L_APR["CLOSE"], AprRC.discord)
                 end
             },
             githubButton = {
@@ -91,7 +90,7 @@ function AprRC.settings:createBlizzOptions()
                 type = "execute",
                 width = 0.75,
                 func = function()
-                    AprRC.questionDialog:CreateEditBoxPopup(L_APR["COPY_HELPER"], L_APR["CLOSE"], AprRC.github)
+                    APR.questionDialog:CreateEditBoxPopup(L_APR["COPY_HELPER"], L_APR["CLOSE"], AprRC.github)
                 end
             },
             buttonOffset = {
@@ -106,7 +105,7 @@ function AprRC.settings:createBlizzOptions()
                 type = "execute",
                 width = 0.75,
                 func = function()
-                    AprRC.questionDialog:CreateQuestionPopup(
+                    APR.questionDialog:CreateQuestionPopup(
                         nil,
                         function() AprRC.settings:ResetSettings() end
                     )

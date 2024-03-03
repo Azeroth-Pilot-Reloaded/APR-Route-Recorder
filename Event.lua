@@ -1,7 +1,7 @@
 local _G = _G
 local L = LibStub("AceLocale-3.0"):GetLocale("APR-Recorder")
 
-AprRC.event = AprRC:NewModule('AprRC-Event')
+AprRC.event = AprRC:NewModule("AprRC-Event")
 
 -- global event framePool for register
 AprRC.event.framePool = {}
@@ -11,11 +11,47 @@ AprRC.event.functions = {}
 ------------------------------------- EVENTS ------------------------------------------
 ---------------------------------------------------------------------------------------
 
-local events = {}
-events.accept = "QUEST_ACCEPTED"
-events.remove = "QUEST_REMOVED"
-events.pet = { "PET_BATTLE_CLOSE", "PET_BATTLE_OPENING_START" }
+local events = {
+    accept = "QUEST_ACCEPTED",
+    remove = "QUEST_REMOVED",
+    done = "QUEST_TURNED_IN",
+    setHS = "HEARTHSTONE_BOUND",
+    spell = "UNIT_SPELLCAST_SUCCEEDED",
+    raidIcon = "RAID_TARGET_UPDATE",
+    pet = { "PET_BATTLE_CLOSE", "PET_BATTLE_OPENING_START" },
+    warMode = "WAR_MODE_STATUS_UPDATE",
+    -- in progress
+    qpart = "QUEST_LOG_UPDATE",
+    vehicle = { "UNIT_ENTERING_VEHICLE", "UNIT_EXITING_VEHICLE" },
+    taxi = "TAXIMAP_OPENED",                                 -- par defaut on fait un getFP mais si jamais y a déjà un getFP sur le currentNode on fait rien
+    fly = { "PLAYER_CONTROL_LOST", "PLAYER_CONTROL_GAINED" } -- UnitOnTaxi("player") UseFlightPath + NodeID+ coord du depart -- il faut lancer le timer durant le fly et set ETA quand on récup le control
 
+    -- target = {"UNIT_TARGET", "PLAYER_TARGET_CHANGED"},
+    --skill = {"SKILL_LINES_CHANGED", "LEARNED_SPELL_IN_TAB"} BUTTON ?
+
+    --gossip = {"GOSSIP_SHOW", "PLAYER_INTERACTION_MANAGER_FRAME_HIDE", "GOSSIP_CONFIRM_CANCEL", "GOSSIP_CLOSED"}
+}
+
+local hearthStoneSpellID = {
+    556,
+    8690,
+    298068,
+    278559,
+    278244,
+    286331,
+    286353,
+    94719,
+    285424,
+    286031,
+    285362,
+    136508,
+    75136,
+    39937,
+    231504,
+    308742
+}
+local garrisonHSSpellID = 171253
+local dalaHSSpellID = 222695
 
 ---------------------------------------------------------------------------------------
 ---------------------------------- Events register ------------------------------------
@@ -27,28 +63,28 @@ function AprRC.event:MyRegisterEvent()
         container.tag = tag
         container.callback = self.functions[tag]
 
-        if type(event) == 'string' then
+        if type(event) == "string" then
             container:RegisterEvent(event)
-            container:SetScript('OnEvent', self.EventHandler)
-        elseif type(event) == 'table' then
+            container:SetScript("OnEvent", self.EventHandler)
+        elseif type(event) == "table" then
             for _, e in ipairs(event) do
                 container:RegisterEvent(e)
-                container:SetScript('OnEvent', self.EventHandler)
+                container:SetScript("OnEvent", self.EventHandler)
             end
         end
     end
 end
 
 function AprRC.event.EventHandler(self, event, ...)
-    if not AprRC.settings.profile.enableAddon then
+    if not AprRC.settings.profile.enableAddon or not AprRC.settings.profile.recordBarFrame.isRecording then
         return
     end
 
     if self.callback and self.tag then
-        Debug('Callback Event', event)
+        Debug("Callback Event", event)
         pcall(self.callback, event, ...)
     else
-        Debug('Unregister Event', event)
+        Debug("Unregister Event", event)
         self.callback = nil
         self:UnregisterEvent(event)
     end
@@ -60,28 +96,111 @@ end
 
 function AprRC.event.functions.accept(event, questId)
     -- Pickup
-    if AprRC:HasStepOption("PickUp") then
-        tinsert(AprRCData.CurrentStep["PickUp"], questId)
-    else
-        local step = { PickUp = { questId } }
-        AprRC:SetStepCoord(step)
-        AprRC:NewStep(step)
+    if event == events.accept then
+        local currentStep = AprRC:GetLastStep()
+        if not AprRC:IsCurrentStepFarAway() and AprRC:HasStepOption("PickUp") then
+            tinsert(currentStep["PickUp"], questId)
+        else
+            local step = { PickUp = { questId } }
+            AprRC:SetStepCoord(step)
+            AprRC:NewStep(step)
+        end
     end
-    --
 end
 
 function AprRC.event.functions.remove(event, questId, ...)
     -- LeaveQuests
+
     if AprRC:HasStepOption("LeaveQuests") then
-        tinsert(AprRCData.CurrentStep["LeaveQuests"], questId)
+        local currentStep = AprRC:GetLastStep()
+        tinsert(currentStep["LeaveQuests"], questId)
     else
-        AprRC:NewStep({ LeaveQuests = { questId } })
+        local step = { LeaveQuests = { questId } }
+        AprRC:NewStep(step)
     end
+end
+
+function AprRC.event.functions.done(event, questId, ...)
+    if not AprRC:IsCurrentStepFarAway() and AprRC:HasStepOption("Done") then
+        local currentStep = AprRC:GetLastStep()
+        tinsert(currentStep["Done"], questId)
+    else
+        local step = { Done = { questId } }
+        AprRC:SetStepCoord(step)
+        AprRC:NewStep(step)
+    end
+end
+
+function AprRC.event.functions.raidIcon(...)
+    local targetId = _G.GetTargetID()
+    local currentStep = AprRC:GetLastStep()
+    currentStep.RaidIcon = targetId
+end
+
+function AprRC.event.functions.setHS(...)
+    local step = { SetHS = 1 } -- //TODO verif si on veut la questId pour les reset
+    AprRC:SetStepCoord(step)
+    AprRC:NewStep(step)
+end
+
+function AprRC.event.functions.spell(event, unitTarget, castGUID, spellID)
+    local key = nil
+    local value = 1 -- //TODO verif si on veut la questId pour les reset
+    if spellID == dalaHSSpellID then
+        key = "UseDalaHS"
+    elseif spellID == garrisonHSSpellID then
+        key = "UseGarrisonHS"
+    elseif Contains(hearthStoneSpellID, spellID) then
+        key = "UseHS"
+    end
+
+    if key then
+        local step = {}
+        step[key] = value
+        AprRC:SetStepCoord(step)
+        AprRC:NewStep(step)
+    end
+end
+
+function AprRC.event.functions.warMode(event, warModeEnabled)
+    if warModeEnabled then
+        local step = { WarMode = 1 } -- //TODO verif si on veut la questId pour les reset
+        AprRC:SetStepCoord(step)
+        AprRC:NewStep(step)
+    end
+end
+
+function AprRC.event.functions.vehicle(event, ...)
+    AprRC.record:RefreshFrameAnchor()
 end
 
 function AprRC.event.functions.pet(event, ...)
     AprRC.record:RefreshFrameAnchor()
 end
+
+---------------------
+-- EVENT
+---------------------
+-- - Qpart        ["Qpart"] = {[46727] = {["2"] = "1",},
+-- - Treasure   ["Treasure"] = 31401 (questID)
+-- - Gossip
+
+-- - GetFP
+-- - UseFlightPath
+-- - NodeID
+
+-- - ChromiePick ( check to the timeline event) PLAYER_ENTERING_WORLD + C_PlayerInfo.IsPlayerInChromieTime()
+
+-- Check how
+-- - DroppableQuest = { Text = "Tideblood", Qid = 50593, MobId = 130116 },
+-- - DropQuest    ["DropQuest"] = 62567 (questID)
+
+---------------------
+-- COMMAND / BAR
+---------------------
+
+-- - Boat (c'est que pour afficher la bonne phrase)
+-- - Emote (edit box  + target)
 
 -- - Faction ["Faction"] = "Horde" (UnitFactionGroup("player"))
 -- - Race    ["Race"] = "Gnome"
@@ -91,111 +210,60 @@ end
 -- - HasAchievement command HasAchievement ID
 -- - DontHaveAchievement command DontHaveAchievement ID
 
--- - ExitTutorial ["ExitTutorial"] = 62567 (IsOnQuest(questID)
--- - PickUp       ["PickUp"] = { questID1, questID2}
 -- - PickUpDB     ["PickUpDB"] = { questID1, questID2}
--- - DropQuest    ["DropQuest"] = 62567 (questID)
--- - Qpart        ["Qpart"] = {[46727] = {["2"] = "1",},
 -- - QpartDB
--- - QpartPart
--- - Fillers
--- - Done       ["Done"] = { questID1, questID2}
--- - DoneDB     ["DoneDB"] = { questID1, questID2}
--- - Treasure   ["Treasure"] = 31401 (questID)
+-- - QpartPart (rework ?)
+-- - TrigText  (rework ?)
+-- - DoneDB     ["DoneDB"] = { questID1, questID2}$
 
+-- - ExtraLineText
+-- - ExtraLine
+
+-- - Waypoint
+-- - Range
+-- - ZoneStepTrigger
+
+-- - ETA
+-- - UseGlider
+-- - Bloodlust
+-- - InstanceQuest
+-- - NoAutoFlightMap
+-- - VehicleExit = 1,
+
+-- - ZoneDoneSave
+
+---------------------
+-- A VOIR
+---------------------
+-- - Fillers ?????????
+-- - Button
+-- - SpellButton
+-- - SpellTrigger
 -- - Group      ["Group"] = { Number = 3, QuestId = 51384},
 -- - GroupTask  ["GroupTask"] = 51384, (the questId from Group, step to check if player want to do the group quest)
 -- - QuestLineSkip ???? (block group quest if present) ["QuestLineSkip"] = 51226,
 
--- - Waypoint
--- - SetHS
--- - UseHS
--- - UseDalaHS
--- - UseGarrisonHS
--- - GetFP
--- - UseFlightPath
--- - Boat
--- - NodeID
--- - Name
--- - WarMode
--- - ZoneDoneSave
--- - ZoneStepTrigger
--- - Range
--- - Coord
+-- - ExtraActionB chekc if event is trigger on click (other then UNIT_SPELLCAST_SUCCEEDED)
 
--- - ExtraLineText
--- - ExtraLine
--- - LoaPick
 -- - PickedLoa
--- - BreadCrum
--- - LeaveQuest
--- - LeaveQuests
--- - SpecialLeaveVehicle
--- - VehicleExit
--- - SpecialFlight
--- - ETA
--- - SpecialETAHide
--- - UseGlider
--- - Bloodlust
--- - InVehicle
--- - DoIHaveFlight
--- - DroppableQuest
+-- - SpecialETAHide ??
+
+-- - DoIHaveFlight ?? check si on peut en faire quelque chose pour des waypoints (avec ajout unAutoSkipableWaypoint)
 -- - Dontskipvid
--- - RaidIcon
--- - Button
--- - SpellButton
--- - Gossip
--- - ChromiePick
--- - SpellTrigger
--- - NoAutoFlightMap
 -- - DenyNPC
--- - TrigText
--- - Emote
--- - InstanceQuest
 
--- -- only in route check if needed
--- - ExtraActionB
-
--- - ButtonSpellId -- Deleted
--- - BlockQuests -- Deleted
+-- - ExitTutorial ["ExitTutorial"] = 62567 (IsOnQuest(questID)
 
 -- AprRC.EventFrame:RegisterEvent("BAG_UPDATE_DELAYED")
--- AprRC.EventFrame:RegisterEvent("BANKFRAME_OPENED")
--- AprRC.EventFrame:RegisterEvent("CHAT_MSG_ADDON")
--- AprRC.EventFrame:RegisterEvent("CHAT_MSG_COMBAT_XP_GAIN")
--- AprRC.EventFrame:RegisterEvent("CHAT_MSG_MONSTER_SAY")
--- AprRC.EventFrame:RegisterEvent("CHAT_MSG_SYSTEM")
--- AprRC.EventFrame:RegisterEvent("COMPANION_LEARNED")
--- AprRC.EventFrame:RegisterEvent("COMPANION_UNLEARNED")
--- AprRC.EventFrame:RegisterEvent("COMPANION_UPDATE")
+--force mort
 -- AprRC.EventFrame:RegisterEvent("CONFIRM_BINDER")
 -- AprRC.EventFrame:RegisterEvent("CONFIRM_XP_LOSS")
--- AprRC.EventFrame:RegisterEvent("CVAR_UPDATE")
--- AprRC.EventFrame:RegisterEvent("GOSSIP_CLOSED")
--- AprRC.EventFrame:RegisterEvent("GOSSIP_CONFIRM_CANCEL")
--- AprRC.EventFrame:RegisterEvent("GOSSIP_SHOW")
 -- AprRC.EventFrame:RegisterEvent("GROUP_JOINED")
 -- AprRC.EventFrame:RegisterEvent("GROUP_LEFT")
--- AprRC.EventFrame:RegisterEvent("HEARTHSTONE_BOUND")
 -- AprRC.EventFrame:RegisterEvent("ITEM_PUSH")
--- AprRC.EventFrame:RegisterEvent("LEARNED_SPELL_IN_TAB")
--- AprRC.EventFrame:RegisterEvent("MERCHANT_CLOSED")
 -- AprRC.EventFrame:RegisterEvent("MERCHANT_SHOW")
--- AprRC.EventFrame:RegisterEvent("MINIMAP_UPDATE_ZOOM")
--- AprRC.EventFrame:RegisterEvent("NEW_PET_ADDED")
--- AprRC.EventFrame:RegisterEvent("NEW_WMO_CHUNK")
 -- AprRC.EventFrame:RegisterEvent("PLAYER_CHOICE_UPDATE")
--- AprRC.EventFrame:RegisterEvent("PLAYER_CONTROL_LOST")
 -- AprRC.EventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
--- AprRC.EventFrame:RegisterEvent("PLAYER_LEVEL_UP")
--- AprRC.EventFrame:RegisterEvent("PLAYER_MONEY")
--- AprRC.EventFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
--- AprRC.EventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
--- AprRC.EventFrame:RegisterEvent("PLAYER_TARGET_CHANGED")
--- AprRC.EventFrame:RegisterEvent("PLAYER_TARGET_CHANGED")
--- AprRC.EventFrame:RegisterEvent("PLAYER_XP_UPDATE")
--- AprRC.EventFrame:RegisterEvent("QUEST_ACCEPTED")
--- AprRC.EventFrame:RegisterEvent("QUEST_ACCEPT_CONFIRM")
 -- AprRC.EventFrame:RegisterEvent("QUEST_AUTOCOMPLETE")
 -- AprRC.EventFrame:RegisterEvent("QUEST_COMPLETE")
 -- AprRC.EventFrame:RegisterEvent("QUEST_DETAIL")
@@ -203,30 +271,12 @@ end
 -- AprRC.EventFrame:RegisterEvent("QUEST_GREETING")
 -- AprRC.EventFrame:RegisterEvent("QUEST_LOG_UPDATE")
 -- AprRC.EventFrame:RegisterEvent("QUEST_PROGRESS")
--- AprRC.EventFrame:RegisterEvent("QUEST_REMOVED")
--- AprRC.EventFrame:RegisterEvent("QUEST_TURNED_IN")
 -- AprRC.EventFrame:RegisterEvent("REQUEST_CEMETERY_LIST_RESPONSE")
 -- AprRC.EventFrame:RegisterEvent("SKILL_LINES_CHANGED")
--- AprRC.EventFrame:RegisterEvent("SPELL_UPDATE_COOLDOWN")
--- AprRC.EventFrame:RegisterEvent("TAXIMAP_OPENED")
 -- AprRC.EventFrame:RegisterEvent("TOYS_UPDATED")
--- AprRC.EventFrame:RegisterEvent("TRAINER_CLOSED")
--- AprRC.EventFrame:RegisterEvent("TRAINER_SHOW")
--- AprRC.EventFrame:RegisterEvent("TRAINER_UPDATE")
--- AprRC.EventFrame:RegisterEvent("UI_ERROR_MESSAGE")
--- AprRC.EventFrame:RegisterEvent("UI_INFO_MESSAGE")
 -- AprRC.EventFrame:RegisterEvent("UNIT_AURA")
--- AprRC.EventFrame:RegisterEvent("UNIT_ENTERED_VEHICLE")
--- AprRC.EventFrame:RegisterEvent("UNIT_ENTERING_VEHICLE")
--- AprRC.EventFrame:RegisterEvent("UNIT_EXITING_VEHICLE")
 -- AprRC.EventFrame:RegisterEvent("UNIT_QUEST_LOG_CHANGED")
--- AprRC.EventFrame:RegisterEvent("UNIT_SPELLCAST_START")
 -- AprRC.EventFrame:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
--- AprRC.EventFrame:RegisterEvent("UNIT_TARGET")
 -- AprRC.EventFrame:RegisterEvent("UPDATE_FACTION")
 -- AprRC.EventFrame:RegisterEvent("UPDATE_MOUSEOVER_UNIT")
 -- AprRC.EventFrame:RegisterEvent("UPDATE_UI_WIDGET")
--- AprRC.EventFrame:RegisterEvent("VEHICLE_UPDATE")
--- AprRC.EventFrame:RegisterEvent("ZONE_CHANGED")
--- AprRC.EventFrame:RegisterEvent("ZONE_CHANGED_INDOORS")
--- AprRC.EventFrame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
