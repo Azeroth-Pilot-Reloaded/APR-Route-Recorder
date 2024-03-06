@@ -20,38 +20,17 @@ local events = {
     raidIcon = "RAID_TARGET_UPDATE",
     pet = { "PET_BATTLE_CLOSE", "PET_BATTLE_OPENING_START" },
     warMode = "WAR_MODE_STATUS_UPDATE",
-    -- in progress
-    qpart = "QUEST_LOG_UPDATE",
     vehicle = { "UNIT_ENTERING_VEHICLE", "UNIT_EXITING_VEHICLE" },
+    -- in progress
+    gossip = "GOSSIP_ENTER_CODE",
+    qpart = "QUEST_LOG_UPDATE",
     taxi = "TAXIMAP_OPENED",                                 -- par defaut on fait un getFP mais si jamais y a déjà un getFP sur le currentNode on fait rien
     fly = { "PLAYER_CONTROL_LOST", "PLAYER_CONTROL_GAINED" } -- UnitOnTaxi("player") UseFlightPath + NodeID+ coord du depart -- il faut lancer le timer durant le fly et set ETA quand on récup le control
 
     -- target = {"UNIT_TARGET", "PLAYER_TARGET_CHANGED"},
     --skill = {"SKILL_LINES_CHANGED", "LEARNED_SPELL_IN_TAB"} BUTTON ?
 
-    --gossip = {"GOSSIP_SHOW", "PLAYER_INTERACTION_MANAGER_FRAME_HIDE", "GOSSIP_CONFIRM_CANCEL", "GOSSIP_CLOSED"}
 }
-
-local hearthStoneSpellID = {
-    556,
-    8690,
-    298068,
-    278559,
-    278244,
-    286331,
-    286353,
-    94719,
-    285424,
-    286031,
-    285362,
-    136508,
-    75136,
-    39937,
-    231504,
-    308742
-}
-local garrisonHSSpellID = 171253
-local dalaHSSpellID = 222695
 
 ---------------------------------------------------------------------------------------
 ---------------------------------- Events register ------------------------------------
@@ -146,11 +125,11 @@ end
 function AprRC.event.functions.spell(event, unitTarget, castGUID, spellID)
     local key = nil
     local value = 1 -- //TODO verif si on veut la questId pour les reset
-    if spellID == dalaHSSpellID then
+    if spellID == APR.dalaHSSpellID then
         key = "UseDalaHS"
-    elseif spellID == garrisonHSSpellID then
+    elseif spellID == APR.garrisonHSSpellID then
         key = "UseGarrisonHS"
-    elseif Contains(hearthStoneSpellID, spellID) then
+    elseif Contains(APR.hearthStoneSpellID, spellID) then
         key = "UseHS"
     end
 
@@ -171,11 +150,18 @@ function AprRC.event.functions.warMode(event, warModeEnabled)
 end
 
 function AprRC.event.functions.vehicle(event, ...)
-    AprRC.record:RefreshFrameAnchor()
+    if event == "UNIT_EXITING_VEHICLE" then
+        local currentStep = AprRC:GetLastStep()
+        tinsert(currentStep["VehicleExit"], 1)
+    end
 end
 
 function AprRC.event.functions.pet(event, ...)
     AprRC.record:RefreshFrameAnchor()
+end
+
+function AprRC.event.functions.gossip(event, gossipID)
+    print("event:", event, gossipID)
 end
 
 ---------------------
@@ -228,7 +214,6 @@ end
 -- - Bloodlust
 -- - InstanceQuest
 -- - NoAutoFlightMap
--- - VehicleExit = 1,
 
 -- - ZoneDoneSave
 

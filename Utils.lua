@@ -4,10 +4,11 @@ function Debug(msg, data)
     end
     if type(data) == "table" then
         for key, value in pairs(data) do
-            print(msg, " - ", key, value)
+            print(msg, " - ", key)
+            Debug(msg, value)
         end
     else
-        print("|cff00bfff" .. msg .. " - ", data)
+        print("|cff00bfff" .. msg .. "|r - ", data)
     end
 end
 
@@ -40,3 +41,4 @@ function SplitQuestAndObjective(questID)
     end
     return tonumber(questID)
 end
+
