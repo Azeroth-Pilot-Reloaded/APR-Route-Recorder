@@ -24,15 +24,21 @@ local events = {
     vehicle = { "UNIT_ENTERING_VEHICLE", "UNIT_EXITING_VEHICLE" },
     pet = { "PET_BATTLE_CLOSE", "PET_BATTLE_OPENING_START" },
     emote = "CHAT_MSG_TEXT_EMOTE",
+    taxi = { "TAXIMAP_OPENED", "TAXIMAP_CLOSED" },
+    fly = { "PLAYER_CONTROL_LOST", "PLAYER_CONTROL_GAINED" },
     -- in progress
-    qpart = "QUEST_LOG_UPDATE",
-    taxi = "TAXIMAP_OPENED",                                 -- par defaut on fait un getFP mais si jamais y a déjà un getFP sur le currentNode on fait rien
-    fly = { "PLAYER_CONTROL_LOST", "PLAYER_CONTROL_GAINED" } -- UnitOnTaxi("player") UseFlightPath + NodeID+ coord du depart -- il faut lancer le timer durant le fly et set ETA quand on récup le control
+    qpart = "QUEST_LOG_UPDATE" -- filler ?
 
     -- target = {"UNIT_TARGET", "PLAYER_TARGET_CHANGED"},
     --skill = {"SKILL_LINES_CHANGED", "LEARNED_SPELL_IN_TAB"} BUTTON ?
-
 }
+
+---------------------------------------------------------------------------------------
+-------------------------------------- DATA -------------------------------------------
+---------------------------------------------------------------------------------------
+
+local boatsNodeID = { 2052, 2053, 2054, 2055, 2056, 2057, 2104, 2105 }
+local controlLostTime = 0
 
 ---------------------------------------------------------------------------------------
 ---------------------------------- Events register ------------------------------------
@@ -226,6 +232,67 @@ function AprRC.event.functions.emote(event, ...)
     end
 end
 
+function AprRC.event.functions.taxi(event, ...)
+    if event == "TAXIMAP_OPENED" then
+        local playerMapID = C_Map.GetBestMapForUnit("player")
+        local taxiNodes = C_TaxiMap.GetAllTaxiNodes(playerMapID)
+
+        for _, node in ipairs(taxiNodes) do
+            if node.state == Enum.FlightPathState.Current then
+                AprRC.CurrentTaxiNode = node
+            end
+        end
+    elseif event == "TAXIMAP_CLOSED" then
+        C_Timer.After(2, function()
+            if AprRC.CurrentTaxiNode and not UnitOnTaxi("player") then
+                local step = { GetFP = AprRC.CurrentTaxiNode.nodeID }
+                AprRC:SetStepCoord(step)
+                AprRC:NewStep(step)
+            end
+        end)
+    end
+end
+
+function AprRC.event.functions.fly(event, ...)
+    if event == "PLAYER_CONTROL_LOST" then
+        C_Timer.After(2, function()
+            if UnitOnTaxi("player") then
+                AprRC.isOnTaxi = true
+                controlLostTime = GetTime()
+                local step = {}
+                step.UseFlightPath = 1 -- //TODO verif si on veut la questId pour les reset
+                AprRC:SetStepCoord(step)
+                AprRC:NewStep(step)
+            end
+        end
+        )
+    elseif event == "PLAYER_CONTROL_GAINED" then
+        if AprRC.isOnTaxi then
+            local currentStep = AprRC:GetLastStep()
+
+            -- ETA
+            local controlGainTime = GetTime()
+            local duration = math.floor(controlGainTime - controlLostTime)
+            currentStep.ETA = duration
+
+            --NodeID
+            local posY, posX = UnitPosition("player")
+            local taxiNodeId, taxiName, taxiX, taxiY = APR.transport:ClosestTaxi(posX, posY)
+            currentStep.NodeID = taxiNodeId
+
+            --Boat
+            if Contains(boatsNodeID, AprRC.CurrentTaxiNode) then
+                currentStep.Boat = 1
+            end
+
+            -- reset
+            AprRC.isOnTaxi = false
+            controlLostTime = 0
+            AprRC.CurrentTaxiNode = nill
+        end
+    end
+end
+
 ---------------------
 -- EVENT
 ---------------------
@@ -234,19 +301,12 @@ end
 -- - Fillers ?????????
 -- - Treasure   ["Treasure"] = 31401 (questID)
 
--- - GetFP ( get le current quand on open taxi)
--- - UseFlightPath (perte de control + on est sur un taxi)
--- - NodeID (get from APR DB quand on récup le control, a partir du closest)
--- - ETA (start reccord a la perte de control si on est sur un taxi check APR / stop quand on recup)
-
 -- - ChromiePick ( check to the timeline event) PLAYER_ENTERING_WORLD + C_PlayerInfo.IsPlayerInChromieTime()
 
 -- Check how
 -- - DroppableQuest = { Text = "Tideblood", Qid = 50593, MobId = 130116 },
 -- - DropQuest    ["DropQuest"] = 62567 (questID)
 
--- - Boat (c'est que pour afficher la bonne phrase) (stocker les npc id de tous les boats)
--- - Emote (edit box  + target) -> faire une DB avec les phrase et ecouter sur le chat (moins lourd que les routes)
 ---------------------
 -- COMMAND / BAR
 ---------------------
@@ -283,12 +343,10 @@ end
 -- - SpellButton (ajout d'un bouton de spell a utilisé pour la route, get la list des spells et autocompletion??)
 -- - SpellTrigger (condition pour update une step pour une qpart)
 
-
 -- si on get une nouvelle quete ou actualise une quete -> info = C_QuestLog.GetInfo(questLogIndex); info.suggestedGroup
 -- - Group      ["Group"] = { Number = 3, QuestId = 51384},
 -- - GroupTask  ["GroupTask"] = 51384, (the questId from Group, step to check if player want to do the group quest)
 -- - QuestLineSkip ???? (block group quest if present) ["QuestLineSkip"] = 51226,
-
 
 -- - NoAutoFlightMap
 -- - ExtraActionB chekc if event is trigger on click (other then UNIT_SPELLCAST_SUCCEEDED)

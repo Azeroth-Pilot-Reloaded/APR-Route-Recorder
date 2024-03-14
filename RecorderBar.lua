@@ -49,22 +49,30 @@ local recordBtn = CreateButton(RecordBarFrame, "interface/timemanager/resetbutto
 recordBtn:SetScript("OnClick", function()
     AprRC.settings.profile.recordBarFrame.isRecording = not AprRC.settings.profile.recordBarFrame.isRecording
     if AprRC.settings.profile.recordBarFrame.isRecording then
-        APR.questionDialog:CreateQuestionPopup(
-            "New Route?",
-            function()
-                AprRC.questionDialog:CreateEditBoxPopup("Route Name", function(text)
-                    AprRC:InitRoute(text)
+        if AprRCData.CurrentRoute.name ~= "" then
+            APR.questionDialog:CreateQuestionPopup(
+                "New Route?",
+                function()
+                    AprRC.questionDialog:CreateEditBoxPopup("Route Name", function(text)
+                        AprRC:InitRoute(text)
+                        UpdateRecordButton(recordBtn)
+                    end)
+                end,
+                function()
                     UpdateRecordButton(recordBtn)
-                end)
-            end,
-            function()
+                end,
+                YES,
+                NO,
+                false
+            )
+        else
+            AprRC.questionDialog:CreateEditBoxPopup("Route Name", function(text)
+                AprRC:InitRoute(text)
                 UpdateRecordButton(recordBtn)
-            end,
-            YES,
-            NO,
-            false
-        )
+            end)
+        end
     else
+        -- stop record
         UpdateRecordButton(recordBtn)
         AprRC:UpdateRoute()
     end
