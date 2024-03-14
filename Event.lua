@@ -20,9 +20,10 @@ local events = {
     setHS = "HEARTHSTONE_BOUND",
     spell = "UNIT_SPELLCAST_SUCCEEDED",
     raidIcon = "RAID_TARGET_UPDATE",
-    warMode = "WAR_MODE_STATUS_UPDATE",
+    -- warMode = "WAR_MODE_STATUS_UPDATE", -- add option
     vehicle = { "UNIT_ENTERING_VEHICLE", "UNIT_EXITING_VEHICLE" },
     pet = { "PET_BATTLE_CLOSE", "PET_BATTLE_OPENING_START" },
+    emote = "CHAT_MSG_TEXT_EMOTE",
     -- in progress
     qpart = "QUEST_LOG_UPDATE",
     taxi = "TAXIMAP_OPENED",                                 -- par defaut on fait un getFP mais si jamais y a déjà un getFP sur le currentNode on fait rien
@@ -176,13 +177,13 @@ local function SetGossipOptionID(self)
             end
         else
             local step = { GossipOptionIDs = { gossipOptionID } }
-            AprRC:SetSteCpoord(step)
+            AprRC:SetStepCoord(step)
             AprRC:NewStep(step)
         end
     end
 end
 
-function AprRC.event.functions.gossip(self, event, ...)
+function AprRC.event.functions.gossip(event, ...)
     local childs = { GossipFrame.GreetingPanel.ScrollBox.ScrollTarget:GetChildren() }
     for k, child in ipairs(childs) do
         local data = child.GetData and child:GetData()
@@ -190,6 +191,36 @@ function AprRC.event.functions.gossip(self, event, ...)
             if not child.hookedGossipExtraction then
                 child:HookScript("OnClick", SetGossipOptionID)
                 child.hookedGossipExtraction = true
+            end
+        end
+    end
+end
+
+function AprRC.event.functions.emote(event, ...)
+    local message, sender = ...
+    if APR.Username == sender then
+        local function getEmoteKey()
+            for emoteKey, phrases in pairs(L.Emotes) do
+                for _, phrase in ipairs(phrases) do
+                    local pattern = phrase:gsub("%%s", ".+") -- replace placeholders patern to lua
+                    pattern = "^" .. pattern .. "$"          -- cast as regex
+                    if string.match(message, pattern) then
+                        return emoteKey
+                    end
+                end
+            end
+            return nil
+        end
+
+        local emote = getEmoteKey()
+        if emote then
+            local currentStep = AprRC:GetLastStep()
+            if not AprRC:IsCurrentStepFarAway() and AprRC:HasStepOption("Emote") then
+                currentStep["Emote"] = emote
+            else
+                local step = { Emote = emote }
+                AprRC:SetStepCoord(step)
+                AprRC:NewStep(step)
             end
         end
     end
