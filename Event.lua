@@ -12,17 +12,18 @@ AprRC.event.functions = {}
 ---------------------------------------------------------------------------------------
 
 local events = {
+    load = "ADDON_LOADED",
     accept = "QUEST_ACCEPTED",
     remove = "QUEST_REMOVED",
     done = "QUEST_TURNED_IN",
+    gossip = "GOSSIP_SHOW",
     setHS = "HEARTHSTONE_BOUND",
     spell = "UNIT_SPELLCAST_SUCCEEDED",
     raidIcon = "RAID_TARGET_UPDATE",
-    pet = { "PET_BATTLE_CLOSE", "PET_BATTLE_OPENING_START" },
     warMode = "WAR_MODE_STATUS_UPDATE",
     vehicle = { "UNIT_ENTERING_VEHICLE", "UNIT_EXITING_VEHICLE" },
+    pet = { "PET_BATTLE_CLOSE", "PET_BATTLE_OPENING_START" },
     -- in progress
-    gossip = "GOSSIP_ENTER_CODE",
     qpart = "QUEST_LOG_UPDATE",
     taxi = "TAXIMAP_OPENED",                                 -- par defaut on fait un getFP mais si jamais y a déjà un getFP sur le currentNode on fait rien
     fly = { "PLAYER_CONTROL_LOST", "PLAYER_CONTROL_GAINED" } -- UnitOnTaxi("player") UseFlightPath + NodeID+ coord du depart -- il faut lancer le timer durant le fly et set ETA quand on récup le control
@@ -144,15 +145,16 @@ end
 function AprRC.event.functions.warMode(event, warModeEnabled)
     if warModeEnabled then
         local step = { WarMode = 1 } -- //TODO verif si on veut la questId pour les reset
-        AprRC:SetStepCoord(step)
         AprRC:NewStep(step)
     end
 end
 
 function AprRC.event.functions.vehicle(event, ...)
     if event == "UNIT_EXITING_VEHICLE" then
-        local currentStep = AprRC:GetLastStep()
-        tinsert(currentStep["VehicleExit"], 1)
+        if not AprRC:HasStepOption("VehicleExit") then
+            local currentStep = AprRC:GetLastStep()
+            currentStep["VehicleExit"] = 1
+        end
     end
 end
 
@@ -160,20 +162,51 @@ function AprRC.event.functions.pet(event, ...)
     AprRC.record:RefreshFrameAnchor()
 end
 
-function AprRC.event.functions.gossip(event, gossipID)
-    print("event:", event, gossipID)
+local function SetGossipOptionID(self)
+    local gossipInfo = self:GetData().info
+    local gossipIcon = gossipInfo.icon
+    local gossipOptionID = gossipInfo.gossipOptionID
+    if gossipIcon == 132053 then --bubble icon
+        if not AprRC:IsCurrentStepFarAway() then
+            local currentStep = AprRC:GetLastStep()
+            if AprRC:HasStepOption("GossipOptionIDs") then
+                tinsert(currentStep["GossipOptionIDs"], gossipOptionID)
+            else
+                currentStep["GossipOptionIDs"] = { gossipOptionID }
+            end
+        else
+            local step = { GossipOptionIDs = { gossipOptionID } }
+            AprRC:SetSteCpoord(step)
+            AprRC:NewStep(step)
+        end
+    end
+end
+
+function AprRC.event.functions.gossip(self, event, ...)
+    local childs = { GossipFrame.GreetingPanel.ScrollBox.ScrollTarget:GetChildren() }
+    for k, child in ipairs(childs) do
+        local data = child.GetData and child:GetData()
+        if data and data.info and data.info.gossipOptionID then
+            if not child.hookedGossipExtraction then
+                child:HookScript("OnClick", SetGossipOptionID)
+                child.hookedGossipExtraction = true
+            end
+        end
+    end
 end
 
 ---------------------
 -- EVENT
 ---------------------
 -- - Qpart        ["Qpart"] = {[46727] = {["2"] = "1",},
+-- - InstanceQuest (on qpart)
+-- - Fillers ?????????
 -- - Treasure   ["Treasure"] = 31401 (questID)
--- - Gossip
 
--- - GetFP
--- - UseFlightPath
--- - NodeID
+-- - GetFP ( get le current quand on open taxi)
+-- - UseFlightPath (perte de control + on est sur un taxi)
+-- - NodeID (get from APR DB quand on récup le control, a partir du closest)
+-- - ETA (start reccord a la perte de control si on est sur un taxi check APR / stop quand on recup)
 
 -- - ChromiePick ( check to the timeline event) PLAYER_ENTERING_WORLD + C_PlayerInfo.IsPlayerInChromieTime()
 
@@ -181,19 +214,18 @@ end
 -- - DroppableQuest = { Text = "Tideblood", Qid = 50593, MobId = 130116 },
 -- - DropQuest    ["DropQuest"] = 62567 (questID)
 
+-- - Boat (c'est que pour afficher la bonne phrase) (stocker les npc id de tous les boats)
+-- - Emote (edit box  + target) -> faire une DB avec les phrase et ecouter sur le chat (moins lourd que les routes)
 ---------------------
 -- COMMAND / BAR
 ---------------------
-
--- - Boat (c'est que pour afficher la bonne phrase)
--- - Emote (edit box  + target)
 
 -- - Faction ["Faction"] = "Horde" (UnitFactionGroup("player"))
 -- - Race    ["Race"] = "Gnome"
 -- - Gender  ["Gender"] = 2
 -- - Class   ["Class"] = "DRUID"
 -- - Grind   command grind lvl
--- - HasAchievement command HasAchievement ID
+-- - HasAchievement command HasAchievement ID (check pour récup la list de tous les haut faits pour faire un autocompletion)
 -- - DontHaveAchievement command DontHaveAchievement ID
 
 -- - PickUpDB     ["PickUpDB"] = { questID1, questID2}
@@ -202,42 +234,44 @@ end
 -- - TrigText  (rework ?)
 -- - DoneDB     ["DoneDB"] = { questID1, questID2}$
 
--- - ExtraLineText
+-- - ExtraLineText (recup  la list de key/value de APR avec autocompletion, si n'existe pas alors stocker dans une list a exporter)
 -- - ExtraLine
 
 -- - Waypoint
 -- - Range
 -- - ZoneStepTrigger
+-- - ETA (si on veut ajouter une attente a un endroit autre que le taxi)
 
--- - ETA
--- - UseGlider
--- - Bloodlust
--- - InstanceQuest
--- - NoAutoFlightMap
-
--- - ZoneDoneSave
+-- - ZoneDoneSave ( auto trigger on stop ?, bouton finalisation ? )
 
 ---------------------
 -- A VOIR
 ---------------------
--- - Fillers ?????????
--- - Button
--- - SpellButton
--- - SpellTrigger
+-- - UseGlider (same as button mais pour le planeur gobelin - aura 126389)
+-- - Button (utilié pour les items, détecter avec bag/spellID/aura/.. l'item utilisé )
+-- - SpellButton (ajout d'un bouton de spell a utilisé pour la route, get la list des spells et autocompletion??)
+-- - SpellTrigger (condition pour update une step pour une qpart)
+
+
+-- si on get une nouvelle quete ou actualise une quete -> info = C_QuestLog.GetInfo(questLogIndex); info.suggestedGroup
 -- - Group      ["Group"] = { Number = 3, QuestId = 51384},
 -- - GroupTask  ["GroupTask"] = 51384, (the questId from Group, step to check if player want to do the group quest)
 -- - QuestLineSkip ???? (block group quest if present) ["QuestLineSkip"] = 51226,
 
--- - ExtraActionB chekc if event is trigger on click (other then UNIT_SPELLCAST_SUCCEEDED)
 
+-- - NoAutoFlightMap
+-- - ExtraActionB chekc if event is trigger on click (other then UNIT_SPELLCAST_SUCCEEDED)
+-- - DoIHaveFlight ?? check si on peut en faire quelque chose pour des waypoints (avec ajout unAutoSkipableWaypoint)
+
+----------------------------- pas sur de le faire
 -- - PickedLoa
 -- - SpecialETAHide ??
-
--- - DoIHaveFlight ?? check si on peut en faire quelque chose pour des waypoints (avec ajout unAutoSkipableWaypoint)
+-- - Bloodlust
 -- - Dontskipvid
 -- - DenyNPC
 
 -- - ExitTutorial ["ExitTutorial"] = 62567 (IsOnQuest(questID)
+-------------------------------
 
 -- AprRC.EventFrame:RegisterEvent("BAG_UPDATE_DELAYED")
 --force mort
