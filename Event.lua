@@ -89,8 +89,32 @@ function AprRC.event.EventHandler(self, event, ...)
 end
 
 ---------------------------------------------------------------------------------------
+---------------------------------- Events always sub ----------------------------------
+---------------------------------------------------------------------------------------
+
+local eventFrame = CreateFrame("Frame")
+eventFrame:RegisterEvent(events.load)
+eventFrame:SetScript("OnEvent", function(self, event, ...)
+    if event == events.load then
+        local addOnName, containsBindings = ...
+        if addOnName == "APR-Recorder" then
+            if ExtraActionButton1 then
+                ExtraActionButton1:HookScript("OnClick", function()
+                    if not AprRC.settings.profile.enableAddon or not AprRC.settings.profile.recordBarFrame.isRecording then
+                        return
+                    end
+                    local currentStep = AprRC:GetLastStep()
+                    currentStep.ExtraActionB = 1
+                end)
+            end
+        end
+    end
+end)
+
+---------------------------------------------------------------------------------------
 ---------------------------------- Events Functions -----------------------------------
 ---------------------------------------------------------------------------------------
+
 
 function AprRC.event.functions.accept(event, questId)
     -- Pickup
@@ -318,12 +342,10 @@ end
 ---------------------
 -- EVENT
 ---------------------
--- - Qpart        ["Qpart"] = {[46727] = {["2"] = "1",},
+-- - Qpart        ["Qpart"] = {[46727] = {["2"] = "1",}, check  for gossip before add
 -- - InstanceQuest (on qpart)
 -- - Fillers ?????????
 -- - Treasure   ["Treasure"] = 31401 (questID)
-
--- - ChromiePick ( check to the timeline event) PLAYER_ENTERING_WORLD + C_PlayerInfo.IsPlayerInChromieTime()
 
 -- Check how
 -- - DroppableQuest = { Text = "Tideblood", Qid = 50593, MobId = 130116 },
@@ -348,7 +370,6 @@ end
 -- - DoneDB     ["DoneDB"] = { questID1, questID2}$
 
 -- - ExtraLineText (recup  la list de key/value de APR avec autocompletion, si n'existe pas alors stocker dans une list a exporter)
--- - ExtraLine
 
 -- - Waypoint
 -- - Range
@@ -371,7 +392,6 @@ end
 -- - QuestLineSkip ???? (block group quest if present) ["QuestLineSkip"] = 51226,
 
 -- - NoAutoFlightMap
--- - ExtraActionB chekc if event is trigger on click (other then UNIT_SPELLCAST_SUCCEEDED)
 -- - DoIHaveFlight ?? check si on peut en faire quelque chose pour des waypoints (avec ajout unAutoSkipableWaypoint)
 
 ----------------------------- pas sur de le faire
