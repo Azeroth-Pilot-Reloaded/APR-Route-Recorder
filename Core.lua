@@ -104,3 +104,27 @@ end
 function AprRC:GetLastStep()
     return AprRCData.CurrentRoute.steps[#AprRCData.CurrentRoute.steps]
 end
+
+function AprRC:FindClosestIncompleteQuest()
+    for i = #AprRCData.CurrentRoute.steps, 1, -1 do
+        local step = AprRCData.CurrentRoute.steps[i]
+
+        for _, optionType in ipairs({ "PickUp", "Done", "Qpart" }) do
+            local questList = step[optionType]
+
+            if questList and optionType == "Qpart" then
+                for questID, _ in pairs(questList) do
+                    if not C_QuestLog.IsQuestFlaggedCompleted(questID) then
+                        return questID
+                    end
+                end
+            elseif questList then
+                for _, questID in ipairs(questList) do
+                    if not C_QuestLog.IsQuestFlaggedCompleted(questID) then
+                        return questID
+                    end
+                end
+            end
+        end
+    end
+end

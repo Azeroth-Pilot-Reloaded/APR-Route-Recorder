@@ -38,6 +38,17 @@ local events = {
 ---------------------------------------------------------------------------------------
 
 local boatsNodeID = { 2052, 2053, 2054, 2055, 2056, 2057, 2104, 2105 }
+local chromieTimelineSpellID = {
+    [325400] = { name = "TheBurningCrusade", optionID = 6 },
+    [325042] = { name = "WrathOfTheLichKing", optionID = 7 },
+    [325537] = { name = "Cataclysm", optionID = 5 },
+    [325530] = { name = "MistsOfPandaria", optionID = 8 },
+    [325534] = { name = "WarlordsOfDraenor", optionID = 9 },
+    [325539] = { name = "Legion", optionID = 10 },
+    [420123] = { name = "BattleForAzeroth", optionID = 15 },
+    [397733] = { name = "Shadowlands", optionID = 14 },
+    -- Dragonflight
+}
 local controlLostTime = 0
 
 ---------------------------------------------------------------------------------------
@@ -83,21 +94,23 @@ end
 
 function AprRC.event.functions.accept(event, questId)
     -- Pickup
-    if event == events.accept then
+    if AprRC:HasStepOption("ChromiePick") then
         local currentStep = AprRC:GetLastStep()
-        if not AprRC:IsCurrentStepFarAway() and AprRC:HasStepOption("PickUp") then
-            tinsert(currentStep["PickUp"], questId)
-        else
-            local step = { PickUp = { questId } }
-            AprRC:SetStepCoord(step)
-            AprRC:NewStep(step)
-        end
+        currentStep.PickUp = { questId }
+        return
+    end
+    if not AprRC:IsCurrentStepFarAway() and AprRC:HasStepOption("PickUp") then
+        local currentStep = AprRC:GetLastStep()
+        tinsert(currentStep["PickUp"], questId)
+    else
+        local step = { PickUp = { questId } }
+        AprRC:SetStepCoord(step)
+        AprRC:NewStep(step)
     end
 end
 
 function AprRC.event.functions.remove(event, questId, ...)
     -- LeaveQuests
-
     if AprRC:HasStepOption("LeaveQuests") then
         local currentStep = AprRC:GetLastStep()
         tinsert(currentStep["LeaveQuests"], questId)
@@ -120,30 +133,39 @@ end
 
 function AprRC.event.functions.raidIcon(...)
     local targetId = _G.GetTargetID()
-    local currentStep = AprRC:GetLastStep()
-    currentStep.RaidIcon = targetId
+    if targetId then
+        local currentStep = AprRC:GetLastStep()
+        currentStep.RaidIcon = targetId
+    end
 end
 
 function AprRC.event.functions.setHS(...)
-    local step = { SetHS = 1 } -- //TODO verif si on veut la questId pour les reset
+    local step = { SetHS = AprRC:FindClosestIncompleteQuest() }
     AprRC:SetStepCoord(step)
     AprRC:NewStep(step)
 end
 
 function AprRC.event.functions.spell(event, unitTarget, castGUID, spellID)
     local key = nil
-    local value = 1 -- //TODO verif si on veut la questId pour les reset
     if spellID == APR.dalaHSSpellID then
         key = "UseDalaHS"
     elseif spellID == APR.garrisonHSSpellID then
         key = "UseGarrisonHS"
     elseif Contains(APR.hearthStoneSpellID, spellID) then
         key = "UseHS"
+    elseif chromieTimelineSpellID[spellID] then
+        local step = {}
+        step.ChromiePick = chromieTimelineSpellID[spellID].optionID
+        step.GossipOptionIDs = { 51901, 51902 }
+        AprRC:SetStepCoord(step)
+        AprRC:NewStep(step)
+        return
     end
+
 
     if key then
         local step = {}
-        step[key] = value
+        step[key] = AprRC:FindClosestIncompleteQuest()
         AprRC:SetStepCoord(step)
         AprRC:NewStep(step)
     end
@@ -151,7 +173,7 @@ end
 
 function AprRC.event.functions.warMode(event, warModeEnabled)
     if warModeEnabled then
-        local step = { WarMode = 1 } -- //TODO verif si on veut la questId pour les reset
+        local step = { WarMode = AprRC:FindClosestIncompleteQuest() }
         AprRC:NewStep(step)
     end
 end
@@ -173,7 +195,7 @@ local function SetGossipOptionID(self)
     local gossipInfo = self:GetData().info
     local gossipIcon = gossipInfo.icon
     local gossipOptionID = gossipInfo.gossipOptionID
-    if gossipIcon == 132053 then --bubble icon
+    if gossipIcon == 132053 and not Contains({ 51901, 51902 }, gossipOptionID) then --bubble icon and not chromie select timeline
         if not AprRC:IsCurrentStepFarAway() then
             local currentStep = AprRC:GetLastStep()
             if AprRC:HasStepOption("GossipOptionIDs") then
@@ -260,7 +282,7 @@ function AprRC.event.functions.fly(event, ...)
                 AprRC.isOnTaxi = true
                 controlLostTime = GetTime()
                 local step = {}
-                step.UseFlightPath = 1 -- //TODO verif si on veut la questId pour les reset
+                step.UseFlightPath = AprRC:FindClosestIncompleteQuest()
                 AprRC:SetStepCoord(step)
                 AprRC:NewStep(step)
             end
