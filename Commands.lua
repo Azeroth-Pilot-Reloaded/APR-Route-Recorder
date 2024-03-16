@@ -37,10 +37,45 @@ function AprRC.command:SlashCmd(input)
             currentStep.ExtraLineText = text
         end)
     elseif input == "pickupdb" then
+        if AprRC:HasStepOption("PickUp") then
+            AprRC.questionDialog:CreateEditBoxPopupWithCallback("PickUp DB (QuestID)", function(questId)
+                local currentStep = AprRC:GetLastStep()
+                if AprRC:HasStepOption("PickUpDB") then
+                    tinsert(currentStep.PickUpDB, tonumber(questId, 10))
+                else
+                    currentStep.PickUpDB = { tonumber(questId, 10) }
+                end
+            end)
+        end
     elseif input == "qpartdb" then
+        if AprRC:HasStepOption("Qpart") then
+            AprRC.questionDialog:CreateEditBoxPopupWithCallback("Qpart DB (QuestID)", function(questId)
+                local currentStep = AprRC:GetLastStep()
+                if AprRC:HasStepOption("QpartDB") then
+                    tinsert(currentStep.QpartDB, tonumber(questId, 10))
+                else
+                    currentStep.QpartDB = { tonumber(questId, 10) }
+                end
+            end)
+        end
     elseif input == "donedb" then
+        if AprRC:HasStepOption("Done") then
+            AprRC.questionDialog:CreateEditBoxPopupWithCallback("Done DB (QuestID)", function(questId)
+                local currentStep = AprRC:GetLastStep()
+                if AprRC:HasStepOption("DoneDB") then
+                    tinsert(currentStep.DoneDB, tonumber(questId, 10))
+                else
+                    currentStep.DoneDB = { tonumber(questId, 10) }
+                end
+            end)
+        end
     elseif input == "qpartpart" then
     elseif input == "zonetrigger" then
+        local currentStep = AprRC:GetLastStep()
+        local y, x = UnitPosition("player")
+        if x and y then
+            currentStep.ZoneStepTrigger = { x = x, y = y, Range = 15 }
+        end
     elseif input == "faction" then
         local currentStep = AprRC:GetLastStep()
         currentStep.Faction = UnitFactionGroup("player")

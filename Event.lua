@@ -347,6 +347,10 @@ end
 -- - Fillers ?????????
 -- - Treasure   ["Treasure"] = 31401 (questID)
 
+-- sur l'action d'un DB check si y a la quest ID dans un PickUpDB et l'ajouter automatiquemejnt
+-- - QpartDB
+-- - DoneDB     ["DoneDB"] = { questID1, questID2}$
+
 -- Check how
 -- - DroppableQuest = { Text = "Tideblood", Qid = 50593, MobId = 130116 },
 -- - DropQuest    ["DropQuest"] = 62567 (questID)
@@ -358,12 +362,8 @@ end
 -- COMMAND / BAR
 ---------------------
 
--- - PickUpDB     ["PickUpDB"] = { questID1, questID2}
--- - QpartDB
 -- - QpartPart (rework ?)
 -- - TrigText  (rework ?)
--- - DoneDB     ["DoneDB"] = { questID1, questID2}$
--- - ZoneStepTrigger
 
 ---------------------
 -- A VOIR
