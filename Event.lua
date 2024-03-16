@@ -351,37 +351,24 @@ end
 -- - DroppableQuest = { Text = "Tideblood", Qid = 50593, MobId = 130116 },
 -- - DropQuest    ["DropQuest"] = 62567 (questID)
 
+-- - BuyMerchant "MERCHANT_SHOW" "ITEM_PUSH"  - MerchantFrame
+-- - ZoneDoneSave ( auto trigger on stop ?, bouton finalisation ? )
+
 ---------------------
 -- COMMAND / BAR
 ---------------------
-
--- - Faction ["Faction"] = "Horde" (UnitFactionGroup("player"))
--- - Race    ["Race"] = "Gnome"
--- - Gender  ["Gender"] = 2
--- - Class   ["Class"] = "DRUID"
--- - Grind   command grind lvl
--- - HasAchievement command HasAchievement ID (check pour récup la list de tous les haut faits pour faire un autocompletion)
--- - DontHaveAchievement command DontHaveAchievement ID
 
 -- - PickUpDB     ["PickUpDB"] = { questID1, questID2}
 -- - QpartDB
 -- - QpartPart (rework ?)
 -- - TrigText  (rework ?)
 -- - DoneDB     ["DoneDB"] = { questID1, questID2}$
-
--- - ExtraLineText (recup  la list de key/value de APR avec autocompletion, si n'existe pas alors stocker dans une list a exporter)
-
--- - Waypoint
--- - Range
 -- - ZoneStepTrigger
--- - ETA (si on veut ajouter une attente a un endroit autre que le taxi)
-
--- - ZoneDoneSave ( auto trigger on stop ?, bouton finalisation ? )
 
 ---------------------
 -- A VOIR
 ---------------------
--- - UseGlider (same as button mais pour le planeur gobelin - aura 126389)
+-- - UseGlider (same as button mais pour le planeur gobelin - aura 126389) "UNIT_AURA"
 -- - Button (utilié pour les items, détecter avec bag/spellID/aura/.. l'item utilisé )
 -- - SpellButton (ajout d'un bouton de spell a utilisé pour la route, get la list des spells et autocompletion??)
 -- - SpellTrigger (condition pour update une step pour une qpart)
@@ -391,10 +378,10 @@ end
 -- - GroupTask  ["GroupTask"] = 51384, (the questId from Group, step to check if player want to do the group quest)
 -- - QuestLineSkip ???? (block group quest if present) ["QuestLineSkip"] = 51226,
 
--- - NoAutoFlightMap
--- - DoIHaveFlight ?? check si on peut en faire quelque chose pour des waypoints (avec ajout unAutoSkipableWaypoint)
 
 ----------------------------- pas sur de le faire
+-- - DoIHaveFlight ?? check si on peut en faire quelque chose pour des waypoints (avec ajout unAutoSkipableWaypoint)
+-- - NoAutoFlightMap
 -- - PickedLoa
 -- - SpecialETAHide ??
 -- - Bloodlust
@@ -404,29 +391,6 @@ end
 -- - ExitTutorial ["ExitTutorial"] = 62567 (IsOnQuest(questID)
 -------------------------------
 
--- AprRC.EventFrame:RegisterEvent("BAG_UPDATE_DELAYED")
---force mort
--- AprRC.EventFrame:RegisterEvent("CONFIRM_BINDER")
--- AprRC.EventFrame:RegisterEvent("CONFIRM_XP_LOSS")
--- AprRC.EventFrame:RegisterEvent("GROUP_JOINED")
--- AprRC.EventFrame:RegisterEvent("GROUP_LEFT")
--- AprRC.EventFrame:RegisterEvent("ITEM_PUSH")
--- AprRC.EventFrame:RegisterEvent("MERCHANT_SHOW")
--- AprRC.EventFrame:RegisterEvent("PLAYER_CHOICE_UPDATE")
--- AprRC.EventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
--- AprRC.EventFrame:RegisterEvent("QUEST_AUTOCOMPLETE")
--- AprRC.EventFrame:RegisterEvent("QUEST_COMPLETE")
--- AprRC.EventFrame:RegisterEvent("QUEST_DETAIL")
--- AprRC.EventFrame:RegisterEvent("QUEST_FINISHED")
--- AprRC.EventFrame:RegisterEvent("QUEST_GREETING")
+-- AprRC.EventFrame:RegisterEvent("CONFIRM_XP_LOSS") -- deathskip ??
 -- AprRC.EventFrame:RegisterEvent("QUEST_LOG_UPDATE")
--- AprRC.EventFrame:RegisterEvent("QUEST_PROGRESS")
--- AprRC.EventFrame:RegisterEvent("REQUEST_CEMETERY_LIST_RESPONSE")
--- AprRC.EventFrame:RegisterEvent("SKILL_LINES_CHANGED")
--- AprRC.EventFrame:RegisterEvent("TOYS_UPDATED")
--- AprRC.EventFrame:RegisterEvent("UNIT_AURA")
--- AprRC.EventFrame:RegisterEvent("UNIT_QUEST_LOG_CHANGED")
--- AprRC.EventFrame:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
--- AprRC.EventFrame:RegisterEvent("UPDATE_FACTION")
--- AprRC.EventFrame:RegisterEvent("UPDATE_MOUSEOVER_UNIT")
--- AprRC.EventFrame:RegisterEvent("UPDATE_UI_WIDGET")
+-- AprRC.EventFrame:RegisterEvent("QUEST_PROGRESS") ??

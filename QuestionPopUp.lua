@@ -2,7 +2,7 @@ local _G = _G
 
 AprRC.questionDialog = AprRC:NewModule("QuestionDialog")
 
-function AprRC.questionDialog:CreateEditBoxPopup(text, onAcceptCallback)
+function AprRC.questionDialog:CreateEditBoxPopupWithCallback(text, onAcceptCallback)
     local dialogName = "EDITBOX_DIALOG"
     StaticPopupDialogs[dialogName] = {
         text = text or "General Kenobi",

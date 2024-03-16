@@ -53,7 +53,7 @@ recordBtn:SetScript("OnClick", function()
             APR.questionDialog:CreateQuestionPopup(
                 "New Route?",
                 function()
-                    AprRC.questionDialog:CreateEditBoxPopup("Route Name", function(text)
+                    AprRC.questionDialog:CreateEditBoxPopupWithCallback("Route Name", function(text)
                         AprRC:InitRoute(text)
                         UpdateRecordButton(recordBtn)
                     end)
@@ -66,7 +66,7 @@ recordBtn:SetScript("OnClick", function()
                 false
             )
         else
-            AprRC.questionDialog:CreateEditBoxPopup("Route Name", function(text)
+            AprRC.questionDialog:CreateEditBoxPopupWithCallback("Route Name", function(text)
                 AprRC:InitRoute(text)
                 UpdateRecordButton(recordBtn)
             end)
