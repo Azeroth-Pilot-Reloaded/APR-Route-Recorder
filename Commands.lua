@@ -3,8 +3,18 @@ local L_APR = LibStub("AceLocale-3.0"):GetLocale("APR")
 
 AprRC.command = AprRC:NewModule("Command")
 
+local function CanDoCommand()
+    if not AprRC.settings.profile.enableAddon then
+        print("The addon is disabled")
+        return false
+    elseif not AprRC.settings.profile.recordBarFrame.isRecording then
+        print("You're not recording a route")
+        return false
+    end
+    return true
+end
 function AprRC.command:SlashCmd(input)
-    if AprRC.settings.profile.enableAddon and AprRC.settings.profile.recordBarFrame.isRecording then
+    if CanDoCommand() then
         if input == "waypoint" then
             local step = {
                 Waypoint = AprRC:FindClosestIncompleteQuest() or 1,

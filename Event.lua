@@ -26,6 +26,7 @@ local events = {
     emote = "CHAT_MSG_TEXT_EMOTE",
     taxi = { "TAXIMAP_OPENED", "TAXIMAP_CLOSED" },
     fly = { "PLAYER_CONTROL_LOST", "PLAYER_CONTROL_GAINED" },
+    buy = "MERCHANT_SHOW",
     -- in progress
     qpart = "QUEST_LOG_UPDATE" -- filler ?
 
@@ -98,7 +99,7 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
     if event == events.load then
         local addOnName, containsBindings = ...
         if addOnName == "APR-Recorder" then
-            if ExtraActionButton1 then
+            if ExtraActionButton1 and not ExtraActionButton1.isHookedAprRC then
                 ExtraActionButton1:HookScript("OnClick", function()
                     if not AprRC.settings.profile.enableAddon or not AprRC.settings.profile.recordBarFrame.isRecording then
                         return
@@ -106,6 +107,7 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
                     local currentStep = AprRC:GetLastStep()
                     currentStep.ExtraActionB = 1
                 end)
+                ExtraActionButton1.isHookedAprRC = true
             end
         end
     end
@@ -335,6 +337,24 @@ function AprRC.event.functions.fly(event, ...)
             AprRC.isOnTaxi = false
             controlLostTime = 0
             AprRC.CurrentTaxiNode = nill
+        end
+    end
+end
+
+function AprRC.event.functions.buy(event, ...)
+    local numItems = GetMerchantNumItems()
+    for i = 1, numItems do
+        local button = _G["MerchantItem" .. i .. "ItemButton"]
+        if button and not button.isHooked then
+            button:HookScript("OnClick", function(self)
+                local itemID = GetMerchantItemID(i)
+                if itemID then
+                    local currentStep = AprRC:GetLastStep()
+                    currentStep.BuyMerchant = itemID
+                    currentStep.RaidIcon = _G.GetTargetID()
+                end
+            end)
+            button.isHooked = true
         end
     end
 end
