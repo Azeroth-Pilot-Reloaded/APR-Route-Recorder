@@ -20,13 +20,14 @@ function AprRC:OnInitialize()
 
     -- Init Saved variable
     AprRCData = AprRCData or {}
-    AprRCData.CurrentRoute = AprRCData.CurrentRoute or { name = "", steps = {} }
+    AprRCData.CurrentRoute = AprRCData.CurrentRoute or { name = "", steps = { {} } }
     AprRCData.Routes = AprRCData.Routes or {}
 
     -- Init module
     AprRC.settings:InitializeBlizOptions()
     AprRC.record:OnInit()
     AprRC.event:MyRegisterEvent()
+    AprRC:saveQuestInfo()
 
     -- Init Global Variables, UI oriented
     BINDING_HEADER_APR_ROUTE_RECORDER = AprRC.title -- Header text for APR's main frame
@@ -42,12 +43,12 @@ end
 
 function AprRC:ResetData()
     AprRCData = {}
-    AprRCData.CurrentRoute = { name = "", steps = {} }
+    AprRCData.CurrentRoute = { name = "", steps = { {} } }
     AprRCData.Routes = {}
 end
 
 function AprRC:InitRoute(name)
-    AprRCData.CurrentRoute = { name = name, steps = {} }
+    AprRCData.CurrentRoute = { name = name, steps = { {} } }
     tinsert(AprRCData.Routes, AprRCData.CurrentRoute)
 end
 
@@ -62,6 +63,12 @@ function AprRC:UpdateRoute()
 end
 
 function AprRC:NewStep(step)
+    local lastStep = AprRC:GetLastStep()
+    if AprRC:IsTableEmpty(lastStep) then
+        lastStep = step
+        return
+    end
+
     tinsert(AprRCData.CurrentRoute.steps, step)
 end
 
@@ -77,11 +84,12 @@ function AprRC:HasStepOption(stepOption)
     return false
 end
 
-function AprRC:SetStepCoord(step)
+function AprRC:SetStepCoord(step, range)
     local y, x, z, mapID = UnitPosition("player")
     if x and y then
         step.Coord = { x = x, y = y }
         step.Zone = C_Map.GetBestMapForUnit("player")
+        step.Range = range
     end
 end
 
@@ -93,7 +101,7 @@ function AprRC:IsCurrentStepFarAway(distance)
         return
     end
 
-    distance = distance or 5
+    distance = distance or step.Range or 5
     local playerY, playerX = UnitPosition("player")
     local deltaX, deltaY = playerX - step.Coord.x, step.Coord.y - playerY
     local currentDistance = (deltaX * deltaX + deltaY * deltaY) ^ 0.5

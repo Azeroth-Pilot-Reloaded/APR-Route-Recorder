@@ -27,8 +27,9 @@ local events = {
     taxi = { "TAXIMAP_OPENED", "TAXIMAP_CLOSED" },
     fly = { "PLAYER_CONTROL_LOST", "PLAYER_CONTROL_GAINED" },
     buy = "MERCHANT_SHOW",
+    qpart = "QUEST_WATCH_UPDATE"
     -- in progress
-    qpart = "QUEST_LOG_UPDATE" -- filler ?
+    -- filler ?
 
     -- target = {"UNIT_TARGET", "PLAYER_TARGET_CHANGED"},
     --skill = {"SKILL_LINES_CHANGED", "LEARNED_SPELL_IN_TAB"} BUTTON ?
@@ -80,10 +81,10 @@ function AprRC.event.EventHandler(self, event, ...)
     end
 
     if self.callback and self.tag then
-        Debug("Callback Event", event)
+        AprRC:Debug("Callback Event", event)
         pcall(self.callback, event, ...)
     else
-        Debug("Unregister Event", event)
+        AprRC:Debug("Unregister Event", event)
         self.callback = nil
         self:UnregisterEvent(event)
     end
@@ -133,16 +134,22 @@ function AprRC.event.functions.accept(event, questId)
         AprRC:SetStepCoord(step)
         AprRC:NewStep(step)
     end
+    -- update saved quest
+    AprRC:saveQuestInfo()
 end
 
 function AprRC.event.functions.remove(event, questId, ...)
     -- LeaveQuests
-    if AprRC:HasStepOption("LeaveQuests") then
-        local currentStep = AprRC:GetLastStep()
-        tinsert(currentStep["LeaveQuests"], questId)
-    else
-        local step = { LeaveQuests = { questId } }
-        AprRC:NewStep(step)
+    if not C_QuestLog.IsQuestFlaggedCompleted(questId) then
+        if AprRC:HasStepOption("LeaveQuests") then
+            local currentStep = AprRC:GetLastStep()
+            tinsert(currentStep["LeaveQuests"], questId)
+        else
+            local step = { LeaveQuests = { questId } }
+            AprRC:NewStep(step)
+        end
+        --remove quest from state list
+        AprRC.lastQuestState[questId] = nil
     end
 end
 
@@ -155,6 +162,8 @@ function AprRC.event.functions.done(event, questId, ...)
         AprRC:SetStepCoord(step)
         AprRC:NewStep(step)
     end
+    --remove quest from state list
+    AprRC.lastQuestState[questId] = nil
 end
 
 function AprRC.event.functions.raidIcon(...)
@@ -177,7 +186,7 @@ function AprRC.event.functions.spell(event, unitTarget, castGUID, spellID)
         key = "UseDalaHS"
     elseif spellID == APR.garrisonHSSpellID then
         key = "UseGarrisonHS"
-    elseif Contains(APR.hearthStoneSpellID, spellID) then
+    elseif AprRC:Contains(APR.hearthStoneSpellID, spellID) then
         key = "UseHS"
     elseif chromieTimelineSpellID[spellID] then
         local step = {}
@@ -192,7 +201,6 @@ function AprRC.event.functions.spell(event, unitTarget, castGUID, spellID)
     if key then
         local step = {}
         step[key] = AprRC:FindClosestIncompleteQuest()
-        AprRC:SetStepCoord(step)
         AprRC:NewStep(step)
     end
 end
@@ -213,15 +221,11 @@ function AprRC.event.functions.vehicle(event, ...)
     end
 end
 
-function AprRC.event.functions.pet(event, ...)
-    AprRC.record:RefreshFrameAnchor()
-end
-
 local function SetGossipOptionID(self)
     local gossipInfo = self:GetData().info
     local gossipIcon = gossipInfo.icon
     local gossipOptionID = gossipInfo.gossipOptionID
-    if gossipIcon == 132053 and not Contains({ 51901, 51902 }, gossipOptionID) then --bubble icon and not chromie select timeline
+    if gossipIcon == 132053 and not AprRC:Contains({ 51901, 51902 }, gossipOptionID) then --bubble icon and not chromie select timeline
         if not AprRC:IsCurrentStepFarAway() then
             local currentStep = AprRC:GetLastStep()
             if AprRC:HasStepOption("GossipOptionIDs") then
@@ -293,7 +297,8 @@ function AprRC.event.functions.taxi(event, ...)
     elseif event == "TAXIMAP_CLOSED" then
         C_Timer.After(2, function()
             if AprRC.CurrentTaxiNode and not UnitOnTaxi("player") then
-                local step = { GetFP = AprRC.CurrentTaxiNode.nodeID }
+                local step = {}
+                step.GetFP = AprRC.CurrentTaxiNode.nodeID
                 AprRC:SetStepCoord(step)
                 AprRC:NewStep(step)
             end
@@ -329,7 +334,7 @@ function AprRC.event.functions.fly(event, ...)
             currentStep.NodeID = taxiNodeId
 
             --Boat
-            if Contains(boatsNodeID, AprRC.CurrentTaxiNode) then
+            if AprRC:Contains(boatsNodeID, AprRC.CurrentTaxiNode) then
                 currentStep.Boat = 1
             end
 
@@ -349,9 +354,10 @@ function AprRC.event.functions.buy(event, ...)
             button:HookScript("OnClick", function(self)
                 local itemID = GetMerchantItemID(i)
                 if itemID then
-                    local currentStep = AprRC:GetLastStep()
-                    currentStep.BuyMerchant = itemID
-                    currentStep.RaidIcon = _G.GetTargetID()
+                    local step = {}
+                    step.BuyMerchant = itemID
+                    AprRC:SetStepCoord(step)
+                    AprRC:NewStep(step)
                 end
             end)
             button.isHooked = true
@@ -359,10 +365,63 @@ function AprRC.event.functions.buy(event, ...)
     end
 end
 
+function AprRC.event.functions.qpart(event, questID)
+    local function setQpart(lastState, objective, questID, index)
+        if lastState.numFulfilled < objective.numFulfilled then
+            local currentStep = AprRC:GetLastStep()
+            --
+            if currentStep.Qpart and currentStep.Qpart[questID][index] then
+                -- update
+                AprRC.lastQuestState[questID][index] = { numFulfilled = objective.numFulfilled }
+                return
+            end
+
+            local range = (objective.type == "monster" or objective.type == "item") and 30 or 5
+            if not AprRC:IsCurrentStepFarAway() and (not AprRC:HasStepOption("Pickup") or not AprRC:HasStepOption("Done") or AprRC:HasStepOption("LeaveQuests") or not AprRC:HasStepOption("GetFP") or not AprRC:HasStepOption("setHS")) then
+                if not AprRC:HasStepOption("Qpart") then
+                    currentStep.Qpart = {}
+                    currentStep.Qpart[questID] = {}
+                    if not AprRC:HasStepOption("Coord") then
+                        AprRC:SetStepCoord(currentStep, range)
+                    end
+                end
+                tinsert(currentStep.Qpart[questID], index)
+            else
+                local step = {}
+                step.Qpart = {}
+                step.Qpart[questID] = { index }
+                AprRC:SetStepCoord(step, range)
+                AprRC:NewStep(step)
+            end
+            -- update
+            AprRC.lastQuestState[questID][index] = { numFulfilled = objective.numFulfilled }
+        end
+    end
+    C_Timer.After(2, function()
+        local objectives = C_QuestLog.GetQuestObjectives(questID)
+        for index, objective in ipairs(objectives) do
+            local lastState = AprRC.lastQuestState[questID] and AprRC.lastQuestState[questID][index]
+            if lastState then
+                setQpart(lastState, objective, questID, index)
+            else
+                AprRC:Debug("j'ai pas")
+                -- save if not existing
+                AprRC.lastQuestState[questID] = AprRC.lastQuestState[questID] or {}
+                AprRC.lastQuestState[questID][index] = { numFulfilled = objective.numFulfilled }
+                local lastState = AprRC.lastQuestState[questID] and AprRC.lastQuestState[questID][index]
+                setQpart(lastState, objective, questID, index)
+            end
+        end
+    end)
+end
+
+function AprRC.event.functions.pet(event, ...)
+    AprRC.record:RefreshFrameAnchor()
+end
+
 ---------------------
 -- EVENT
 ---------------------
--- - Qpart        ["Qpart"] = {[46727] = {["2"] = "1",}, check  for gossip before add
 -- - InstanceQuest (on qpart)
 -- - Fillers ?????????
 -- - Treasure   ["Treasure"] = 31401 (questID)
@@ -375,7 +434,6 @@ end
 -- - DroppableQuest = { Text = "Tideblood", Qid = 50593, MobId = 130116 },
 -- - DropQuest    ["DropQuest"] = 62567 (questID)
 
--- - BuyMerchant "MERCHANT_SHOW" "ITEM_PUSH"  - MerchantFrame
 -- - ZoneDoneSave ( auto trigger on stop ?, bouton finalisation ? )
 
 ---------------------
