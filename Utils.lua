@@ -57,3 +57,8 @@ function AprRC:saveQuestInfo()
         end
     end
 end
+
+function AprRC:IsInInstanceQuest()
+    local isIntance, type = IsInInstance()
+    return isIntance and type == "scenario"
+end

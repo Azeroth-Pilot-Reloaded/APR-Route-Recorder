@@ -384,12 +384,18 @@ function AprRC.event.functions.qpart(event, questID)
                     if not AprRC:HasStepOption("Coord") then
                         AprRC:SetStepCoord(currentStep, range)
                     end
+                    if AprRC:IsInInstanceQuest() then
+                        currentStep.InstanceQuest = true
+                    end
                 end
                 tinsert(currentStep.Qpart[questID], index)
             else
                 local step = {}
                 step.Qpart = {}
                 step.Qpart[questID] = { index }
+                if AprRC:IsInInstanceQuest() then
+                    step.InstanceQuest = true
+                end
                 AprRC:SetStepCoord(step, range)
                 AprRC:NewStep(step)
             end
