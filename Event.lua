@@ -428,7 +428,6 @@ end
 ---------------------
 -- EVENT
 ---------------------
--- - InstanceQuest (on qpart)
 -- - Fillers ?????????
 -- - Treasure   ["Treasure"] = 31401 (questID)
 
