@@ -62,3 +62,8 @@ function AprRC:IsInInstanceQuest()
     local isIntance, type = IsInInstance()
     return isIntance and type == "scenario"
 end
+
+function AprRC:GetItemIDFromLink(link)
+    local _, _, itemID = string.find(link, "item:(%d+):")
+    return itemID
+end

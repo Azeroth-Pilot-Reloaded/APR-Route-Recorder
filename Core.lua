@@ -86,7 +86,7 @@ end
 
 function AprRC:SetStepCoord(step, range)
     local y, x, z, mapID = UnitPosition("player")
-    if x and y then
+    if x and y and not step.NoArrow then
         step.Coord = { x = x, y = y }
         step.Zone = C_Map.GetBestMapForUnit("player")
         step.Range = range

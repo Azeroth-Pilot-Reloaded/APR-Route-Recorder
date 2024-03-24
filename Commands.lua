@@ -47,6 +47,9 @@ function AprRC.command:SlashCmd(input)
         elseif input == "noarrow" then
             local currentStep = AprRC:GetLastStep()
             currentStep.NoArrow = 1
+            -- remove useless coord for NoArrow
+            currentStep.Coord = nil
+            currentStep.Range = nil
             return
         elseif input == "text" then
             AprRC.questionDialog:CreateEditBoxPopupWithCallback("Extra Line Text", function(text)

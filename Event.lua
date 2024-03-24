@@ -366,6 +366,20 @@ function AprRC.event.functions.buy(event, ...)
 end
 
 function AprRC.event.functions.qpart(event, questID)
+    local function setButton(questID, index, step)
+        -- itemID
+        local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)
+        local link = GetQuestLogSpecialItemInfo(questLogIndex)
+        if link then
+            local itemID = AprRC:GetItemIDFromLink(link)
+            if AprRC:HasStepOption("Button") then
+                tinsert(step.Button[questID .. '-' .. index], itemID)
+            else
+                step.Button = { [questID .. '-' .. index] = itemID }
+            end
+        end
+    end
+
     local function setQpart(lastState, objective, questID, index)
         if lastState.numFulfilled < objective.numFulfilled then
             local currentStep = AprRC:GetLastStep()
@@ -376,7 +390,7 @@ function AprRC.event.functions.qpart(event, questID)
                 return
             end
 
-            local range = (objective.type == "monster" or objective.type == "item") and 30 or 5
+            local range = (objective.type == "monster" or objective.type == "item") and 10 or 5
             if not AprRC:IsCurrentStepFarAway() and (not AprRC:HasStepOption("Pickup") or not AprRC:HasStepOption("Done") or AprRC:HasStepOption("LeaveQuests") or not AprRC:HasStepOption("GetFP") or not AprRC:HasStepOption("setHS")) then
                 if not AprRC:HasStepOption("Qpart") then
                     currentStep.Qpart = {}
@@ -387,6 +401,7 @@ function AprRC.event.functions.qpart(event, questID)
                     if AprRC:IsInInstanceQuest() then
                         currentStep.InstanceQuest = true
                     end
+                    setButton(questID, index, currentStep)
                 end
                 tinsert(currentStep.Qpart[questID], index)
             else
@@ -396,9 +411,11 @@ function AprRC.event.functions.qpart(event, questID)
                 if AprRC:IsInInstanceQuest() then
                     step.InstanceQuest = true
                 end
+                setButton(questID, index, step)
                 AprRC:SetStepCoord(step, range)
                 AprRC:NewStep(step)
             end
+
             -- update
             AprRC.lastQuestState[questID][index] = { numFulfilled = objective.numFulfilled }
         end
@@ -410,7 +427,6 @@ function AprRC.event.functions.qpart(event, questID)
             if lastState then
                 setQpart(lastState, objective, questID, index)
             else
-                AprRC:Debug("j'ai pas")
                 -- save if not existing
                 AprRC.lastQuestState[questID] = AprRC.lastQuestState[questID] or {}
                 AprRC.lastQuestState[questID][index] = { numFulfilled = objective.numFulfilled }
