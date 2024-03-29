@@ -182,26 +182,32 @@ end
 
 function AprRC.event.functions.spell(event, unitTarget, castGUID, spellID)
     local key = nil
-    if spellID == APR.dalaHSSpellID then
-        key = "UseDalaHS"
-    elseif spellID == APR.garrisonHSSpellID then
-        key = "UseGarrisonHS"
-    elseif AprRC:Contains(APR.hearthStoneSpellID, spellID) then
-        key = "UseHS"
-    elseif chromieTimelineSpellID[spellID] then
-        local step = {}
-        step.ChromiePick = chromieTimelineSpellID[spellID].optionID
-        step.GossipOptionIDs = { 51901, 51902 }
-        AprRC:SetStepCoord(step)
-        AprRC:NewStep(step)
-        return
-    end
+    if unitTarget == "player" then
+        if spellID == APR.dalaHSSpellID then
+            key = "UseDalaHS"
+        elseif spellID == APR.garrisonHSSpellID then
+            key = "UseGarrisonHS"
+        elseif AprRC:Contains(APR.hearthStoneSpellID, spellID) then
+            key = "UseHS"
+        elseif spellID == 126389 then
+            local currentStep = AprRC:GetLastStep()
+            currentStep.UseGlider = 1
+            return
+        elseif chromieTimelineSpellID[spellID] then
+            local step = {}
+            step.ChromiePick = chromieTimelineSpellID[spellID].optionID
+            step.GossipOptionIDs = { 51901, 51902 }
+            AprRC:SetStepCoord(step)
+            AprRC:NewStep(step)
+            return
+        end
 
 
-    if key then
-        local step = {}
-        step[key] = AprRC:FindClosestIncompleteQuest()
-        AprRC:NewStep(step)
+        if key then
+            local step = {}
+            step[key] = AprRC:FindClosestIncompleteQuest()
+            AprRC:NewStep(step)
+        end
     end
 end
 
@@ -442,43 +448,41 @@ function AprRC.event.functions.pet(event, ...)
 end
 
 ---------------------
--- EVENT
+-- V1
 ---------------------
--- - Fillers ?????????
--- - Treasure   ["Treasure"] = 31401 (questID)
+-- - Fillers (non auto -> command/button + frame to select quest + objective)
 
--- sur l'action d'un DB check si y a la quest ID dans un PickUpDB et l'ajouter automatiquemejnt
--- - QpartDB
--- - DoneDB     ["DoneDB"] = { questID1, questID2}$
+-- - ZoneDoneSave ( auto trigger on stop ?, bouton finalisation ? )
 
+-- - Button (Quest item already done, add command/button for manual add)
+  -- SpellButton (ajout d'un bouton de spell a utilisé pour la route, get la list des spells et autocompletion??)
+-- SpellTrigger (condition pour update une step pour une qpart)
+
+---------------------
+-- V2
+---------------------
 -- Check how
 -- - DroppableQuest = { Text = "Tideblood", Qid = 50593, MobId = 130116 },
 -- - DropQuest    ["DropQuest"] = 62567 (questID)
 
--- - ZoneDoneSave ( auto trigger on stop ?, bouton finalisation ? )
+-- - Treasure   ["Treasure"] = 31401 (questID)
 
----------------------
--- COMMAND / BAR
----------------------
-
--- - QpartPart (rework ?)
--- - TrigText  (rework ?)
-
----------------------
--- A VOIR
----------------------
--- - UseGlider (same as button mais pour le planeur gobelin - aura 126389) "UNIT_AURA"
--- - Button (utilié pour les items, détecter avec bag/spellID/aura/.. l'item utilisé )
--- - SpellButton (ajout d'un bouton de spell a utilisé pour la route, get la list des spells et autocompletion??)
--- - SpellTrigger (condition pour update une step pour une qpart)
+-- sur l'action d'un DB check si y a la quest ID dans un PickUpDB et l'ajouter automatiquemejnt
+-- - QpartDB
+-- - DoneDB     ["DoneDB"] = { questID1, questID2}
 
 -- si on get une nouvelle quete ou actualise une quete -> info = C_QuestLog.GetInfo(questLogIndex); info.suggestedGroup
 -- - Group      ["Group"] = { Number = 3, QuestId = 51384},
 -- - GroupTask  ["GroupTask"] = 51384, (the questId from Group, step to check if player want to do the group quest)
 -- - QuestLineSkip ???? (block group quest if present) ["QuestLineSkip"] = 51226,
 
+-- - QpartPart (rework ?)
+-- - TrigText  (rework ?)
 
------------------------------ pas sur de le faire
+
+---------------------
+-- V3 - maybe
+---------------------
 -- - DoIHaveFlight ?? check si on peut en faire quelque chose pour des waypoints (avec ajout unAutoSkipableWaypoint)
 -- - NoAutoFlightMap
 -- - PickedLoa
@@ -491,5 +495,3 @@ end
 -------------------------------
 
 -- AprRC.EventFrame:RegisterEvent("CONFIRM_XP_LOSS") -- deathskip ??
--- AprRC.EventFrame:RegisterEvent("QUEST_LOG_UPDATE")
--- AprRC.EventFrame:RegisterEvent("QUEST_PROGRESS") ??
