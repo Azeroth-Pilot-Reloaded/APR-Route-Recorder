@@ -145,6 +145,18 @@ function AprRC.command:SlashCmd(input)
                 currentStep.DontHaveAchievement = tonumber(text, 10)
             end)
             return
+        elseif input == "save" then
+            if AprRCData.CurrentRoute.name ~= "" then
+                local step = { ZoneDoneSave = 1 }
+                AprRC:NewStep(step)
+                -- //TODO: Open Edit box with this route then reset currentRoute
+                AprRC.settings.profile.recordBarFrame.isRecording = false
+                AprRC.record:StopRecord()
+                AprRCData.CurrentRoute = { name = "", steps = { {} } }
+            else
+                print('You current route is empty')
+            end
+            return
         end
     end
     if input == "help" or input == "h" then

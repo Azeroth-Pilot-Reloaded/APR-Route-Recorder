@@ -43,6 +43,7 @@ function AprRC:SplitQuestAndObjective(questID)
 end
 
 function AprRC:saveQuestInfo()
+    AprRC:Debug("Save QuestInfo")
     AprRC.lastQuestState = AprRC.lastQuestState or {}
     for i = 1, C_QuestLog.GetNumQuestLogEntries() do
         local info = C_QuestLog.GetInfo(i)

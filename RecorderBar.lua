@@ -72,9 +72,7 @@ recordBtn:SetScript("OnClick", function()
             end)
         end
     else
-        -- stop record
-        UpdateRecordButton(recordBtn)
-        AprRC:UpdateRoute()
+        AprRC.record:StopRecord()
     end
 end)
 
@@ -137,4 +135,9 @@ function AprRC.record:AdjustBarRotation(bar)
         bar:SetWidth(FRAME_HEIGHT)
         bar:SetHeight(FRAME_WIDTH + (#buttons - 1) * spacing)
     end
+end
+
+function AprRC.record:StopRecord()
+    UpdateRecordButton(recordBtn)
+    AprRC:UpdateRoute()
 end

@@ -64,12 +64,11 @@ function AprRC:UpdateRoute()
 end
 
 function AprRC:NewStep(step)
+    AprRC:Debug("NewStep", step)
     local lastStep = AprRC:GetLastStep()
     if AprRC:IsTableEmpty(lastStep) then
-        lastStep = step
-        return
+        AprRCData.CurrentRoute.steps = {}
     end
-
     tinsert(AprRCData.CurrentRoute.steps, step)
 end
 

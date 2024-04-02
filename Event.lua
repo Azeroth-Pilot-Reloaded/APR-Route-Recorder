@@ -452,10 +452,8 @@ end
 ---------------------
 -- - Fillers (non auto -> command/button + frame to select quest + objective)
 
--- - ZoneDoneSave ( auto trigger on stop ?, bouton finalisation ? )
-
 -- - Button (Quest item already done, add command/button for manual add)
-  -- SpellButton (ajout d'un bouton de spell a utilisé pour la route, get la list des spells et autocompletion??)
+-- SpellButton (ajout d'un bouton de spell a utilisé pour la route, get la list des spells et autocompletion??)
 -- SpellTrigger (condition pour update une step pour une qpart)
 
 ---------------------
