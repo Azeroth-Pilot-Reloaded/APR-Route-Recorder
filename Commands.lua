@@ -65,6 +65,9 @@ function AprRC.command:SlashCmd(input)
                         tinsert(currentStep.PickUpDB, tonumber(questId, 10))
                     else
                         currentStep.PickUpDB = { tonumber(questId, 10) }
+                        for _, qID in pairs(currentStep.PickUp) do
+                            tinsert(currentStep.PickUpDB, qID)
+                        end
                     end
                 end)
             else
@@ -79,6 +82,10 @@ function AprRC.command:SlashCmd(input)
                         tinsert(currentStep.QpartDB, tonumber(questId, 10))
                     else
                         currentStep.QpartDB = { tonumber(questId, 10) }
+
+                        for qID, _ in pairs(currentStep.Qpart) do
+                            tinsert(currentStep.QpartDB, qID)
+                        end
                     end
                 end)
             else
@@ -93,6 +100,9 @@ function AprRC.command:SlashCmd(input)
                         tinsert(currentStep.DoneDB, tonumber(questId, 10))
                     else
                         currentStep.DoneDB = { tonumber(questId, 10) }
+                        for _, qID in pairs(currentStep.Done) do
+                            tinsert(currentStep.DoneDB, qID)
+                        end
                     end
                 end)
             else
