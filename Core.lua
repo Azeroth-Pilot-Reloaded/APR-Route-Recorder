@@ -48,7 +48,8 @@ function AprRC:ResetData()
 end
 
 function AprRC:InitRoute(name)
-    AprRCData.CurrentRoute = { name = name, steps = { {} } }
+    local mapID = C_Map.GetBestMapForUnit("player")
+    AprRCData.CurrentRoute = { name = mapID .. '-' .. name, steps = { {} } }
     tinsert(AprRCData.Routes, AprRCData.CurrentRoute)
 end
 
