@@ -159,7 +159,10 @@ function AprRC.command:SlashCmd(input)
             return
         end
     end
-    if input == "help" or input == "h" then
+    if input == "export" then
+        APR.RouteQuestStepList[AprRCData.CurrentRoute.name] = AprRCData.CurrentRoute.steps
+        APR.RouteList.Custom[AprRCData.CurrentRoute.name] = AprRCData.CurrentRoute.name:match("%d+-(.*)")
+    elseif input == "help" or input == "h" then
         print(L_APR["COMMAND_LIST"] .. ":")
         print("|cffeda55f/aprrc help, h |r- " .. L_APR["HELP_COMMAND"])
         print("|cffeda55f/aprrc range |r- " .. "RANGE")
