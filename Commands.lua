@@ -14,8 +14,9 @@ local function CanDoCommand()
     return true
 end
 function AprRC.command:SlashCmd(input)
+    local inputText = string.lower(input)
     if CanDoCommand() then
-        if input == "waypoint" then
+        if inputText == "waypoint" then
             local step = {
                 Waypoint = AprRC:FindClosestIncompleteQuest() or 1,
                 Range = 5,
@@ -23,20 +24,20 @@ function AprRC.command:SlashCmd(input)
             AprRC:SetStepCoord(step)
             AprRC:NewStep(step)
             return
-        elseif input == "range" then
+        elseif inputText == "range" then
             AprRC.questionDialog:CreateEditBoxPopupWithCallback("Range (number)", function(text)
                 local currentStep = AprRC:GetLastStep()
                 currentStep.Range = tonumber(text, 10)
             end)
             return
-        elseif input == "eta" then
+        elseif inputText == "eta" then
             AprRC.questionDialog:CreateEditBoxPopupWithCallback("ETA (second)", function(text)
                 local currentStep = AprRC:GetLastStep()
                 currentStep.ETA =
                     tonumber(text, 10)
             end)
             return
-        elseif input == "grind" then
+        elseif inputText == "grind" then
             AprRC.questionDialog:CreateEditBoxPopupWithCallback("Grind (lvl)", function(text)
                 local step = {}
                 step.Grind = tonumber(text, 10)
@@ -44,17 +45,20 @@ function AprRC.command:SlashCmd(input)
                 AprRC:NewStep(step)
             end)
             return
-        elseif input == "noarrow" then
+        elseif inputText == "noarrow" then
             local currentStep = AprRC:GetLastStep()
             currentStep.NoArrow = 1
             -- remove useless coord for NoArrow
             currentStep.Coord = nil
             currentStep.Range = nil
             return
-        elseif input == "text" then
+        elseif inputText == "text" or inputText == "txt" then
             AprRC.autocomplete:Show()
             return
-        elseif input == "pickupdb" then
+        elseif inputText == "button" or inputText == "btn" then
+            AprRC.SelectButton:Show()
+            return
+        elseif inputText == "pickupdb" then
             if AprRC:HasStepOption("PickUp") then
                 AprRC.questionDialog:CreateEditBoxPopupWithCallback("PickUp DB (QuestID)", function(questId)
                     local currentStep = AprRC:GetLastStep()
@@ -71,7 +75,7 @@ function AprRC.command:SlashCmd(input)
                 print('Missing PickUp option on current step')
             end
             return
-        elseif input == "qpartdb" then
+        elseif inputText == "qpartdb" then
             if AprRC:HasStepOption("Qpart") then
                 AprRC.questionDialog:CreateEditBoxPopupWithCallback("Qpart DB (QuestID)", function(questId)
                     local currentStep = AprRC:GetLastStep()
@@ -89,7 +93,7 @@ function AprRC.command:SlashCmd(input)
                 print('Missing Qpart option on current step')
             end
             return
-        elseif input == "donedb" then
+        elseif inputText == "donedb" then
             if AprRC:HasStepOption("Done") then
                 AprRC.questionDialog:CreateEditBoxPopupWithCallback("Done DB (QuestID)", function(questId)
                     local currentStep = AprRC:GetLastStep()
@@ -106,43 +110,43 @@ function AprRC.command:SlashCmd(input)
                 print('Missing Done option on current step')
             end
             return
-        elseif input == "qpartpart" then
-        elseif input == "zonetrigger" then
+        elseif inputText == "qpartpart" then
+        elseif inputText == "zonetrigger" then
             local currentStep = AprRC:GetLastStep()
             local y, x = UnitPosition("player")
             if x and y then
                 currentStep.ZoneStepTrigger = { x = x, y = y, Range = 15 }
             end
             return
-        elseif input == "faction" then
+        elseif inputText == "faction" then
             local currentStep = AprRC:GetLastStep()
             currentStep.Faction = UnitFactionGroup("player")
             return
-        elseif input == "race" then
+        elseif inputText == "race" then
             local currentStep = AprRC:GetLastStep()
             currentStep.Race = select(2, UnitRace("player"))
             return
-        elseif input == "gender" then
+        elseif inputText == "gender" then
             local currentStep = AprRC:GetLastStep()
             currentStep.Gender = UnitSex("player")
             return
-        elseif input == "class" then
+        elseif inputText == "class" then
             local currentStep = AprRC:GetLastStep()
             currentStep.Class = select(2, UnitClass("player"))
             return
-        elseif input == "achievement" then
+        elseif inputText == "achievement" then
             AprRC.questionDialog:CreateEditBoxPopupWithCallback("Has Achievement (ID)", function(text)
                 local currentStep = AprRC:GetLastStep()
                 currentStep.HasAchievement = tonumber(text, 10)
             end)
             return
-        elseif input == "noachievement" then
+        elseif inputText == "noachievement" then
             AprRC.questionDialog:CreateEditBoxPopupWithCallback("Dont Have Achievement (ID)", function(text)
                 local currentStep = AprRC:GetLastStep()
                 currentStep.DontHaveAchievement = tonumber(text, 10)
             end)
             return
-        elseif input == "save" then
+        elseif inputText == "save" then
             if AprRCData.CurrentRoute.name ~= "" then
                 local step = { ZoneDoneSave = 1 }
                 AprRC:NewStep(step)
@@ -156,11 +160,11 @@ function AprRC.command:SlashCmd(input)
             return
         end
     end
-    if input == "export" then
-        -- APR.RouteQuestStepList[AprRCData.CurrentRoute.name] = AprRCData.CurrentRoute.steps
-        -- APR.RouteList.Custom[AprRCData.CurrentRoute.name] = AprRCData.CurrentRoute.name:match("%d+-(.*)")
+    if inputText == "export" then
+        APR.RouteQuestStepList[AprRCData.CurrentRoute.name] = AprRCData.CurrentRoute.steps
+        APR.RouteList.Custom[AprRCData.CurrentRoute.name] = AprRCData.CurrentRoute.name:match("%d+-(.*)")
         AprRC.export.Show()
-    elseif input == "help" or input == "h" then
+    elseif inputText == "help" or inputText == "h" then
         print(L_APR["COMMAND_LIST"] .. ":")
         print("|cffeda55f/aprrc help, h |r- " .. L_APR["HELP_COMMAND"])
         print("|cffeda55f/aprrc range |r- " .. "RANGE")
@@ -169,7 +173,7 @@ function AprRC.command:SlashCmd(input)
         print("|cffeda55f/aprrc qpartdb |r- " .. "QpartDB")
         print("|cffeda55f/aprrc qpartpart |r- " .. "QpartPart")
         print("|cffeda55f/aprrc donedb |r- " .. "DoneDB")
-        print("|cffeda55f/aprrc text |r- " .. "ExtraLineText")
+        print("|cffeda55f/aprrc text, txt |r- " .. "ExtraLineText")
         print("|cffeda55f/aprrc zonetrigger |r- " .. "ZoneStepTrigger")
         print("|cffeda55f/aprrc eta |r- " .. "ETA")
         print("|cffeda55f/aprrc noarrow |r- " .. "NoArrow")
@@ -179,7 +183,7 @@ function AprRC.command:SlashCmd(input)
         print("|cffeda55f/aprrc class |r- " .. "Class")
         print("|cffeda55f/aprrc grind |r- " .. "Grind")
         print("|cffeda55f/aprrc spelltrigger |r- " .. "SpellTrigger")
-        print("|cffeda55f/aprrc button |r- " .. "Button")
+        print("|cffeda55f/aprrc button, btn |r- " .. "Button")
         print("|cffeda55f/aprrc achievement |r- " .. "HasAchievement")
         print("|cffeda55f/aprrc noachievement |r- " .. "DontHaveAchievement")
     else
