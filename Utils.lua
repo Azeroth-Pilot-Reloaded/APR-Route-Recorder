@@ -150,7 +150,7 @@ function AprRC:RouteToString(tbl, level)
                 str = str .. itemIndent .. keyStr .. "{}" .. ",\n"
             else
                 local valueStr
-                if k == "Qpart" then
+                if k == "Qpart" or k == "Fillers" then
                     valueStr = qpartTableToString(v, level + 1)
                 else
                     valueStr = self:RouteToString(v, level + 1)

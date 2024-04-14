@@ -58,6 +58,9 @@ function AprRC.command:SlashCmd(input)
         elseif inputText == "button" or inputText == "btn" then
             AprRC.SelectButton:Show()
             return
+        elseif inputText == "fillers" or inputText == "filler" then
+            AprRC.fillers:Show()
+            return
         elseif inputText == "spelltrigger" then
             AprRC.questionDialog:CreateEditBoxPopupWithCallback("SpellTrigger (Spell ID)", function(text)
                 local currentStep = AprRC:GetLastStep()
@@ -173,7 +176,7 @@ function AprRC.command:SlashCmd(input)
     elseif inputText == "help" or inputText == "h" then
         print(L_APR["COMMAND_LIST"] .. ":")
         print("|cffeda55f/aprrc help, h |r- " .. L_APR["HELP_COMMAND"])
-        print("|cffeda55f/aprrc range |r- " .. "RANGE")
+        print("|cffeda55f/aprrc range |r- " .. "Range")
         print("|cffeda55f/aprrc waypoint |r- " .. "Waypoint")
         print("|cffeda55f/aprrc pickupdb |r- " .. "PickUpDB")
         print("|cffeda55f/aprrc qpartdb |r- " .. "QpartDB")
@@ -190,6 +193,7 @@ function AprRC.command:SlashCmd(input)
         print("|cffeda55f/aprrc grind |r- " .. "Grind")
         print("|cffeda55f/aprrc spelltrigger |r- " .. "SpellTrigger")
         print("|cffeda55f/aprrc button, btn |r- " .. "Button")
+        print("|cffeda55f/aprrc fillers, filler |r- " .. "Fillers")
         print("|cffeda55f/aprrc achievement |r- " .. "HasAchievement")
         print("|cffeda55f/aprrc noachievement |r- " .. "DontHaveAchievement")
     else
