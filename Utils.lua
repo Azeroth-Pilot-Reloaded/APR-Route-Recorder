@@ -80,3 +80,34 @@ function AprRC:ExtraLineTextToKey(inputString)
 
     return result
 end
+
+function AprRC:tableToString(tbl, level, cache)
+    local str = ""
+    local indent = string.rep("  ", level or 0)
+    cache = cache or {}
+
+    if cache[tbl] then
+        str = str .. indent .. "<circular reference>\n"
+        return str
+    end
+    cache[tbl] = true
+
+    str = str .. indent .. "{\n"
+    for k, v in pairs(tbl) do
+        local keyString = k
+        if type(k) == "string" then
+            keyString = string.format("%q", k)
+        end
+        if type(v) == "table" then
+            str = str .. indent .. "  " .. keyString .. " = \n" .. AprRC:tableToString(v, (level or 0) + 1, cache)
+        elseif type(v) == "string" then
+            str = str .. indent .. "  " .. keyString .. " = " .. string.format("%q", v) .. ",\n"
+        else
+            str = str .. indent .. "  " .. keyString .. " = " .. tostring(v) .. ",\n"
+        end
+    end
+    str = str .. indent .. "}\n"
+
+    cache[tbl] = nil
+    return str
+end
