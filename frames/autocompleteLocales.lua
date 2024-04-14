@@ -40,32 +40,38 @@ function AprRC.autocomplete:Show()
         AceGUI:Release(frame)
     end)
 
+    local debounceTimer = nil
     local function UpdateAutoCompleteList(text)
-        scrollFrame:ReleaseChildren() -- Clear current list
-        scrollFrame.frame:Hide()
-        editbox.key = ''
-        editbox.newKey = true
-        if text ~= "" then
-            btnConfirm:SetDisabled(false)
-            for key, value in pairs(L_APR) do
-                if string.match(value:lower(), text:lower()) then
-                    local interacLabel = AceGUI:Create("InteractiveLabel")
-                    interacLabel:SetText(value)
-                    interacLabel:SetColor(255, 255, 255)
-                    interacLabel:SetFullWidth(true)
-                    interacLabel:SetCallback("OnClick", function()
-                        editbox:SetText(value)
-                        editbox.key = key
-                        editbox.newKey = false
-                        scrollFrame:ReleaseChildren() -- Clear list after selection
-                        scrollFrame.frame:Hide()
-                    end)
-                    scrollFrame.frame:Show()
-                    scrollFrame:AddChild(interacLabel)
+        if not debounceTimer then
+            debounceTimer = C_Timer.NewTimer(0.3, function()
+                scrollFrame:ReleaseChildren() -- Clear current list
+                scrollFrame.frame:Hide()
+                editbox.key = ''
+                editbox.newKey = true
+                if text ~= "" then
+                    btnConfirm:SetDisabled(false)
+                    for key, value in pairs(L_APR) do
+                        if string.match(value:lower(), text:lower()) then
+                            local interacLabel = AceGUI:Create("InteractiveLabel")
+                            interacLabel:SetText(value)
+                            interacLabel:SetColor(255, 255, 255)
+                            interacLabel:SetFullWidth(true)
+                            interacLabel:SetCallback("OnClick", function()
+                                editbox:SetText(value)
+                                editbox.key = key
+                                editbox.newKey = false
+                                scrollFrame:ReleaseChildren() -- Clear list after selection
+                                scrollFrame.frame:Hide()
+                            end)
+                            scrollFrame.frame:Show()
+                            scrollFrame:AddChild(interacLabel)
+                        end
+                    end
+                else
+                    btnConfirm:SetDisabled(true)
                 end
-            end
-        else
-            btnConfirm:SetDisabled(true)
+                debounceTimer = nil
+            end)
         end
     end
 
