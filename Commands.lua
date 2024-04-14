@@ -58,6 +58,12 @@ function AprRC.command:SlashCmd(input)
         elseif inputText == "button" or inputText == "btn" then
             AprRC.SelectButton:Show()
             return
+        elseif inputText == "spelltrigger" then
+            AprRC.questionDialog:CreateEditBoxPopupWithCallback("SpellTrigger (Spell ID)", function(text)
+                local currentStep = AprRC:GetLastStep()
+                currentStep.SpellTrigger = tonumber(text, 10)
+            end)
+            return
         elseif inputText == "pickupdb" then
             if AprRC:HasStepOption("PickUp") then
                 AprRC.questionDialog:CreateEditBoxPopupWithCallback("PickUp DB (QuestID)", function(questId)

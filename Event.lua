@@ -452,13 +452,11 @@ end
 ---------------------
 -- - Fillers (non auto -> command/button + frame to select quest + objective)
 
--- - Button (Quest item already done, add command/button for manual add)
--- SpellButton (ajout d'un bouton de spell a utilisé pour la route, get la list des spells et autocompletion??)
--- SpellTrigger (condition pour update une step pour une qpart)
-
 ---------------------
 -- V2
 ---------------------
+-- - Button / SpellButton / Achievement (autoComplete)
+
 -- Check how
 -- - DroppableQuest = { Text = "Tideblood", Qid = 50593, MobId = 130116 },
 -- - DropQuest    ["DropQuest"] = 62567 (questID)
