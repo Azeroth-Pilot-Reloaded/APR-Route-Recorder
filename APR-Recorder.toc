@@ -26,6 +26,10 @@ Config.lua
 Utils.lua
 Commands.lua
 Event.lua
-QuestionPopUp.lua
-RecorderBar.lua
-# StepOptionBar.lua
+
+frames/QuestionPopUp.lua
+frames/RecorderBar.lua
+frames/autocompleteLocales.lua
+frames/selectButton.lua
+frames/export.lua
+frames/StepOptionBar.lua

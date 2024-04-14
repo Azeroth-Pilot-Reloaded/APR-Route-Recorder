@@ -52,10 +52,7 @@ function AprRC.command:SlashCmd(input)
             currentStep.Range = nil
             return
         elseif input == "text" then
-            AprRC.questionDialog:CreateEditBoxPopupWithCallback("Extra Line Text", function(text)
-                local currentStep = AprRC:GetLastStep()
-                currentStep.ExtraLineText = text
-            end)
+            AprRC.autocomplete:Show()
             return
         elseif input == "pickupdb" then
             if AprRC:HasStepOption("PickUp") then
@@ -160,8 +157,9 @@ function AprRC.command:SlashCmd(input)
         end
     end
     if input == "export" then
-        APR.RouteQuestStepList[AprRCData.CurrentRoute.name] = AprRCData.CurrentRoute.steps
-        APR.RouteList.Custom[AprRCData.CurrentRoute.name] = AprRCData.CurrentRoute.name:match("%d+-(.*)")
+        -- APR.RouteQuestStepList[AprRCData.CurrentRoute.name] = AprRCData.CurrentRoute.steps
+        -- APR.RouteList.Custom[AprRCData.CurrentRoute.name] = AprRCData.CurrentRoute.name:match("%d+-(.*)")
+        AprRC.export.Show()
     elseif input == "help" or input == "h" then
         print(L_APR["COMMAND_LIST"] .. ":")
         print("|cffeda55f/aprrc help, h |r- " .. L_APR["HELP_COMMAND"])
@@ -180,6 +178,8 @@ function AprRC.command:SlashCmd(input)
         print("|cffeda55f/aprrc gender |r- " .. "Gender")
         print("|cffeda55f/aprrc class |r- " .. "Class")
         print("|cffeda55f/aprrc grind |r- " .. "Grind")
+        print("|cffeda55f/aprrc spelltrigger |r- " .. "SpellTrigger")
+        print("|cffeda55f/aprrc button |r- " .. "Button")
         print("|cffeda55f/aprrc achievement |r- " .. "HasAchievement")
         print("|cffeda55f/aprrc noachievement |r- " .. "DontHaveAchievement")
     else

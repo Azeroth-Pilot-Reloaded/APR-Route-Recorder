@@ -68,3 +68,15 @@ function AprRC:GetItemIDFromLink(link)
     local _, _, itemID = string.find(link, "item:(%d+):")
     return itemID
 end
+
+function AprRC:ExtraLineTextToKey(inputString)
+    local result = string.gsub(inputString, "%s", "_")
+    result = string.gsub(result, "_a_", "_")
+    result = string.gsub(result, "_of_", "_")
+    result = string.gsub(result, "_the_", "_")
+    result = string.gsub(result, "__", "_")
+    result = string.gsub(result, "'", "")
+    result = string.upper(result)
+
+    return result
+end

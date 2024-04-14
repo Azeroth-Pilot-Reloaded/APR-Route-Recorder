@@ -396,7 +396,7 @@ function AprRC.event.functions.qpart(event, questID)
                 return
             end
 
-            local range = (objective.type == "monster" or objective.type == "item") and 10 or 5
+            local range = (objective.type == "monster" or objective.type == "item") and 15 or 5
             if not AprRC:IsCurrentStepFarAway() and (not AprRC:HasStepOption("Pickup") or not AprRC:HasStepOption("Done") or AprRC:HasStepOption("LeaveQuests") or not AprRC:HasStepOption("GetFP") or not AprRC:HasStepOption("setHS")) then
                 if not AprRC:HasStepOption("Qpart") then
                     currentStep.Qpart = {}

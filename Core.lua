@@ -6,6 +6,13 @@ AprRC = _G.LibStub("AceAddon-3.0"):NewAddon(AprRC, "APR-Recorder", "AceEvent-3.0
 AprRC.Color = {
     white = { 1, 1, 1 },
     red = { 1, 0, 0 },
+}
+AprRC.Backdrop = {
+    defaut = {
+        bgFile = "Interface\\BUTTONS\\WHITE8X8",
+        tile = true,
+        tileSize = 16
+    },
     defaultBackdrop = { 0, 0, 0, 0.4 }
 }
 
@@ -22,6 +29,7 @@ function AprRC:OnInitialize()
     AprRCData = AprRCData or {}
     AprRCData.CurrentRoute = AprRCData.CurrentRoute or { name = "", steps = { {} } }
     AprRCData.Routes = AprRCData.Routes or {}
+    AprRCData.ExtraLineTexts = AprRCData.ExtraLineTexts or {}
 
     -- Init module
     AprRC.settings:InitializeBlizOptions()

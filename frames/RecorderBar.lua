@@ -14,12 +14,8 @@ local RecordBarFrame = CreateFrame("Frame", "RecordBarFrame", UIParent, "Backdro
 RecordBarFrame:SetSize(FRAME_WIDTH, FRAME_HEIGHT)
 RecordBarFrame:SetFrameStrata("MEDIUM")
 RecordBarFrame:SetClampedToScreen(true)
-RecordBarFrame:SetBackdrop({
-    bgFile = "Interface\\BUTTONS\\WHITE8X8",
-    tile = true,
-    tileSize = 16
-})
-RecordBarFrame:SetBackdropColor(unpack(AprRC.Color.defaultBackdrop))
+RecordBarFrame:SetBackdrop(AprRC.Backdrop.defaut)
+RecordBarFrame:SetBackdropColor(unpack(AprRC.Backdrop.defaultBackdrop))
 
 local function UpdateRecordButton(button)
     if AprRC.settings.profile.recordBarFrame.isRecording then
