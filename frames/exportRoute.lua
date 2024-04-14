@@ -40,24 +40,37 @@ function AprRC.export:Show()
     editbox:DisableButton(true)
     scrollContainer:AddChild(editbox)
 
-    local btnReset = AceGUI:Create("Button")
-    btnReset:SetText("Export Extra Line Text")
-    btnReset:SetWidth(200)
-    btnReset:SetCallback("OnClick", function()
+    local btnExportELT = AceGUI:Create("Button")
+    btnExportELT:SetText("Export Extra Line Text")
+    btnExportELT:SetWidth(200)
+    btnExportELT:SetCallback("OnClick", function()
         AprRC.exportExtraLineText.Show()
         AceGUI:Release(frame)
     end)
-    frame:AddChild(btnReset)
+    frame:AddChild(btnExportELT)
+
+    -- local btnDelete = AceGUI:Create("Button")
+    -- btnDelete:SetText("Delete this route")
+    -- btnDelete:SetWidth(200)
+    -- btnDelete:SetCallback("OnClick", function()
+    --     routeList[defaultIndex] = nil
+    --     AprRCData.Routes[defaultIndex] = nil
+    --     dropdown:SetList(routeList)
+    --     dropdown:SetValue(1)
+    --     editbox:SetText(AprRC:RouteToString(AprRCData.Routes[1].steps))
+    -- end)
+    -- frame:AddChild(btnDelete)
 
     if defaultIndex then
         dropdown:SetValue(defaultIndex)
-        editbox:SetText(AprRC:tableToString(AprRCData.Routes[defaultIndex].steps))
+        editbox:SetText(AprRC:RouteToString(AprRCData.Routes[defaultIndex].steps))
     end
 
-    dropdown:SetCallback("OnValueChanged", function(widget, event, key)
-        local selectedRoute = AprRCData.Routes[key]
+    dropdown:SetCallback("OnValueChanged", function(widget, event, index)
+        local selectedRoute = AprRCData.Routes[index]
+        -- defaultIndex = index
         if selectedRoute then
-            editbox:SetText(AprcRC:tableToString(selectedRoute.steps))
+            editbox:SetText(AprRC:RouteToString(selectedRoute.steps))
         end
     end)
 end

@@ -1,5 +1,5 @@
-function AprRC:Debug(msg, data)
-    if not AprRC.settings.profile.debug then
+function AprRC:Debug(msg, data, force)
+    if not AprRC.settings.profile.debug and not force then
         return
     end
     if type(data) == "table" then
@@ -109,5 +109,60 @@ function AprRC:tableToString(tbl, level, cache)
     str = str .. indent .. "}\n"
 
     cache[tbl] = nil
+    return str
+end
+
+local function qpartTableToString(tbl, level)
+    local indent = string.rep("    ", level)
+    local str = "{\n"
+    local itemIndent = string.rep("    ", level + 1)
+
+    for k, v in pairs(tbl) do
+        local keyStr = k .. " = "
+        if type(v) == "table" then
+            str = str .. itemIndent .. keyStr .. AprRC:RouteToString(v, level + 1) .. ",\n"
+        else
+            local valueStr = tostring(v)
+            str = str .. itemIndent .. keyStr .. valueStr .. ",\n"
+        end
+    end
+
+    str = str .. indent .. "}"
+    return str
+end
+
+function AprRC:RouteToString(tbl, level)
+    level = level or 0
+    local indent = string.rep("    ", level)
+    local str = "{\n"
+    local itemIndent = string.rep("    ", level + 1)
+
+    for k, v in pairs(tbl) do
+        local keyStr
+        if type(k) == "string" then
+            keyStr = k .. " = "
+        else
+            keyStr = ""
+        end
+
+        if type(v) == "table" then
+            if next(v) == nil then
+                str = str .. itemIndent .. keyStr .. "{}" .. ",\n"
+            else
+                local valueStr
+                if k == "Qpart" then
+                    valueStr = qpartTableToString(v, level + 1)
+                else
+                    valueStr = self:RouteToString(v, level + 1)
+                end
+                str = str .. itemIndent .. keyStr .. valueStr .. ",\n"
+            end
+        else
+            local valueStr = type(v) == "string" and '"' .. v .. '"' or tostring(v)
+            str = str .. itemIndent .. keyStr .. valueStr .. ",\n"
+        end
+    end
+
+    str = str .. indent .. "}"
     return str
 end
