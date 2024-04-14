@@ -149,7 +149,7 @@ function AprRC.command:SlashCmd(input)
                 -- //TODO: Open Edit box with this route then reset currentRoute
                 AprRC.settings.profile.recordBarFrame.isRecording = false
                 AprRC.record:StopRecord()
-                AprRCData.CurrentRoute = { name = "", steps = { {} } }
+                -- AprRCData.CurrentRoute = { name = "", steps = { {} } }
             else
                 print('You current route is empty')
             end
