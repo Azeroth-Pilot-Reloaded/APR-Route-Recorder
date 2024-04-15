@@ -390,7 +390,7 @@ function AprRC.event.functions.qpart(event, questID)
         if lastState.numFulfilled < objective.numFulfilled then
             local currentStep = AprRC:GetLastStep()
             --
-            if currentStep.Qpart and currentStep.Qpart[questID][index] then
+            if currentStep.Qpart and currentStep.Qpart[questID] and currentStep.Qpart[questID][index] then
                 -- update
                 AprRC.lastQuestState[questID][index] = { numFulfilled = objective.numFulfilled }
                 return
@@ -408,6 +408,8 @@ function AprRC.event.functions.qpart(event, questID)
                         currentStep.InstanceQuest = true
                     end
                     setButton(questID, index, currentStep)
+                elseif not currentStep.Qpart[questID] then
+                    currentStep.Qpart[questID] = {}
                 end
                 tinsert(currentStep.Qpart[questID], index)
             else
