@@ -30,10 +30,10 @@ Commands.lua
 Event.lua
 
 frames/autocompleteLocales.lua
+frames/CommandsBar.lua
 frames/exportExtraLineText.lua
 frames/exportRoute.lua
 frames/fillersSelection.lua
 frames/QuestionPopUp.lua
 frames/RecorderBar.lua
 frames/selectButton.lua
-frames/StepOptionBar.lua

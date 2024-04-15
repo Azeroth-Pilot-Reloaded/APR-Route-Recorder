@@ -6,6 +6,8 @@ AprRC = _G.LibStub("AceAddon-3.0"):NewAddon(AprRC, "APR-Recorder", "AceEvent-3.0
 AprRC.Color = {
     white = { 1, 1, 1 },
     red = { 1, 0, 0 },
+    darkblue = { 0, 0.5, 0.5 },
+
 }
 AprRC.Backdrop = {
     defaut = {

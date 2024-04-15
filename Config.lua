@@ -44,7 +44,11 @@ function AprRC.settings:InitializeSettings()
                 position = {},
                 isRecording = false,
             },
-            stepOptionBarFrame = {},
+            commandsBarFrame = {
+                rotation = "HORIZONTAL",
+                position = {},
+                isRecording = false,
+            },
             --debug
             enableMinimapButton = true,
             debug = false,

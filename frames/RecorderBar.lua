@@ -25,7 +25,7 @@ local function UpdateRecordButton(button)
     end
 end
 
-local function CreateButton(parent, iconPath, color)
+local function CreateButton(parent, iconPath, color, message)
     local btn = CreateFrame("Button", nil, parent)
     btn:SetSize(24, 24)
     btn:SetPoint("TOPLEFT", 0, 0)
@@ -33,6 +33,14 @@ local function CreateButton(parent, iconPath, color)
     btn.icon:SetAllPoints(btn)
     btn.icon:SetTexture(iconPath)
     btn.icon:SetVertexColor(unpack(color))
+    btn:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
+        GameTooltip:AddLine(message, unpack(AprRC.Color.darkblue))
+        GameTooltip:Show()
+    end)
+    btn:SetScript("OnLeave", function(self) GameTooltip:Hide() end)
+
+
 
     btn:SetPushedTexture([[Interface\Buttons\heckbuttonglow]])
     btn:SetHighlightTexture([[Interface\Buttons\UI-Panel-MinimizeButton-Highlight]])
@@ -41,7 +49,7 @@ local function CreateButton(parent, iconPath, color)
     return btn
 end
 
-local recordBtn = CreateButton(RecordBarFrame, "interface/timemanager/resetbutton", AprRC.Color.red)
+local recordBtn = CreateButton(RecordBarFrame, "interface/timemanager/resetbutton", AprRC.Color.red, "Record/Stop")
 recordBtn:SetScript("OnClick", function()
     AprRC.settings.profile.recordBarFrame.isRecording = not AprRC.settings.profile.recordBarFrame.isRecording
     if AprRC.settings.profile.recordBarFrame.isRecording then
@@ -72,13 +80,13 @@ recordBtn:SetScript("OnClick", function()
     end
 end)
 
-local updateBtn = CreateButton(RecordBarFrame, "interface/buttons/ui-optionsbutton", AprRC.Color.white)
+local updateBtn = CreateButton(RecordBarFrame, "interface/buttons/ui-optionsbutton", AprRC.Color.white, "Setting")
 updateBtn:SetScript("OnClick", function()
     AprRC.settings:OpenSettings(AprRC.title)
 end)
 
 local rotationBtn = CreateButton(RecordBarFrame, "interface/buttons/ui-rotationleft-button-up",
-    AprRC.Color.white)
+    AprRC.Color.white, "Rotate")
 rotationBtn:SetScript("OnClick", function()
     AprRC.settings.profile.recordBarFrame.rotation = AprRC.settings.profile.recordBarFrame.rotation == "HORIZONTAL" and
         "VERTICAL" or "HORIZONTAL"
