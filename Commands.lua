@@ -49,6 +49,8 @@ function AprRC.command:SlashCmd(input)
         print("|cffeda55f/aprrc range |r- " .. "Range")
         print("|cffeda55f/aprrc spelltrigger |r- " .. "SpellTrigger")
         print("|cffeda55f/aprrc text, txt |r- " .. "ExtraLineText")
+        print("|cffeda55f/aprrc vehicle |r- " .. "VehicleExit")
+        print("|cffeda55f/aprrc warmode |r- " .. "WarMode")
         print("|cffeda55f/aprrc waypoint |r- " .. "Waypoint")
         print("|cffeda55f/aprrc zonetrigger |r- " .. "ZoneStepTrigger")
         return
@@ -207,6 +209,24 @@ function AprRC.command:SlashCmd(input)
                 currentStep.DontHaveAchievement = tonumber(text, 10)
                 print("|cff00bfffDontHaveAchievement - " .. tonumber(text, 10) .. "|r Added")
             end)
+            return
+        elseif inputText == "vehicle" then
+            if not AprRC:HasStepOption("VehicleExit") then
+                local currentStep = AprRC:GetLastStep()
+                currentStep["VehicleExit"] = 1
+                print("|cff00bfffDVehicleExit|r Added")
+                return
+            end
+            print("|cff00bfffVehicleExit|r already exist on this step")
+            return
+        elseif inputText == "warmode" then
+            if not AprRC:HasStepOption("WarMode") then
+                local step = { WarMode = AprRC:FindClosestIncompleteQuest() }
+                AprRC:NewStep(step)
+                print("|cff00bfffWarMode|r Added")
+                return
+            end
+            print("|cff00bfffWarMode|r already exist on this step")
             return
         elseif inputText == "save" then
             if AprRCData.CurrentRoute.name ~= "" then

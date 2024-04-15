@@ -57,25 +57,28 @@
 <p style="text-align: left;"><span style="font-size: 18px;"> <span style="font-family: arial;"> Using the <em> <strong>/aprrc</strong> </em> prefix, the below commands are available. </span> <span style="font-family: arial;"> <br /> </span> </span> <span style="font-family: arial; font-size: 18px;"> <span style="font-size: 14px;"> <em> <strong>Note:</strong> These commands are displayed with their shorthand versions, variations may be omitted from this list.</em></span></span></p>
 <ul>
 <li><span style="font-family: arial; font-size: 18px;"><span style="text-decoration: underline;"><em><strong><span style="font-size: 14px;">/aprrc help, h</span></strong> </em> </span><span style="font-size: 14px;"> - Displays the <em>(up-to-date)</em> commands in-game.<span style="font-family: arial;"><span style="font-family: arial;"><br /> </span> </span> </span></span></li>
-<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc range&nbsp;</strong></em>- Add Range step option.</span></li>
-<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc waypoint&nbsp;</strong></em>- Add Waypoint step option.</span></li>
-<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc pickupdb</strong>&nbsp;</em>- Add PickUpDB step option.</span></li>
-<li><span style="font-size: 14px;"><span style="font-family: arial;"><em><strong>/aprrc qpartdb</strong>&nbsp;</em>- Add QpartDB step option.</span></span></li>
-<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc donedb</strong>&nbsp;</em>- Add DoneDB step option.</span></li>
-<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc text, txt</strong>&nbsp;</em>- Add ExtraLineText step option.</span></li>
-<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc zonetrigger</strong>&nbsp;</em>- Add ZoneStepTrigger step option.</span></li>
-<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc eta&nbsp;</strong></em>- Add ETA step option.</span></li>
-<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc noarrow&nbsp;</strong></em>- Add NoArrow step option.</span></li>
-<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc faction&nbsp;</strong></em>- Add Faction step option.</span></li>
-<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc race&nbsp;</strong></em>- Add Race step option.</span></li>
-<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc gender&nbsp;</strong></em>- Add Gender step option.</span></li>
-<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc class&nbsp;</strong></em>- Add Class step option.</span></li>
-<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc grind&nbsp;</strong></em>- Add Grind step option.</span></li>
-<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc spelltrigger&nbsp;</strong></em>- Add SpellTrigger step option.</span></li>
-<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc button, btn&nbsp;</strong></em>- Add Button or SpellButton step option.</span></li>
-<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc fillers, filler&nbsp;</strong></em>- Add Fillers step option.</span></li>
 <li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc achievement&nbsp;</strong></em>- Add&nbsp; HasAchievement step option.</span></li>
+<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc button, btn&nbsp;</strong></em>- Add Button or SpellButton step option.</span></li>
+<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc class&nbsp;</strong></em>- Add Class step option.</span></li>
+<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc donedb</strong>&nbsp;</em>- Add DoneDB step option.</span></li>
+<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc eta&nbsp;</strong></em>- Add ETA step option.</span></li>
+<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc export&nbsp;</strong></em>- Open export frame.</span></li>
+<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc faction&nbsp;</strong></em>- Add Faction step option.</span></li>
+<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc fillers, filler&nbsp;</strong></em>- Add Fillers step option.</span></li>
+<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc gender&nbsp;</strong></em>- Add Gender step option.</span></li>
+<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc grind&nbsp;</strong></em>- Add Grind step option.</span></li>
 <li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc noachievement&nbsp;</strong></em>- Add DontHaveAchievement step option.</span></li>
+<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc noarrow&nbsp;</strong></em>- Add NoArrow step option.</span></li>
+<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc pickupdb</strong>&nbsp;</em>- Add PickUpDB step option.</span></li>
+<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc qpartdb</strong>&nbsp;</em>- Add QpartDB step option.</span></li>
+<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc race&nbsp;</strong></em>- Add Race step option.</span></li>
+<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc range&nbsp;</strong></em>- Add Range step option.</span></li>
+<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc spelltrigger&nbsp;</strong></em>- Add SpellTrigger step option.</span></li>
+<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc text, txt</strong>&nbsp;</em>- Add ExtraLineText step option.</span></li>
+<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc vehicle&nbsp;</strong></em>- Add VehicleExit step option.</span></li>
+<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc warmode&nbsp;</strong></em>- Add WarMode step option.</span></li>
+<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc waypoint&nbsp;</strong></em>- Add Waypoint step option.</span></li>
+<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc zonetrigger</strong>&nbsp;</em>- Add ZoneStepTrigger step option.</span></li>
 </ul>
 <p>&nbsp;</p>
 <ul>
