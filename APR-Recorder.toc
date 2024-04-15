@@ -23,7 +23,9 @@ locales/locales.xml
 
 Core.lua
 Config.lua
-Utils.lua
+helper/Utils.lua
+helper/RouteManagement.lua
+
 Commands.lua
 Event.lua
 

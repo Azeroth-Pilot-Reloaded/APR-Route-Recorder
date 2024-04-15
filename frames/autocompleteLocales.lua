@@ -99,4 +99,6 @@ function AprRC.autocomplete:SetExtraLineText(key)
     end
 
     currentStep[propertyName] = key
+
+    print("|cff00bfffExtraLineTexts|r Added")
 end

@@ -39,6 +39,7 @@ function AprRC.fillers:Show()
                     currentStep.Fillers[quest.questID] = {}
                 end
                 tinsert(currentStep.Fillers[quest.questID], objective.objectiveID)
+                print("|cff00bfffFillers - [" .. quest.title .. "] - " .. objective.objectiveID .. "|r Added")
                 AceGUI:Release(frame)
             end)
             questGroup:AddChild(objectiveLabel)
