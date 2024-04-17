@@ -88,7 +88,12 @@ local function qpartTableToString(tbl, level)
     local itemIndent = string.rep("    ", level + 1)
 
     for k, v in pairs(tbl) do
-        local keyStr = k .. " = "
+        local keyStr = ''
+        if k == "Button" then
+            keyStr = '["' .. tostring(k) .. '"] = '
+        else
+            keyStr = "[" .. k .. "] = "
+        end
         if type(v) == "table" then
             str = str .. itemIndent .. keyStr .. AprRC:RouteToString(v, level + 1) .. ",\n"
         else
@@ -120,7 +125,7 @@ function AprRC:RouteToString(tbl, level)
                 str = str .. itemIndent .. keyStr .. "{}" .. ",\n"
             else
                 local valueStr
-                if k == "Qpart" or k == "Fillers" then
+                if k == "Qpart" or k == "Fillers" or k == "Button" then
                     valueStr = qpartTableToString(v, level + 1)
                 else
                     valueStr = self:RouteToString(v, level + 1)
@@ -135,4 +140,20 @@ function AprRC:RouteToString(tbl, level)
 
     str = str .. indent .. "}"
     return str
+end
+
+function AprRC:stringToTable(str)
+    local cleanedStr = str:gsub("[%s\n\r\t]+", "")
+
+    local func, err = loadstring("return " .. cleanedStr)
+    if not func then
+        AprRC:Debug("Error when converting the string to a table", err)
+    else
+        local success, tableResult = pcall(func)
+        if success then
+            return tableResult
+        else
+            AprRC:Debug("Error when executing the string converted to a table", tableResult)
+        end
+    end
 end

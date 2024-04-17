@@ -18,10 +18,15 @@ function AprRC.export:Show()
     dropdown:SetFullWidth(true)
     local routeList = {}
     local defaultIndex = nil
+    local selectedRouteName = ''
     for index, route in ipairs(AprRCData.Routes) do
+        if index == 1 then
+            selectedRouteName = route.name
+        end
         routeList[index] = route.name
         if AprRCData.CurrentRoute and route.name == AprRCData.CurrentRoute.name then
             defaultIndex = index
+            selectedRouteName = route.name
         end
     end
     dropdown:SetList(routeList)
@@ -49,6 +54,20 @@ function AprRC.export:Show()
     end)
     frame:AddChild(btnExportELT)
 
+    local btnSave = AceGUI:Create("Button")
+    btnSave:SetText("Save Route")
+    btnSave:SetWidth(200)
+    btnSave:SetCallback("OnClick", function()
+        local routeText = editbox:GetText()
+        local newStepRouteTable = AprRC:stringToTable(routeText)
+        local newRoute = { name = selectedRouteName, steps = newStepRouteTable }
+        AprRC:UpdateRouteByName(selectedRouteName, newRoute)
+        if AprRCData.CurrentRoute.name == selectedRouteName then
+            AprRCData.CurrentRoute = newRoute
+        end
+    end)
+    frame:AddChild(btnSave)
+
     -- local btnDelete = AceGUI:Create("Button")
     -- btnDelete:SetText("Delete this route")
     -- btnDelete:SetWidth(200)
@@ -68,9 +87,9 @@ function AprRC.export:Show()
 
     dropdown:SetCallback("OnValueChanged", function(widget, event, index)
         local selectedRoute = AprRCData.Routes[index]
-        -- defaultIndex = index
         if selectedRoute then
             editbox:SetText(AprRC:RouteToString(selectedRoute.steps))
+            selectedRouteName = selectedRoute.name
         end
     end)
 end
