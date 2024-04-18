@@ -393,7 +393,8 @@ function AprRC.event.functions.qpart(event, questID)
                 and (not AprRC:HasStepOption("PickUp") or not AprRC:HasStepOption("Done")
                     or not AprRC:HasStepOption("LeaveQuests")
                     or not AprRC:HasStepOption("GetFP")
-                    or not AprRC:HasStepOption("setHS"))
+                    or not AprRC:HasStepOption("setHS")
+                    or not AprRC:HasStepOption("Waypoint"))
             then
                 if not AprRC:HasStepOption("Qpart") then
                     currentStep.Qpart = {}
