@@ -20,19 +20,14 @@ local events = {
     setHS = "HEARTHSTONE_BOUND",
     spell = "UNIT_SPELLCAST_SUCCEEDED",
     raidIcon = "RAID_TARGET_UPDATE",
-    -- warMode = "WAR_MODE_STATUS_UPDATE", -- add option
-    -- vehicle = { "UNIT_ENTERING_VEHICLE", "UNIT_EXITING_VEHICLE" },
     pet = { "PET_BATTLE_CLOSE", "PET_BATTLE_OPENING_START" },
     emote = "CHAT_MSG_TEXT_EMOTE",
     taxi = { "TAXIMAP_OPENED", "TAXIMAP_CLOSED" },
     fly = { "PLAYER_CONTROL_LOST", "PLAYER_CONTROL_GAINED" },
     buy = "MERCHANT_SHOW",
     qpart = "QUEST_WATCH_UPDATE"
-    -- in progress
-    -- filler ?
-
-    -- target = {"UNIT_TARGET", "PLAYER_TARGET_CHANGED"},
-    --skill = {"SKILL_LINES_CHANGED", "LEARNED_SPELL_IN_TAB"} BUTTON ?
+    -- warMode = "WAR_MODE_STATUS_UPDATE",
+    -- vehicle = { "UNIT_ENTERING_VEHICLE", "UNIT_EXITING_VEHICLE" },
 }
 
 ---------------------------------------------------------------------------------------
@@ -48,7 +43,7 @@ local chromieTimelineSpellID = {
     [325534] = { name = "WarlordsOfDraenor", optionID = 9 },
     [325539] = { name = "Legion", optionID = 10 },
     [420123] = { name = "BattleForAzeroth", optionID = 15 },
-    [397733] = { name = "Shadowlands", optionID = 14 },
+    [397733] = { name = "Shadowlands", optionID = 14 }
     -- Dragonflight
 }
 local controlLostTime = 0
@@ -117,7 +112,6 @@ end)
 ---------------------------------------------------------------------------------------
 ---------------------------------- Events Functions -----------------------------------
 ---------------------------------------------------------------------------------------
-
 
 function AprRC.event.functions.accept(event, questId)
     -- Pickup
@@ -201,7 +195,6 @@ function AprRC.event.functions.spell(event, unitTarget, castGUID, spellID)
             AprRC:NewStep(step)
             return
         end
-
 
         if key then
             local step = {}
@@ -323,8 +316,7 @@ function AprRC.event.functions.fly(event, ...)
                 AprRC:SetStepCoord(step)
                 AprRC:NewStep(step)
             end
-        end
-        )
+        end)
     elseif event == "PLAYER_CONTROL_GAINED" then
         if AprRC.isOnTaxi then
             local currentStep = AprRC:GetLastStep()
@@ -379,9 +371,9 @@ function AprRC.event.functions.qpart(event, questID)
         if link then
             local itemID = AprRC:GetItemIDFromLink(link)
             if AprRC:HasStepOption("Button") then
-                tinsert(step.Button[questID .. '-' .. index], itemID)
+                tinsert(step.Button[questID .. "-" .. index], itemID)
             else
-                step.Button = { [questID .. '-' .. index] = itemID }
+                step.Button = { [questID .. "-" .. index] = itemID }
             end
         end
     end
@@ -396,8 +388,13 @@ function AprRC.event.functions.qpart(event, questID)
                 return
             end
 
-            local range = (objective.type == "monster" or objective.type == "item") and 15 or 5
-            if not AprRC:IsCurrentStepFarAway() and (not AprRC:HasStepOption("Pickup") or not AprRC:HasStepOption("Done") or AprRC:HasStepOption("LeaveQuests") or not AprRC:HasStepOption("GetFP") or not AprRC:HasStepOption("setHS")) then
+            local range = (objective.type == "monster" or objective.type == "item") and 30 or 5
+            if not AprRC:IsCurrentStepFarAway()
+                and (not AprRC:HasStepOption("PickUp") or not AprRC:HasStepOption("Done")
+                    or not AprRC:HasStepOption("LeaveQuests")
+                    or not AprRC:HasStepOption("GetFP")
+                    or not AprRC:HasStepOption("setHS"))
+            then
                 if not AprRC:HasStepOption("Qpart") then
                     currentStep.Qpart = {}
                     currentStep.Qpart[questID] = {}
@@ -450,11 +447,6 @@ function AprRC.event.functions.pet(event, ...)
 end
 
 ---------------------
--- V1
----------------------
--- - Fillers (non auto -> command/button + frame to select quest + objective)
-
----------------------
 -- V2
 ---------------------
 -- - Button / SpellButton / Achievement (autoComplete)
@@ -476,7 +468,6 @@ end
 
 -- - QpartPart (rework ?)
 -- - TrigText  (rework ?)
-
 
 ---------------------
 -- V3 - maybe
