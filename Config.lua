@@ -50,6 +50,7 @@ function AprRC.settings:InitializeSettings()
                 isRecording = false,
             },
             --debug
+            minimap = { minimapPos = 285 },
             enableMinimapButton = true,
             debug = false,
             enableAddon = true,
