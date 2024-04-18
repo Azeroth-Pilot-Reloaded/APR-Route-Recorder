@@ -6,6 +6,7 @@ end
 
 function AprRC:InitRoute(name)
     local mapID = C_Map.GetBestMapForUnit("player")
+    AprRC:ResetQuestLookup()
     AprRCData.CurrentRoute = { name = mapID .. '-' .. name, steps = { {} } }
     tinsert(AprRCData.Routes, AprRCData.CurrentRoute)
 end
@@ -149,4 +150,18 @@ function AprRC:UpdateRouteByName(routeName, newRouteData)
     else
         return false
     end
+end
+
+function AprRC:AddQuestToLookup(questID, objective)
+    local key = questID .. "-" .. objective
+    AprRCData.QuestLookup[key] = true
+end
+
+function AprRC:IsQuestInLookup(questID, objective)
+    local key = questID .. "-" .. objective
+    return AprRCData.QuestLookup[key] or false
+end
+
+function AprRC:ResetQuestLookup()
+    AprRCData.QuestLookup = {}
 end

@@ -382,7 +382,7 @@ function AprRC.event.functions.qpart(event, questID)
         if lastState.numFulfilled < objective.numFulfilled then
             local currentStep = AprRC:GetLastStep()
             --
-            if currentStep.Qpart and currentStep.Qpart[questID] and currentStep.Qpart[questID][index] then
+            if (currentStep.Qpart and currentStep.Qpart[questID] and currentStep.Qpart[questID][index]) or AprRC:IsQuestInLookup(questID, index) then
                 -- update
                 AprRC.lastQuestState[questID][index] = { numFulfilled = objective.numFulfilled }
                 return
@@ -423,6 +423,7 @@ function AprRC.event.functions.qpart(event, questID)
 
             -- update
             AprRC.lastQuestState[questID][index] = { numFulfilled = objective.numFulfilled }
+            AprRC:AddQuestToLookup(questID, index)
         end
     end
     C_Timer.After(2, function()

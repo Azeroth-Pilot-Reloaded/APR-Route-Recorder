@@ -32,6 +32,7 @@ function AprRC:OnInitialize()
     AprRCData.CurrentRoute = AprRCData.CurrentRoute or { name = "", steps = { {} } }
     AprRCData.Routes = AprRCData.Routes or {}
     AprRCData.ExtraLineTexts = AprRCData.ExtraLineTexts or {}
+    AprRCData.QuestLookup = AprRCData.QuestLookup or {}
 
     -- Init module
     AprRC.settings:InitializeBlizOptions()
