@@ -82,14 +82,14 @@ function AprRC:tableToString(tbl, level, cache)
     return str
 end
 
-local function qpartTableToString(tbl, level)
+local function qpartTableToString(tbl, level, parrentKey)
     local indent = string.rep("    ", level)
     local str = "{\n"
     local itemIndent = string.rep("    ", level + 1)
 
     for k, v in pairs(tbl) do
         local keyStr = ''
-        if k == "Button" then
+        if parrentKey == "Button" then
             keyStr = '["' .. tostring(k) .. '"] = '
         else
             keyStr = "[" .. k .. "] = "
@@ -126,7 +126,7 @@ function AprRC:RouteToString(tbl, level)
             else
                 local valueStr
                 if k == "Qpart" or k == "Fillers" or k == "Button" then
-                    valueStr = qpartTableToString(v, level + 1)
+                    valueStr = qpartTableToString(v, level + 1, k)
                 else
                     valueStr = self:RouteToString(v, level + 1)
                 end
