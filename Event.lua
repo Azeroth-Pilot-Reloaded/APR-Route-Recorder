@@ -370,11 +370,10 @@ function AprRC.event.functions.qpart(event, questID)
         local link = GetQuestLogSpecialItemInfo(questLogIndex)
         if link then
             local itemID = AprRC:GetItemIDFromLink(link)
-            if AprRC:HasStepOption("Button") then
-                tinsert(step.Button[questID .. "-" .. index], itemID)
-            else
-                step.Button = { [questID .. "-" .. index] = itemID }
+            if not step.Button then
+                step.Button = {}
             end
+            step.Button[questID .. "-" .. index] = itemID
         end
     end
 
