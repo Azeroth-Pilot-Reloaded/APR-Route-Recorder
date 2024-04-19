@@ -1,16 +1,42 @@
 local _G = _G
 local AceGUI = LibStub("AceGUI-3.0")
+local AceTimer = LibStub("AceTimer-3.0")
 local L = LibStub("AceLocale-3.0"):GetLocale("APR-Recorder")
 local L_APR = LibStub("AceLocale-3.0"):GetLocale("APR")
 
 AprRC.export = AprRC:NewModule('Export')
 
+
 function AprRC.export:Show()
+    local refreshTimer
+
+    local function StartAutoRefresh(dropdown, editbox)
+        if not refreshTimer then
+            refreshTimer = AceTimer:ScheduleRepeatingTimer(function()
+                if dropdown:GetValue() then
+                    if AprRCData.CurrentRoute.name ~= "" then
+                        AprRC:UpdateRouteByName(AprRCData.CurrentRoute.name, AprRCData.CurrentRoute)
+                        local route = AprRCData.Routes[dropdown:GetValue()]
+                        if route then
+                            editbox:SetText(AprRC:RouteToString(route.steps))
+                        end
+                    end
+                end
+            end, 5)
+        end
+    end
+
+    local function StopAutoRefresh()
+        if refreshTimer then
+            AceTimer:CancelTimer(refreshTimer)
+            refreshTimer = nil
+        end
+    end
+
     local frame = AceGUI:Create("Frame")
     frame:SetTitle("Export")
     frame:SetLayout("Flow")
     frame:SetStatusText(L_APR["COPY_HELPER"])
-    frame:SetCallback("OnClose", function(widget) AceGUI:Release(widget) end)
     frame:SetHeight(750)
 
     local dropdown = AceGUI:Create("Dropdown")
@@ -80,7 +106,25 @@ function AprRC.export:Show()
     -- end)
     -- frame:AddChild(btnDelete)
 
+    local checkbox = AceGUI:Create("CheckBox")
+    checkbox:SetLabel("Enable Auto Refresh")
+    checkbox:SetWidth(200)
+    checkbox:SetValue(false)
+    checkbox:SetDisabled(true)
+    checkbox:SetCallback("OnValueChanged", function(widget, event, value)
+        if value then
+            StartAutoRefresh(dropdown, editbox)
+        else
+            StopAutoRefresh()
+        end
+    end)
+    frame:AddChild(checkbox)
+
+
     if defaultIndex then
+        if AprRCData.Routes[defaultIndex].name == AprRCData.CurrentRoute.name then
+            checkbox:SetDisabled(false)
+        end
         dropdown:SetValue(defaultIndex)
         editbox:SetText(AprRC:RouteToString(AprRCData.Routes[defaultIndex].steps))
     end
@@ -90,6 +134,18 @@ function AprRC.export:Show()
         if selectedRoute then
             editbox:SetText(AprRC:RouteToString(selectedRoute.steps))
             selectedRouteName = selectedRoute.name
+            if selectedRouteName == AprRCData.CurrentRoute.name then
+                checkbox:SetDisabled(false)
+            else
+                checkbox:SetDisabled(true)
+                checkbox:SetValue(false)
+                StopAutoRefresh()
+            end
         end
+    end)
+
+    frame:SetCallback("OnClose", function(widget)
+        StopAutoRefresh()
+        AceGUI:Release(widget)
     end)
 end
