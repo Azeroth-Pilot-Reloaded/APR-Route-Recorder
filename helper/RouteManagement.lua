@@ -56,7 +56,7 @@ end
 function AprRC:IsCurrentStepFarAway(distance)
     local step = self:GetLastStep()
     if not step or not step.Coord then
-        return
+        return true
     end
 
     distance = distance or step.Range or 5

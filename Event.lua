@@ -388,28 +388,7 @@ function AprRC.event.functions.qpart(event, questID)
             end
 
             local range = (objective.type == "monster" or objective.type == "item") and 30 or 5
-            if not AprRC:IsCurrentStepFarAway()
-                and (not AprRC:HasStepOption("PickUp") or not AprRC:HasStepOption("Done")
-                    or not AprRC:HasStepOption("LeaveQuests")
-                    or not AprRC:HasStepOption("GetFP")
-                    or not AprRC:HasStepOption("setHS")
-                    or not AprRC:HasStepOption("Waypoint"))
-            then
-                if not AprRC:HasStepOption("Qpart") then
-                    currentStep.Qpart = {}
-                    currentStep.Qpart[questID] = {}
-                    if not AprRC:HasStepOption("Coord") then
-                        AprRC:SetStepCoord(currentStep, range)
-                    end
-                    if AprRC:IsInInstanceQuest() then
-                        currentStep.InstanceQuest = true
-                    end
-                    setButton(questID, index, currentStep)
-                elseif not currentStep.Qpart[questID] then
-                    currentStep.Qpart[questID] = {}
-                end
-                tinsert(currentStep.Qpart[questID], index)
-            else
+            local function newStep()
                 local step = {}
                 step.Qpart = {}
                 step.Qpart[questID] = { index }
@@ -419,6 +398,33 @@ function AprRC.event.functions.qpart(event, questID)
                 setButton(questID, index, step)
                 AprRC:SetStepCoord(step, range)
                 AprRC:NewStep(step)
+            end
+            if AprRC:HasStepOption("PickUp")
+                or AprRC:HasStepOption("Done")
+                or AprRC:HasStepOption("LeaveQuests")
+                or AprRC:HasStepOption("GetFP")
+                or AprRC:HasStepOption("setHS")
+                or AprRC:HasStepOption("Waypoint") then
+                newStep()
+            else
+                if not AprRC:IsCurrentStepFarAway() then
+                    if not AprRC:HasStepOption("Qpart") then
+                        currentStep.Qpart = {}
+                        currentStep.Qpart[questID] = {}
+                        if not AprRC:HasStepOption("Coord") then
+                            AprRC:SetStepCoord(currentStep, range)
+                        end
+                        if AprRC:IsInInstanceQuest() then
+                            currentStep.InstanceQuest = true
+                        end
+                        setButton(questID, index, currentStep)
+                    elseif not currentStep.Qpart[questID] then
+                        currentStep.Qpart[questID] = {}
+                    end
+                    tinsert(currentStep.Qpart[questID], index)
+                else
+                    newStep()
+                end
             end
 
             -- update
