@@ -59,9 +59,8 @@ function AprRC.command:SlashCmd(input)
         if inputText == "waypoint" then
             local step = {
                 Waypoint = AprRC:FindClosestIncompleteQuest() or 1,
-                Range = 5,
             }
-            AprRC:SetStepCoord(step)
+            AprRC:SetStepCoord(step, 5)
             AprRC:NewStep(step)
             print("|cff00bfffWaypoint|r Added")
             return
