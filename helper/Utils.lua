@@ -1,3 +1,4 @@
+local L = LibStub("AceLocale-3.0"):GetLocale("APR")
 function AprRC:Debug(msg, data, force)
     if not AprRC.settings.profile.debug and not force then
         return
@@ -9,6 +10,17 @@ function AprRC:Debug(msg, data, force)
         end
     else
         print("|cff00bfff" .. msg .. "|r - ", data)
+    end
+end
+
+function AprRC:Error(errorMessage, data)
+    if (errorMessage and type(errorMessage) == "string") then
+        local redColorCode = "|cffff0000"
+        if data then
+            DEFAULT_CHAT_FRAME:AddMessage(redColorCode .. L["ERROR"] .. ": " .. errorMessage .. "|r - ", data)
+        else
+            DEFAULT_CHAT_FRAME:AddMessage(redColorCode .. L["ERROR"] .. ": " .. errorMessage .. "|r")
+        end
     end
 end
 

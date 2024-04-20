@@ -86,6 +86,11 @@ function AprRC.export:Show()
     btnSave:SetCallback("OnClick", function()
         local routeText = editbox:GetText()
         local newStepRouteTable = AprRC:stringToTable(routeText)
+        if not newStepRouteTable then
+            UIErrorsFrame:AddMessage("Route not saved, incorrect format", 1, 0, 0, 1, 5)
+            AprRC:Error("Route not saved, incorrect format")
+            return
+        end
         local newRoute = { name = selectedRouteName, steps = newStepRouteTable }
         AprRC:UpdateRouteByName(selectedRouteName, newRoute)
         if AprRCData.CurrentRoute.name == selectedRouteName then

@@ -5,10 +5,10 @@ AprRC.command = AprRC:NewModule("Command")
 
 local function CanDoCommand()
     if not AprRC.settings.profile.enableAddon then
-        print("The addon is disabled")
+        AprRC:Error("The addon is disabled")
         return false
     elseif not AprRC.settings.profile.recordBarFrame.isRecording then
-        print("You're not recording a route")
+        AprRC:Error("You're not recording a route")
         return false
     end
     return true
@@ -127,7 +127,7 @@ function AprRC.command:SlashCmd(input)
                     print("|cff00bfffPickUpDB - " .. tonumber(questId, 10) .. "|r Added")
                 end)
             else
-                print('Missing PickUp option on current step')
+                AprRC:Error('Missing PickUp option on current step')
             end
             return
         elseif inputText == "qpartdb" then
@@ -146,7 +146,7 @@ function AprRC.command:SlashCmd(input)
                     print("|cff00bfffQpartDB - " .. tonumber(questId, 10) .. "|r Added")
                 end)
             else
-                print('Missing Qpart option on current step')
+                AprRC:Error('Missing Qpart option on current step')
             end
             return
         elseif inputText == "donedb" then
@@ -164,7 +164,7 @@ function AprRC.command:SlashCmd(input)
                     print("|cff00bfffDoneDB - " .. tonumber(questId, 10) .. "|r Added")
                 end)
             else
-                print('Missing Done option on current step')
+                AprRC:Error('Missing Done option on current step')
             end
             return
         elseif inputText == "qpartpart" then
@@ -217,7 +217,7 @@ function AprRC.command:SlashCmd(input)
                 print("|cff00bfffDVehicleExit|r Added")
                 return
             end
-            print("|cff00bfffVehicleExit|r already exist on this step")
+            AprRC:Error("|cff00bfffVehicleExit|r already exist on this step")
             return
         elseif inputText == "warmode" then
             if not AprRC:HasStepOption("WarMode") then
@@ -226,7 +226,7 @@ function AprRC.command:SlashCmd(input)
                 print("|cff00bfffWarMode|r Added")
                 return
             end
-            print("|cff00bfffWarMode|r already exist on this step")
+            AprRC:Error("|cff00bfffWarMode|r already exist on this step")
             return
         elseif inputText == "save" then
             if AprRCData.CurrentRoute.name ~= "" then
@@ -238,7 +238,7 @@ function AprRC.command:SlashCmd(input)
                 -- AprRCData.CurrentRoute = { name = "", steps = { {} } }
                 print("|cff00bfff ZoneDoneSave |r Added")
             else
-                print('You current route is empty')
+                AprRC:Error('You current route is empty')
             end
             return
         end
