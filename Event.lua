@@ -459,10 +459,10 @@ end
 -- - Button / SpellButton / Achievement (autoComplete)
 
 -- Check how
--- - DroppableQuest = { Text = "Tideblood", Qid = 50593, MobId = 130116 },
+-- - DroppableQuest = { Text = "Tideblood", Qid = 50593, MobId = 130116 }, (voir sur les loots si on peut pas vérif si on loot pas une quete, et save avant la target )
 -- - DropQuest    ["DropQuest"] = 62567 (questID)
 
--- - Treasure   ["Treasure"] = 31401 (questID)
+-- - Treasure   ["Treasure"] = 31401 (questID) (how ?)
 
 -- sur l'action d'un DB check si y a la quest ID dans un PickUpDB et l'ajouter automatiquemejnt
 -- - QpartDB
@@ -473,18 +473,17 @@ end
 -- - GroupTask  ["GroupTask"] = 51384, (the questId from Group, step to check if player want to do the group quest)
 -- - QuestLineSkip ???? (block group quest if present) ["QuestLineSkip"] = 51226,
 
--- - QpartPart (rework ?)
+-- - QpartPart (rework ?) -> button/command
 -- - TrigText  (rework ?)
 
 ---------------------
--- V3 - maybe
+-- V3 - maybe in command no button
 ---------------------
 -- - DoIHaveFlight ?? check si on peut en faire quelque chose pour des waypoints (avec ajout unAutoSkipableWaypoint)
 -- - NoAutoFlightMap
 -- - PickedLoa
 -- - SpecialETAHide ??
 -- - Bloodlust
--- - Dontskipvid
 -- - DenyNPC
 
 -- - ExitTutorial ["ExitTutorial"] = 62567 (IsOnQuest(questID)

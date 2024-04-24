@@ -42,6 +42,7 @@ function AprRC.command:SlashCmd(input)
         print("|cffeda55f/aprrc help, h |r- " .. L_APR["HELP_COMMAND"])
         print("|cffeda55f/aprrc noachievement |r- " .. "DontHaveAchievement")
         print("|cffeda55f/aprrc noarrow |r- " .. "NoArrow")
+        print("|cffeda55f/aprrc notskipvid, nsv |r- " .. "Dontskipvid")
         print("|cffeda55f/aprrc pickupdb |r- " .. "PickUpDB")
         print("|cffeda55f/aprrc qpartdb |r- " .. "QpartDB")
         print("|cffeda55f/aprrc qpartpart |r- " .. "QpartPart")
@@ -86,6 +87,11 @@ function AprRC.command:SlashCmd(input)
                 AprRC:NewStep(step)
                 print("|cff00bfffGrind|r Added")
             end)
+            return
+        elseif inputText == "notskipvid" or inputText == "nsv" then
+            local currentStep = AprRC:GetLastStep()
+            currentStep.Dontskipvid = 1
+            print("|cff00bfffDontskipvid|r Added")
             return
         elseif inputText == "noarrow" then
             local currentStep = AprRC:GetLastStep()
