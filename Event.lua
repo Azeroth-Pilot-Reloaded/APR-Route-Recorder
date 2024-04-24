@@ -228,6 +228,9 @@ local function SetGossipOptionID(self)
         if not AprRC:IsCurrentStepFarAway() then
             local currentStep = AprRC:GetLastStep()
             if AprRC:HasStepOption("GossipOptionIDs") then
+                if not AprRC:Contains(currentStep["GossipOptionIDs"], gossipOptionID) then
+                    tinsert(currentStep["GossipOptionIDs"], gossipOptionID)
+                end
                 tinsert(currentStep["GossipOptionIDs"], gossipOptionID)
             else
                 currentStep["GossipOptionIDs"] = { gossipOptionID }
