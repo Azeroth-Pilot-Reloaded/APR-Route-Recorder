@@ -231,7 +231,6 @@ local function SetGossipOptionID(self)
                 if not AprRC:Contains(currentStep["GossipOptionIDs"], gossipOptionID) then
                     tinsert(currentStep["GossipOptionIDs"], gossipOptionID)
                 end
-                tinsert(currentStep["GossipOptionIDs"], gossipOptionID)
             else
                 currentStep["GossipOptionIDs"] = { gossipOptionID }
             end
