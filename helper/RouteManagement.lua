@@ -7,6 +7,7 @@ end
 function AprRC:InitRoute(name)
     local mapID = C_Map.GetBestMapForUnit("player")
     AprRC:ResetQuestLookup()
+    AprRC:ResetTaxiLookup()
     AprRCData.CurrentRoute = { name = mapID .. '-' .. name, steps = { {} } }
     tinsert(AprRCData.Routes, AprRCData.CurrentRoute)
 end
@@ -164,4 +165,12 @@ end
 
 function AprRC:ResetQuestLookup()
     AprRCData.QuestLookup = {}
+end
+
+function AprRC:ResetTaxiLookup()
+    AprRCData.TaxiLookup = {}
+end
+
+function AprRC:IsTaxiInLookup(nodeID)
+    return AprRCData.TaxiLookup[nodeID] or false
 end

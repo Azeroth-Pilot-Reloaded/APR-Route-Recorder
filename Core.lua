@@ -33,6 +33,7 @@ function AprRC:OnInitialize()
     AprRCData.Routes = AprRCData.Routes or {}
     AprRCData.ExtraLineTexts = AprRCData.ExtraLineTexts or {}
     AprRCData.QuestLookup = AprRCData.QuestLookup or {}
+    AprRCData.TaxiLookup = AprRCData.TaxiLookup or {}
 
     -- Init module
     AprRC.settings:InitializeBlizOptions()

@@ -299,10 +299,15 @@ function AprRC.event.functions.taxi(event, ...)
     elseif event == "TAXIMAP_CLOSED" then
         C_Timer.After(2, function()
             if AprRC.CurrentTaxiNode and not UnitOnTaxi("player") then
-                local step = {}
-                step.GetFP = AprRC.CurrentTaxiNode.nodeID
-                AprRC:SetStepCoord(step)
-                AprRC:NewStep(step)
+                local nodeID = AprRC.CurrentTaxiNode.nodeID
+                if not AprRC:IsTaxiInLookup(nodeID) then
+                    local step = {}
+                    step.GetFP = nodeID
+                    -- Save for currentRoute
+                    AprRCData.TaxiLookup[nodeID] = true
+                    AprRC:SetStepCoord(step)
+                    AprRC:NewStep(step)
+                end
             end
         end)
     end
