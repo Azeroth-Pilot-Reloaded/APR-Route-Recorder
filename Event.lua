@@ -314,13 +314,14 @@ end
 
 function AprRC.event.functions.fly(event, ...)
     if event == "PLAYER_CONTROL_LOST" then
+        -- Save player position for right coord on taxi step
+        local step = {}
+        AprRC:SetStepCoord(step)
         C_Timer.After(2, function()
             if UnitOnTaxi("player") then
                 AprRC.isOnTaxi = true
                 controlLostTime = GetTime()
-                local step = {}
                 step.UseFlightPath = AprRC:FindClosestIncompleteQuest()
-                AprRC:SetStepCoord(step)
                 AprRC:NewStep(step)
             end
         end)
