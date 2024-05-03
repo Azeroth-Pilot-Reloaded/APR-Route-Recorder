@@ -36,4 +36,5 @@ frames/exportRoute.lua
 frames/fillersSelection.lua
 frames/QuestionPopUp.lua
 frames/RecorderBar.lua
+frames/routeSelector.lua
 frames/selectButton.lua
