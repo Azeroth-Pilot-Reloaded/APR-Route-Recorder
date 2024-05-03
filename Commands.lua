@@ -40,6 +40,7 @@ function AprRC.command:SlashCmd(input)
         print("|cffeda55f/aprrc gender |r- " .. "Gender")
         print("|cffeda55f/aprrc grind |r- " .. "Grind")
         print("|cffeda55f/aprrc help, h |r- " .. L_APR["HELP_COMMAND"])
+        print("|cffeda55f/aprrc instance |r- " .. "InstanceQuest")
         print("|cffeda55f/aprrc noachievement |r- " .. "DontHaveAchievement")
         print("|cffeda55f/aprrc noarrow |r- " .. "NoArrow")
         print("|cffeda55f/aprrc notskipvid, nsv |r- " .. "Dontskipvid")
@@ -87,6 +88,11 @@ function AprRC.command:SlashCmd(input)
                 AprRC:NewStep(step)
                 print("|cff00bfffGrind|r Added")
             end)
+            return
+        elseif inputText == "instance" then
+            local currentStep = AprRC:GetLastStep()
+            currentStep.InstanceQuest = true
+            print("|cff00bfffInstanceQuest|r Added")
             return
         elseif inputText == "notskipvid" or inputText == "nsv" then
             local currentStep = AprRC:GetLastStep()
