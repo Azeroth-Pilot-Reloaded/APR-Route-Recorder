@@ -52,12 +52,13 @@ function AprRC:GetItemIDFromLink(link)
 end
 
 function AprRC:ExtraLineTextToKey(inputString)
-    local result = string.gsub(inputString, "%s", "_")
-    result = string.gsub(result, "_a_", "_")
-    result = string.gsub(result, "_of_", "_")
-    result = string.gsub(result, "_the_", "_")
-    result = string.gsub(result, "__", "_")
-    result = string.gsub(result, "'", "")
+    local result = string.gsub(inputString, "_(a|of|the)_", " ")
+    result = string.gsub(result, " - ", " ")
+    result = string.gsub(result, "-", " ")
+    result = string.gsub(result, "[+='\"`$£€°~^¨<>|#&;,%.:§?!*/(){}%[%]]", "")
+    result = string.gsub(result, "%s", "_")
+    result = string.gsub(result, "__+", "_")
+    result = string.gsub(result, "_+$", "")
     result = string.upper(result)
 
     return result
