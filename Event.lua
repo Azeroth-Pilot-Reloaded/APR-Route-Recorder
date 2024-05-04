@@ -372,6 +372,9 @@ function AprRC.event.functions.buy(event, ...)
 end
 
 function AprRC.event.functions.qpart(event, questID)
+    -- Save player position for right coord on qpart update
+    local step = {}
+    AprRC:SetStepCoord(step)
     local function setButton(questID, index, step)
         -- itemID
         local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)
@@ -397,14 +400,13 @@ function AprRC.event.functions.qpart(event, questID)
 
             local range = (objective.type == "monster" or objective.type == "item") and 30 or 5
             local function newStep()
-                local step = {}
                 step.Qpart = {}
                 step.Qpart[questID] = { index }
                 if AprRC:IsInInstanceQuest() then
                     step.InstanceQuest = true
                 end
                 setButton(questID, index, step)
-                AprRC:SetStepCoord(step, range)
+                step.Range = range
                 AprRC:NewStep(step)
             end
             if AprRC:HasStepOption("PickUp")
@@ -419,8 +421,11 @@ function AprRC.event.functions.qpart(event, questID)
                     if not AprRC:HasStepOption("Qpart") then
                         currentStep.Qpart = {}
                         currentStep.Qpart[questID] = {}
+
                         if not AprRC:HasStepOption("Coord") then
-                            AprRC:SetStepCoord(currentStep, range)
+                            currentStep.Coord = step.Coord
+                            currentStep.Zone = step.Zone
+                            currentStep.Range = range
                         end
                         if AprRC:IsInInstanceQuest() then
                             currentStep.InstanceQuest = true
