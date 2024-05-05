@@ -94,6 +94,7 @@ function AprRC:FindClosestIncompleteQuest()
             end
         end
     end
+    return 1
 end
 
 function AprRC:SplitQuestAndObjective(questID)
