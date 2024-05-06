@@ -75,8 +75,17 @@ function AprRC:tableToString(tbl, level, cache)
     end
     cache[tbl] = true
 
+    -- Collect and sort keys
+    local keys = {}
+    for k in pairs(tbl) do
+        table.insert(keys, k)
+    end
+    table.sort(keys)
+
     str = str .. indent .. "{\n"
-    for k, v in pairs(tbl) do
+    -- Iterate over the sorted keys
+    for _, k in ipairs(keys) do
+        local v = tbl[k] -- Get the value corresponding to the key
         local keyString = k
         if type(k) == "string" then
             keyString = string.format("%q", k)
