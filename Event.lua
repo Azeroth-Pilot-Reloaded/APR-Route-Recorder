@@ -369,13 +369,21 @@ function AprRC.event.functions.buy(event, ...)
     for i = 1, numItems do
         local button = _G["MerchantItem" .. i .. "ItemButton"]
         if button and not button.isHooked then
-            button:HookScript("OnClick", function(self)
+            button:HookScript("OnClick", function()
                 local itemID = GetMerchantItemID(i)
                 if itemID then
-                    local step = {}
-                    step.BuyMerchant = itemID
-                    AprRC:SetStepCoord(step)
-                    AprRC:NewStep(step)
+                    local currentStep = AprRC:GetLastStep()
+                    local buyMerchant = currentStep and currentStep.BuyMerchant
+
+                    if buyMerchant and buyMerchant.itemID == itemID then
+                        buyMerchant.count = buyMerchant.count + 1
+                    else
+                        local step = {
+                            BuyMerchant = { itemID = itemID, count = 1 }
+                        }
+                        AprRC:SetStepCoord(step)
+                        AprRC:NewStep(step)
+                    end
                 end
             end)
             button.isHooked = true
@@ -518,8 +526,8 @@ end
 ---------------------
 -- - Button / SpellButton / Achievement (autoComplete)
 
--- Check how
--- - DroppableQuest = { Text = "Tideblood", Qid = 50593, MobId = 130116 }, (voir sur les loots si on peut pas vérif si on loot pas une quete, et save avant la target )
+-- Add command
+-- - DroppableQuest = { Text = "Tideblood", Qid = 50593, MobId = 130116 },
 -- - DropQuest    ["DropQuest"] = 62567 (questID)
 
 -- - Treasure   ["Treasure"] = 31401 (questID) (how ?)
