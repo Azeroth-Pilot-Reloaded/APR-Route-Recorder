@@ -3,6 +3,7 @@ if not L then return end
 
 --@localization(locale="koKR", format="lua_additive_table", handle-unlocalized="ignore")@
 
+L.DroppableQuestItem = "퀘스트 시작 아이템"
 L.Emotes = {
     ["AGREE"] = { '%s|1이;가; %s의 의견에 동의합니다.', '%s|1이;가; 당신의 의견에 동의합니다.', '당신은 %s의 의견에 동의합니다.', '%s|1이;가; 의견에 동의합니다.', '당신은 의견에 동의합니다.' },
     ["AMAZE"] = { '%s|1이;가; %s|1을;를; 보고 아연실색합니다!', '%s|1이;가; 당신을 보고 아연실색합니다!', '당신은 %s|1을;를; 보고 아연실색합니다!', '%s|1이;가; 무언가를 보고 아연실색합니다!', '당신은 무언가를 보고 아연실색합니다!' },

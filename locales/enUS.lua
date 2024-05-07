@@ -3,6 +3,7 @@ if not L then return end
 
 --@localization(locale="enUS", format="lua_additive_table", handle-unlocalized="ignore")@
 
+L.DroppableQuestItem = "This Item Begins a Quest"
 L.Emotes = {
     ["AGREE"] = { "%s agrees with %s.", "%s agrees with you.", "You agree with %s.", "%s agrees.", "You agree." },
     ["AMAZE"] = { "%s is amazed by %s!", "%s is amazed by you!", "You are amazed by %s!", "%s is amazed!", "You are amazed!" },

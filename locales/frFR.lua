@@ -4,6 +4,7 @@ if not L then return end
 -- Author: Neogeekmo
 --@localization(locale="frFR", format="lua_additive_table", handle-unlocalized="ignore")@
 
+L.DroppableQuestItem = "Cet objet permet de lancer une quête"
 L.Emotes = {
     ["AGREE"] = { "%s est bien d’accord avec %s.", "%s est bien d’accord avec vous.", "Vous êtes bien d’accord avec %s.", "%s est bien d’accord.", "Vous êtes bien d’accord." },
     ["AMAZE"] = { "%s est stupéfait par %s !", "Vous stupéfiez %s !", "Vous êtes stupéfait par %s !", "%s trouve ça stupéfiant !", "Vous trouvez ça stupéfiant !" },

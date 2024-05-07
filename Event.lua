@@ -7,6 +7,8 @@ AprRC.event = AprRC:NewModule("AprRC-Event")
 AprRC.event.framePool = {}
 AprRC.event.functions = {}
 
+local targetName, targetID
+
 ---------------------------------------------------------------------------------------
 ------------------------------------- EVENTS ------------------------------------------
 ---------------------------------------------------------------------------------------
@@ -25,7 +27,9 @@ local events = {
     taxi = { "TAXIMAP_OPENED", "TAXIMAP_CLOSED" },
     fly = { "PLAYER_CONTROL_LOST", "PLAYER_CONTROL_GAINED" },
     buy = "MERCHANT_SHOW",
-    qpart = "QUEST_WATCH_UPDATE"
+    qpart = "QUEST_WATCH_UPDATE",
+    loot = "CHAT_MSG_LOOT",
+    target = "PLAYER_TARGET_CHANGED"
     -- warMode = "WAR_MODE_STATUS_UPDATE",
     -- vehicle = { "UNIT_ENTERING_VEHICLE", "UNIT_EXITING_VEHICLE" },
 }
@@ -115,9 +119,17 @@ end)
 
 function AprRC.event.functions.accept(event, questId)
     -- Pickup
+    if AprRC:HasStepOption("DroppableQuest") then
+        local currentStep = AprRC:GetLastStep()
+        currentStep.DropQuest = questId
+        currentStep.DroppableQuest.Qid = questId
+        AprRC:saveQuestInfo()
+        return
+    end
     if AprRC:HasStepOption("ChromiePick") then
         local currentStep = AprRC:GetLastStep()
         currentStep.PickUp = { questId }
+        AprRC:saveQuestInfo()
         return
     end
     if not AprRC:IsCurrentStepFarAway() and AprRC:HasStepOption("PickUp") then
@@ -460,6 +472,41 @@ function AprRC.event.functions.qpart(event, questID)
             end
         end
     end)
+end
+
+function AprRC.event.functions.loot(event, message, ...)
+    local itemLink = string.match(message, "|Hitem:.-|h.-|h")
+
+    if itemLink then
+        local itemID, _, _, _, _, classID, _ = C_Item.GetItemInfoInstant(itemLink)
+        if classID == 12 then -- Quest item
+            local tooltipScanner = CreateFrame("GameTooltip", "ItemTooltipScanner", nil, "GameTooltipTemplate")
+            tooltipScanner:SetOwner(WorldFrame, "ANCHOR_NONE")
+            tooltipScanner:SetItemByID(itemID)
+
+            local hasQuestItem = false
+            for i = 2, tooltipScanner:NumLines() do
+                local line = _G["ItemTooltipScannerTextLeft" .. i]:GetText() or ""
+                if line:find(L.DroppableQuestItem) then
+                    hasQuestItem = true
+                    break
+                end
+            end
+            if hasQuestItem then
+                local step = {}
+                step.DroppableQuest = { Text = targetName, MobId = targetID }
+                AprRC:SetStepCoord(step)
+                AprRC:NewStep(step, 5)
+            end
+        end
+    end
+end
+
+function AprRC.event.functions.target(event, ...)
+    local targetGUID = UnitGUID("target")
+    if not targetGUID then return end
+    targetName = UnitName("target")
+    targetID = select(6, strsplit("-", targetGUID))
 end
 
 function AprRC.event.functions.pet(event, ...)
