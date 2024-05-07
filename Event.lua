@@ -373,17 +373,24 @@ function AprRC.event.functions.buy(event, ...)
                 local itemID = GetMerchantItemID(i)
                 if itemID then
                     local currentStep = AprRC:GetLastStep()
-                    local buyMerchant = currentStep and currentStep.BuyMerchant
-
-                    if buyMerchant and buyMerchant.itemID == itemID then
-                        buyMerchant.count = buyMerchant.count + 1
-                    else
-                        local step = {
-                            BuyMerchant = { itemID = itemID, count = 1 }
-                        }
-                        AprRC:SetStepCoord(step)
-                        AprRC:NewStep(step)
+                    if currentStep and currentStep.BuyMerchant then
+                        local found = false
+                        for _, item in ipairs(currentStep.BuyMerchant) do
+                            if item.itemID == itemID then
+                                item.quantity = item.quantity + 1
+                                found = true
+                                break
+                            end
+                        end
+                        if not found then
+                            table.insert(currentStep.BuyMerchant, { itemID = itemID, quantity = 1 })
+                        end
+                        return
                     end
+
+                    local step = { BuyMerchant = { { itemID = itemID, quantity = 1 } } }
+                    AprRC:SetStepCoord(step)
+                    AprRC:NewStep(step)
                 end
             end)
             button.isHooked = true
