@@ -115,7 +115,14 @@ local function qpartTableToString(tbl, level, parrentKey)
     local str = "{\n"
     local itemIndent = string.rep("    ", level + 1)
 
-    for k, v in pairs(tbl) do
+    local keys = {}
+    for k in pairs(tbl) do
+        table.insert(keys, k)
+    end
+    table.sort(keys)
+
+    for _, k in ipairs(keys) do
+        local v = tbl[k]
         local keyStr = ''
         if parrentKey == "Button" then
             keyStr = '["' .. tostring(k) .. '"] = '
@@ -140,13 +147,15 @@ function AprRC:RouteToString(tbl, level)
     local str = "{\n"
     local itemIndent = string.rep("    ", level + 1)
 
-    for k, v in pairs(tbl) do
-        local keyStr
-        if type(k) == "string" then
-            keyStr = k .. " = "
-        else
-            keyStr = ""
-        end
+    local keys = {}
+    for k in pairs(tbl) do
+        table.insert(keys, k)
+    end
+    table.sort(keys)
+
+    for _, k in ipairs(keys) do
+        local v = tbl[k]
+        local keyStr = type(k) == "string" and k .. " = " or ""
 
         if type(v) == "table" then
             if next(v) == nil then
