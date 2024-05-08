@@ -383,12 +383,13 @@ function AprRC.event.functions.buy(event, ...)
                             end
                         end
                         if not found then
-                            table.insert(currentStep.BuyMerchant, { itemID = itemID, quantity = 1 })
+                            table.insert(currentStep.BuyMerchant,
+                                { itemID = itemID, quantity = 1, questID = AprRC:FindClosestIncompleteQuest() })
                         end
                         return
                     end
 
-                    local step = { BuyMerchant = { { itemID = itemID, quantity = 1 } } }
+                    local step = { BuyMerchant = { { itemID = itemID, quantity = 1, questID = AprRC:FindClosestIncompleteQuest() } } }
                     AprRC:SetStepCoord(step)
                     AprRC:NewStep(step)
                 end
