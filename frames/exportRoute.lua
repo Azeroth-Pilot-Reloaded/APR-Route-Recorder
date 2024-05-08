@@ -6,6 +6,13 @@ local L_APR = LibStub("AceLocale-3.0"):GetLocale("APR")
 
 AprRC.export = AprRC:NewModule('Export')
 
+local frame
+function AprRC.export:Hide()
+    if frame then
+        AceGUI:Release(frame)
+    end
+    frame = nil
+end
 
 function AprRC.export:Show()
     local refreshTimer
@@ -33,11 +40,11 @@ function AprRC.export:Show()
         end
     end
 
-    local frame = AceGUI:Create("Frame")
+    frame = AceGUI:Create("Frame")
     frame:SetTitle("Export")
     frame:SetLayout("Flow")
     frame:SetStatusText(L_APR["COPY_HELPER"])
-    frame:SetHeight(750)
+    frame:SetHeight(775)
 
     local dropdown = AceGUI:Create("Dropdown")
     dropdown:SetLabel("Select Route")
@@ -77,6 +84,7 @@ function AprRC.export:Show()
     btnExportELT:SetCallback("OnClick", function()
         AprRC.exportExtraLineText.Show()
         AceGUI:Release(frame)
+        frame = nil
     end)
     frame:AddChild(btnExportELT)
 
@@ -99,17 +107,16 @@ function AprRC.export:Show()
     end)
     frame:AddChild(btnSave)
 
-    -- local btnDelete = AceGUI:Create("Button")
-    -- btnDelete:SetText("Delete this route")
-    -- btnDelete:SetWidth(200)
-    -- btnDelete:SetCallback("OnClick", function()
-    --     routeList[defaultIndex] = nil
-    --     AprRCData.Routes[defaultIndex] = nil
-    --     dropdown:SetList(routeList)
-    --     dropdown:SetValue(1)
-    --     editbox:SetText(AprRC:RouteToString(AprRCData.Routes[1].steps))
-    -- end)
-    -- frame:AddChild(btnDelete)
+    local exportToAPRBtn = AceGUI:Create("Button")
+    exportToAPRBtn:SetText("Export this route into APR")
+    exportToAPRBtn:SetWidth(200)
+    exportToAPRBtn:SetCallback("OnClick", function()
+        local route = AprRC:FindRouteByName(selectedRouteName)
+        APRData.CustomRoute[route.name] = route.steps
+        APR.RouteQuestStepList[route.name] = route.steps
+        APR.RouteList.Custom[route.name] = route.name:match("%d+-(.*)")
+    end)
+    frame:AddChild(exportToAPRBtn)
 
     local checkbox = AceGUI:Create("CheckBox")
     checkbox:SetLabel("Enable Auto Refresh")
@@ -124,7 +131,6 @@ function AprRC.export:Show()
         end
     end)
     frame:AddChild(checkbox)
-
 
     if defaultIndex then
         if AprRCData.Routes[defaultIndex].name == AprRCData.CurrentRoute.name then
@@ -152,5 +158,6 @@ function AprRC.export:Show()
     frame:SetCallback("OnClose", function(widget)
         StopAutoRefresh()
         AceGUI:Release(widget)
+        frame = nil
     end)
 end

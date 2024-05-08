@@ -19,8 +19,7 @@ function AprRC.command:SlashCmd(input)
         if AprRCData.CurrentRoute.name ~= "" then
             AprRC:UpdateRouteByName(AprRCData.CurrentRoute.name, AprRCData.CurrentRoute)
         end
-        APR.RouteQuestStepList[AprRCData.CurrentRoute.name] = AprRCData.CurrentRoute.steps
-        APR.RouteList.Custom[AprRCData.CurrentRoute.name] = AprRCData.CurrentRoute.name:match("%d+-(.*)")
+        AprRC.export:Hide()
         AprRC.export.Show()
         return
     elseif inputText == "forcereset" or inputText == "fr" then
