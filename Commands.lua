@@ -29,6 +29,7 @@ function AprRC.command:SlashCmd(input)
     elseif inputText == "help" or inputText == "h" then
         print(L_APR["COMMAND_LIST"] .. ":")
         print("|cffeda55f/aprrc achievement |r- " .. "HasAchievement")
+        print("|cffeda55f/aprrc addjob |r- " .. "LearnProfession")
         print("|cffeda55f/aprrc button, btn |r- " .. "Button")
         print("|cffeda55f/aprrc class |r- " .. "Class")
         print("|cffeda55f/aprrc donedb |r- " .. "DoneDB")
@@ -65,6 +66,16 @@ function AprRC.command:SlashCmd(input)
             AprRC:SetStepCoord(step, 5)
             AprRC:NewStep(step)
             print("|cff00bfffWaypoint|r Added")
+            return
+        elseif inputText == "addjob" then
+            AprRC.questionDialog:CreateEditBoxPopupWithCallback("Profession spellID", function(text)
+                local step = {
+                    LearnProfession = tonumber(text, 10)
+                }
+                AprRC:SetStepCoord(step)
+                AprRC:NewStep(step)
+                print("|cff00bfffLearnProfession|r Added")
+            end)
             return
         elseif inputText == "range" then
             AprRC.questionDialog:CreateEditBoxPopupWithCallback("Range (number)", function(text)
