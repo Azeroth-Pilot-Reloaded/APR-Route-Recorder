@@ -31,6 +31,7 @@ function AprRC.command:SlashCmd(input)
         print("|cffeda55f/aprrc addjob |r- " .. "LearnProfession")
         print("|cffeda55f/aprrc button, btn |r- " .. "Button")
         print("|cffeda55f/aprrc class |r- " .. "Class")
+        print("|cffeda55f/aprrc coord |r- " .. "Coord")
         print("|cffeda55f/aprrc donedb |r- " .. "DoneDB")
         print("|cffeda55f/aprrc eta |r- " .. "ETA")
         print("|cffeda55f/aprrc export |r- " .. "To export data")
@@ -75,6 +76,11 @@ function AprRC.command:SlashCmd(input)
                 AprRC:NewStep(step)
                 print("|cff00bfffLearnProfession|r Added")
             end)
+            return
+        elseif inputText == "coord" then
+            local currentStep = AprRC:GetLastStep()
+            AprRC:SetStepCoord(currentStep, currentStep.Range)
+            print("|cff00bfffCoord|r Added")
             return
         elseif inputText == "range" then
             AprRC.questionDialog:CreateEditBoxPopupWithCallback("Range (number)", function(text)
