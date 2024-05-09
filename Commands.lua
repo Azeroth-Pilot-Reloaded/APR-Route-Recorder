@@ -80,6 +80,7 @@ function AprRC.command:SlashCmd(input)
         elseif inputText == "coord" then
             local currentStep = AprRC:GetLastStep()
             AprRC:SetStepCoord(currentStep, currentStep.Range)
+            currentStep.NoArrow = nil -- remove NoArrow
             print("|cff00bfffCoord|r Added")
             return
         elseif inputText == "range" then

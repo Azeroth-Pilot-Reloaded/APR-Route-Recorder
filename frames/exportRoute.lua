@@ -112,9 +112,10 @@ function AprRC.export:Show()
     exportToAPRBtn:SetWidth(200)
     exportToAPRBtn:SetCallback("OnClick", function()
         local route = AprRC:FindRouteByName(selectedRouteName)
-        APRData.CustomRoute[route.name] = route.steps
-        APR.RouteQuestStepList[route.name] = route.steps
-        APR.RouteList.Custom[route.name] = route.name:match("%d+-(.*)")
+        local name = route.name .. ' - Custom'
+        APRData.CustomRoute[name] = route.steps
+        APR.RouteQuestStepList[name] = route.steps
+        APR.RouteList.Custom[name] = name:match("%d+-(.*)")
     end)
     frame:AddChild(exportToAPRBtn)
 
