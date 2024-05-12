@@ -152,6 +152,7 @@ function AprRC.event.functions.remove(event, questId, ...)
             tinsert(currentStep["LeaveQuests"], questId)
         else
             local step = { LeaveQuests = { questId } }
+            step.Zone = C_Map.GetBestMapForUnit("player")
             AprRC:NewStep(step)
         end
         --remove quest from state list
@@ -211,6 +212,7 @@ function AprRC.event.functions.spell(event, unitTarget, castGUID, spellID)
         if key then
             local step = {}
             step[key] = AprRC:FindClosestIncompleteQuest()
+            step.Zone = C_Map.GetBestMapForUnit("player")
             AprRC:NewStep(step)
         end
     end
@@ -308,15 +310,16 @@ function AprRC.event.functions.taxi(event, ...)
             end
         end
     elseif event == "TAXIMAP_CLOSED" then
+        -- Save player position for right coord on taxi step
+        local step = {}
+        AprRC:SetStepCoord(step)
         C_Timer.After(2, function()
             if AprRC.CurrentTaxiNode and not UnitOnTaxi("player") then
                 local nodeID = AprRC.CurrentTaxiNode.nodeID
                 if not AprRC:IsTaxiInLookup(nodeID) then
-                    local step = {}
                     step.GetFP = nodeID
                     -- Save for currentRoute
                     AprRCData.TaxiLookup[nodeID] = true
-                    AprRC:SetStepCoord(step)
                     AprRC:NewStep(step)
                 end
             end
