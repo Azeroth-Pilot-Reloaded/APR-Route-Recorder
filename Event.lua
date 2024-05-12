@@ -461,11 +461,11 @@ function AprRC.event.functions.qpart(event, questID)
                         if AprRC:IsInInstanceQuest() then
                             currentStep.InstanceQuest = true
                         end
-                        setButton(questID, index, currentStep)
                     elseif not currentStep.Qpart[questID] then
                         currentStep.Qpart[questID] = {}
                     end
                     tinsert(currentStep.Qpart[questID], index)
+                    setButton(questID, index, currentStep)
                 else
                     newStep()
                 end
