@@ -22,7 +22,7 @@ function AprRC.command:SlashCmd(input)
         AprRC.export:Hide()
         AprRC.export.Show()
         return
-    elseif inputText == "forcereset" or inputText == "fr" then
+    elseif inputText == "forcereset" then
         AprRC:ResetData()
         return
     elseif inputText == "help" or inputText == "h" then
