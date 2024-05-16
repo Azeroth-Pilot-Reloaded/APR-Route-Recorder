@@ -152,7 +152,7 @@ function AprRC.event.functions.remove(event, questId, ...)
             tinsert(currentStep["LeaveQuests"], questId)
         else
             local step = { LeaveQuests = { questId } }
-            step.Zone = C_Map.GetBestMapForUnit("player")
+            step.Zone = AprRC:getZone()
             AprRC:NewStep(step)
         end
         --remove quest from state list
@@ -212,7 +212,7 @@ function AprRC.event.functions.spell(event, unitTarget, castGUID, spellID)
         if key then
             local step = {}
             step[key] = AprRC:FindClosestIncompleteQuest()
-            step.Zone = C_Map.GetBestMapForUnit("player")
+            step.Zone = AprRC:getZone()
             AprRC:NewStep(step)
         end
     end

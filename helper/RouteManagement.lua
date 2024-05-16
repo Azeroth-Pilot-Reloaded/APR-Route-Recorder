@@ -47,7 +47,7 @@ function AprRC:SetStepCoord(step, range)
     local y, x, z, mapID = UnitPosition("player")
     if x and y and not step.NoArrow then
         step.Coord = { x = x, y = y }
-        step.Zone = C_Map.GetBestMapForUnit("player")
+        step.Zone = AprRC:getZone()
         step.Range = range
     end
 end
@@ -174,4 +174,14 @@ end
 
 function AprRC:IsTaxiInLookup(nodeID)
     return AprRCData.TaxiLookup[nodeID] or false
+end
+
+function AprRC:getZone()
+    local playerMapId
+    local currentMapId = C_Map.GetBestMapForUnit('player')
+    if currentMapId and Enum and Enum.UIMapType then
+        playerMapId = MapUtil.GetMapParentInfo(currentMapId, Enum.UIMapType.Zone, true)
+        playerMapId = playerMapId and playerMapId.mapID or currentMapId
+    end
+    return playerMapId
 end
