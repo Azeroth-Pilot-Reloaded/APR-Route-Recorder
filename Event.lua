@@ -513,7 +513,7 @@ function AprRC.event.functions.loot(event, message, ...)
             end
             if hasQuestItem then
                 local step = {}
-                step.DroppableQuest = { Text = targetName, MobId = targetID }
+                step.DroppableQuest = { Text = targetName, MobId = tonumber(targetID) }
                 AprRC:SetStepCoord(step)
                 AprRC:NewStep(step, 5)
             end
@@ -524,7 +524,7 @@ end
 function AprRC.event.functions.target(event, ...)
     local targetGUID = UnitGUID("target")
     if not targetGUID then return end
-    targetName = UnitName("target")
+    targetName = UnitNameUnmodified("target")
     targetID = select(6, strsplit("-", targetGUID))
 end
 
