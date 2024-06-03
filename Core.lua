@@ -41,10 +41,6 @@ function AprRC:OnInitialize()
     AprRC.event:MyRegisterEvent()
     AprRC:saveQuestInfo()
 
-    -- Init Global Variables, UI oriented
-    BINDING_HEADER_APR_ROUTE_RECORDER = AprRC.title -- Header text for APR's main frame
-    _G["BINDING_NAME_" .. "CLICK AprRCItemButton:LeftButton"] = L_APR["USE_QUEST_ITEM"]
-
     -- Register to Chat
     C_ChatInfo.RegisterAddonMessagePrefix("AprRCChat")
 end
