@@ -21,38 +21,46 @@ function AprRC.fillers:Show()
     local questList = AprRC.fillers:GetQuestList()
 
     for _, quest in ipairs(questList) do
-        local questGroup = AceGUI:Create("InlineGroup")
-        questGroup:SetFullWidth(true)
-        questGroup:SetTitle(quest.title)
-        questGroup:SetLayout("List")
+        if #quest.objectives > 0 then
+            local questGroup = AceGUI:Create("InlineGroup")
+            questGroup:SetFullWidth(true)
+            questGroup:SetTitle(quest.title)
+            questGroup:SetLayout("List")
 
-        for i, objective in ipairs(quest.objectives) do
-            local objectiveLabel = AceGUI:Create("InteractiveLabel")
-            objectiveLabel:SetText("[" .. objective.objectiveID .. "]" .. " - " .. objective.text)
-            objectiveLabel:SetFullWidth(true)
-            objectiveLabel:SetCallback("OnClick", function()
-                local currentStep = AprRC:GetLastStep()
-                if not currentStep.Fillers then
-                    currentStep.Fillers = {}
+            for i, objective in ipairs(quest.objectives) do
+                local objectiveLabel = AceGUI:Create("InteractiveLabel")
+                objectiveLabel:SetText("[" .. objective.objectiveID .. "]" .. " - " .. objective.text)
+                objectiveLabel:SetFullWidth(true)
+                objectiveLabel:SetCallback("OnClick", function()
+                    local currentStep = AprRC:GetLastStep()
+                    if not currentStep.Fillers then
+                        currentStep.Fillers = {}
+                    end
+                    if not currentStep.Fillers[quest.questID] then
+                        currentStep.Fillers[quest.questID] = {}
+                    end
+                    tinsert(currentStep.Fillers[quest.questID], objective.objectiveID)
+                    print("|cff00bfffFillers - [" .. quest.title .. "] - " .. objective.objectiveID .. "|r Added")
+                    AceGUI:Release(frame)
+                end)
+                objectiveLabel:SetCallback("OnEnter", function(widget)
+                    widget:SetHighlight("Interface\\Buttons\\UI-Common-MouseHilight")
+                end)
+                objectiveLabel:SetCallback("OnLeave", function(widget)
+                    widget:SetHighlight(nil)
+                end)
+                questGroup:AddChild(objectiveLabel)
+                if i < #quest.objectives then
+                    local spacer = AceGUI:Create("Label")
+                    spacer:SetText("")
+                    spacer:SetFullWidth(true)
+                    spacer:SetHeight(10)
+                    questGroup:AddChild(spacer)
                 end
-                if not currentStep.Fillers[quest.questID] then
-                    currentStep.Fillers[quest.questID] = {}
-                end
-                tinsert(currentStep.Fillers[quest.questID], objective.objectiveID)
-                print("|cff00bfffFillers - [" .. quest.title .. "] - " .. objective.objectiveID .. "|r Added")
-                AceGUI:Release(frame)
-            end)
-            questGroup:AddChild(objectiveLabel)
-            if i < #quest.objectives then
-                local spacer = AceGUI:Create("Label")
-                spacer:SetText("")
-                spacer:SetFullWidth(true)
-                spacer:SetHeight(10)
-                questGroup:AddChild(spacer)
             end
-        end
 
-        scrollFrame:AddChild(questGroup)
+            scrollFrame:AddChild(questGroup)
+        end
     end
 
     frame:AddChild(scrollFrame)
