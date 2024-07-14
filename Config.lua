@@ -120,31 +120,20 @@ function AprRC.settings:createBlizzOptions()
                 order = 2,
                 type = "header",
                 width = "full",
-                name = "Somthing :)",
+                name = "Settings",
             },
-            somthing = {
+            icon = {
                 order = 3,
                 type = "group",
-                name = "What a group",
+                name = "Minimap",
                 inline = true,
                 args = {
-                    enableAddon = {
-                        order = 3.1,
-                        type = "toggle",
-                        name = L_APR["ENABLE_ADDON"],
-                        width = "full",
-                        get = GetProfileOption,
-                        set = function(info, value)
-                            SetProfileOption(info, value)
-                            self:ToggleAddon()
-                        end,
-                    },
                     enableMinimapButton = {
                         name = L_APR["ENABLE_MINIMAP_BUTTON"],
                         desc = L_APR["ENABLE_MINIMAP_BUTTON_DESC"],
                         type = "toggle",
                         width = "full",
-                        order = 9.20,
+                        order = 3.1,
                         get = GetProfileOption,
                         set = function(info, value)
                             SetProfileOption(info, value)
@@ -155,8 +144,28 @@ function AprRC.settings:createBlizzOptions()
                             end
                         end
                     },
+
+                }
+            },
+            debug = {
+                order = 4,
+                type = "group",
+                name = "Debug",
+                inline = true,
+                args = {
+                    enableAddon = {
+                        order = 4.1,
+                        type = "toggle",
+                        name = L_APR["ENABLE_ADDON"],
+                        width = "full",
+                        get = GetProfileOption,
+                        set = function(info, value)
+                            SetProfileOption(info, value)
+                            self:ToggleAddon()
+                        end,
+                    },
                     debug = {
-                        order = 3.2,
+                        order = 4.2,
                         type = "toggle",
                         name = L_APR["DEBUG"],
                         width = "full",
@@ -179,6 +188,9 @@ function AprRC.settings:createBlizzOptions()
     -- add profile to bliz option
     aceConfig:RegisterOptionsTable(AprRC.title .. "/Profile", _G.LibStub("AceDBOptions-3.0"):GetOptionsTable(SettingsDB))
     aceDialog:AddToBlizOptions(AprRC.title .. "/Profile", L_APR["PROFILES"], AprRC.title)
+
+    local category, layout = Settings.RegisterCanvasLayoutCategory(AprRC, AprRC.title);
+    AprRC.settings.category = category
 end
 
 function AprRC.settings:CreateMiniMapButton()
@@ -192,7 +204,11 @@ function AprRC.settings:CreateMiniMapButton()
                 self.profile.enableAddon = not self.profile.enableAddon
                 self:ToggleAddon()
             else
-                AprRC.settings:OpenSettings(AprRC.title)
+                if SettingsPanel:IsShown() then
+                    self:CloseSettings()
+                else
+                    self:OpenSettings(AprRC.title)
+                end
             end
         end,
         OnTooltipShow = function(tooltip)
@@ -219,7 +235,11 @@ end
 
 function AprRC.settings:OpenSettings(name)
     if name == AprRC.title then
-        InterfaceOptionsFrame_OpenToCategory(AprRC.title)
+        if InterfaceOptionsFrame_OpenToCategory then
+            InterfaceOptionsFrame_OpenToCategory(AprRC.title)
+        else
+            Settings.OpenToCategory(self.category.ID)
+        end
         AprRC.settings:OpenSettings(L_APR["PROFILES"])
     end
     if AprRC.Options then
@@ -242,6 +262,20 @@ function AprRC.settings:OpenSettings(name)
             InterfaceOptionsFrame_OpenToCategory(AprRC.Options)
             if AprRC.OptionsRoute then
                 InterfaceOptionsFrame_OpenToCategory(AprRC.OptionsRoute)
+            end
+            return
+        else
+            Settings.OpenToCategory(self.category.ID)
+        end
+    end
+end
+
+function AprRC.settings:CloseSettings()
+    if AprRC.Options then
+        if SettingsPanel then
+            local category = SettingsPanel:GetCategoryList():GetCategory(AprRC.Options.name)
+            if category then
+                SettingsPanel:Hide()
             end
             return
         end
