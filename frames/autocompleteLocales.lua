@@ -41,23 +41,35 @@ function AprRC.autocomplete:Show()
 
     local debounceTimer = nil
     local function UpdateAutoCompleteList(text)
-        if not debounceTimer then
-            debounceTimer = C_Timer.NewTimer(0.3, function()
-                scrollFrame:ReleaseChildren() -- Clear current list
-                scrollFrame.frame:Hide()
-                editbox.key = ''
-                editbox.newKey = true
-                if text ~= "" then
-                    btnConfirm:SetDisabled(false)
-                    for key, value in pairs(L_APR) do
-                        if string.match(value:lower(), text:lower()) then
+        if debounceTimer then
+            debounceTimer:Cancel()
+        end
+        debounceTimer = C_Timer.NewTimer(0.3, function()
+            scrollFrame:ReleaseChildren() -- Clear current list
+            scrollFrame.frame:Hide()
+            editbox.key = ''
+            editbox.newKey = true
+            if text ~= "" then
+                btnConfirm:SetDisabled(false)
+                local matches = {}
+                for key, value in pairs(L_APR) do
+                    if string.match(value:lower(), text:lower()) then
+                        table.insert(matches, { key = key, value = value })
+                    end
+                end
+
+                -- Render items in chunks to avoid lag
+                local function RenderMatches(startIndex, endIndex)
+                    for i = startIndex, endIndex do
+                        local match = matches[i]
+                        if match then
                             local interacLabel = AceGUI:Create("InteractiveLabel")
-                            interacLabel:SetText(value)
+                            interacLabel:SetText(match.value)
                             interacLabel:SetColor(255, 255, 255)
                             interacLabel:SetFullWidth(true)
                             interacLabel:SetCallback("OnClick", function()
-                                editbox:SetText(value)
-                                editbox.key = key
+                                editbox:SetText(match.value)
+                                editbox.key = match.key
                                 editbox.newKey = false
                                 scrollFrame:ReleaseChildren() -- Clear list after selection
                                 scrollFrame.frame:Hide()
@@ -68,16 +80,23 @@ function AprRC.autocomplete:Show()
                             interacLabel:SetCallback("OnLeave", function(widget)
                                 widget:SetHighlight(nil)
                             end)
-                            scrollFrame.frame:Show()
                             scrollFrame:AddChild(interacLabel)
                         end
                     end
-                else
-                    btnConfirm:SetDisabled(true)
+                    if endIndex < #matches then
+                        C_Timer.After(0.01, function()
+                            RenderMatches(endIndex + 1, math.min(endIndex + 10, #matches))
+                        end)
+                    end
                 end
-                debounceTimer = nil
-            end)
-        end
+
+                scrollFrame.frame:Show()
+                RenderMatches(1, math.min(10, #matches)) -- Start rendering first 10 matches
+            else
+                btnConfirm:SetDisabled(true)
+            end
+            debounceTimer = nil
+        end)
     end
 
     editbox:SetCallback("OnTextChanged", function(widget, event, text)
