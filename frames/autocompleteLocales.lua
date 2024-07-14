@@ -14,7 +14,6 @@ function AprRC.autocomplete:Show()
     frame:EnableResize(false)
     frame:SetLayout("Flow")
 
-
     local editbox = AceGUI:Create("EditBox")
     editbox:SetLabel("Enter text")
     editbox:SetFullWidth(true)
@@ -62,6 +61,12 @@ function AprRC.autocomplete:Show()
                                 editbox.newKey = false
                                 scrollFrame:ReleaseChildren() -- Clear list after selection
                                 scrollFrame.frame:Hide()
+                            end)
+                            interacLabel:SetCallback("OnEnter", function(widget)
+                                widget:SetHighlight("Interface\\QuestFrame\\UI-QuestTitleHighlight")
+                            end)
+                            interacLabel:SetCallback("OnLeave", function(widget)
+                                widget:SetHighlight(nil)
                             end)
                             scrollFrame.frame:Show()
                             scrollFrame:AddChild(interacLabel)

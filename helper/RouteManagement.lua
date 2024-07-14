@@ -28,6 +28,7 @@ function AprRC:NewStep(step)
     if AprRC:IsTableEmpty(lastStep) then
         AprRCData.CurrentRoute.steps = {}
     end
+    step._index = #AprRCData.CurrentRoute.steps + 1
     tinsert(AprRCData.CurrentRoute.steps, step)
 end
 

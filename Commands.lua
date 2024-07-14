@@ -142,55 +142,58 @@ function AprRC.command:SlashCmd(input)
             return
         elseif inputText == "pickupdb" then
             if AprRC:HasStepOption("PickUp") then
-                AprRC.questionDialog:CreateEditBoxPopupWithCallback("PickUp DB (QuestID)", function(questId)
-                    local currentStep = AprRC:GetLastStep()
-                    if AprRC:HasStepOption("PickUpDB") then
-                        tinsert(currentStep.PickUpDB, tonumber(questId, 10))
-                    else
-                        currentStep.PickUpDB = { tonumber(questId, 10) }
-                        for _, qID in pairs(currentStep.PickUp) do
-                            tinsert(currentStep.PickUpDB, qID)
+                AprRC.questionDialog:CreateEditBoxPopupWithCallback("PickUp DB (QuestID) - Also add PickUp QuestID",
+                    function(questId)
+                        local currentStep = AprRC:GetLastStep()
+                        if AprRC:HasStepOption("PickUpDB") then
+                            tinsert(currentStep.PickUpDB, tonumber(questId, 10))
+                        else
+                            currentStep.PickUpDB = { tonumber(questId, 10) }
+                            for _, qID in pairs(currentStep.PickUp) do
+                                tinsert(currentStep.PickUpDB, qID)
+                            end
                         end
-                    end
-                    print("|cff00bfffPickUpDB - " .. tonumber(questId, 10) .. "|r Added")
-                end)
+                        print("|cff00bfffPickUpDB - " .. tonumber(questId, 10) .. "|r Added")
+                    end)
             else
                 AprRC:Error('Missing PickUp option on current step')
             end
             return
         elseif inputText == "qpartdb" then
             if AprRC:HasStepOption("Qpart") then
-                AprRC.questionDialog:CreateEditBoxPopupWithCallback("Qpart DB (QuestID)", function(questId)
-                    local currentStep = AprRC:GetLastStep()
-                    if AprRC:HasStepOption("QpartDB") then
-                        tinsert(currentStep.QpartDB, tonumber(questId, 10))
-                    else
-                        currentStep.QpartDB = { tonumber(questId, 10) }
+                AprRC.questionDialog:CreateEditBoxPopupWithCallback("Qpart DB (QuestID) - Also add Qpart QuestID",
+                    function(questId)
+                        local currentStep = AprRC:GetLastStep()
+                        if AprRC:HasStepOption("QpartDB") then
+                            tinsert(currentStep.QpartDB, tonumber(questId, 10))
+                        else
+                            currentStep.QpartDB = { tonumber(questId, 10) }
 
-                        for qID, _ in pairs(currentStep.Qpart) do
-                            tinsert(currentStep.QpartDB, qID)
+                            for qID, _ in pairs(currentStep.Qpart) do
+                                tinsert(currentStep.QpartDB, qID)
+                            end
                         end
-                    end
-                    print("|cff00bfffQpartDB - " .. tonumber(questId, 10) .. "|r Added")
-                end)
+                        print("|cff00bfffQpartDB - " .. tonumber(questId, 10) .. "|r Added")
+                    end)
             else
                 AprRC:Error('Missing Qpart option on current step')
             end
             return
         elseif inputText == "donedb" then
             if AprRC:HasStepOption("Done") then
-                AprRC.questionDialog:CreateEditBoxPopupWithCallback("Done DB (QuestID)", function(questId)
-                    local currentStep = AprRC:GetLastStep()
-                    if AprRC:HasStepOption("DoneDB") then
-                        tinsert(currentStep.DoneDB, tonumber(questId, 10))
-                    else
-                        currentStep.DoneDB = { tonumber(questId, 10) }
-                        for _, qID in pairs(currentStep.Done) do
-                            tinsert(currentStep.DoneDB, qID)
+                AprRC.questionDialog:CreateEditBoxPopupWithCallback("Done DB (QuestID) - Also add Done QuestID",
+                    function(questId)
+                        local currentStep = AprRC:GetLastStep()
+                        if AprRC:HasStepOption("DoneDB") then
+                            tinsert(currentStep.DoneDB, tonumber(questId, 10))
+                        else
+                            currentStep.DoneDB = { tonumber(questId, 10) }
+                            for _, qID in pairs(currentStep.Done) do
+                                tinsert(currentStep.DoneDB, qID)
+                            end
                         end
-                    end
-                    print("|cff00bfffDoneDB - " .. tonumber(questId, 10) .. "|r Added")
-                end)
+                        print("|cff00bfffDoneDB - " .. tonumber(questId, 10) .. "|r Added")
+                    end)
             else
                 AprRC:Error('Missing Done option on current step')
             end
