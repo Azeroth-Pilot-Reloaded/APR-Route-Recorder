@@ -4,13 +4,14 @@ local L_APR = LibStub("AceLocale-3.0"):GetLocale("APR")
 
 AprRC.autocomplete = AprRC:NewModule('AutoComplete')
 
-function AprRC.autocomplete:Show()
+function AprRC.autocomplete:ShowAutoComplete(title, list, onConfirm, formatItem, width, height, showAllOnEmpty)
+    showAllOnEmpty = showAllOnEmpty or false
     local frame = AceGUI:Create("Frame")
-    frame:SetTitle("Extra Line Text")
+    frame:SetTitle(title)
     frame.statustext:GetParent():Hide()
     frame:SetCallback("OnClose", function(widget) AceGUI:Release(widget) end)
-    frame:SetWidth(1000)
-    frame:SetHeight(450)
+    frame:SetWidth(width or 1000)
+    frame:SetHeight(height or 450)
     frame:EnableResize(false)
     frame:SetLayout("Flow")
 
@@ -30,13 +31,7 @@ function AprRC.autocomplete:Show()
     btnConfirm:SetWidth(100)
     btnConfirm:SetDisabled(false)
     btnConfirm:SetCallback("OnClick", function()
-        local key = editbox.key
-        if editbox.newKey then
-            key = AprRC:ExtraLineTextToKey(editbox:GetText())
-            AprRCData.ExtraLineTexts[key] = editbox:GetText()
-        end
-        AprRC.autocomplete:SetExtraLineText(key)
-        AceGUI:Release(frame)
+        onConfirm(editbox:GetText(), editbox.key, frame)
     end)
 
     local debounceTimer = nil
@@ -46,55 +41,55 @@ function AprRC.autocomplete:Show()
         end
         debounceTimer = C_Timer.NewTimer(0.3, function()
             scrollFrame:ReleaseChildren() -- Clear current list
-            scrollFrame.frame:Hide()
-            editbox.key = ''
-            editbox.newKey = true
-            if text ~= "" then
-                btnConfirm:SetDisabled(false)
-                local matches = {}
-                for key, value in pairs(L_APR) do
-                    if string.match(value:lower(), text:lower()) then
+            editbox.key = nil
+            local matches = {}
+
+            if text ~= "" or showAllOnEmpty then
+                for key, value in pairs(list) do
+                    if text == "" or string.match(value:lower(), text:lower()) then
                         table.insert(matches, { key = key, value = value })
                     end
                 end
+            end
 
-                -- Render items in chunks to avoid lag
-                local function RenderMatches(startIndex, endIndex)
-                    for i = startIndex, endIndex do
-                        local match = matches[i]
-                        if match then
-                            local interacLabel = AceGUI:Create("InteractiveLabel")
-                            interacLabel:SetText(match.value)
-                            interacLabel:SetColor(255, 255, 255)
-                            interacLabel:SetFullWidth(true)
-                            interacLabel:SetCallback("OnClick", function()
-                                editbox:SetText(match.value)
-                                editbox.key = match.key
-                                editbox.newKey = false
-                                scrollFrame:ReleaseChildren() -- Clear list after selection
-                                scrollFrame.frame:Hide()
-                            end)
-                            interacLabel:SetCallback("OnEnter", function(widget)
-                                widget:SetHighlight("Interface\\QuestFrame\\UI-QuestTitleHighlight")
-                            end)
-                            interacLabel:SetCallback("OnLeave", function(widget)
-                                widget:SetHighlight(nil)
-                            end)
-                            scrollFrame:AddChild(interacLabel)
-                        end
-                    end
-                    if endIndex < #matches then
-                        C_Timer.After(0.01, function()
-                            RenderMatches(endIndex + 1, math.min(endIndex + 10, #matches))
+            -- Render items in chunks to avoid lag
+            local function RenderMatches(startIndex, endIndex)
+                for i = startIndex, endIndex do
+                    local match = matches[i]
+                    if match then
+                        local interacLabel = AceGUI:Create("InteractiveLabel")
+                        interacLabel:SetText(formatItem and formatItem(match) or match.value)
+                        interacLabel:SetColor(255, 255, 255)
+                        interacLabel:SetFullWidth(true)
+                        interacLabel:SetCallback("OnClick", function()
+                            editbox:SetText(match.value)
+                            editbox.key = match.key
+                            scrollFrame:ReleaseChildren() -- Clear list after selection
+                            scrollFrame.frame:Hide()
                         end)
+                        interacLabel:SetCallback("OnEnter", function(widget)
+                            widget:SetHighlight("Interface\\QuestFrame\\UI-QuestTitleHighlight")
+                        end)
+                        interacLabel:SetCallback("OnLeave", function(widget)
+                            widget:SetHighlight(nil)
+                        end)
+                        scrollFrame:AddChild(interacLabel)
                     end
                 end
-
-                scrollFrame.frame:Show()
-                RenderMatches(1, math.min(10, #matches)) -- Start rendering first 10 matches
-            else
-                btnConfirm:SetDisabled(true)
+                if endIndex < #matches then
+                    C_Timer.After(0.01, function()
+                        RenderMatches(endIndex + 1, math.min(endIndex + 10, #matches))
+                    end)
+                end
             end
+
+            if #matches > 0 then
+                scrollFrame.frame:Show()
+                RenderMatches(1, math.min(10, #matches)) -- Start rendering first 10 matches for lazy rendering
+            else
+                scrollFrame.frame:Hide()
+            end
+
             debounceTimer = nil
         end)
     end
@@ -106,23 +101,101 @@ function AprRC.autocomplete:Show()
     frame:AddChild(editbox)
     frame:AddChild(scrollFrame)
     frame:AddChild(btnConfirm)
+
+    -- Initial call to show all items if the text is empty and showAllOnEmpty is true
+    if showAllOnEmpty then
+        UpdateAutoCompleteList("")
+    end
 end
 
-function AprRC.autocomplete:SetExtraLineText(key)
-    local currentStep = AprRC:GetLastStep()
+function AprRC.autocomplete:ShowLocaleAutoComplete()
+    self:ShowAutoComplete(
+        "Extra Line Text",
+        L_APR,
+        function(text, key, frame)
+            if not key then
+                key = AprRC:ExtraLineTextToKey(text)
+                AprRCData.ExtraLineTexts[key] = text
+            end
+            local currentStep = AprRC:GetLastStep()
 
-    local baseName = "ExtraLineText"
-    local index = 2
-    local propertyName = baseName
+            local baseName = "ExtraLineText"
+            local index = 2
+            local propertyName = baseName
 
-    if currentStep[baseName] then
-        while currentStep[baseName .. index] do
-            index = index + 1
+            if currentStep[baseName] then
+                while currentStep[baseName .. index] do
+                    index = index + 1
+                end
+                propertyName = baseName .. index
+            end
+
+            currentStep[propertyName] = key
+
+            print("|cff00bfffExtraLineTexts|r Added")
+            AceGUI:Release(frame)
         end
-        propertyName = baseName .. index
+    )
+end
+
+function AprRC.autocomplete:ShowItemAutoComplete()
+    local itemList = {}
+    for bag = 0, 4 do
+        for slot = 1, C_Container.GetContainerNumSlots(bag) do
+            local itemID = C_Container.GetContainerItemID(bag, slot)
+            if itemID then
+                local itemName, _, _, _, _, _, _, _, _, itemIcon = C_Item.GetItemInfo(itemID)
+                if itemName then
+                    itemList[itemID] = itemName
+                end
+            end
+        end
     end
 
-    currentStep[propertyName] = key
+    self:ShowAutoComplete(
+        "Select Item",
+        itemList,
+        function(text, key, frame)
+            print(text, key)
+            AceGUI:Release(frame)
+        end,
+        function(match)
+            local itemName, _, _, _, _, _, _, _, _, itemIcon = C_Item.GetItemInfo(match.key)
+            return "|T" .. itemIcon .. ":35:35|t " .. itemName
+        end,
+        500,
+        450,
+        true
+    )
+end
 
-    print("|cff00bfffExtraLineTexts|r Added")
+function AprRC.autocomplete:ShowSpellAutoComplete()
+    local spellList = {}
+    for i = 1, C_SpellBook.GetNumSpellBookSkillLines() do
+        local skillLineInfo = C_SpellBook.GetSpellBookSkillLineInfo(i)
+        local offset, numSlots = skillLineInfo.itemIndexOffset, skillLineInfo.numSpellBookItems
+        for j = offset + 1, offset + numSlots do
+            local name, subName = C_SpellBook.GetSpellBookItemName(j, Enum.SpellBookSpellBank.Player)
+            local spellID = select(2, C_SpellBook.GetSpellBookItemType(j, Enum.SpellBookSpellBank.Player))
+            spellList[spellID] = name
+        end
+    end
+
+    self:ShowAutoComplete(
+        "Select Spell",
+        spellList,
+        function(text, key, frame)
+            print(text, key)
+            AceGUI:Release(frame)
+        end,
+        function(match)
+            local spellInfo = C_Spell.GetSpellInfo(match.key)
+            if spellInfo then
+                return "|T" .. spellInfo.iconID .. ":35:35|t " .. spellInfo.name
+            end
+        end,
+        500,
+        450,
+        true
+    )
 end

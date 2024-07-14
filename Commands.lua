@@ -125,10 +125,12 @@ function AprRC.command:SlashCmd(input)
             print("|cff00bfffNoArrow|r Added")
             return
         elseif inputText == "text" or inputText == "txt" then
-            AprRC.autocomplete:Show()
+            AprRC.autocomplete:ShowLocaleAutoComplete()
             return
         elseif inputText == "button" or inputText == "btn" then
             AprRC.SelectButton:Show()
+            -- AprRC.autocomplete:ShowItemAutoComplete()
+            -- AprRC.autocomplete:ShowSpellAutoComplete()
             return
         elseif inputText == "fillers" or inputText == "filler" then
             AprRC.fillers:Show()
