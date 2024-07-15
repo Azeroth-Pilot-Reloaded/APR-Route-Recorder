@@ -129,11 +129,25 @@ function AprRC.command:SlashCmd(input)
             return
         elseif inputText == "button" or inputText == "btn" then
             AprRC.SelectButton:Show()
-            -- AprRC.autocomplete:ShowItemAutoComplete()
-            -- AprRC.autocomplete:ShowSpellAutoComplete()
             return
         elseif inputText == "fillers" or inputText == "filler" then
-            AprRC.fillers:Show()
+            AprRC.QuestObjectiveSelector:Show({
+                title = "Fillers quest list",
+                statusText = "Click on an objective to add it as a filler",
+                questList = AprRC.QuestObjectiveSelector:GetQuestList(),
+                onClick = function(questID, objectiveID)
+                    local currentStep = AprRC:GetLastStep()
+                    if not currentStep.Fillers then
+                        currentStep.Fillers = {}
+                    end
+                    if not currentStep.Fillers[questID] then
+                        currentStep.Fillers[questID] = {}
+                    end
+                    table.insert(currentStep.Fillers[questID], objectiveID)
+                    print("|cff00bfffFillers - [" ..
+                        C_QuestLog.GetTitleForQuestID(questID) .. "] - " .. objectiveID .. "|r Added")
+                end
+            })
             return
         elseif inputText == "spelltrigger" then
             AprRC.questionDialog:CreateEditBoxPopupWithCallback("SpellTrigger (Spell ID)", function(text)

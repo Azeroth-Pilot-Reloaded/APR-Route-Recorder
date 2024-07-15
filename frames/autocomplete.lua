@@ -138,7 +138,7 @@ function AprRC.autocomplete:ShowLocaleAutoComplete()
     )
 end
 
-function AprRC.autocomplete:ShowItemAutoComplete()
+function AprRC.autocomplete:ShowItemAutoComplete(questID, objectiveID)
     local itemList = {}
     for bag = 0, 4 do
         for slot = 1, C_Container.GetContainerNumSlots(bag) do
@@ -155,8 +155,13 @@ function AprRC.autocomplete:ShowItemAutoComplete()
     self:ShowAutoComplete(
         "Select Item",
         itemList,
-        function(text, key, frame)
-            print(text, key)
+        function(_, itemID, frame)
+            local currentStep = AprRC:GetLastStep()
+            if not currentStep.Button then
+                currentStep.Button = {}
+            end
+            currentStep.Button[questID .. "-" .. objectiveID] = tonumber(itemID, 10)
+            print("|cff00bfff Button |r Added")
             AceGUI:Release(frame)
         end,
         function(match)
@@ -169,7 +174,7 @@ function AprRC.autocomplete:ShowItemAutoComplete()
     )
 end
 
-function AprRC.autocomplete:ShowSpellAutoComplete()
+function AprRC.autocomplete:ShowSpellAutoComplete(questID, objectiveID)
     local spellList = {}
     for i = 1, C_SpellBook.GetNumSpellBookSkillLines() do
         local skillLineInfo = C_SpellBook.GetSpellBookSkillLineInfo(i)
@@ -184,8 +189,13 @@ function AprRC.autocomplete:ShowSpellAutoComplete()
     self:ShowAutoComplete(
         "Select Spell",
         spellList,
-        function(text, key, frame)
-            print(text, key)
+        function(_, spellID, frame)
+            local currentStep = AprRC:GetLastStep()
+            if not currentStep.SpellButton then
+                currentStep.SpellButton = {}
+            end
+            currentStep.SpellButton[questID .. "-" .. objectiveID] = tonumber(spellID, 10)
+            print("|cff00bfff SpellButton |r Added")
             AceGUI:Release(frame)
         end,
         function(match)

@@ -29,12 +29,12 @@ helper/RouteManagement.lua
 Commands.lua
 Event.lua
 
-frames/autocompleteLocales.lua
+frames/autocomplete.lua
 frames/CommandsBar.lua
 frames/exportExtraLineText.lua
 frames/exportRoute.lua
-frames/fillersSelection.lua
 frames/QuestionPopUp.lua
+frames/QuestObjectiveSelector.lua
 frames/RecorderBar.lua
 frames/routeSelector.lua
 frames/selectButton.lua

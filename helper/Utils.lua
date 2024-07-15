@@ -21,6 +21,7 @@ function AprRC:Error(errorMessage, data)
         else
             DEFAULT_CHAT_FRAME:AddMessage(redColorCode .. L["ERROR"] .. ": " .. errorMessage .. "|r")
         end
+        UIErrorsFrame:AddMessage(errorMessage, 1, 0, 0, 1, 5)
     end
 end
 
@@ -124,7 +125,7 @@ local function qpartTableToString(tbl, level, parrentKey)
     for _, k in ipairs(keys) do
         local v = tbl[k]
         local keyStr = ''
-        if parrentKey == "Button" then
+        if parrentKey == "Button" or parrentKey == "SpellButton" then
             keyStr = '["' .. tostring(k) .. '"] = '
         else
             keyStr = "[" .. k .. "] = "
@@ -162,7 +163,7 @@ function AprRC:RouteToString(tbl, level)
                 str = str .. itemIndent .. keyStr .. "{}" .. ",\n"
             else
                 local valueStr
-                if k == "Qpart" or k == "Fillers" or k == "Button" then
+                if k == "Qpart" or k == "Fillers" or k == "Button" or k == "SpellButton" then
                     valueStr = qpartTableToString(v, level + 1, k)
                 else
                     valueStr = self:RouteToString(v, level + 1)

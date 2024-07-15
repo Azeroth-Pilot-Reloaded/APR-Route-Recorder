@@ -1,12 +1,13 @@
 local _G = _G
 local AceGUI = LibStub("AceGUI-3.0")
 
-AprRC.fillers = AprRC:NewModule('Fillers')
+AprRC.QuestObjectiveSelector = AprRC:NewModule('QuestObjectiveSelector')
 
-function AprRC.fillers:Show()
+
+function AprRC.QuestObjectiveSelector:Show(config)
     local frame = AceGUI:Create("Frame")
-    frame:SetTitle("Fillers quest list")
-    frame:SetStatusText("Click on an objective to add it as a filler")
+    frame:SetTitle(config.title or "Quest Objective Selector")
+    frame:SetStatusText(config.statusText or "Select a quest objective")
     frame:SetCallback("OnClose", function(widget) AceGUI:Release(widget) end)
     frame:SetWidth(800)
     frame:SetHeight(600)
@@ -18,9 +19,8 @@ function AprRC.fillers:Show()
     scrollFrame:SetFullHeight(true)
     scrollFrame:SetLayout("Flow")
 
-    local questList = AprRC.fillers:GetQuestList()
 
-    for _, quest in ipairs(questList) do
+    for _, quest in ipairs(config.questList) do
         if #quest.objectives > 0 then
             local questGroup = AceGUI:Create("InlineGroup")
             questGroup:SetFullWidth(true)
@@ -32,15 +32,9 @@ function AprRC.fillers:Show()
                 objectiveLabel:SetText("[" .. objective.objectiveID .. "]" .. " - " .. objective.text)
                 objectiveLabel:SetFullWidth(true)
                 objectiveLabel:SetCallback("OnClick", function()
-                    local currentStep = AprRC:GetLastStep()
-                    if not currentStep.Fillers then
-                        currentStep.Fillers = {}
+                    if config.onClick then
+                        config.onClick(quest.questID, objective.objectiveID)
                     end
-                    if not currentStep.Fillers[quest.questID] then
-                        currentStep.Fillers[quest.questID] = {}
-                    end
-                    tinsert(currentStep.Fillers[quest.questID], objective.objectiveID)
-                    print("|cff00bfffFillers - [" .. quest.title .. "] - " .. objective.objectiveID .. "|r Added")
                     AceGUI:Release(frame)
                 end)
                 objectiveLabel:SetCallback("OnEnter", function(widget)
@@ -66,7 +60,40 @@ function AprRC.fillers:Show()
     frame:AddChild(scrollFrame)
 end
 
-function AprRC.fillers:GetQuestList()
+local function GetFormattedQuestObjectives(questID, objectiveIDs)
+    local formattedObjectives = {}
+    local objectivesInfo = C_QuestLog.GetQuestObjectives(questID)
+
+    if objectivesInfo then
+        for _, objectiveID in ipairs(objectiveIDs) do
+            local objective = objectivesInfo[objectiveID]
+            if objective then
+                table.insert(formattedObjectives, {
+                    objectiveID = objectiveID,
+                    text = objective.text
+                })
+            end
+        end
+    end
+
+    return formattedObjectives
+end
+
+local function AddQuestsToList(questList, questsTable)
+    for questID, objectives in pairs(questsTable) do
+        local title = C_QuestLog.GetTitleForQuestID(questID)
+        if title then
+            local formattedObjectives = GetFormattedQuestObjectives(questID, objectives)
+            table.insert(questList, {
+                title = questID .. " - " .. title,
+                questID = questID,
+                objectives = formattedObjectives
+            })
+        end
+    end
+end
+
+function AprRC.QuestObjectiveSelector:GetQuestList()
     local questList = {}
 
     for i = 1, C_QuestLog.GetNumQuestLogEntries() do
@@ -74,26 +101,36 @@ function AprRC.fillers:GetQuestList()
         if info and not info.isHeader then
             local questID = info.questID
             local title = C_QuestLog.GetTitleForQuestID(questID)
-            local isComplete = C_QuestLog.IsComplete(questID)
-            if not isComplete then
-                local objectives = C_QuestLog.GetQuestObjectives(questID)
-
-                local formattedObjectives = {}
-                for j, objective in ipairs(objectives) do
-                    local formattedObjective = {
-                        objectiveID = j,
-                        text = objective.text
-                    }
-                    table.insert(formattedObjectives, formattedObjective)
+            if title and not C_QuestLog.IsComplete(questID) then
+                local objectives = {}
+                local objectivesInfo = C_QuestLog.GetQuestObjectives(questID)
+                for j, objective in ipairs(objectivesInfo) do
+                    table.insert(objectives, j)
                 end
-
-                local questData = {
+                local formattedObjectives = GetFormattedQuestObjectives(questID, objectives)
+                table.insert(questList, {
                     title = questID .. " - " .. title,
                     questID = questID,
                     objectives = formattedObjectives
-                }
-                table.insert(questList, questData)
+                })
             end
+        end
+    end
+
+    return questList
+end
+
+function AprRC.QuestObjectiveSelector:GetQuestListFromLastStep()
+    local questList = {}
+    local lastStep = AprRC:GetLastStep()
+
+    if lastStep then
+        if lastStep.Qpart then
+            AddQuestsToList(questList, lastStep.Qpart)
+        end
+
+        if lastStep.Fillers then
+            AddQuestsToList(questList, lastStep.Fillers)
         end
     end
 
