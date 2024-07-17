@@ -40,6 +40,19 @@ function AprRC:Contains(list, x)
     return false
 end
 
+function AprRC:DeepCompare(t1, t2)
+    if t1 == t2 then return true end
+    if type(t1) ~= "table" or type(t2) ~= "table" then return false end
+    for k1, v1 in pairs(t1) do
+        local v2 = t2[k1]
+        if v2 == nil or not deepCompare(v1, v2) then return false end
+    end
+    for k2, v2 in pairs(t2) do
+        if t1[k2] == nil then return false end
+    end
+    return true
+end
+
 function AprRC:IsTableEmpty(table)
     if (table) then
         return next(table) == nil
