@@ -17,28 +17,6 @@ end
 function AprRC.export:Show()
     local refreshTimer
 
-    local function StartAutoRefresh(dropdown, editbox)
-        if not refreshTimer then
-            refreshTimer = AceTimer:ScheduleRepeatingTimer(function()
-                if dropdown:GetValue() then
-                    if AprRCData.CurrentRoute.name ~= "" then
-                        AprRC:UpdateRouteByName(AprRCData.CurrentRoute.name, AprRCData.CurrentRoute)
-                        local route = AprRCData.Routes[dropdown:GetValue()]
-                        if route then
-                            editbox:SetText(AprRC:RouteToString(route.steps))
-                        end
-                    end
-                end
-            end, 5)
-        end
-    end
-
-    local function StopAutoRefresh()
-        if refreshTimer then
-            AceTimer:CancelTimer(refreshTimer)
-            refreshTimer = nil
-        end
-    end
 
     frame = AceGUI:Create("Frame")
     frame:SetTitle("Export")
@@ -77,6 +55,39 @@ function AprRC.export:Show()
     editbox:SetFullHeight(true)
     editbox:DisableButton(true)
     scrollContainer:AddChild(editbox)
+    AprRC.export.editbox = editbox
+
+    local function AutoScrollToBottom()
+        C_Timer.After(0.1, function()
+            local scrollFrame = editbox.scrollFrame
+            scrollFrame:SetVerticalScroll(scrollFrame:GetVerticalScrollRange())
+        end)
+    end
+
+    local function StartAutoRefresh(dropdown, editbox)
+        if not refreshTimer then
+            refreshTimer = AceTimer:ScheduleRepeatingTimer(function()
+                if dropdown:GetValue() then
+                    if AprRCData.CurrentRoute.name ~= "" then
+                        AprRC:UpdateRouteByName(AprRCData.CurrentRoute.name, AprRCData.CurrentRoute)
+                        local route = AprRCData.Routes[dropdown:GetValue()]
+                        if route then
+                            editbox:SetText(AprRC:RouteToString(route.steps))
+                            AutoScrollToBottom()
+                        end
+                    end
+                end
+            end, 5)
+        end
+    end
+
+    local function StopAutoRefresh()
+        if refreshTimer then
+            AceTimer:CancelTimer(refreshTimer)
+            refreshTimer = nil
+        end
+    end
+
 
     local btnExportELT = AceGUI:Create("Button")
     btnExportELT:SetText("Export Extra Line Text")
@@ -103,6 +114,7 @@ function AprRC.export:Show()
         if AprRCData.CurrentRoute.name == selectedRouteName then
             AprRCData.CurrentRoute = newRoute
         end
+        AutoScrollToBottom()
     end)
     frame:AddChild(btnSave)
 
@@ -115,6 +127,7 @@ function AprRC.export:Show()
         APRData.CustomRoute[name] = route.steps
         APR.RouteQuestStepList[name] = route.steps
         APR.RouteList.Custom[name] = name:match("%d+-(.*)")
+        AutoScrollToBottom()
     end)
     frame:AddChild(exportToAPRBtn)
 
@@ -138,6 +151,7 @@ function AprRC.export:Show()
         end
         dropdown:SetValue(defaultIndex)
         editbox:SetText(AprRC:RouteToString(AprRCData.Routes[defaultIndex].steps))
+        AutoScrollToBottom()
     end
 
     dropdown:SetCallback("OnValueChanged", function(widget, event, index)
@@ -152,6 +166,7 @@ function AprRC.export:Show()
                 checkbox:SetValue(false)
                 StopAutoRefresh()
             end
+            AutoScrollToBottom()
         end
     end)
 
