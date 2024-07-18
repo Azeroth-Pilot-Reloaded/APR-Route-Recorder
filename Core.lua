@@ -35,9 +35,11 @@ function AprRC:OnInitialize()
     AprRCData.QuestLookup = AprRCData.QuestLookup or {}
     AprRCData.TaxiLookup = AprRCData.TaxiLookup or {}
     AprRCData.BeforePortal = AprRCData.BeforePortal or {}
+    AprRCData.CommandBarCommands = AprRCData.CommandBarCommands or {}
 
     -- Init module
     AprRC.settings:InitializeBlizOptions()
+    AprRC.CommandBar:OnInit()
     AprRC.record:OnInit()
     AprRC.event:MyRegisterEvent()
     AprRC:saveQuestInfo()

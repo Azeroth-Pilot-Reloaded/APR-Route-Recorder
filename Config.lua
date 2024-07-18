@@ -47,8 +47,8 @@ function AprRC.settings:InitializeSettings()
             commandsBarFrame = {
                 rotation = "HORIZONTAL",
                 position = {},
-                isRecording = false,
             },
+            commandBarSettingFrame = {},
             --debug
             minimap = { minimapPos = 285 },
             enableMinimapButton = true,
