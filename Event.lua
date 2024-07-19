@@ -29,7 +29,8 @@ local events = {
     buy = "MERCHANT_SHOW",
     qpart = "QUEST_WATCH_UPDATE",
     loot = "CHAT_MSG_LOOT",
-    target = "PLAYER_TARGET_CHANGED"
+    target = "PLAYER_TARGET_CHANGED",
+    portal = { "PLAYER_LEAVING_WORLD", "PLAYER_ENTERING_WORLD" }
     -- warMode = "WAR_MODE_STATUS_UPDATE",
     -- vehicle = { "UNIT_ENTERING_VEHICLE", "UNIT_EXITING_VEHICLE" },
 }
@@ -530,6 +531,45 @@ end
 
 function AprRC.event.functions.pet(event, ...)
     AprRC.record:RefreshFrameAnchor()
+end
+
+function AprRC.event.functions.portal(event, ...)
+    if event == "PLAYER_LEAVING_WORLD" then
+        local step = {}
+        AprRC:SetStepCoord(step)
+        AprRCData.BeforePortal.lastStep = AprRC:GetLastStep()
+        AprRCData.BeforePortal.lastCoord = step
+    else
+        local isInitialLogin, isReloadingUi = ...
+        -- wait 2s si last step = saved last step  alors waypoints + text prendre portal -- not skippable waypoints (new option)
+        -- sinon check IsCurrentStepFarAway si trop loin alors override coord + text prendre portal
+        -- pour les tp sans portail ni cast => LOSS_OF_CONTROL_ADDED into Zone changed indoors, waypoint update, area pois updated
+        -- pour les tp avec spell => spell list teleport (sans les spell de class) + unit spellcast-succeeded
+
+        if not isInitialLogin and not isReloadingUi then
+            C_Timer.After(3, function()
+                local last = AprRC:GetLastStep()
+                if AprRC:DeepCompare(AprRCData.BeforePortal.lastStep, last) then
+                    local step = {
+                        Waypoint = AprRC:FindClosestIncompleteQuest(),
+                        ExtraLineText = "USE_PORTAL",
+                        Coord = AprRCData.BeforePortal.lastStep.Coord
+                    }
+                    AprRC:NewStep(step)
+                    print("|cff00bfffWaypoint|r Added")
+                elseif AprRC:IsCurrentStepFarAway() then
+                    local last = AprRC:GetLastStep()
+                    last.Coord = AprRCData.BeforePortal.lastStep.Coord
+                    last.ExtraLineText = "USE_PORTAL"
+                    AprRCData.BeforePortal = {}
+                    print("|cff00bfffLast Step coord updated|r Added")
+                end
+            end)
+        end
+        if isInitialLogin then
+            AprRCData.BeforePortal = {}
+        end
+    end
 end
 
 ---------------------

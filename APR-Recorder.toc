@@ -1,5 +1,5 @@
-## Interface: 100207
-## X-Min-Interface: 100205
+## Interface: 110002
+## X-Min-Interface: 110000
 
 ## Title: Azeroth Pilot Reloaded - [|cffeda55fRoute Recorder|r]
 ## Notes: A route recorder for Azeroth Pilot Reloaded
@@ -16,7 +16,7 @@
 ## X-Discord: https://discord.gg/YgcdybKdWX
 ## X-Curse-Project-ID: 965240
 ## X-Wago-ID: rN4VYvKD
-## X-WoWI-ID: ------
+## X-WoWI-ID: 26704
 
 libs/embeds.xml
 locales/locales.xml
@@ -29,12 +29,13 @@ helper/RouteManagement.lua
 Commands.lua
 Event.lua
 
-frames/autocompleteLocales.lua
+frames/autocomplete.lua
 frames/CommandsBar.lua
+frames/CommandsBarSetting.lua
 frames/exportExtraLineText.lua
 frames/exportRoute.lua
-frames/fillersSelection.lua
 frames/QuestionPopUp.lua
+frames/QuestObjectiveSelector.lua
 frames/RecorderBar.lua
 frames/routeSelector.lua
 frames/selectButton.lua

@@ -1,5 +1,6 @@
 local L = LibStub("AceLocale-3.0"):GetLocale("APR-Recorder")
 local L_APR = LibStub("AceLocale-3.0"):GetLocale("APR")
+local AceGUI = LibStub("AceGUI-3.0")
 
 AprRC.command = AprRC:NewModule("Command")
 
@@ -125,72 +126,94 @@ function AprRC.command:SlashCmd(input)
             print("|cff00bfffNoArrow|r Added")
             return
         elseif inputText == "text" or inputText == "txt" then
-            AprRC.autocomplete:Show()
+            AprRC.autocomplete:ShowLocaleAutoComplete()
             return
         elseif inputText == "button" or inputText == "btn" then
             AprRC.SelectButton:Show()
             return
         elseif inputText == "fillers" or inputText == "filler" then
-            AprRC.fillers:Show()
+            AprRC.QuestObjectiveSelector:Show({
+                title = "Fillers quest list",
+                statusText = "Click on an objective to add it as a filler",
+                questList = AprRC.QuestObjectiveSelector:GetQuestList(),
+                onClick = function(questID, objectiveID)
+                    local currentStep = AprRC:GetLastStep()
+                    if not currentStep.Fillers then
+                        currentStep.Fillers = {}
+                    end
+                    if not currentStep.Fillers[questID] then
+                        currentStep.Fillers[questID] = {}
+                    end
+                    table.insert(currentStep.Fillers[questID], objectiveID)
+                    print("|cff00bfffFillers - [" ..
+                        C_QuestLog.GetTitleForQuestID(questID) .. "] - " .. objectiveID .. "|r Added")
+                end
+            })
             return
         elseif inputText == "spelltrigger" then
-            AprRC.questionDialog:CreateEditBoxPopupWithCallback("SpellTrigger (Spell ID)", function(text)
+            AprRC.autocomplete:ShowSpellAutoComplete(questID, objectiveID, function(_, spellID, frame)
                 local currentStep = AprRC:GetLastStep()
-                currentStep.SpellTrigger = tonumber(text, 10)
-                print("|cff00bfffSpellTrigger -" .. tonumber(text, 10) .. "|r Added")
+
+                currentStep.SpellTrigger = tonumber(spellID, 10)
+                print("|cff00bfff SpellTrigger |r Added")
+                AceGUI:Release(frame)
             end)
+
             return
         elseif inputText == "pickupdb" then
             if AprRC:HasStepOption("PickUp") then
-                AprRC.questionDialog:CreateEditBoxPopupWithCallback("PickUp DB (QuestID)", function(questId)
-                    local currentStep = AprRC:GetLastStep()
-                    if AprRC:HasStepOption("PickUpDB") then
-                        tinsert(currentStep.PickUpDB, tonumber(questId, 10))
-                    else
-                        currentStep.PickUpDB = { tonumber(questId, 10) }
-                        for _, qID in pairs(currentStep.PickUp) do
-                            tinsert(currentStep.PickUpDB, qID)
+                AprRC.questionDialog:CreateEditBoxPopupWithCallback("PickUp DB (QuestID) - Also add PickUp QuestID",
+                    function(questId)
+                        local currentStep = AprRC:GetLastStep()
+                        if AprRC:HasStepOption("PickUpDB") then
+                            tinsert(currentStep.PickUpDB, tonumber(questId, 10))
+                        else
+                            currentStep.PickUpDB = { tonumber(questId, 10) }
+                            for _, qID in pairs(currentStep.PickUp) do
+                                tinsert(currentStep.PickUpDB, qID)
+                            end
                         end
-                    end
-                    print("|cff00bfffPickUpDB - " .. tonumber(questId, 10) .. "|r Added")
-                end)
+                        print("|cff00bfffPickUpDB - " .. tonumber(questId, 10) .. "|r Added")
+                    end)
             else
                 AprRC:Error('Missing PickUp option on current step')
             end
             return
         elseif inputText == "qpartdb" then
             if AprRC:HasStepOption("Qpart") then
-                AprRC.questionDialog:CreateEditBoxPopupWithCallback("Qpart DB (QuestID)", function(questId)
-                    local currentStep = AprRC:GetLastStep()
-                    if AprRC:HasStepOption("QpartDB") then
-                        tinsert(currentStep.QpartDB, tonumber(questId, 10))
-                    else
-                        currentStep.QpartDB = { tonumber(questId, 10) }
+                AprRC.questionDialog:CreateEditBoxPopupWithCallback("Qpart DB (QuestID) - Also add Qpart QuestID",
+                    function(questId)
+                        local currentStep = AprRC:GetLastStep()
+                        if AprRC:HasStepOption("QpartDB") then
+                            tinsert(currentStep.QpartDB, tonumber(questId, 10))
+                        else
+                            currentStep.QpartDB = { tonumber(questId, 10) }
 
-                        for qID, _ in pairs(currentStep.Qpart) do
-                            tinsert(currentStep.QpartDB, qID)
+                            for qID, _ in pairs(currentStep.Qpart) do
+                                tinsert(currentStep.QpartDB, qID)
+                            end
                         end
-                    end
-                    print("|cff00bfffQpartDB - " .. tonumber(questId, 10) .. "|r Added")
-                end)
+                        print("|cff00bfffQpartDB - " .. tonumber(questId, 10) .. "|r Added")
+                    end)
             else
                 AprRC:Error('Missing Qpart option on current step')
             end
             return
         elseif inputText == "donedb" then
             if AprRC:HasStepOption("Done") then
-                AprRC.questionDialog:CreateEditBoxPopupWithCallback("Done DB (QuestID)", function(questId)
-                    local currentStep = AprRC:GetLastStep()
-                    if AprRC:HasStepOption("DoneDB") then
-                        tinsert(currentStep.DoneDB, tonumber(questId, 10))
-                    else
-                        currentStep.DoneDB = { tonumber(questId, 10) }
-                        for _, qID in pairs(currentStep.Done) do
-                            tinsert(currentStep.DoneDB, qID)
+                AprRC.questionDialog:CreateEditBoxPopupWithCallback("Done DB (QuestID) - Also add Done QuestID",
+                    function(questId)
+                        local currentStep = AprRC:GetLastStep()
+                        if AprRC:HasStepOption("DoneDB") then
+                            tinsert(currentStep.DoneDB, tonumber(questId, 10))
+                        else
+                            currentStep.DoneDB = { tonumber(questId, 10) }
+                            for _, qID in pairs(currentStep.Done) do
+                                tinsert(currentStep.DoneDB, qID)
+                            end
                         end
-                    end
-                    print("|cff00bfffDoneDB - " .. tonumber(questId, 10) .. "|r Added")
-                end)
+                        print("|cff00bfffDoneDB - " .. tonumber(questId, 10) .. "|r Added")
+                    end)
             else
                 AprRC:Error('Missing Done option on current step')
             end
@@ -225,17 +248,21 @@ function AprRC.command:SlashCmd(input)
             print("|cff00bfffClass - " .. select(2, UnitClass("player")) .. "|r Added")
             return
         elseif inputText == "achievement" then
-            AprRC.questionDialog:CreateEditBoxPopupWithCallback("Has Achievement (ID)", function(text)
+            AprRC.autocomplete:ShowAchievementAutoComplete(function(name, achievementID, frame)
                 local currentStep = AprRC:GetLastStep()
-                currentStep.HasAchievement = tonumber(text, 10)
-                print("|cff00bfffHasAchievement - " .. tonumber(text, 10) .. "|r Added")
+                currentStep.HasAchievement = tonumber(achievementID, 10)
+                print("|cff00bfffHasAchievement - " .. name .. "|r Added")
+
+                AceGUI:Release(frame)
             end)
             return
         elseif inputText == "noachievement" then
-            AprRC.questionDialog:CreateEditBoxPopupWithCallback("Dont Have Achievement (ID)", function(text)
+            AprRC.autocomplete:ShowAchievementAutoComplete(function(name, achievementID, frame)
                 local currentStep = AprRC:GetLastStep()
-                currentStep.DontHaveAchievement = tonumber(text, 10)
-                print("|cff00bfffDontHaveAchievement - " .. tonumber(text, 10) .. "|r Added")
+                currentStep.DontHaveAchievement = tonumber(achievementID, 10)
+                print("|cff00bfffDontHaveAchievement - " .. name .. "|r Added")
+
+                AceGUI:Release(frame)
             end)
             return
         elseif inputText == "vehicle" then

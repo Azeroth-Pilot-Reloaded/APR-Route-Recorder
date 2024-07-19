@@ -21,6 +21,7 @@ function AprRC:Error(errorMessage, data)
         else
             DEFAULT_CHAT_FRAME:AddMessage(redColorCode .. L["ERROR"] .. ": " .. errorMessage .. "|r")
         end
+        UIErrorsFrame:AddMessage(errorMessage, 1, 0, 0, 1, 5)
     end
 end
 
@@ -37,6 +38,19 @@ function AprRC:Contains(list, x)
         end
     end
     return false
+end
+
+function AprRC:DeepCompare(t1, t2)
+    if t1 == t2 then return true end
+    if type(t1) ~= "table" or type(t2) ~= "table" then return false end
+    for k1, v1 in pairs(t1) do
+        local v2 = t2[k1]
+        if v2 == nil or not deepCompare(v1, v2) then return false end
+    end
+    for k2, v2 in pairs(t2) do
+        if t1[k2] == nil then return false end
+    end
+    return true
 end
 
 function AprRC:IsTableEmpty(table)
@@ -124,7 +138,7 @@ local function qpartTableToString(tbl, level, parrentKey)
     for _, k in ipairs(keys) do
         local v = tbl[k]
         local keyStr = ''
-        if parrentKey == "Button" then
+        if parrentKey == "Button" or parrentKey == "SpellButton" then
             keyStr = '["' .. tostring(k) .. '"] = '
         else
             keyStr = "[" .. k .. "] = "
@@ -162,7 +176,7 @@ function AprRC:RouteToString(tbl, level)
                 str = str .. itemIndent .. keyStr .. "{}" .. ",\n"
             else
                 local valueStr
-                if k == "Qpart" or k == "Fillers" or k == "Button" then
+                if k == "Qpart" or k == "Fillers" or k == "Button" or k == "SpellButton" then
                     valueStr = qpartTableToString(v, level + 1, k)
                 else
                     valueStr = self:RouteToString(v, level + 1)

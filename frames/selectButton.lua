@@ -17,51 +17,49 @@ function AprRC.SelectButton:Show()
     buttonGroup:SetLayout("Flow")
     frame:AddChild(buttonGroup)
 
-    local btnItem = AceGUI:Create("Button")
-    btnItem:SetText("Item")
-    btnItem:SetFullWidth(true)
-    btnItem:SetCallback("OnClick", function()
-        AceGUI:Release(frame)
-        AprRC.questionDialog:CreateEditBoxPopupWithCallback("QuestID for the button (ID)", function(questID)
-            C_Timer.After(0.2, function()
-                AprRC.questionDialog:CreateEditBoxPopupWithCallback("Objective index of the quest", function(index)
-                    C_Timer.After(0.2, function()
-                        AprRC.questionDialog:CreateEditBoxPopupWithCallback("Item Button (ID)", function(itemID)
-                            local currentStep = AprRC:GetLastStep()
-                            if not currentStep.Button then
-                                currentStep.Button = {}
-                            end
-                            currentStep.Button[questID .. "-" .. index] = tonumber(itemID, 10)
-                            print("|cff00bfff Button |r Added")
-                        end)
-                    end)
-                end)
-            end)
+    local function AddButton(text, callback)
+        local button = AceGUI:Create("Button")
+        button:SetText(text)
+        button:SetFullWidth(true)
+        button:SetCallback("OnClick", function()
+            AceGUI:Release(frame)
+            callback()
         end)
-    end)
-    buttonGroup:AddChild(btnItem)
+        buttonGroup:AddChild(button)
+    end
 
-    local btnSpell = AceGUI:Create("Button")
-    btnSpell:SetText("Spell")
-    btnSpell:SetFullWidth(true)
-    btnSpell:SetCallback("OnClick", function()
-        AceGUI:Release(frame)
-        AprRC.questionDialog:CreateEditBoxPopupWithCallback("QuestID for the button (ID)", function(questID)
-            C_Timer.After(0.2, function()
-                AprRC.questionDialog:CreateEditBoxPopupWithCallback("Objective index of the quest", function(index)
-                    C_Timer.After(0.2, function()
-                        AprRC.questionDialog:CreateEditBoxPopupWithCallback("Spell Button (ID)", function(spellID)
-                            local currentStep = AprRC:GetLastStep()
-                            if not currentStep.SpellButton then
-                                currentStep.SpellButton = {}
-                            end
-                            currentStep.SpellButton[questID .. "-" .. index] = tonumber(spellID, 10)
-                            print("|cff00bfff SpellButton |r Added")
-                        end)
-                    end)
-                end)
+    AddButton("Item", function() self:ShowQuestSelector("Item") end)
+    AddButton("Spell", function() self:ShowQuestSelector("Spell") end)
+end
+
+function AprRC.SelectButton:ShowQuestSelector(type)
+    local questList = AprRC.QuestObjectiveSelector:GetQuestListFromLastStep()
+    if #questList == 0 then
+        AprRC:Error("No Qpart or Filler quests available on your last step")
+        return
+    end
+
+    local callback
+    if type == "Item" then
+        callback = function(questID, objectiveID)
+            AprRC.autocomplete:ShowItemAutoComplete(questID, objectiveID)
+        end
+    elseif type == "Spell" then
+        callback = function(questID, objectiveID)
+            AprRC.autocomplete:ShowSpellAutoComplete(questID, objectiveID, function(_, spellID, frame)
+                local currentStep = AprRC:GetLastStep()
+                if not currentStep.SpellButton then
+                    currentStep.SpellButton = {}
+                end
+                currentStep.SpellButton[questID .. "-" .. objectiveID] = tonumber(spellID, 10)
+                print("|cff00bfff SpellButton |r Added")
+                AceGUI:Release(frame)
             end)
-        end)
-    end)
-    buttonGroup:AddChild(btnSpell)
+        end
+    end
+
+    AprRC.QuestObjectiveSelector:Show({
+        questList = questList,
+        onClick = callback
+    })
 end
