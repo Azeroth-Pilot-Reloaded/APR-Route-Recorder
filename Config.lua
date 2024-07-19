@@ -44,7 +44,7 @@ function AprRC.settings:InitializeSettings()
                 position = {},
                 isRecording = false,
             },
-            commandsBarFrame = {
+            commandBarFrame = {
                 rotation = "HORIZONTAL",
                 position = {},
             },

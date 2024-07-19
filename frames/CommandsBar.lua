@@ -3,16 +3,16 @@ local L = LibStub("AceLocale-3.0"):GetLocale("APR-Recorder")
 local LibWindow = LibStub("LibWindow-1.1")
 
 AprRC.CommandBar = AprRC:NewModule('CommandBar')
+AprRC.CommandBar.btnList = {}
 
 local FRAME_WIDTH = 80
 local FRAME_HEIGHT = 35
-
-AprRC.CommandBar.btnList = {}
 
 ---------------------------------------------------------------------------------------
 --------------------------------- CommandBar Frames -----------------------------------
 ---------------------------------------------------------------------------------------
 
+print('OUIIIIIIIIIIIIIIIIIIIII')
 local CommandBarFrame = CreateFrame("Frame", "CommandBarFrame", UIParent, "BackdropTemplate")
 CommandBarFrame:SetSize(FRAME_WIDTH, FRAME_HEIGHT)
 CommandBarFrame:SetFrameStrata("MEDIUM")

@@ -87,11 +87,9 @@ updateBtn:SetScript("OnClick", function()
     AprRC.settings:OpenSettings(AprRC.title)
 end)
 
-
 ---------------------------------------------------------------------------------------
 ----------------------------- Function Recorder Frames --------------------------------
 ---------------------------------------------------------------------------------------
-
 
 function AprRC.record:OnInit()
     LibWindow.RegisterConfig(RecordBarFrame, AprRC.settings.profile.recordBarFrame.position)
