@@ -82,8 +82,8 @@ rotationBtn:SetScript("OnClick", function()
     AprRC.record:AdjustBarRotation(RecordBarFrame)
 end)
 
-local updateBtn = CreateButton(RecordBarFrame, "Interface\\AddOns\\APR-Recorder\\assets\\icons\\settings", "Settings")
-updateBtn:SetScript("OnClick", function()
+local settingsBtn = CreateButton(RecordBarFrame, "Interface\\AddOns\\APR-Recorder\\assets\\icons\\settings", "Settings")
+settingsBtn:SetScript("OnClick", function()
     AprRC.settings:OpenSettings(AprRC.title)
 end)
 
@@ -113,7 +113,7 @@ function AprRC.record:RefreshFrameAnchor()
 end
 
 function AprRC.record:AdjustBarRotation(bar)
-    local buttons = { recordBtn, updateBtn, rotationBtn }
+    local buttons = { recordBtn, rotationBtn, settingsBtn }
     local spacing = 10
     local offsetX, offsetY = 5, -5
     local rotation = AprRC.settings.profile.recordBarFrame.rotation
