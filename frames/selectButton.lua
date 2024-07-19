@@ -46,7 +46,15 @@ function AprRC.SelectButton:ShowQuestSelector(type)
         end
     elseif type == "Spell" then
         callback = function(questID, objectiveID)
-            AprRC.autocomplete:ShowSpellAutoComplete(questID, objectiveID)
+            AprRC.autocomplete:ShowSpellAutoComplete(questID, objectiveID, function(_, spellID, frame)
+                local currentStep = AprRC:GetLastStep()
+                if not currentStep.SpellButton then
+                    currentStep.SpellButton = {}
+                end
+                currentStep.SpellButton[questID .. "-" .. objectiveID] = tonumber(spellID, 10)
+                print("|cff00bfff SpellButton |r Added")
+                AceGUI:Release(frame)
+            end)
         end
     end
 

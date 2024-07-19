@@ -174,7 +174,7 @@ function AprRC.autocomplete:ShowItemAutoComplete(questID, objectiveID)
     )
 end
 
-function AprRC.autocomplete:ShowSpellAutoComplete(questID, objectiveID)
+function AprRC.autocomplete:ShowSpellAutoComplete(questID, objectiveID, onConfirm)
     local spellList = {}
     for i = 1, C_SpellBook.GetNumSpellBookSkillLines() do
         local skillLineInfo = C_SpellBook.GetSpellBookSkillLineInfo(i)
@@ -189,15 +189,7 @@ function AprRC.autocomplete:ShowSpellAutoComplete(questID, objectiveID)
     self:ShowAutoComplete(
         "Select Spell",
         spellList,
-        function(_, spellID, frame)
-            local currentStep = AprRC:GetLastStep()
-            if not currentStep.SpellButton then
-                currentStep.SpellButton = {}
-            end
-            currentStep.SpellButton[questID .. "-" .. objectiveID] = tonumber(spellID, 10)
-            print("|cff00bfff SpellButton |r Added")
-            AceGUI:Release(frame)
-        end,
+        onConfirm,
         function(match)
             local spellInfo = C_Spell.GetSpellInfo(match.key)
             if spellInfo then

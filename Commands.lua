@@ -1,5 +1,6 @@
 local L = LibStub("AceLocale-3.0"):GetLocale("APR-Recorder")
 local L_APR = LibStub("AceLocale-3.0"):GetLocale("APR")
+local AceGUI = LibStub("AceGUI-3.0")
 
 AprRC.command = AprRC:NewModule("Command")
 
@@ -150,11 +151,14 @@ function AprRC.command:SlashCmd(input)
             })
             return
         elseif inputText == "spelltrigger" then
-            AprRC.questionDialog:CreateEditBoxPopupWithCallback("SpellTrigger (Spell ID)", function(text)
+            AprRC.autocomplete:ShowSpellAutoComplete(questID, objectiveID, function(_, spellID, frame)
                 local currentStep = AprRC:GetLastStep()
-                currentStep.SpellTrigger = tonumber(text, 10)
-                print("|cff00bfffSpellTrigger -" .. tonumber(text, 10) .. "|r Added")
+
+                currentStep.SpellTrigger = tonumber(spellID, 10)
+                print("|cff00bfff SpellTrigger |r Added")
+                AceGUI:Release(frame)
             end)
+
             return
         elseif inputText == "pickupdb" then
             if AprRC:HasStepOption("PickUp") then

@@ -8,6 +8,7 @@ function AprRC.questionDialog:CreateEditBoxPopupWithCallback(text, onAcceptCallb
         text = text or "General Kenobi",
         hasEditBox = true,
         button1 = CONTINUE,
+        button2 = CANCEL,
         OnShow = function(self)
             local box = _G[self:GetName() .. "EditBox"]
             local button = _G[self:GetName() .. "Button1"] -- Récupère le bouton OK
