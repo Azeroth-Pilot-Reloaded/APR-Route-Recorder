@@ -248,17 +248,21 @@ function AprRC.command:SlashCmd(input)
             print("|cff00bfffClass - " .. select(2, UnitClass("player")) .. "|r Added")
             return
         elseif inputText == "achievement" then
-            AprRC.questionDialog:CreateEditBoxPopupWithCallback("Has Achievement (ID)", function(text)
+            AprRC.autocomplete:ShowAchievementAutoComplete(function(name, achievementID, frame)
                 local currentStep = AprRC:GetLastStep()
-                currentStep.HasAchievement = tonumber(text, 10)
-                print("|cff00bfffHasAchievement - " .. tonumber(text, 10) .. "|r Added")
+                currentStep.HasAchievement = tonumber(achievementID, 10)
+                print("|cff00bfffHasAchievement - " .. name .. "|r Added")
+
+                AceGUI:Release(frame)
             end)
             return
         elseif inputText == "noachievement" then
-            AprRC.questionDialog:CreateEditBoxPopupWithCallback("Dont Have Achievement (ID)", function(text)
+            AprRC.autocomplete:ShowAchievementAutoComplete(function(name, achievementID, frame)
                 local currentStep = AprRC:GetLastStep()
-                currentStep.DontHaveAchievement = tonumber(text, 10)
-                print("|cff00bfffDontHaveAchievement - " .. tonumber(text, 10) .. "|r Added")
+                currentStep.DontHaveAchievement = tonumber(achievementID, 10)
+                print("|cff00bfffDontHaveAchievement - " .. name .. "|r Added")
+
+                AceGUI:Release(frame)
             end)
             return
         elseif inputText == "vehicle" then

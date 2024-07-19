@@ -201,3 +201,28 @@ function AprRC.autocomplete:ShowSpellAutoComplete(questID, objectiveID, onConfir
         true
     )
 end
+
+function AprRC.autocomplete:ShowAchievementAutoComplete(onConfirm)
+    local achievementList = {}
+    for _, catId in ipairs(GetCategoryList()) do
+        for i = 1, GetCategoryNumAchievements(catId) do
+            local id, name = GetAchievementInfo(catId, i)
+            if id and name then
+                achievementList[id] = name
+            end
+        end
+    end
+
+    self:ShowAutoComplete(
+        "Select Achievement",
+        achievementList,
+        onConfirm,
+        function(match)
+            local id, name, _, _, _, _, _, _, _, icon = GetAchievementInfo(match.key)
+            return "|T" .. icon .. ":35:35|t " .. name
+        end,
+        500,
+        450,
+        true
+    )
+end
