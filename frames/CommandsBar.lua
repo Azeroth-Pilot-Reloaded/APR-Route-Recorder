@@ -11,8 +11,6 @@ local FRAME_HEIGHT = 35
 ---------------------------------------------------------------------------------------
 --------------------------------- CommandBar Frames -----------------------------------
 ---------------------------------------------------------------------------------------
-
-print('OUIIIIIIIIIIIIIIIIIIIII')
 local CommandBarFrame = CreateFrame("Frame", "CommandBarFrame", UIParent, "BackdropTemplate")
 CommandBarFrame:SetSize(FRAME_WIDTH, FRAME_HEIGHT)
 CommandBarFrame:SetFrameStrata("MEDIUM")

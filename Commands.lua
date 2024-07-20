@@ -219,6 +219,25 @@ function AprRC.command:SlashCmd(input)
             end
             return
         elseif inputText == "qpartpart" then
+            AprRC.QuestObjectiveSelector:Show({
+                title = "Qpartpart quest list",
+                statusText = "Click on an objective to create a Qpartpart ",
+                questList = AprRC.QuestObjectiveSelector:GetQuestList(),
+                onClick = function(questID, objectiveID)
+                    AprRC.questionDialog:CreateEditBoxPopupWithCallback("Text Trigger for Qpart Part", function(text)
+                        local step = {
+                            TrigText = text,
+                            QpartPart = { [questID] = { objectiveID } }
+                        }
+                        AprRC:SetStepCoord(step)
+                        AprRC:NewStep(step)
+                        print("|cff00bfffQpartPart - [" ..
+                            C_QuestLog.GetTitleForQuestID(questID) .. "] - " .. objectiveID .. "|r Added")
+                        print("|cff00bfffTrigText - " .. text .. "|r Added")
+                    end)
+                end
+            })
+            return
         elseif inputText == "zonetrigger" then
             local currentStep = AprRC:GetLastStep()
             local y, x = UnitPosition("player")

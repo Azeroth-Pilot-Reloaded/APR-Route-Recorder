@@ -195,7 +195,7 @@ function AprRC.event.functions.spell(event, unitTarget, castGUID, spellID)
             key = "UseDalaHS"
         elseif spellID == APR.garrisonHSSpellID then
             key = "UseGarrisonHS"
-        elseif AprRC:Contains(APR.hearthStoneSpellID, spellID) then
+        elseif tContains(APR.hearthStoneSpellID, spellID) then
             key = "UseHS"
         elseif spellID == 126389 then
             local currentStep = AprRC:GetLastStep()
@@ -239,11 +239,11 @@ local function SetGossipOptionID(self)
     local gossipInfo = self:GetData().info
     local gossipIcon = gossipInfo.icon
     local gossipOptionID = gossipInfo.gossipOptionID
-    if gossipIcon == 132053 and not AprRC:Contains({ 51901, 51902 }, gossipOptionID) then --bubble icon and not chromie select timeline
+    if gossipIcon == 132053 and not tContains({ 51901, 51902 }, gossipOptionID) then --bubble icon and not chromie select timeline
         if not AprRC:IsCurrentStepFarAway() then
             local currentStep = AprRC:GetLastStep()
             if AprRC:HasStepOption("GossipOptionIDs") then
-                if not AprRC:Contains(currentStep["GossipOptionIDs"], gossipOptionID) then
+                if not tContains(currentStep["GossipOptionIDs"], gossipOptionID) then
                     tinsert(currentStep["GossipOptionIDs"], gossipOptionID)
                 end
             else
@@ -356,7 +356,7 @@ function AprRC.event.functions.fly(event, ...)
             currentStep.NodeID = taxiNodeId
 
             --Boat
-            if AprRC:Contains(boatsNodeID, AprRC.CurrentTaxiNode) then
+            if tContains(boatsNodeID, AprRC.CurrentTaxiNode) then
                 currentStep.Boat = 1
             end
 

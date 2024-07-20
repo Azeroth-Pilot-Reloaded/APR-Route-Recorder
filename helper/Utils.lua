@@ -25,21 +25,6 @@ function AprRC:Error(errorMessage, data)
     end
 end
 
---- Contain data in list
----@param list array list
----@param x object object to check if in the list
----@return true|false Boolean
-function AprRC:Contains(list, x)
-    if list then
-        for _, v in pairs(list) do
-            if v == x then
-                return true
-            end
-        end
-    end
-    return false
-end
-
 function AprRC:DeepCompare(t1, t2)
     if t1 == t2 then return true end
     if type(t1) ~= "table" or type(t2) ~= "table" then return false end
@@ -160,6 +145,7 @@ function AprRC:RouteToString(tbl, level)
     local indent = string.rep("    ", level)
     local str = "{\n"
     local itemIndent = string.rep("    ", level + 1)
+    local qpartTableLis = { "Fillers", "Qpart", "QpartPart", "Button", "SpellButton" }
 
     local keys = {}
     for k in pairs(tbl) do
@@ -176,7 +162,7 @@ function AprRC:RouteToString(tbl, level)
                 str = str .. itemIndent .. keyStr .. "{}" .. ",\n"
             else
                 local valueStr
-                if k == "Qpart" or k == "Fillers" or k == "Button" or k == "SpellButton" then
+                if tContains(qpartTableLis, k) then
                     valueStr = qpartTableToString(v, level + 1, k)
                 else
                     valueStr = self:RouteToString(v, level + 1)
