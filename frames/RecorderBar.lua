@@ -20,10 +20,13 @@ RecordBarFrame:SetBackdropColor(unpack(AprRC.Backdrop.defaultBackdrop))
 local function UpdateRecordButton(button)
     if AprRC.settings.profile.recordBarFrame.isRecording then
         button.icon:SetTexture("Interface\\AddOns\\APR-Recorder\\assets\\icons\\stop")
+        APR.settings.profile.enableAddon = false
     else
         button.icon:SetTexture("Interface\\AddOns\\APR-Recorder\\assets\\icons\\rec")
+        APR.settings.profile.enableAddon = true
     end
     AprRC.CommandBar:RefreshFrameAnchor()
+    APR.settings:ToggleAddon()
 end
 
 local function CreateButton(parent, iconPath, message)
