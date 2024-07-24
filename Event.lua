@@ -572,6 +572,8 @@ function AprRC.event.functions.portal(event, ...)
     end
 end
 
+C_Scenario.GetInfo()
+
 ---------------------
 -- V2
 ---------------------
