@@ -229,7 +229,7 @@ function AprRC.command:SlashCmd(input)
                             TrigText = text,
                             QpartPart = { [questID] = { objectiveID } }
                         }
-                        AprRC:SetStepCoord(step)
+                        AprRC:SetStepCoord(step, 5)
                         AprRC:NewStep(step)
                         print("|cff00bfffQpartPart - [" ..
                             C_QuestLog.GetTitleForQuestID(questID) .. "] - " .. objectiveID .. "|r Added")
