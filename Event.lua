@@ -30,7 +30,8 @@ local events = {
     qpart = "QUEST_WATCH_UPDATE",
     loot = "CHAT_MSG_LOOT",
     target = "PLAYER_TARGET_CHANGED",
-    portal = { "PLAYER_LEAVING_WORLD", "PLAYER_ENTERING_WORLD" }
+    scenario = { "SCENARIO_CRITERIA_UPDATE", "SCENARIO_COMPLETED" },
+    portal = { "PLAYER_LEAVING_WORLD", "PLAYER_ENTERING_WORLD" },
     -- warMode = "WAR_MODE_STATUS_UPDATE",
     -- vehicle = { "UNIT_ENTERING_VEHICLE", "UNIT_EXITING_VEHICLE" },
 }
@@ -533,6 +534,42 @@ function AprRC.event.functions.pet(event, ...)
     AprRC.record:RefreshFrameAnchor()
 end
 
+function AprRC.event.functions.scenario(event, ...)
+    local isIntance, type = IsInInstance()
+    if not istance or (isIntance and type == "scenario") then
+        if event == "SCENARIO_CRITERIA_UPDATE" then
+            local criteriaID = ...
+            local scenarioInfo = C_ScenarioInfo.GetScenarioInfo()
+            if not scenarioInfo then return end
+
+            local scenarioID = scenarioInfo.scenarioID
+            local stepInfo = C_ScenarioInfo.GetScenarioStepInfo()
+            if not stepInfo then return end
+            for i = 1, stepInfo.numCriteria do
+                local criteria = C_ScenarioInfo.GetCriteriaInfoByStep(stepInfo.stepID, i)
+                if criteria.criteriaID == criteriaID and criteria.completed then
+                    local step = { Scenario = { scenarioID = scenarioID, criteriaID = criteriaID } }
+                    if AprRC:IsInInstanceQuest() then
+                        step.InstanceQuest = true
+                    end
+                    AprRC:SetStepCoord(step)
+                    AprRC:NewStep(step)
+                    break
+                end
+            end
+        elseif event == "SCENARIO_COMPLETED" then
+            local scenarioInfo = C_ScenarioInfo.GetScenarioInfo()
+            if not scenarioInfo then return end
+            local step = { ScenarioDone = scenarioInfo.scenarioID }
+
+            step.InstanceQuest = true
+
+            AprRC:SetStepCoord(step)
+            AprRC:NewStep(step)
+        end
+    end
+end
+
 function AprRC.event.functions.portal(event, ...)
     if event == "PLAYER_LEAVING_WORLD" then
         local step = {}
@@ -550,13 +587,16 @@ function AprRC.event.functions.portal(event, ...)
             C_Timer.After(3, function()
                 local last = AprRC:GetLastStep()
                 if AprRC:DeepCompare(AprRCData.BeforePortal.lastStep, last) then
-                    local step = {
-                        Waypoint = AprRC:FindClosestIncompleteQuest(),
-                        ExtraLineText = "USE_PORTAL",
-                        Coord = AprRCData.BeforePortal.lastStep.Coord
-                    }
-                    AprRC:NewStep(step)
-                    print("|cff00bfffWaypoint|r Added")
+                    APR.questionDialog:CreateQuestionPopup(
+                        "Set a waypoint where you were before teleporting?", function()
+                            local step = {
+                                Waypoint = AprRC:FindClosestIncompleteQuest(),
+                                ExtraLineText = "USE_PORTAL",
+                                Coord = AprRCData.BeforePortal.lastStep.Coord
+                            }
+                            AprRC:NewStep(step)
+                            print("|cff00bfffWaypoint|r Added")
+                        end)
                 elseif AprRC:IsCurrentStepFarAway() then
                     local last = AprRC:GetLastStep()
                     last.Coord = AprRCData.BeforePortal.lastStep.Coord
@@ -571,8 +611,6 @@ function AprRC.event.functions.portal(event, ...)
         end
     end
 end
-
-C_Scenario.GetInfo()
 
 ---------------------
 -- V2
