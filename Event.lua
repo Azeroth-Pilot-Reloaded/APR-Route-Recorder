@@ -136,7 +136,7 @@ function AprRC.event.functions.accept(event, questId)
     end
     if not AprRC:IsCurrentStepFarAway() and AprRC:HasStepOption("PickUp") then
         local currentStep = AprRC:GetLastStep()
-        tinsert(currentStep["PickUp"], questId)
+        tinsert(currentStep.PickUp, questId)
     else
         local step = { PickUp = { questId } }
         AprRC:SetStepCoord(step)
@@ -151,7 +151,7 @@ function AprRC.event.functions.remove(event, questId, ...)
     if not C_QuestLog.IsQuestFlaggedCompleted(questId) then
         if AprRC:HasStepOption("LeaveQuests") then
             local currentStep = AprRC:GetLastStep()
-            tinsert(currentStep["LeaveQuests"], questId)
+            tinsert(currentStep.LeaveQuests, questId)
         else
             local step = { LeaveQuests = { questId } }
             step.Zone = AprRC:getZone()
@@ -165,7 +165,7 @@ end
 function AprRC.event.functions.done(event, questId, ...)
     if not AprRC:IsCurrentStepFarAway() and AprRC:HasStepOption("Done") then
         local currentStep = AprRC:GetLastStep()
-        tinsert(currentStep["Done"], questId)
+        tinsert(currentStep.Done, questId)
     else
         local step = { Done = { questId } }
         AprRC:SetStepCoord(step)
@@ -176,7 +176,7 @@ function AprRC.event.functions.done(event, questId, ...)
 end
 
 function AprRC.event.functions.raidIcon(...)
-    local targetId = _G.GetTargetID()
+    local targetId = APR:GetTargetID()
     if targetId then
         local currentStep = AprRC:GetLastStep()
         currentStep.RaidIcon = targetId
@@ -231,7 +231,7 @@ function AprRC.event.functions.vehicle(event, ...)
     if event == "UNIT_EXITING_VEHICLE" then
         if not AprRC:HasStepOption("VehicleExit") then
             local currentStep = AprRC:GetLastStep()
-            currentStep["VehicleExit"] = 1
+            currentStep.VehicleExit = 1
         end
     end
 end
@@ -240,18 +240,28 @@ local function SetGossipOptionID(self)
     local gossipInfo = self:GetData().info
     local gossipIcon = gossipInfo.icon
     local gossipOptionID = gossipInfo.gossipOptionID
-    if gossipIcon == 132053 and not tContains({ 51901, 51902 }, gossipOptionID) then --bubble icon and not chromie select timeline
+    local npcID = APR:GetTargetID("npc")
+
+    if gossipIcon == 132053 and not tContains({ 51901, 51902 }, gossipOptionID) then -- bubble icon and not Chromie select timeline
         if not AprRC:IsCurrentStepFarAway() then
             local currentStep = AprRC:GetLastStep()
             if AprRC:HasStepOption("GossipOptionIDs") then
-                if not tContains(currentStep["GossipOptionIDs"], gossipOptionID) then
-                    tinsert(currentStep["GossipOptionIDs"], gossipOptionID)
+                if not tContains(currentStep.GossipOptionIDs, gossipOptionID) then
+                    tinsert(currentStep.GossipOptionIDs, gossipOptionID)
                 end
             else
-                currentStep["GossipOptionIDs"] = { gossipOptionID }
+                currentStep.GossipOptionIDs = { gossipOptionID }
+            end
+            if npcID then
+                if not currentStep.NPCIDs then
+                    currentStep.NPCIDs = {}
+                end
+                if not tContains(currentStep.NPCIDs, npcID) then
+                    tinsert(currentStep.NPCIDs, npcID)
+                end
             end
         else
-            local step = { GossipOptionIDs = { gossipOptionID } }
+            local step = { GossipOptionIDs = { gossipOptionID }, NPCIDs = { npcID } }
             AprRC:SetStepCoord(step)
             AprRC:NewStep(step)
         end
@@ -291,7 +301,7 @@ function AprRC.event.functions.emote(event, ...)
         if emote then
             local currentStep = AprRC:GetLastStep()
             if not AprRC:IsCurrentStepFarAway() and AprRC:HasStepOption("Emote") then
-                currentStep["Emote"] = emote
+                currentStep.Emote = emote
             else
                 local step = { Emote = emote }
                 AprRC:SetStepCoord(step)

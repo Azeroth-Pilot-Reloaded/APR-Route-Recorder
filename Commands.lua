@@ -287,7 +287,7 @@ function AprRC.command:SlashCmd(input)
         elseif inputText == "vehicle" then
             if not AprRC:HasStepOption("VehicleExit") then
                 local currentStep = AprRC:GetLastStep()
-                currentStep["VehicleExit"] = 1
+                currentStep.VehicleExit = 1
                 print("|cff00bfffDVehicleExit|r Added")
                 return
             end
