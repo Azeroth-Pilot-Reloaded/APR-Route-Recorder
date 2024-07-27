@@ -8,6 +8,7 @@ AprRC.event.framePool = {}
 AprRC.event.functions = {}
 
 local targetName, targetID
+local scenarioCriteriaLogged = {}
 
 ---------------------------------------------------------------------------------------
 ------------------------------------- EVENTS ------------------------------------------
@@ -545,8 +546,8 @@ function AprRC.event.functions.pet(event, ...)
 end
 
 function AprRC.event.functions.scenario(event, ...)
-    local isIntance, type = IsInInstance()
-    if not istance or (isIntance and type == "scenario") then
+    local isInstance, type = IsInInstance()
+    if not isInstance or (isInstance and type == "scenario") then
         if event == "SCENARIO_CRITERIA_UPDATE" then
             local criteriaID = ...
             local scenarioInfo = C_ScenarioInfo.GetScenarioInfo()
@@ -558,12 +559,15 @@ function AprRC.event.functions.scenario(event, ...)
             for i = 1, stepInfo.numCriteria do
                 local criteria = C_ScenarioInfo.GetCriteriaInfoByStep(stepInfo.stepID, i)
                 if criteria.criteriaID == criteriaID and criteria.completed then
-                    local step = { Scenario = { scenarioID = scenarioID, criteriaID = criteriaID } }
-                    if AprRC:IsInInstanceQuest() then
-                        step.InstanceQuest = true
+                    if not scenarioCriteriaLogged[criteriaID] then -- to avoid duplication of step
+                        local step = { Scenario = { scenarioID = scenarioID, criteriaID = criteriaID } }
+                        if AprRC:IsInInstanceQuest() then
+                            step.InstanceQuest = true
+                        end
+                        AprRC:SetStepCoord(step)
+                        AprRC:NewStep(step)
+                        scenarioCriteriaLogged[criteriaID] = true
                     end
-                    AprRC:SetStepCoord(step)
-                    AprRC:NewStep(step)
                     break
                 end
             end
@@ -576,6 +580,7 @@ function AprRC.event.functions.scenario(event, ...)
 
             AprRC:SetStepCoord(step)
             AprRC:NewStep(step)
+            scenarioCriteriaLogged = {}
         end
     end
 end
