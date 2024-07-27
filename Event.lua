@@ -564,7 +564,7 @@ function AprRC.event.functions.scenario(event, ...)
                         if AprRC:IsInInstanceQuest() then
                             step.InstanceQuest = true
                         end
-                        AprRC:SetStepCoord(step)
+                        AprRC:SetStepCoord(step, 5)
                         AprRC:NewStep(step)
                         scenarioCriteriaLogged[criteriaID] = true
                     end
