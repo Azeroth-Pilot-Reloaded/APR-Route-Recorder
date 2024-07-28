@@ -560,7 +560,7 @@ function AprRC.event.functions.scenario(event, ...)
                 local criteria = C_ScenarioInfo.GetCriteriaInfoByStep(stepInfo.stepID, i)
                 if criteria.criteriaID == criteriaID and criteria.completed then
                     if not scenarioCriteriaLogged[criteriaID] then -- to avoid duplication of step
-                        local step = { Scenario = { scenarioID = scenarioID, criteriaID = criteriaID } }
+                        local step = { Scenario = { scenarioID = scenarioID, stepID = stepInfo.stepID, criteriaID = criteriaID, criteriaIndex = i } }
                         if AprRC:IsInInstanceQuest() then
                             step.InstanceQuest = true
                         end
@@ -571,16 +571,16 @@ function AprRC.event.functions.scenario(event, ...)
                     break
                 end
             end
-        elseif event == "SCENARIO_COMPLETED" then
-            local scenarioInfo = C_ScenarioInfo.GetScenarioInfo()
-            if not scenarioInfo then return end
-            local step = { ScenarioDone = scenarioInfo.scenarioID }
+        -- elseif event == "SCENARIO_COMPLETED" then
+        --     local scenarioInfo = C_ScenarioInfo.GetScenarioInfo()
+        --     if not scenarioInfo then return end
+        --     local step = { ScenarioDone = scenarioInfo.scenarioID }
 
-            step.InstanceQuest = true
+        --     step.InstanceQuest = true
 
-            AprRC:SetStepCoord(step)
-            AprRC:NewStep(step)
-            scenarioCriteriaLogged = {}
+        --     AprRC:SetStepCoord(step)
+        --     AprRC:NewStep(step)
+        --     scenarioCriteriaLogged = {}
         end
     end
 end
