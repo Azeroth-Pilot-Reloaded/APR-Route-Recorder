@@ -31,7 +31,7 @@ local events = {
     qpart = "QUEST_WATCH_UPDATE",
     loot = "CHAT_MSG_LOOT",
     target = "PLAYER_TARGET_CHANGED",
-    scenario = { "SCENARIO_CRITERIA_UPDATE", "SCENARIO_COMPLETED" },
+    scenario = "SCENARIO_CRITERIA_UPDATE",
     portal = { "PLAYER_LEAVING_WORLD", "PLAYER_ENTERING_WORLD" },
     -- warMode = "WAR_MODE_STATUS_UPDATE",
     -- vehicle = { "UNIT_ENTERING_VEHICLE", "UNIT_EXITING_VEHICLE" },
@@ -548,39 +548,27 @@ end
 function AprRC.event.functions.scenario(event, ...)
     local isInstance, type = IsInInstance()
     if not isInstance or (isInstance and type == "scenario") then
-        if event == "SCENARIO_CRITERIA_UPDATE" then
-            local criteriaID = ...
-            local scenarioInfo = C_ScenarioInfo.GetScenarioInfo()
-            if not scenarioInfo then return end
+        local criteriaID = ...
+        local scenarioInfo = C_ScenarioInfo.GetScenarioInfo()
+        if not scenarioInfo then return end
 
-            local scenarioID = scenarioInfo.scenarioID
-            local stepInfo = C_ScenarioInfo.GetScenarioStepInfo()
-            if not stepInfo then return end
-            for i = 1, stepInfo.numCriteria do
-                local criteria = C_ScenarioInfo.GetCriteriaInfoByStep(stepInfo.stepID, i)
-                if criteria.criteriaID == criteriaID and criteria.completed then
-                    if not scenarioCriteriaLogged[criteriaID] then -- to avoid duplication of step
-                        local step = { Scenario = { scenarioID = scenarioID, stepID = stepInfo.stepID, criteriaID = criteriaID, criteriaIndex = i } }
-                        if AprRC:IsInInstanceQuest() then
-                            step.InstanceQuest = true
-                        end
-                        AprRC:SetStepCoord(step, 5)
-                        AprRC:NewStep(step)
-                        scenarioCriteriaLogged[criteriaID] = true
+        local scenarioID = scenarioInfo.scenarioID
+        local stepInfo = C_ScenarioInfo.GetScenarioStepInfo()
+        if not stepInfo then return end
+        for i = 1, stepInfo.numCriteria do
+            local criteria = C_ScenarioInfo.GetCriteriaInfoByStep(stepInfo.stepID, i)
+            if criteria.criteriaID == criteriaID and criteria.completed then
+                if not scenarioCriteriaLogged[criteriaID] then     -- to avoid duplication of step
+                    local step = { Scenario = { scenarioID = scenarioID, stepID = stepInfo.stepID, criteriaID = criteriaID, criteriaIndex = i } }
+                    if AprRC:IsInInstanceQuest() then
+                        step.InstanceQuest = true
                     end
-                    break
+                    AprRC:SetStepCoord(step, 5)
+                    AprRC:NewStep(step)
+                    scenarioCriteriaLogged[criteriaID] = true
                 end
+                break
             end
-        -- elseif event == "SCENARIO_COMPLETED" then
-        --     local scenarioInfo = C_ScenarioInfo.GetScenarioInfo()
-        --     if not scenarioInfo then return end
-        --     local step = { ScenarioDone = scenarioInfo.scenarioID }
-
-        --     step.InstanceQuest = true
-
-        --     AprRC:SetStepCoord(step)
-        --     AprRC:NewStep(step)
-        --     scenarioCriteriaLogged = {}
         end
     end
 end
