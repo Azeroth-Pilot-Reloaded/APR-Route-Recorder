@@ -253,16 +253,16 @@ local function SetGossipOptionID(self)
             else
                 currentStep.GossipOptionIDs = { gossipOptionID }
             end
-            if npcID then
-                if not currentStep.NPCIDs then
-                    currentStep.NPCIDs = {}
-                end
-                if not tContains(currentStep.NPCIDs, npcID) then
-                    tinsert(currentStep.NPCIDs, npcID)
-                end
-            end
+            -- if npcID then
+            --     if not currentStep.NPCIDs then
+            --         currentStep.NPCIDs = {}
+            --     end
+            --     if not tContains(currentStep.NPCIDs, npcID) then
+            --         tinsert(currentStep.NPCIDs, npcID)
+            --     end
+            -- end
         else
-            local step = { GossipOptionIDs = { gossipOptionID }, NPCIDs = { npcID } }
+            local step = { GossipOptionIDs = { gossipOptionID } } --, NPCIDs = { npcID } }
             AprRC:SetStepCoord(step)
             AprRC:NewStep(step)
         end
@@ -558,7 +558,7 @@ function AprRC.event.functions.scenario(event, ...)
         for i = 1, stepInfo.numCriteria do
             local criteria = C_ScenarioInfo.GetCriteriaInfoByStep(stepInfo.stepID, i)
             if criteria.criteriaID == criteriaID and criteria.completed then
-                if not scenarioCriteriaLogged[criteriaID] then     -- to avoid duplication of step
+                if not scenarioCriteriaLogged[criteriaID] then -- to avoid duplication of step
                     local step = { Scenario = { scenarioID = scenarioID, stepID = stepInfo.stepID, criteriaID = criteriaID, criteriaIndex = i } }
                     if AprRC:IsInInstanceQuest() then
                         step.InstanceQuest = true
