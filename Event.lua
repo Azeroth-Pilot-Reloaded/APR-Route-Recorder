@@ -546,29 +546,26 @@ function AprRC.event.functions.pet(event, ...)
 end
 
 function AprRC.event.functions.scenario(event, ...)
-    local isInstance, type = IsInInstance()
-    if not isInstance or (isInstance and type == "scenario") then
-        local criteriaID = ...
-        local scenarioInfo = C_ScenarioInfo.GetScenarioInfo()
-        if not scenarioInfo then return end
+    local criteriaID = ...
+    local scenarioInfo = C_ScenarioInfo.GetScenarioInfo()
+    if not scenarioInfo then return end
 
-        local scenarioID = scenarioInfo.scenarioID
-        local stepInfo = C_ScenarioInfo.GetScenarioStepInfo()
-        if not stepInfo then return end
-        for i = 1, stepInfo.numCriteria do
-            local criteria = C_ScenarioInfo.GetCriteriaInfoByStep(stepInfo.stepID, i)
-            if criteria.criteriaID == criteriaID and criteria.completed then
-                if not scenarioCriteriaLogged[criteriaID] then -- to avoid duplication of step
-                    local step = { Scenario = { scenarioID = scenarioID, stepID = stepInfo.stepID, criteriaID = criteriaID, criteriaIndex = i } }
-                    if AprRC:IsInInstanceQuest() then
-                        step.InstanceQuest = true
-                    end
-                    AprRC:SetStepCoord(step, 5)
-                    AprRC:NewStep(step)
-                    scenarioCriteriaLogged[criteriaID] = true
+    local scenarioID = scenarioInfo.scenarioID
+    local stepInfo = C_ScenarioInfo.GetScenarioStepInfo()
+    if not stepInfo then return end
+    for i = 1, stepInfo.numCriteria do
+        local criteria = C_ScenarioInfo.GetCriteriaInfoByStep(stepInfo.stepID, i)
+        if criteria.criteriaID == criteriaID and criteria.completed then
+            if not scenarioCriteriaLogged[criteriaID] then     -- to avoid duplication of step
+                local step = { Scenario = { scenarioID = scenarioID, stepID = stepInfo.stepID, criteriaID = criteriaID, criteriaIndex = i } }
+                if AprRC:IsInInstanceQuest() then
+                    step.InstanceQuest = true
                 end
-                break
+                AprRC:SetStepCoord(step, 5)
+                AprRC:NewStep(step)
+                scenarioCriteriaLogged[criteriaID] = true
             end
+            break
         end
     end
 end
