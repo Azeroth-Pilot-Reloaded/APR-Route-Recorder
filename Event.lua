@@ -135,11 +135,13 @@ function AprRC.event.functions.accept(event, questId)
         AprRC:saveQuestInfo()
         return
     end
-    if not AprRC:IsCurrentStepFarAway() and AprRC:HasStepOption("PickUp") then
+    if not AprRC:IsCurrentStepFarAway() and AprRC:HasStepOption("PickUp") and not AprRC:HasStepOption("IsCampaignQuest") then
         local currentStep = AprRC:GetLastStep()
         tinsert(currentStep.PickUp, questId)
     else
         local step = { PickUp = { questId } }
+        local IsCampaignQuest = APR:IsCampaignQuest(questId)
+        step.IsCampaignQuest = IsCampaignQuest and true or nil
         AprRC:SetStepCoord(step)
         AprRC:NewStep(step)
     end
@@ -164,11 +166,13 @@ function AprRC.event.functions.remove(event, questId, ...)
 end
 
 function AprRC.event.functions.done(event, questId, ...)
-    if not AprRC:IsCurrentStepFarAway() and AprRC:HasStepOption("Done") then
+    if not AprRC:IsCurrentStepFarAway() and AprRC:HasStepOption("Done") and not AprRC:HasStepOption("IsCampaignQuest") then
         local currentStep = AprRC:GetLastStep()
         tinsert(currentStep.Done, questId)
     else
         local step = { Done = { questId } }
+        local IsCampaignQuest = APR:IsCampaignQuest(questId)
+        step.IsCampaignQuest = IsCampaignQuest and true or nil
         AprRC:SetStepCoord(step)
         AprRC:NewStep(step)
     end
@@ -450,6 +454,8 @@ function AprRC.event.functions.qpart(event, questID)
                     step.InstanceQuest = true
                 end
                 setButton(questID, index, step)
+                local IsCampaignQuest = APR:IsCampaignQuest(questId)
+                step.IsCampaignQuest = IsCampaignQuest and true or nil
                 step.Range = range
                 AprRC:NewStep(step)
             end
@@ -556,7 +562,7 @@ function AprRC.event.functions.scenario(event, ...)
     for i = 1, stepInfo.numCriteria do
         local criteria = C_ScenarioInfo.GetCriteriaInfoByStep(stepInfo.stepID, i)
         if criteria.criteriaID == criteriaID and criteria.completed then
-            if not scenarioCriteriaLogged[criteriaID] then     -- to avoid duplication of step
+            if not scenarioCriteriaLogged[criteriaID] then -- to avoid duplication of step
                 local step = { Scenario = { scenarioID = scenarioID, stepID = stepInfo.stepID, criteriaID = criteriaID, criteriaIndex = i } }
                 if AprRC:IsInInstanceQuest() then
                     step.InstanceQuest = true
