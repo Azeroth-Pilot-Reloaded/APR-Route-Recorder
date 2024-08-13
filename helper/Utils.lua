@@ -194,3 +194,9 @@ function AprRC:stringToTable(str)
         end
     end
 end
+
+function AprRC:IsCampaignQuest(questID)
+    local questIndex = C_QuestLog.GetLogIndexForQuestID(questID)
+    local questInfo = C_QuestLog.GetInfo(questIndex)
+    return questInfo and questInfo.campaignID ~= nil
+end

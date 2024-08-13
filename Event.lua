@@ -139,9 +139,7 @@ function AprRC.event.functions.accept(event, questId)
         local currentStep = AprRC:GetLastStep()
         tinsert(currentStep.PickUp, questId)
     else
-        local step = { PickUp = { questId } }
-        local IsCampaignQuest = APR:IsCampaignQuest(questId)
-        step.IsCampaignQuest = IsCampaignQuest and true or nil
+        local step = { PickUp = { questId }, IsCampaignQuest = AprRC:IsCampaignQuest(questId) or nil }
         AprRC:SetStepCoord(step)
         AprRC:NewStep(step)
     end
@@ -171,8 +169,7 @@ function AprRC.event.functions.done(event, questId, ...)
         tinsert(currentStep.Done, questId)
     else
         local step = { Done = { questId } }
-        local IsCampaignQuest = APR:IsCampaignQuest(questId)
-        step.IsCampaignQuest = IsCampaignQuest and true or nil
+        step.IsCampaignQuest = AprRC:IsCampaignQuest(questId) or nil
         AprRC:SetStepCoord(step)
         AprRC:NewStep(step)
     end
@@ -454,8 +451,7 @@ function AprRC.event.functions.qpart(event, questID)
                     step.InstanceQuest = true
                 end
                 setButton(questID, index, step)
-                local IsCampaignQuest = APR:IsCampaignQuest(questId)
-                step.IsCampaignQuest = IsCampaignQuest and true or nil
+                step.IsCampaignQuest = AprRC:IsCampaignQuest(questID) or nil
                 step.Range = range
                 AprRC:NewStep(step)
             end
