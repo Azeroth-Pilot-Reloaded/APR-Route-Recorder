@@ -33,6 +33,10 @@
 <li><span style="font-size: 14px;">Set/Use HS</span></li>
 <li><span style="font-size: 14px;">RaidIcon</span></li>
 <li><span style="font-size: 14px;">Pickup</span></li>
+<li><span style="font-size: 14px;">Scenario</span></li>
+<li><span style="font-size: 14px;">IsCampaignQuest</span></li>
+<li><span style="font-size: 14px;">Drop Quest</span></li>
+
 </ul>
 <p>&nbsp;</p>
 <p><span style="font-family: arial; font-size: 18px;"> <strong> <u>Manually</u> </strong> <br /></span></p>
@@ -49,12 +53,18 @@
 <li><span style="font-size: 14px;">Race</span></li>
 <li><span style="font-size: 14px;">Gender</span></li>
 <li><span style="font-size: 14px;">Class</span></li>
-<li><span style="font-size: 14px;">HasAchievement</span></li>
-<li><span style="font-size: 14px;">DontHaveAchievement</span></li>
+<li><span style="font-size: 14px;">Has Achievement</span></li>
+<li><span style="font-size: 14px;">Don't Have Achievement</span></li>
 <li><span style="font-size: 14px;">Fillers</span></li>
 <li><span style="font-size: 14px;">Button (Item and Spell)</span></li>
-<li><span style="font-size: 14px;">SpellTrigger</span></li>
+<li><span style="font-size: 14px;">Spell Trigger</span></li>
 <li><span style="font-size: 14px;">ZoneDoneSave</span></li>
+<li><span style="font-size: 14px;">Learn Profession</span></li>
+<li><span style="font-size: 14px;">Don't skip video</span></li>
+<li><span style="font-size: 14px;">QpartPart</span></li>
+<li><span style="font-size: 14px;">Vehicle Exit</span></li>
+<li><span style="font-size: 14px;">WarMode</span></li>
+<li><span style="font-size: 14px;">Coord (to override)</span></li>
 </ul>
 
 ![Settings & Commands](https://github.com/Azeroth-Pilot-Reloaded/azeroth-pilot-reloaded/assets/43384589/ef2d04b1-05f9-4828-a259-f486d59409a7)
@@ -65,19 +75,25 @@
 <ul>
 <li><span style="font-family: arial; font-size: 18px;"><span style="text-decoration: underline;"><em><strong><span style="font-size: 14px;">/aprrc help, h</span></strong> </em> </span><span style="font-size: 14px;"> - Displays the <em>(up-to-date)</em> commands in-game.<span style="font-family: arial;"><span style="font-family: arial;"><br /> </span> </span> </span></span></li>
 <li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc achievement&nbsp;</strong></em>- Add&nbsp; HasAchievement step option.</span></li>
+<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc addjob&nbsp;</strong></em>- Add&nbsp; LearnProfession step option.</span></li>
 <li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc button, btn&nbsp;</strong></em>- Add Button or SpellButton step option.</span></li>
 <li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc class&nbsp;</strong></em>- Add Class step option.</span></li>
+<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc coord&nbsp;</strong></em>- Add/override Coord step option.</span></li>
 <li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc donedb</strong>&nbsp;</em>- Add DoneDB step option.</span></li>
 <li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc eta&nbsp;</strong></em>- Add ETA step option.</span></li>
 <li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc export&nbsp;</strong></em>- Open export frame.</span></li>
 <li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc faction&nbsp;</strong></em>- Add Faction step option.</span></li>
 <li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc fillers, filler&nbsp;</strong></em>- Add Fillers step option.</span></li>
+<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc forcereset, fr&nbsp;</strong></em>- Clear the Saved Variables.</span></li>
 <li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc gender&nbsp;</strong></em>- Add Gender step option.</span></li>
 <li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc grind&nbsp;</strong></em>- Add Grind step option.</span></li>
+<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc instance&nbsp;</strong></em>- Add InstanceQuest step option.</span></li>
 <li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc noachievement&nbsp;</strong></em>- Add DontHaveAchievement step option.</span></li>
 <li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc noarrow&nbsp;</strong></em>- Add NoArrow step option.</span></li>
+<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc notskipvid, nsv&nbsp;</strong></em>- Add Dontskipvid step option.</span></li>
 <li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc pickupdb</strong>&nbsp;</em>- Add PickUpDB step option.</span></li>
 <li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc qpartdb</strong>&nbsp;</em>- Add QpartDB step option.</span></li>
+<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc qpartpart</strong>&nbsp;</em>- Add QpartPart/TrigText step option.</span></li>
 <li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc race&nbsp;</strong></em>- Add Race step option.</span></li>
 <li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc range&nbsp;</strong></em>- Add Range step option.</span></li>
 <li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc spelltrigger&nbsp;</strong></em>- Add SpellTrigger step option.</span></li>
@@ -86,10 +102,6 @@
 <li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc warmode&nbsp;</strong></em>- Add WarMode step option.</span></li>
 <li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc waypoint&nbsp;</strong></em>- Add Waypoint step option.</span></li>
 <li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc zonetrigger</strong>&nbsp;</em>- Add ZoneStepTrigger step option.</span></li>
-</ul>
-<p>&nbsp;</p>
-<ul>
-<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc qpartpart&nbsp;</strong></em>- Not implemented yet.</span></li>
 </ul>
 <p>&nbsp;</p>
 
