@@ -168,8 +168,7 @@ function AprRC.event.functions.done(event, questId, ...)
         local currentStep = AprRC:GetLastStep()
         tinsert(currentStep.Done, questId)
     else
-        local step = { Done = { questId } }
-        step.IsCampaignQuest = AprRC:IsCampaignQuest(questId) or nil
+        local step = { Done = { questId }, IsCampaignQuest = AprRC:IsCampaignQuest(questId) or nil }
         AprRC:SetStepCoord(step)
         AprRC:NewStep(step)
     end
@@ -633,9 +632,6 @@ end
 -- - Group      ["Group"] = { Number = 3, QuestId = 51384},
 -- - GroupTask  ["GroupTask"] = 51384, (the questId from Group, step to check if player want to do the group quest)
 -- - QuestLineSkip ???? (block group quest if present) ["QuestLineSkip"] = 51226,
-
--- - QpartPart (rework ?) -> button/command
--- - TrigText  (rework ?)
 
 -- MountVehicle / InVehicle (rework)
 
