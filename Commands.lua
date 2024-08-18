@@ -26,6 +26,10 @@ function AprRC.command:SlashCmd(input)
     elseif inputText == "forcereset" then
         AprRC:ResetData()
         return
+    elseif inputText == 'coordframe' then
+        APR.settings.profile.coordinateShow = not APR.settings.profile.coordinateShow
+        AprRC.coordinate:RefreshFrameAnchor()
+        return
     elseif inputText == "help" or inputText == "h" then
         print(L_APR["COMMAND_LIST"] .. ":")
         print("|cffeda55f/aprrc achievement |r- " .. "HasAchievement")
@@ -33,6 +37,7 @@ function AprRC.command:SlashCmd(input)
         print("|cffeda55f/aprrc button, btn |r- " .. "Button")
         print("|cffeda55f/aprrc class |r- " .. "Class")
         print("|cffeda55f/aprrc coord |r- " .. "Coord")
+        print("|cffeda55f/aprrc coordframe |r- " .. "Coord Frame")
         print("|cffeda55f/aprrc donedb |r- " .. "DoneDB")
         print("|cffeda55f/aprrc eta |r- " .. "ETA")
         print("|cffeda55f/aprrc export |r- " .. "To export data")

@@ -38,3 +38,4 @@ frames/QuestObjectiveSelector.lua
 frames/RecorderBar.lua
 frames/routeSelector.lua
 frames/selectButton.lua
+frames/CoordinateFrame.lua
