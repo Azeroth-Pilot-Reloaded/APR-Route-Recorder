@@ -135,11 +135,11 @@ function AprRC.event.functions.accept(event, questId)
         AprRC:saveQuestInfo()
         return
     end
-    if not AprRC:IsCurrentStepFarAway() and AprRC:HasStepOption("PickUp") and not AprRC:HasStepOption("IsCampaignQuest") then
+    if not AprRC:IsCurrentStepFarAway() and AprRC:HasStepOption("PickUp") then
         local currentStep = AprRC:GetLastStep()
         tinsert(currentStep.PickUp, questId)
     else
-        local step = { PickUp = { questId }, IsCampaignQuest = AprRC:IsCampaignQuest(questId) or nil }
+        local step = { PickUp = { questId } }
         AprRC:SetStepCoord(step)
         AprRC:NewStep(step)
     end
@@ -164,11 +164,11 @@ function AprRC.event.functions.remove(event, questId, ...)
 end
 
 function AprRC.event.functions.done(event, questId, ...)
-    if not AprRC:IsCurrentStepFarAway() and AprRC:HasStepOption("Done") and not AprRC:HasStepOption("IsCampaignQuest") then
+    if not AprRC:IsCurrentStepFarAway() and AprRC:HasStepOption("Done") then
         local currentStep = AprRC:GetLastStep()
         tinsert(currentStep.Done, questId)
     else
-        local step = { Done = { questId }, IsCampaignQuest = AprRC:IsCampaignQuest(questId) or nil }
+        local step = { Done = { questId } }
         AprRC:SetStepCoord(step)
         AprRC:NewStep(step)
     end
@@ -450,7 +450,7 @@ function AprRC.event.functions.qpart(event, questID)
                     step.InstanceQuest = true
                 end
                 setButton(questID, index, step)
-                step.IsCampaignQuest = AprRC:IsCampaignQuest(questID) or nil
+                -- step.IsCampaignQuest = AprRC:IsCampaignQuest(questID) or nil
                 step.Range = range
                 AprRC:NewStep(step)
             end
