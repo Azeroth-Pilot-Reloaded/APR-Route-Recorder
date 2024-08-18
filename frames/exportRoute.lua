@@ -77,7 +77,7 @@ function AprRC.export:Show()
                         end
                     end
                 end
-            end, 5)
+            end, 2)
         end
     end
 
