@@ -132,6 +132,9 @@ function AprRC.QuestObjectiveSelector:GetQuestListFromLastStep()
         if lastStep.Fillers then
             AddQuestsToList(questList, lastStep.Fillers)
         end
+        if lastStep.QpartPart then
+            AddQuestsToList(questList, lastStep.QpartPart)
+        end
     end
 
     return questList
