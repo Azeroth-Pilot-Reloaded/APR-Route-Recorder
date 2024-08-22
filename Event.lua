@@ -122,34 +122,47 @@ end)
 
 function AprRC.event.functions.accept(event, questId)
     -- Pickup
-    if AprRC:HasStepOption("DroppableQuest") then
-        local currentStep = AprRC:GetLastStep()
-        currentStep.DropQuest = questId
-        currentStep.DroppableQuest.Qid = questId
+    local function AddQuestToStep(questId)
+        if AprRC:HasStepOption("DroppableQuest") then
+            local currentStep = AprRC:GetLastStep()
+            currentStep.DropQuest = questId
+            currentStep.DroppableQuest.Qid = questId
+            AprRC:saveQuestInfo()
+            return
+        end
+        if AprRC:HasStepOption("ChromiePick") then
+            local currentStep = AprRC:GetLastStep()
+            currentStep.PickUp = { questId }
+            AprRC:saveQuestInfo()
+            return
+        end
+        if not AprRC:IsCurrentStepFarAway() and AprRC:HasStepOption("PickUp") then
+            local currentStep = AprRC:GetLastStep()
+            tinsert(currentStep.PickUp, questId)
+        else
+            local step = { PickUp = { questId } }
+            AprRC:SetStepCoord(step)
+            AprRC:NewStep(step)
+        end
+        -- update saved quest
         AprRC:saveQuestInfo()
+    end
+    if C_QuestLog.IsWorldQuest(questId) then
+        APR.questionDialog:CreateQuestionPopup(
+            "New world quest, do you want to add it?",
+            function()
+                AddQuestToStep(questId)
+            end
+        )
         return
     end
-    if AprRC:HasStepOption("ChromiePick") then
-        local currentStep = AprRC:GetLastStep()
-        currentStep.PickUp = { questId }
-        AprRC:saveQuestInfo()
-        return
-    end
-    if not AprRC:IsCurrentStepFarAway() and AprRC:HasStepOption("PickUp") then
-        local currentStep = AprRC:GetLastStep()
-        tinsert(currentStep.PickUp, questId)
-    else
-        local step = { PickUp = { questId } }
-        AprRC:SetStepCoord(step)
-        AprRC:NewStep(step)
-    end
-    -- update saved quest
-    AprRC:saveQuestInfo()
+
+    AddQuestToStep(questId)
 end
 
 function AprRC.event.functions.remove(event, questId, ...)
     -- LeaveQuests
-    if not C_QuestLog.IsQuestFlaggedCompleted(questId) then
+    if not C_QuestLog.IsQuestFlaggedCompleted(questId) and not C_QuestLog.IsWorldQuest(questId) then
         if AprRC:HasStepOption("LeaveQuests") then
             local currentStep = AprRC:GetLastStep()
             tinsert(currentStep.LeaveQuests, questId)
