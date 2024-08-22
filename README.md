@@ -6,7 +6,6 @@
 [![Discord](https://github.com/Azeroth-Pilot-Reloaded/azeroth-pilot-reloaded/assets/43384589/f9fc38ba-26b0-4669-a584-ce56f0bf57d6)](https://discord.gg/YgcdybKdWX)
 [![GitHub](https://github.com/Azeroth-Pilot-Reloaded/azeroth-pilot-reloaded/assets/43384589/2c9d96ac-f38a-4442-9dfc-cc6b3ce36981)](https://github.com/Azeroth-Pilot-Reloaded/APR-Route-Recorder)
 [![CurseForge](https://github.com/user-attachments/assets/1bae5d08-d88b-403a-b902-ad3aa5c55248)](https://www.curseforge.com/wow/addons/azeroth-pilot-reloaded-route-recorder)
-[![Patreon](https://github.com/Azeroth-Pilot-Reloaded/azeroth-pilot-reloaded/assets/43384589/8431a849-5507-4489-b6ab-f3b7993ef4ef)](https://www.patreon.com/AzerothPilotReloaded)
 
 <p style="text-align: center;">&nbsp;</p>
 <p style="text-align: center;"><span style="font-size: 24px; font-family: arial;"> <strong> <span style="font-size: 14px;"> <em> <a href="https://github.com/Azeroth-Pilot-Reloaded/APR-Route-Recorder"> <span style="font-family: arial;"> If you wish to contribute to our development, head to our GitHub! </span> </a> </em> </span> <em> <span style="font-size: 12px;"> <span style="font-family: arial;"> <br /> <a href="https://discord.gg/YgcdybKdWX" target="_blank" rel="noopener noreferrer"> Visit our Discord for support and translation contribution! </a> </span> </span> <br /> </em> </strong> </span></p>
