@@ -47,6 +47,8 @@ end
 function AprRC:SetStepCoord(step, range)
     local y, x, z, mapID = UnitPosition("player")
     if x and y and not step.NoArrow then
+        x = tonumber(string.format("%.2f", x))
+        y = tonumber(string.format("%.2f", y))
         step.Coord = { x = x, y = y }
         step.Zone = AprRC:getZone()
         step.Range = range

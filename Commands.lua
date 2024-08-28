@@ -247,6 +247,8 @@ function AprRC.command:SlashCmd(input)
             local currentStep = AprRC:GetLastStep()
             local y, x = UnitPosition("player")
             if x and y then
+                x = tonumber(string.format("%.2f", x))
+                y = tonumber(string.format("%.2f", y))
                 currentStep.ZoneStepTrigger = { x = x, y = y, Range = 15 }
                 print("|cff00bfffZoneStepTrigger|r Added")
             end
