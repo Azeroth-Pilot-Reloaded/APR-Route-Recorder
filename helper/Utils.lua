@@ -69,7 +69,7 @@ function AprRC:ExtraLineTextToKey(inputString)
     return result
 end
 
-function AprRC:tableToString(tbl, level, cache)
+function AprRC:ExtraLinetableToString(tbl, level, cache)
     local str = ""
     local indent = string.rep("  ", level or 0)
     cache = cache or {}
@@ -96,7 +96,8 @@ function AprRC:tableToString(tbl, level, cache)
             keyString = string.format("%q", k)
         end
         if type(v) == "table" then
-            str = str .. indent .. "  " .. keyString .. " = \n" .. AprRC:tableToString(v, (level or 0) + 1, cache)
+            str = str ..
+                indent .. "  " .. keyString .. " = \n" .. AprRC:ExtraLinetableToString(v, (level or 0) + 1, cache)
         elseif type(v) == "string" then
             str = str .. indent .. "  " .. keyString .. " = " .. string.format("%q", v) .. ",\n"
         else
@@ -147,11 +148,7 @@ function AprRC:RouteToString(tbl, level)
     local itemIndent = string.rep("    ", level + 1)
     local qpartTableLis = { "Fillers", "Qpart", "QpartPart", "Button", "SpellButton" }
 
-    local keys = {}
-    for k in pairs(tbl) do
-        table.insert(keys, k)
-    end
-    table.sort(keys)
+    local keys = self:CustomSortKeys(tbl)
 
     for _, k in ipairs(keys) do
         local v = tbl[k]
@@ -193,6 +190,39 @@ function AprRC:stringToTable(str)
             AprRC:Debug("Error when executing the string converted to a table", tableResult)
         end
     end
+end
+
+function AprRC:CustomSortKeys(tbl)
+    local priorityList = {
+        "Waypoint", "PickUp", "PickUpDB", "Qpart", "QpartPart", "QpartDB", "Done", "DoneDB",
+        "LeaveQuests", "Treasure", "LearnProfession", "Grind", "DropQuest", "DroppableQuest",
+        "ChromiePick", "SetHS", "GetFP", "UseHS", "UseDalaHS", "UseGarrisonHS", "UseFlightPath",
+        "Name", "NodeID", "WarMode", "Coord", "Range", "NoArrow", "ZoneStepTrigger",
+        "Fillers", "BuyMerchant", "Button", "SpellButton", "ExtraLineText", "GossipOptionID", "GossipOptionIDs"
+    }
+
+    local function customSort(a, b)
+        local indexA = tIndexOf(priorityList, a)
+        local indexB = tIndexOf(priorityList, b)
+
+        if indexA and indexB then
+            return indexA < indexB
+        elseif indexA then
+            return true
+        elseif indexB then
+            return false
+        else
+            return a < b
+        end
+    end
+
+    local keys = {}
+    for k in pairs(tbl) do
+        table.insert(keys, k)
+    end
+    table.sort(keys, customSort)
+
+    return keys
 end
 
 function AprRC:IsCampaignQuest(questID)

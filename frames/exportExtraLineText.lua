@@ -44,7 +44,7 @@ function AprRC.exportExtraLineText.Show()
     end)
     frame:AddChild(btnReset)
 
-    local text = AprRC:tableToString(AprRCData.ExtraLineTexts)
+    local text = AprRC:ExtraLinetableToString(AprRCData.ExtraLineTexts)
 
     text = string.gsub(text, '" = "', ' = "')
     text = string.gsub(text, ',\n  "', '\n')
