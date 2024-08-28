@@ -33,6 +33,7 @@ local events = {
     target = "PLAYER_TARGET_CHANGED",
     scenario = "SCENARIO_CRITERIA_UPDATE",
     portal = { "PLAYER_LEAVING_WORLD", "PLAYER_ENTERING_WORLD" },
+    learnProfession = "LEARNED_SPELL_IN_SKILL_LINE"
     -- warMode = "WAR_MODE_STATUS_UPDATE",
     -- vehicle = { "UNIT_ENTERING_VEHICLE", "UNIT_EXITING_VEHICLE" },
 }
@@ -623,6 +624,15 @@ function AprRC.event.functions.portal(event, ...)
         if isInitialLogin then
             AprRCData.BeforePortal = {}
         end
+    end
+end
+
+function AprRC.event.functions.learnProfession(event, ...)
+    local spellID, skillLineIndex, isGuildPerkSpell = ...
+    if tContains(AprRC.professionSpellIDs, spellID) then
+        local step = { LearnProfession = spellID }
+        AprRC:SetStepCoord(step)
+        AprRC:NewStep(step)
     end
 end
 
