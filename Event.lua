@@ -629,12 +629,6 @@ end
 ---------------------
 -- V2
 ---------------------
--- - Button / SpellButton / Achievement (autoComplete)
-
--- Add command
--- - DroppableQuest = { Text = "Tideblood", Qid = 50593, MobId = 130116 },
--- - DropQuest    ["DropQuest"] = 62567 (questID)
-
 -- - Treasure   ["Treasure"] = 31401 (questID) (how ?)
 
 -- sur l'action d'un DB check si y a la quest ID dans un PickUpDB et l'ajouter automatiquemejnt
