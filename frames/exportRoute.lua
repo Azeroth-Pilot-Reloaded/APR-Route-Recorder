@@ -72,7 +72,7 @@ function AprRC.export:Show()
                         AprRC:UpdateRouteByName(AprRCData.CurrentRoute.name, AprRCData.CurrentRoute)
                         local route = AprRCData.Routes[dropdown:GetValue()]
                         if route then
-                            editbox:SetText(AprRC:RouteToString(route.steps))
+                            editbox:SetText(AprRC:TableToString(route.steps))
                             AutoScrollToBottom()
                         end
                     end
@@ -104,7 +104,7 @@ function AprRC.export:Show()
     btnSave:SetWidth(200)
     btnSave:SetCallback("OnClick", function()
         local routeText = editbox:GetText()
-        local newStepRouteTable = AprRC:stringToTable(routeText)
+        local newStepRouteTable = AprRC:StringToTable(routeText)
         if not newStepRouteTable then
             AprRC:Error("Route not saved, incorrect format")
             return
@@ -150,14 +150,14 @@ function AprRC.export:Show()
             checkbox:SetDisabled(false)
         end
         dropdown:SetValue(defaultIndex)
-        editbox:SetText(AprRC:RouteToString(AprRCData.Routes[defaultIndex].steps))
+        editbox:SetText(AprRC:TableToString(AprRCData.Routes[defaultIndex].steps))
         AutoScrollToBottom()
     end
 
     dropdown:SetCallback("OnValueChanged", function(widget, event, index)
         local selectedRoute = AprRCData.Routes[index]
         if selectedRoute then
-            editbox:SetText(AprRC:RouteToString(selectedRoute.steps))
+            editbox:SetText(AprRC:TableToString(selectedRoute.steps))
             selectedRouteName = selectedRoute.name
             if selectedRouteName == AprRCData.CurrentRoute.name then
                 checkbox:SetDisabled(false)

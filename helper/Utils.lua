@@ -176,7 +176,29 @@ function AprRC:RouteToString(tbl, level)
     return str
 end
 
-function AprRC:stringToTable(str)
+function AprRC:TableToString(tbl)
+    local text = self:RouteToString(tbl)
+
+    local function formatCoordString(coordString)
+        return coordString:gsub("x%s*=%s*(-?%d+%.%d+)", function(x)
+            return string.format("x = %.1f", tonumber(x))
+        end):gsub("y%s*=%s*(-?%d+%.%d+)", function(y)
+            return string.format("y = %.1f", tonumber(y))
+        end)
+    end
+
+    text = string.gsub(text, "\n                ", " ")
+    text = string.gsub(text, "{\n            ", "{ ")
+    text = string.gsub(text, ",\n        },", " },")
+    text = string.gsub(text, ",\n            ", ", ")
+    text = string.gsub(text, ", }", " }")
+
+    local textFormated = formatCoordString(text)
+
+    return textFormated
+end
+
+function AprRC:StringToTable(str)
     local cleanedStr = str:gsub("[%s\n\r\t]+", "")
 
     local func, err = loadstring("return " .. cleanedStr)
@@ -197,8 +219,8 @@ function AprRC:CustomSortKeys(tbl)
         "Waypoint", "PickUp", "PickUpDB", "Qpart", "QpartPart", "QpartDB", "Done", "DoneDB",
         "LeaveQuests", "Treasure", "LearnProfession", "Grind", "DropQuest", "DroppableQuest",
         "ChromiePick", "SetHS", "GetFP", "UseHS", "UseDalaHS", "UseGarrisonHS", "UseFlightPath",
-        "Name", "NodeID", "WarMode", "Coord", "Range", "NoArrow", "ZoneStepTrigger",
-        "Fillers", "BuyMerchant", "Button", "SpellButton", "ExtraLineText", "GossipOptionID", "GossipOptionIDs"
+        "Name", "NodeID", "WarMode", "Coord", "Fillers", "BuyMerchant", "Button", "SpellButton", "ExtraLineText",
+        "GossipOptionID", "GossipOptionIDs", "Range", "NoArrow", "ZoneStepTrigger",
     }
 
     local function customSort(a, b)
