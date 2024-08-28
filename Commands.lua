@@ -48,6 +48,7 @@ function AprRC.command:SlashCmd(input)
         print("|cffeda55f/aprrc grind |r- " .. "Grind")
         print("|cffeda55f/aprrc help, h |r- " .. L_APR["HELP_COMMAND"])
         print("|cffeda55f/aprrc instance |r- " .. "InstanceQuest")
+        print("|cffeda55f/aprrc lootitem, lt |r- " .. "LootItem")
         print("|cffeda55f/aprrc noachievement |r- " .. "DontHaveAchievement")
         print("|cffeda55f/aprrc noarrow |r- " .. "NoArrow")
         print("|cffeda55f/aprrc notskipvid, nsv |r- " .. "Dontskipvid")
@@ -117,6 +118,18 @@ function AprRC.command:SlashCmd(input)
             currentStep.InstanceQuest = true
             print("|cff00bfffInstanceQuest|r Added")
             return
+        elseif inputText == "lootitem" or inputText == "lt" then
+            AprRC.autocomplete:ShowItemAutoComplete(questID, objectiveID, function(_, itemID, frame)
+                local step = {}
+                step.LootItem = tonumber(itemID, 10)
+
+                AprRC:SetStepCoord(step)
+                AprRC:NewStep(step)
+
+                print("|cff00bfff LootItem |r Added")
+                AceGUI:Release(frame)
+            end)
+            return
         elseif inputText == "notskipvid" or inputText == "nsv" then
             local currentStep = AprRC:GetLastStep()
             currentStep.Dontskipvid = 1
@@ -156,7 +169,7 @@ function AprRC.command:SlashCmd(input)
             })
             return
         elseif inputText == "spelltrigger" then
-            AprRC.autocomplete:ShowSpellAutoComplete(questID, objectiveID, function(_, spellID, frame)
+            AprRC.autocomplete:ShowButtonSpellAutoComplete(questID, objectiveID, function(_, spellID, frame)
                 local currentStep = AprRC:GetLastStep()
 
                 currentStep.SpellTrigger = tonumber(spellID, 10)

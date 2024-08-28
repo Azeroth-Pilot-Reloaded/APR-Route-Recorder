@@ -20,6 +20,7 @@ local allCommands = {
     { command = "achievement",   label = "HasAchievement",      texture = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\HasAchievement" },
     { command = "instance",      label = "InstanceQuest",       texture = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\InstanceQuest" },
     { command = "addjob",        label = "LearnProfession",     texture = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\LearnProfession" },
+    { command = "lootitem",      label = "LootItem",            texture = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\LootItem" },
     { command = "noarrow",       label = "NoArrow",             texture = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\NoArrow" },
     { command = "pickupdb",      label = "PickUpDB",            texture = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\PickUpDB" },
     { command = "qpartdb",       label = "QpartDB",             texture = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\QpartDB" },

@@ -138,7 +138,7 @@ function AprRC.autocomplete:ShowLocaleAutoComplete()
     )
 end
 
-function AprRC.autocomplete:ShowItemAutoComplete(questID, objectiveID)
+function AprRC.autocomplete:ShowItemAutoComplete(questID, objectiveID, onConfirm)
     local itemList = {}
     for bag = 0, 4 do
         for slot = 1, C_Container.GetContainerNumSlots(bag) do
@@ -155,15 +155,7 @@ function AprRC.autocomplete:ShowItemAutoComplete(questID, objectiveID)
     self:ShowAutoComplete(
         "Select Item",
         itemList,
-        function(_, itemID, frame)
-            local currentStep = AprRC:GetLastStep()
-            if not currentStep.Button then
-                currentStep.Button = {}
-            end
-            currentStep.Button[questID .. "-" .. objectiveID] = tonumber(itemID, 10)
-            print("|cff00bfff Button |r Added")
-            AceGUI:Release(frame)
-        end,
+        onConfirm,
         function(match)
             local itemName, _, _, _, _, _, _, _, _, itemIcon = C_Item.GetItemInfo(match.key)
             return "|T" .. itemIcon .. ":35:35|t " .. itemName
