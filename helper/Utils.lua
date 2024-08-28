@@ -177,6 +177,12 @@ function AprRC:RouteToString(tbl, level)
 end
 
 function AprRC:TableToString(tbl)
+    -- Update or add _index
+    for i, v in ipairs(tbl) do
+        if type(v) == "table" then
+            v._index = i
+        end
+    end
     local text = self:RouteToString(tbl)
 
     local function formatCoordString(coordString)
