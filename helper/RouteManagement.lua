@@ -1,7 +1,9 @@
 function AprRC:ResetData()
+    AprRC.settings.profile.recordBarFrame.isRecording = false
     AprRCData = {}
     AprRCData.CurrentRoute = { name = "", steps = { {} } }
     AprRCData.Routes = {}
+    C_UI.Reload()
 end
 
 function AprRC:InitRoute(name)

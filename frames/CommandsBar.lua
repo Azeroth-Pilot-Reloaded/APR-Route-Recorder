@@ -8,6 +8,17 @@ AprRC.CommandBar.btnList = {}
 local FRAME_WIDTH = 80
 local FRAME_HEIGHT = 35
 
+local defaultCommands = {
+    { command = "waypoint",  label = "Waypoint",      texture = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\Waypoint" },
+    { command = "coord",     label = "Coord",         texture = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\Coord" },
+    { command = "range",     label = "Range",         texture = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\Range" },
+    { command = "noarrow",   label = "NoArrow",       texture = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\NoArrow" },
+    { command = "text",      label = "ExtraLineText", texture = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\ExtraLineText" },
+    { command = "btn",       label = "Button",        texture = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\Button" },
+    { command = "filler",    label = "Fillers",       texture = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\Fillers" },
+    { command = "qpartpart", label = "QpartPart",     texture = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\QpartPart" },
+}
+
 ---------------------------------------------------------------------------------------
 --------------------------------- CommandBar Frames -----------------------------------
 ---------------------------------------------------------------------------------------
@@ -45,6 +56,7 @@ function AprRC.CommandBar:UpdateFrame()
     end
     AprRC.CommandBar.btnList = {}
 
+    AprRCData.CommandBarCommands = AprRCData.CommandBarCommands or defaultCommands
     for _, commandData in ipairs(AprRCData.CommandBarCommands) do
         local btn = CreateButton(CommandBarFrame, commandData.texture, commandData.label, function()
             AprRC.command:SlashCmd(commandData.command)
@@ -70,7 +82,7 @@ function AprRC.CommandBar:UpdateFrame()
 
     -- Create settings button
     local settingsBtn = CreateButton(CommandBarFrame, "Interface\\AddOns\\APR-Recorder\\assets\\icons\\settings",
-        "Settings", function()
+        "Commands Settings", function()
             AprRC.CommandBarSetting:Show()
         end)
 
