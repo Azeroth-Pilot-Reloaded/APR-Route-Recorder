@@ -218,3 +218,33 @@ function AprRC.autocomplete:ShowAchievementAutoComplete(onConfirm)
         true
     )
 end
+
+function AprRC.autocomplete:ShowProfessionAutoComplete(onConfirm)
+    local spellList = {}
+    for i, spellID in ipairs(AprRC.professionSpellIDs) do
+        local name = C_Spell.GetSpellName(spellID)
+        spellList[spellID] = name
+    end
+
+    self:ShowAutoComplete(
+        "Select Profession",
+        spellList,
+        function(text, key, frame)
+            local step = {
+                LearnProfession = tonumber(key, 10)
+            }
+            AprRC:SetStepCoord(step)
+            AprRC:NewStep(step)
+            print("|cff00bfff Learn Profession |r Added")
+        end,
+        function(match)
+            local spellInfo = C_Spell.GetSpellInfo(match.key)
+            if spellInfo then
+                return "|T" .. spellInfo.iconID .. ":35:35|t " .. spellInfo.name
+            end
+        end,
+        500,
+        450,
+        true
+    )
+end

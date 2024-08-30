@@ -75,14 +75,7 @@ function AprRC.command:SlashCmd(input)
             print("|cff00bfffWaypoint|r Added")
             return
         elseif inputText == "addjob" then
-            AprRC.questionDialog:CreateEditBoxPopupWithCallback("Profession spellID", function(text)
-                local step = {
-                    LearnProfession = tonumber(text, 10)
-                }
-                AprRC:SetStepCoord(step)
-                AprRC:NewStep(step)
-                print("|cff00bfffLearnProfession|r Added")
-            end)
+            AprRC.autocomplete:ShowProfessionAutoComplete()
             return
         elseif inputText == "coord" then
             local currentStep = AprRC:GetLastStep()
