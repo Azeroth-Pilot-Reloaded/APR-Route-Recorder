@@ -4,7 +4,7 @@ local LibWindow = LibStub("LibWindow-1.1")
 
 AprRC.record = AprRC:NewModule('Recorder')
 
-local FRAME_WIDTH = 80
+local FRAME_WIDTH = 105
 local FRAME_HEIGHT = 35
 ---------------------------------------------------------------------------------------
 --------------------------------- Recorder Frames -------------------------------------
@@ -45,7 +45,6 @@ local function CreateButton(parent, iconPath, message)
     btn:SetScript("OnLeave", function(self) GameTooltip:Hide() end)
 
     btn:SetHighlightTexture("Interface\\Buttons\\UI-Common-MouseHilight")
-    btn:SetDisabledTexture("Interface\\Buttons\\UI-Panel-QuestHideButton-disabled")
 
     return btn
 end
@@ -76,6 +75,11 @@ recordBtn:SetScript("OnClick", function()
     else
         AprRC.record:StopRecord()
     end
+end)
+
+local exportBtn = CreateButton(RecordBarFrame, "Interface\\AddOns\\APR-Recorder\\assets\\icons\\Export", "Export frame")
+exportBtn:SetScript("OnClick", function()
+    AprRC.command:SlashCmd('export')
 end)
 
 local rotationBtn = CreateButton(RecordBarFrame, "Interface\\AddOns\\APR-Recorder\\assets\\icons\\rotate", "Rotate")
@@ -116,7 +120,7 @@ function AprRC.record:RefreshFrameAnchor()
 end
 
 function AprRC.record:AdjustBarRotation(bar)
-    local buttons = { recordBtn, rotationBtn, settingsBtn }
+    local buttons = { recordBtn, exportBtn, rotationBtn, settingsBtn }
     local spacing = 10
     local offsetX, offsetY = 5, -5
     local rotation = AprRC.settings.profile.recordBarFrame.rotation
