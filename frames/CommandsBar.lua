@@ -4,6 +4,7 @@ local LibWindow = LibStub("LibWindow-1.1")
 
 AprRC.CommandBar = AprRC:NewModule('CommandBar')
 AprRC.CommandBar.btnList = {}
+AprRC.CommandBar.settingTutoFrameID = nil
 
 local FRAME_WIDTH = 80
 local FRAME_HEIGHT = 35
@@ -56,7 +57,9 @@ function AprRC.CommandBar:UpdateFrame()
     end
     AprRC.CommandBar.btnList = {}
 
+    -- Check if the commands are still the default commands
     AprRCData.CommandBarCommands = AprRCData.CommandBarCommands or defaultCommands
+
     for _, commandData in ipairs(AprRCData.CommandBarCommands) do
         local btn = CreateButton(CommandBarFrame, commandData.texture, commandData.label, function()
             AprRC.command:SlashCmd(commandData.command)
@@ -84,12 +87,19 @@ function AprRC.CommandBar:UpdateFrame()
     local settingsBtn = CreateButton(CommandBarFrame, "Interface\\AddOns\\APR-Recorder\\assets\\icons\\settings",
         "Commands Settings", function()
             AprRC.CommandBarSetting:Show()
+            AprRC.settings.profile.commandBarFrame.tutorialShown = false
+            AprRC.TutoFrame:HideCustomTutorialFrame(AprRC.CommandBar.settingTutoFrameID)
         end)
 
     tinsert(AprRC.CommandBar.btnList, zoneDoneSaveBtn)
     tinsert(AprRC.CommandBar.btnList, rotationBtn)
     tinsert(AprRC.CommandBar.btnList, settingsBtn)
     AprRC.CommandBar:AdjustBarRotation(CommandBarFrame)
+    -- Show the tutorial if we are using the default commands
+    if AprRC.settings.profile.commandBarFrame.tutorialShown then
+        AprRC.CommandBar.settingTutoFrameID = AprRC.TutoFrame:ShowCustomTutorialFrame(
+            "You can add more commands in the Commands Settings panel", TutorialPointerFrame.Direction.UP, settingsBtn)
+    end
 end
 
 ---------------------------------------------------------------------------------------
@@ -110,6 +120,7 @@ end
 function AprRC.CommandBar:RefreshFrameAnchor()
     if not AprRC.settings.profile.enableAddon or not AprRC.settings.profile.recordBarFrame.isRecording or C_PetBattles.IsInBattle() then
         CommandBarFrame:Hide()
+        AprRC.TutoFrame:HideCustomTutorialFrame(AprRC.CommandBar.settingTutoFrameID)
         return
     end
     CommandBarFrame:Show()

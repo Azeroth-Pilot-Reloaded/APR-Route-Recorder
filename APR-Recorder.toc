@@ -29,6 +29,7 @@ helper/spells.lua
 Commands.lua
 Event.lua
 
+frames/TutoFrame.lua
 frames/autocomplete.lua
 frames/CommandsBar.lua
 frames/CommandsBarSetting.lua
