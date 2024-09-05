@@ -74,6 +74,22 @@ function AprRC.command:SlashCmd(input)
             AprRC:NewStep(step)
             print("|cff00bfffWaypoint|r Added")
             return
+        elseif inputText == "waypointdb" then
+            if AprRC:HasStepOption("Waypoint") then
+                AprRC.questionDialog:CreateEditBoxPopupWithCallback("Waypoint DB (QuestID) - Also add Waypoint QuestID",
+                    function(questId)
+                        local currentStep = AprRC:GetLastStep()
+                        if AprRC:HasStepOption("WaypointDB") then
+                            tinsert(currentStep.WaypointDB, tonumber(questId, 10))
+                        else
+                            currentStep.WaypointDB = { currentStep.Waypoint, tonumber(questId, 10) }
+                        end
+                        print("|cff00bfffWaypointDB - " .. tonumber(questId, 10) .. "|r Added")
+                    end)
+            else
+                AprRC:Error('Missing Waypoint option on current step')
+            end
+            return
         elseif inputText == "addjob" then
             AprRC.autocomplete:ShowProfessionAutoComplete()
             return

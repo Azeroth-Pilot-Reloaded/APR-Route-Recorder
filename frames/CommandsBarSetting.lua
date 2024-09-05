@@ -31,6 +31,7 @@ local allCommands = {
     { command = "vehicle",       label = "VehicleExit",         texture = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\VehicleExit" },
     { command = "warmode",       label = "WarMode",             texture = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\WarMode" },
     { command = "waypoint",      label = "Waypoint",            texture = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\Waypoint" },
+    { command = "waypointdb",    label = "WaypointDB",          texture = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\WaypointDB" },
     { command = "zonetrigger",   label = "ZoneStepTrigger",     texture = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\ZoneStepTrigger" },
 }
 

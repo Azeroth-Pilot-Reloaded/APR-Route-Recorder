@@ -222,7 +222,7 @@ end
 
 function AprRC:CustomSortKeys(tbl)
     local priorityList = {
-        "Waypoint", "PickUp", "PickUpDB", "Qpart", "QpartPart", "QpartDB", "Done", "DoneDB",
+        "Waypoint", "WaypointDB", "PickUp", "PickUpDB", "Qpart", "QpartPart", "QpartDB", "Done", "DoneDB",
         "LeaveQuests", "Treasure", "Scenario", "LearnProfession", "Grind", "DropQuest", "DroppableQuest", "LootItem",
         "ChromiePick", "SetHS", "GetFP", "UseHS", "UseDalaHS", "UseGarrisonHS", "UseFlightPath",
         "Name", "NodeID", "WarMode", "Coord", "Fillers", "BuyMerchant", "Button", "SpellButton", "ExtraLineText",
