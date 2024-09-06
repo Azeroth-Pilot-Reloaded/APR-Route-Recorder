@@ -30,6 +30,9 @@ function AprRC.command:SlashCmd(input)
         APR.settings.profile.coordinateShow = not APR.settings.profile.coordinateShow
         AprRC.coordinate:RefreshFrameAnchor()
         return
+    elseif inputText == 'backup' then
+        AprRCData.CurrentRoute = AprRCData.BackupRoute
+        return
     elseif inputText == "help" or inputText == "h" then
         print(L_APR["COMMAND_LIST"] .. ":")
         print("|cffeda55f/aprrc achievement |r- " .. "HasAchievement")

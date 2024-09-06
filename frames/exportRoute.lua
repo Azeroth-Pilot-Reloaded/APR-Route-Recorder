@@ -114,6 +114,7 @@ function AprRC.export:Show()
         if AprRCData.CurrentRoute.name == selectedRouteName then
             AprRCData.CurrentRoute = newRoute
         end
+        AprRCData.BackupRoute = newRoute
         AutoScrollToBottom()
     end)
     frame:AddChild(btnSave)
