@@ -166,7 +166,7 @@ function AprRC.autocomplete:ShowItemAutoComplete(questID, objectiveID, onConfirm
     )
 end
 
-function AprRC.autocomplete:ShowSpellAutoComplete(questID, objectiveID, onConfirm)
+function AprRC.autocomplete:ShowSpellAutoComplete(questID, objectiveID, onConfirm, includeProfessionSpells)
     local spellList = {}
     for i = 1, C_SpellBook.GetNumSpellBookSkillLines() do
         local skillLineInfo = C_SpellBook.GetSpellBookSkillLineInfo(i)
@@ -174,6 +174,12 @@ function AprRC.autocomplete:ShowSpellAutoComplete(questID, objectiveID, onConfir
         for j = offset + 1, offset + numSlots do
             local name, subName = C_SpellBook.GetSpellBookItemName(j, Enum.SpellBookSpellBank.Player)
             local spellID = select(2, C_SpellBook.GetSpellBookItemType(j, Enum.SpellBookSpellBank.Player))
+            spellList[spellID] = name
+        end
+    end
+    if includeProfessionSpells then
+        for i, spellID in ipairs(AprRC.professionSpellIDs) do
+            local name = C_Spell.GetSpellName(spellID)
             spellList[spellID] = name
         end
     end
@@ -219,7 +225,7 @@ function AprRC.autocomplete:ShowAchievementAutoComplete(onConfirm)
     )
 end
 
-function AprRC.autocomplete:ShowProfessionAutoComplete(onConfirm)
+function AprRC.autocomplete:ShowProfessionAutoComplete()
     local spellList = {}
     for i, spellID in ipairs(AprRC.professionSpellIDs) do
         local name = C_Spell.GetSpellName(spellID)
@@ -241,6 +247,36 @@ function AprRC.autocomplete:ShowProfessionAutoComplete(onConfirm)
             local spellInfo = C_Spell.GetSpellInfo(match.key)
             if spellInfo then
                 return "|T" .. spellInfo.iconID .. ":35:35|t " .. spellInfo.name
+            end
+        end,
+        500,
+        450,
+        true
+    )
+end
+
+function AprRC.autocomplete:ShowAuraAutoComplete(onConfirm)
+    local unitToken = "player"
+    local auraList = {}
+    local index = 1
+    while true do
+        local aura = C_UnitAuras.GetAuraDataByIndex(unitToken, index)
+        if not aura then
+            break
+        end
+
+        auraList[aura.spellId] = aura.name
+        index = index + 1
+    end
+
+    self:ShowAutoComplete(
+        "Select Aura",
+        auraList,
+        onConfirm,
+        function(match)
+            local auraInfo = C_UnitAuras.GetPlayerAuraBySpellID(match.key)
+            if auraInfo then
+                return "|T" .. auraInfo.icon .. ":35:35|t " .. auraInfo.name
             end
         end,
         500,

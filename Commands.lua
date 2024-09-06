@@ -34,6 +34,7 @@ function AprRC.command:SlashCmd(input)
         print(L_APR["COMMAND_LIST"] .. ":")
         print("|cffeda55f/aprrc achievement |r- " .. "HasAchievement")
         print("|cffeda55f/aprrc addjob |r- " .. "LearnProfession")
+        print("|cffeda55f/aprrc aura |r- " .. "HasAura")
         print("|cffeda55f/aprrc button, btn |r- " .. "Button")
         print("|cffeda55f/aprrc class |r- " .. "Class")
         print("|cffeda55f/aprrc coord |r- " .. "Coord")
@@ -51,12 +52,14 @@ function AprRC.command:SlashCmd(input)
         print("|cffeda55f/aprrc lootitem, lt |r- " .. "LootItem")
         print("|cffeda55f/aprrc noachievement |r- " .. "DontHaveAchievement")
         print("|cffeda55f/aprrc noarrow |r- " .. "NoArrow")
+        print("|cffeda55f/aprrc noaura |r- " .. "DontHaveAura")
         print("|cffeda55f/aprrc notskipvid, nsv |r- " .. "Dontskipvid")
         print("|cffeda55f/aprrc pickupdb |r- " .. "PickUpDB")
         print("|cffeda55f/aprrc qpartdb |r- " .. "QpartDB")
         print("|cffeda55f/aprrc qpartpart |r- " .. "QpartPart")
         print("|cffeda55f/aprrc race |r- " .. "Race")
         print("|cffeda55f/aprrc range |r- " .. "Range")
+        print("|cffeda55f/aprrc spell |r- " .. "HasSpell")
         print("|cffeda55f/aprrc spelltrigger |r- " .. "SpellTrigger")
         print("|cffeda55f/aprrc text, txt |r- " .. "ExtraLineText")
         print("|cffeda55f/aprrc vehicle |r- " .. "VehicleExit")
@@ -92,6 +95,24 @@ function AprRC.command:SlashCmd(input)
             return
         elseif inputText == "addjob" then
             AprRC.autocomplete:ShowProfessionAutoComplete()
+            return
+        elseif inputText == "aura" then
+            AprRC.autocomplete:ShowAuraAutoComplete(function(_, spellID, frame)
+                local currentStep = AprRC:GetLastStep()
+
+                currentStep.HasAura = tonumber(spellID, 10)
+                print("|cff00bfff HasAura |r Added")
+                AceGUI:Release(frame)
+            end)
+            return
+        elseif inputText == "noaura" then
+            AprRC.autocomplete:ShowAuraAutoComplete(function(_, spellID, frame)
+                local currentStep = AprRC:GetLastStep()
+
+                currentStep.DontHaveAura = tonumber(spellID, 10)
+                print("|cff00bfff DontHaveAura |r Added")
+                AceGUI:Release(frame)
+            end)
             return
         elseif inputText == "coord" then
             local currentStep = AprRC:GetLastStep()
@@ -177,8 +198,17 @@ function AprRC.command:SlashCmd(input)
                 end
             })
             return
+        elseif inputText == "spell" then
+            AprRC.autocomplete:ShowSpellAutoComplete(_, _, function(_, spellID, frame)
+                local currentStep = AprRC:GetLastStep()
+
+                currentStep.HasSpell = tonumber(spellID, 10)
+                print("|cff00bfff HasSpell |r Added")
+                AceGUI:Release(frame)
+            end, true)
+            return
         elseif inputText == "spelltrigger" then
-            AprRC.autocomplete:ShowButtonSpellAutoComplete(questID, objectiveID, function(_, spellID, frame)
+            AprRC.autocomplete:ShowSpellAutoComplete(_, _, function(_, spellID, frame)
                 local currentStep = AprRC:GetLastStep()
 
                 currentStep.SpellTrigger = tonumber(spellID, 10)
