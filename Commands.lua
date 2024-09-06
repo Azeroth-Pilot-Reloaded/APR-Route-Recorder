@@ -318,18 +318,21 @@ function AprRC.command:SlashCmd(input)
             return
         elseif inputText == "race" then
             local currentStep = AprRC:GetLastStep()
-            currentStep.Race = select(2, UnitRace("player"))
-            print("|cff00bfffRace - " .. select(2, UnitRace("player")) .. "|r Added")
+            local race = select(2, UnitRace("player"))
+            currentStep.Race = { race }
+            print("|cff00bfffRace - " .. race .. "|r Added")
             return
         elseif inputText == "gender" then
             local currentStep = AprRC:GetLastStep()
-            currentStep.Gender = UnitSex("player")
-            print("|cff00bfffGender - " .. UnitSex("player") .. "|r Added")
+            local sex = UnitSex("player")
+            currentStep.Gender = sex
+            print("|cff00bfffGender - " .. sex .. "|r Added")
             return
         elseif inputText == "class" then
             local currentStep = AprRC:GetLastStep()
-            currentStep.Class = select(2, UnitClass("player"))
-            print("|cff00bfffClass - " .. select(2, UnitClass("player")) .. "|r Added")
+            local class = select(2, UnitClass("player"))
+            currentStep.Class = { class }
+            print("|cff00bfffClass - " .. class .. "|r Added")
             return
         elseif inputText == "achievement" then
             AprRC.autocomplete:ShowAchievementAutoComplete(function(name, achievementID, frame)
