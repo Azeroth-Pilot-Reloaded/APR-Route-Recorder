@@ -35,6 +35,7 @@ function AprRC:OnInitialize()
     AprRCData.QuestLookup = AprRCData.QuestLookup or {}
     AprRCData.TaxiLookup = AprRCData.TaxiLookup or {}
     AprRCData.BeforePortal = AprRCData.BeforePortal or {}
+    AprRCData.BackupRoute = AprRCData.BackupRoute or {}
 
     -- Init module
     AprRC.settings:InitializeBlizOptions()

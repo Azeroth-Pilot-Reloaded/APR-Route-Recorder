@@ -114,6 +114,10 @@ function AprRC.export:Show()
         if AprRCData.CurrentRoute.name == selectedRouteName then
             AprRCData.CurrentRoute = newRoute
         end
+        AprRCData.BackupRoute = { }
+        for k, v in pairs(newStepRouteTable) do
+            AprRCData.BackupRoute[k] = v
+        end
         AutoScrollToBottom()
     end)
     frame:AddChild(btnSave)
