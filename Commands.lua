@@ -40,6 +40,7 @@ function AprRC.command:SlashCmd(input)
         print(L_APR["COMMAND_LIST"] .. ":")
         print("|cffeda55f/aprrc achievement |r- " .. "HasAchievement")
         print("|cffeda55f/aprrc addjob |r- " .. "LearnProfession")
+        print("|cffeda55f/aprrc addreset |r- " .. "ResetRoute")
         print("|cffeda55f/aprrc aura |r- " .. "HasAura")
         print("|cffeda55f/aprrc button, btn |r- " .. "Button")
         print("|cffeda55f/aprrc class |r- " .. "Class")
@@ -101,6 +102,10 @@ function AprRC.command:SlashCmd(input)
             return
         elseif inputText == "addjob" then
             AprRC.autocomplete:ShowProfessionAutoComplete()
+            return
+        elseif inputText == "addreset" then
+            local step = { ResetRoute = true }
+            AprRC:NewStep(step)
             return
         elseif inputText == "aura" then
             AprRC.autocomplete:ShowAuraAutoComplete(function(_, spellID, frame)

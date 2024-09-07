@@ -30,6 +30,7 @@ local allCommands = {
     { command = "qpartpart",     label = "QpartPart",           texture = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\QpartPart" },
     { command = "race",          label = "Race",                texture = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\Race" },
     { command = "range",         label = "Range",               texture = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\Range" },
+    { command = "addreset",      label = "ResetRoute",          texture = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\ResetRoute" },
     { command = "spelltrigger",  label = "SpellTrigger",        texture = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\SpellTrigger" },
     { command = "vehicle",       label = "VehicleExit",         texture = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\VehicleExit" },
     { command = "warmode",       label = "WarMode",             texture = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\WarMode" },
