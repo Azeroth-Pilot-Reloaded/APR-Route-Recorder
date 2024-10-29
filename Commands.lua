@@ -377,13 +377,13 @@ function AprRC.command:SlashCmd(input)
             return
         elseif inputText == "save" then
             if AprRCData.CurrentRoute.name ~= "" then
-                local step = { ZoneDoneSave = 1 }
+                local step = { RouteCompleted = 1 }
                 AprRC:NewStep(step)
                 -- //TODO: Open Edit box with this route then reset currentRoute
                 AprRC.settings.profile.recordBarFrame.isRecording = false
                 AprRC.record:StopRecord()
                 -- AprRCData.CurrentRoute = { name = "", steps = { {} } }
-                print("|cff00bfff ZoneDoneSave |r Added")
+                print("|cff00bfff RouteCompleted |r Added")
             else
                 AprRC:Error('You current route is empty')
             end

@@ -67,10 +67,10 @@ function AprRC.CommandBar:UpdateFrame()
         tinsert(AprRC.CommandBar.btnList, btn)
     end
 
-    -- Create ZoneDoneSave button
-    local zoneDoneSaveBtn = CreateButton(CommandBarFrame, "Interface\\AddOns\\APR-Recorder\\assets\\icons\\ZoneDoneSave",
-        "Add the last step (ZoneDoneSave) of the route so it can be marked as completed")
-    zoneDoneSaveBtn:SetScript("OnClick", function()
+    -- Create RouteCompleted button
+    local routeCompletedBtn = CreateButton(CommandBarFrame, "Interface\\AddOns\\APR-Recorder\\assets\\icons\\RouteCompleted",
+        "Add the last step (RouteCompleted) of the route so it can be marked as completed")
+    routeCompletedBtn:SetScript("OnClick", function()
         AprRC.command:SlashCmd('save')
     end)
 
@@ -91,7 +91,7 @@ function AprRC.CommandBar:UpdateFrame()
             AprRC.TutoFrame:HideCustomTutorialFrame(AprRC.CommandBar.settingTutoFrameID)
         end)
 
-    tinsert(AprRC.CommandBar.btnList, zoneDoneSaveBtn)
+    tinsert(AprRC.CommandBar.btnList, routeCompletedBtn)
     tinsert(AprRC.CommandBar.btnList, rotationBtn)
     tinsert(AprRC.CommandBar.btnList, settingsBtn)
     AprRC.CommandBar:AdjustBarRotation(CommandBarFrame)

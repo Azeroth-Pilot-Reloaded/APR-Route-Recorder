@@ -57,7 +57,7 @@
 <li><span style="font-size: 14px;">Fillers</span></li>
 <li><span style="font-size: 14px;">Button (Item and Spell)</span></li>
 <li><span style="font-size: 14px;">Spell Trigger</span></li>
-<li><span style="font-size: 14px;">ZoneDoneSave</span></li>
+<li><span style="font-size: 14px;">RouteCompleted</span></li>
 <li><span style="font-size: 14px;">Learn Profession</span></li>
 <li><span style="font-size: 14px;">Don't skip video</span></li>
 <li><span style="font-size: 14px;">QpartPart</span></li>
