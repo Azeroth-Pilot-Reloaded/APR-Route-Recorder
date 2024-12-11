@@ -14,7 +14,7 @@ local allCommands = {
     { command = "notskipvid",    label = "Dontskipvid",         texture = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\Dontskipvid" },
     { command = "eta",           label = "ETA",                 texture = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\ETA" },
     { command = "text",          label = "ExtraLineText",       texture = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\ExtraLineText" },
-    { command = "faction",       label = "Faction",             texture = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\Faction_" .. UnitFactionGroup("player") },
+    { command = "faction",       label = "Faction",             texture = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\Faction" },
     { command = "filler",        label = "Fillers",             texture = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\Fillers" },
     { command = "gender",        label = "Gender",              texture = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\Gender" },
     { command = "grind",         label = "Grind",               texture = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\Grind" },
