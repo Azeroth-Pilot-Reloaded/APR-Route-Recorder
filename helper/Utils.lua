@@ -204,8 +204,9 @@ function AprRC:TableToString(tbl)
     return textFormated
 end
 
-function AprRC:StringToTable(str)
-    local cleanedStr = str:gsub("[%s\n\r\t]+", "")
+function AprRC:StringToTable(str, dontUseCleaner)
+    local cleanedStr = str
+    if not dontUseCleaner then str:gsub("[%s\n\r\t]+", "") end
 
     local func, err = loadstring("return " .. cleanedStr)
     if not func then
@@ -218,6 +219,13 @@ function AprRC:StringToTable(str)
             AprRC:Debug("Error when executing the string converted to a table", tableResult)
         end
     end
+end
+
+function AprRC:FormatTextToTableString(text)
+    text = string.gsub(text, '([^\n{}])\n', '%1,\n')
+    text = "{\n" .. text .. "}"
+    text = text:gsub(",}", "}")
+    return text
 end
 
 function AprRC:CustomSortKeys(tbl)

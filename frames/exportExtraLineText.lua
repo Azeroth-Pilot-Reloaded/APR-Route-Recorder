@@ -44,8 +44,27 @@ function AprRC.exportExtraLineText.Show()
     end)
     frame:AddChild(btnReset)
 
-    local text = AprRC:ExtraLinetableToString(AprRCData.ExtraLineTexts)
+    local btnSave = AceGUI:Create("Button")
+    btnSave:SetText("Save Extra Line Text")
+    btnSave:SetWidth(200)
+    btnSave:SetCallback("OnClick", function()
+        local editedText = editbox:GetText()
+        local formattedText = AprRC:FormatTextToTableString(editedText)
+        local newTable = AprRC:StringToTable(formattedText, true)
 
+
+        if not formattedText then
+            AprRC:Error("Failed to save. Incorrect format.")
+            return
+        end
+
+        AprRCData.ExtraLineTexts = newTable
+        AprRC:Debug("Extra Line Text saved successfully.")
+    end)
+    frame:AddChild(btnSave)
+
+
+    local text = AprRC:ExtraLinetableToString(AprRCData.ExtraLineTexts)
     text = string.gsub(text, '" = "', ' = "')
     text = string.gsub(text, ',\n  "', '\n')
     text = string.gsub(text, '{\n  "', '')
