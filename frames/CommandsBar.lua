@@ -9,15 +9,16 @@ AprRC.CommandBar.settingTutoFrameID = nil
 local FRAME_WIDTH = 80
 local FRAME_HEIGHT = 35
 
+local iconPath = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\"
 local defaultCommands = {
-    { command = "waypoint",  label = "Waypoint",      texture = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\Waypoint" },
-    { command = "coord",     label = "Coord",         texture = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\Coord" },
-    { command = "range",     label = "Range",         texture = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\Range" },
-    { command = "noarrow",   label = "NoArrow",       texture = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\NoArrow" },
-    { command = "text",      label = "ExtraLineText", texture = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\ExtraLineText" },
-    { command = "btn",       label = "Button",        texture = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\Button" },
-    { command = "filler",    label = "Fillers",       texture = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\Fillers" },
-    { command = "qpartpart", label = "QpartPart",     texture = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\QpartPart" },
+    { command = "waypoint",  label = "Waypoint",      texture = iconPath .. "Waypoint" },
+    { command = "coord",     label = "Coord",         texture = iconPath .. "Coord" },
+    { command = "range",     label = "Range",         texture = iconPath .. "Range" },
+    { command = "noarrow",   label = "NoArrow",       texture = iconPath .. "NoArrow" },
+    { command = "text",      label = "ExtraLineText", texture = iconPath .. "ExtraLineText" },
+    { command = "btn",       label = "Button",        texture = iconPath .. "Button" },
+    { command = "filler",    label = "Fillers",       texture = iconPath .. "Fillers" },
+    { command = "qpartpart", label = "QpartPart",     texture = iconPath .. "QpartPart" },
 }
 
 ---------------------------------------------------------------------------------------
@@ -68,7 +69,8 @@ function AprRC.CommandBar:UpdateFrame()
     end
 
     -- Create RouteCompleted button
-    local routeCompletedBtn = CreateButton(CommandBarFrame, "Interface\\AddOns\\APR-Recorder\\assets\\icons\\RouteCompleted",
+    local routeCompletedBtn = CreateButton(CommandBarFrame,
+        "Interface\\AddOns\\APR-Recorder\\assets\\icons\\RouteCompleted",
         "Add the last step (RouteCompleted) of the route so it can be marked as completed")
     routeCompletedBtn:SetScript("OnClick", function()
         AprRC.command:SlashCmd('save')
