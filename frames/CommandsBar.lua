@@ -11,14 +11,14 @@ local FRAME_HEIGHT = 35
 
 local iconPath = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\"
 local defaultCommands = {
-    { command = "waypoint",  label = "Waypoint",      texture = iconPath .. "Waypoint" },
-    { command = "coord",     label = "Coord",         texture = iconPath .. "Coord" },
-    { command = "range",     label = "Range",         texture = iconPath .. "Range" },
-    { command = "noarrow",   label = "NoArrow",       texture = iconPath .. "NoArrow" },
-    { command = "text",      label = "ExtraLineText", texture = iconPath .. "ExtraLineText" },
-    { command = "btn",       label = "Button",        texture = iconPath .. "Button" },
-    { command = "filler",    label = "Fillers",       texture = iconPath .. "Fillers" },
-    { command = "qpartpart", label = "QpartPart",     texture = iconPath .. "QpartPart" },
+    { command = "waypoint",  label = "Waypoint",        texture = iconPath .. "Waypoint" },
+    { command = "coord",     label = "Coord",           texture = iconPath .. "Coord" },
+    { command = "range",     label = "Range",           texture = iconPath .. "Range" },
+    { command = "noarrow",   label = "No Arrow",        texture = iconPath .. "NoArrow" },
+    { command = "text",      label = "Extra Line Text", texture = iconPath .. "ExtraLineText" },
+    { command = "btn",       label = "Button",          texture = iconPath .. "Button" },
+    { command = "filler",    label = "Fillers",         texture = iconPath .. "Fillers" },
+    { command = "qpartpart", label = "Qpart Part",      texture = iconPath .. "QpartPart" },
 }
 
 ---------------------------------------------------------------------------------------

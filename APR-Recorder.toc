@@ -1,4 +1,4 @@
-## Interface: 110000, 110002, 110005, 110007
+## Interface: 110000, 110002, 110005, 110007, 110100
 
 ## Title: Azeroth Pilot Reloaded - [|cffeda55fRoute Recorder|r]
 ## Notes: A route recorder for Azeroth Pilot Reloaded
@@ -9,6 +9,18 @@
 ## RequiredDeps: APR
 
 ## SavedVariables: AprRCData, AprRCSettings
+
+## Category-enUS: Quests
+## Category-deDE: Quests
+## Category-esES: Misiones
+## Category-esMX: Misiones
+## Category-frFR: Quêtes
+## Category-itIT: Missioni
+## Category-koKR: 퀘스트
+## Category-ptBR: Missões
+## Category-ruRU: Задания
+## Category-zhCN: 任务
+## Category-zhTW: 任務
 
 ## X-License: All Rights Reserved: You are free to fork and modify on GitHub, please ask us about anything else.
 ## X-Github: https://github.com/Azeroth-Pilot-Reloaded/APR-Route-Recorder
