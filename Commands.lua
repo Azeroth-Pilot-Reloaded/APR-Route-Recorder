@@ -56,6 +56,8 @@ function AprRC.command:SlashCmd(input)
         print("|cffeda55f/aprrc grind |r- " .. "Grind")
         print("|cffeda55f/aprrc help, h |r- " .. L_APR["HELP_COMMAND"])
         print("|cffeda55f/aprrc instance |r- " .. "InstanceQuest")
+        print("|cffeda55f/aprrc isCompleted |r- " .. "IsQuestCompletedOnAccount")
+        print("|cffeda55f/aprrc isUncompleted |r- " .. "IsQuestUncompletedOnAccount")
         print("|cffeda55f/aprrc lootitem, lt |r- " .. "LootItem")
         print("|cffeda55f/aprrc noachievement |r- " .. "DontHaveAchievement")
         print("|cffeda55f/aprrc noarrow |r- " .. "NoArrow")
@@ -158,6 +160,22 @@ function AprRC.command:SlashCmd(input)
             local currentStep = AprRC:GetLastStep()
             currentStep.InstanceQuest = true
             print("|cff00bfffInstanceQuest|r Added")
+            return
+        elseif inputText == "isCompleted" then
+            AprRC.questionDialog:CreateEditBoxPopupWithCallback("Is Quest Completed On Account (QuestID number)",
+                function(text)
+                    local currentStep = AprRC:GetLastStep()
+                    currentStep.IsQuestCompletedOnAccount = tonumber(text, 10)
+                    print("|cff00bfffIsQuestCompletedOnAccount|r Added")
+                end)
+            return
+        elseif inputText == "isUncompleted" then
+            AprRC.questionDialog:CreateEditBoxPopupWithCallback("Is Quest Uncompleted On Account (QuestID number)",
+                function(text)
+                    local currentStep = AprRC:GetLastStep()
+                    currentStep.IsQuestUncompletedOnAccount = tonumber(text, 10)
+                    print("|cff00bfffIsQuestUncompletedOnAccount|r Added")
+                end)
             return
         elseif inputText == "lootitem" or inputText == "lt" then
             AprRC.autocomplete:ShowItemAutoComplete(questID, objectiveID, function(_, itemID, frame)
