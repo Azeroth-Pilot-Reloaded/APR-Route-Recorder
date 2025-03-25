@@ -27,10 +27,6 @@ jobs:
           sudo apt-get install luarocks
           sudo luarocks install luacheck
 
-      - name: Run Luacheck APR-Core
-        run: luacheck ./APR-Core
-
-      - name: Run Luacheck Routes
-        run: luacheck ./Routes
-
+      - name: Run Luacheck
+        run: luacheck ./
 
