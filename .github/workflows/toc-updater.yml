@@ -1,0 +1,40 @@
+name: Update TOC Interface version(s)
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: 0 12 * * *
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone project
+        uses: actions/checkout@v4.2.2
+
+      - name: Update TOC Interface version
+        uses: Mctalian/toc-interface-updater@v1
+        with:
+          flavor: retail
+          ptr: true
+
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GIT_TOKEN }}
+          title: "Auto updates supported interface versions"
+          body: |
+            ## Requirements
+
+            - [ ] Check [APi changelog](https://warcraft.wiki.gg/wiki/API_change_summaries)
+            - [ ] Test for all applicable game clients
+
+            ----------------------------------------------------
+            _This PR was automatically created to update the supported interface versions in APR-Recorder.toc._
+          commit-message: "Auto updates supported interface versions"
+          branch: interface-version
+          delete-branch: true
