@@ -514,8 +514,7 @@ function AprRC.event.functions.qpart(event, questID)
                 -- save if not existing
                 AprRC.lastQuestState[questID] = AprRC.lastQuestState[questID] or {}
                 AprRC.lastQuestState[questID][index] = { numFulfilled = objective.numFulfilled }
-                local lastState = AprRC.lastQuestState[questID] and AprRC.lastQuestState[questID][index]
-                setQpart(lastState, objective, questID, index)
+                setQpart(AprRC.lastQuestState[questID][index], objective, questID, index)
             end
         end
     end)
@@ -613,7 +612,6 @@ function AprRC.event.functions.portal(event, ...)
                             print("|cff00bfffWaypoint|r Added")
                         end)
                 elseif AprRC:IsCurrentStepFarAway() then
-                    local last = AprRC:GetLastStep()
                     last.Coord = AprRCData.BeforePortal.lastStep.Coord
                     last.ExtraLineText = "USE_PORTAL"
                     AprRCData.BeforePortal = {}
