@@ -1,95 +1,89 @@
 name: "Bug Report"
 description: Report a bug or an issue with Azeroth Pilot Reloaded - Route Recorder.
 title: "[ISSUE] - "
-labels: 'Bug'
+labels: ["Bug"]
 body:
-- type: markdown
-  attributes:
-    value: |
-      Please [search for existing issues](https://github.com/Azeroth-Pilot-Reloaded/APR-Route-Recorder/issues) before creating a new one.
+  - type: markdown
+    attributes:
+      value: |
+        Please [search for existing issues](https://github.com/Azeroth-Pilot-Reloaded/APR-Route-Recorder/issues) before creating a new one.
 
-- type: textarea
-  attributes:
-    label: Description
-    description: What did you expect to happen and what happened instead?
-  validations:
-    required: true
+  - type: textarea
+    attributes:
+      label: Description
+      description: What did you expect to happen and what happened instead?
+    validations:
+      required: true
 
-- type: input
-  attributes:
-    label: APR - Route Recorder Version
-    description: |
-      You can see the current version in the title of the options window (`/aprrc`).
-    placeholder: "v1.0.0"
-  validations:
-    required: true
+  - type: input
+    attributes:
+      label: APR - Route Recorder Version
+      description: |
+        You can see the current version in the title of the options window (`/aprrc`).
+      placeholder: "v1.0.0"
+    validations:
+      required: true
 
-- type: dropdown
-  id: flavor
-  attributes:
-    label: World of Warcraft Flavor
-    description: What version of World of Warcraft are are you running?
-    options:
-      - Retail (Default)
-      - Beta (Dragonflight)
-  validations:
-    required: true
+  - type: dropdown
+    id: flavor
+    attributes:
+      label: World of Warcraft Flavor
+      description: What version of World of Warcraft are are you running?
+      options:
+        - Retail (Default)
+        - PRT (Public Test Realm)
+        - Beta
+    validations:
+      required: true
 
-- type: checkboxes
-  id: testing
-  attributes:
-    label: Tested with only APR
-    description: Did you try having APR as the only enabled addon and everything else (especially something like ElvUI) disabled?
-    options:
-      - label: "Yes"
-      - label: "No"
-  validations:
-    required: true
+  - type: checkboxes
+    id: testing
+    attributes:
+      label: Tested with only APR
+      description: Did you try having APR as the only enabled addon and everything else (especially something like ElvUI) disabled?
+      options:
+        - label: "Yes"
+        - label: "No"
 
-- type: textarea
-  attributes:
-    label: Lua Error
-    description: |
-      Do you have an error log of what happened? If you don't see any errors, make sure that error reporting is enabled (`/console scriptErrors 1`) or install [BugSack](https://www.curseforge.com/wow/addons/bugsack) & [BugGrabber](https://www.curseforge.com/wow/addons/bug-grabber), yes both are needed.
-    render: true
-  validations:
-    required: false
+  - type: textarea
+    attributes:
+      label: Lua Error
+      description: |
+        Do you have an error log of what happened? If you don't see any errors, make sure that error reporting is enabled (`/console scriptErrors 1`) or install [BugSack](https://www.curseforge.com/wow/addons/bugsack) & [BugGrabber](https://www.curseforge.com/wow/addons/bug-grabber), yes both are needed.
 
-- type: textarea
-  attributes:
-    label: Reproduction Steps
-    description: Please list out the steps to reproduce your bug. Please verify that your reproduction steps are enough to reproduce the problem.
-    placeholder: |
-      1. Go to '...'
-      2. Click on '....'
-      3. Scroll down to '....'
-      4. See error
-  validations:
-    required: true
+        If you are submitting an error, please wrap the error log in triple backticks (```).
+        If no error, remove the triple backticks and this section.
+      value: |
+        ```lua
+        Replace this text with the actual Lua error log.
+        ```
+    validations:
+      required: false
 
-- type: input
-  attributes:
-    label: Last Good Version
-    description: |
-      Was it working in a previous version? If yes, which was the last good one?
-    placeholder: "v1.0.0"
-  validations:
-    required: false
+  - type: textarea
+    attributes:
+      label: Reproduction Steps
+      description: Please list out the steps to reproduce your bug. Please verify that your reproduction steps are enough to reproduce the problem.
+      placeholder: |
+        1. Go to '...'
+        2. Click on '....'
+        3. Scroll down to '....'
+        4. See error
+    validations:
+      required: true
 
-- type: textarea
-  attributes:
-    label: Screenshots
-    description: If applicable, add screenshots to help explain your problem.
-    placeholder: Attach directly via "copy & paste," do not link to other sites
-  validations:
-    required: false
+  - type: textarea
+    attributes:
+      label: Screenshots
+      description: If applicable, add screenshots to help explain your problem.
+      placeholder: Attach directly via "copy & paste," do not link to other sites
+    validations:
+      required: false
 
-- type: textarea
-  attributes:
-    label: Any additional information?
-    description: |
-      If you have additional information that does not match the other fields
-    render: true
-  validations:
-    required: false
-
+  - type: textarea
+    attributes:
+      label: Any additional information?
+      description: |
+        If you have additional information that does not match the other fields
+    validations:
+      required: false
