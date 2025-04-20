@@ -40,8 +40,8 @@ new_release_body = header_line + "\n" + "\n".join(lines)
 
 # Transform the last line to the desired format
 new_release_body = re.sub(
-    r'\*\*Full Changelog\*\*: https://github\.com/Azeroth-Pilot-Reloaded/azeroth-pilot-reloaded/compare/([\w\.]+...[\w\.]+)',
-    r'**Full Changelog**: [\1](https://github.com/Azeroth-Pilot-Reloaded/azeroth-pilot-reloaded/compare/\1)',
+    r'\*\*Full Changelog\*\*: https://github\.com/Azeroth-Pilot-Reloaded/APR-Route-Recorde/compare/([\w\.]+...[\w\.]+)',
+    r'**Full Changelog**: [\1](https://github.com/Azeroth-Pilot-Reloaded/APR-Route-Recorde/compare/\1)',
     new_release_body
 )
 
