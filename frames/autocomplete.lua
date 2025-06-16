@@ -69,9 +69,19 @@ function AprRC.autocomplete:ShowAutoComplete(title, list, onConfirm, formatItem,
                         end)
                         interacLabel:SetCallback("OnEnter", function(widget)
                             widget:SetHighlight("Interface\\QuestFrame\\UI-QuestTitleHighlight")
+                            GameTooltip:SetOwner(widget.frame, "ANCHOR_RIGHT")
+                            GameTooltip:ClearLines()
+                            local font, size, flags = GameFontNormal:GetFont()
+                            GameTooltip:AddLine("Key: " .. match.key, 1, 1, 0, false)
+                            local line = _G["GameTooltipTextLeft" .. GameTooltip:NumLines()]
+                            if line then
+                                line:SetFont(font, size, flags)
+                            end
+                            GameTooltip:Show()
                         end)
                         interacLabel:SetCallback("OnLeave", function(widget)
                             widget:SetHighlight(nil)
+                            GameTooltip:Hide()
                         end)
                         scrollFrame:AddChild(interacLabel)
                     end
