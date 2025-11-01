@@ -32,7 +32,7 @@ local events = {
     loot = "CHAT_MSG_LOOT",
     target = "PLAYER_TARGET_CHANGED",
     scenario = "SCENARIO_CRITERIA_UPDATE",
-    portal = { "PLAYER_LEAVING_WORLD", "PLAYER_ENTERING_WORLD" }, -- test with "AREA_POIS_UPDATED"
+    portal = { "PLAYER_ENTERING_WORLD", "LOADING_SCREEN_ENABLED" },
     learnProfession = "LEARNED_SPELL_IN_SKILL_LINE"
     -- warMode = "WAR_MODE_STATUS_UPDATE",
     -- vehicle = { "UNIT_ENTERING_VEHICLE", "UNIT_EXITING_VEHICLE" },
@@ -585,40 +585,72 @@ function AprRC.event.functions.scenario(event, ...)
 end
 
 function AprRC.event.functions.portal(event, ...)
-    if event == "PLAYER_LEAVING_WORLD" then
+    if event == "LOADING_SCREEN_ENABLED" then
+        -- Step to save coordinates before TP
         local step = {}
         AprRC:SetStepCoord(step)
-        AprRCData.BeforePortal.lastStep = AprRC:GetLastStep()
-        AprRCData.BeforePortal.lastCoord = step
+        AprRCData.BeforePortal.stepForCoord = step
+
+        -- previous step before the portal
+        local lastStep = AprRC:GetLastStep()
+        AprRCData.BeforePortal.lastStep = lastStep
     else
         local isInitialLogin, isReloadingUi = ...
-        -- wait 2s si last step = saved last step  alors waypoints + text prendre portal -- not skippable waypoints (new option)
-        -- sinon check IsCurrentStepFarAway si trop loin alors override coord + text prendre portal
-        -- pour les tp sans portail ni cast => LOSS_OF_CONTROL_ADDED into Zone changed indoors, waypoint update, area pois updated
-        -- pour les tp avec spell => spell list teleport (sans les spell de class) + unit spellcast-succeeded
+        -- wait 3s; if last step == saved last step then add waypoint + "USE_PORTAL" text -- non-skippable waypoints (new option)
+        -- otherwise check IsCurrentStepFarAway; if too far then override coord + "USE_PORTAL" text
+        -- for teleports without a portal or cast => detect via LOSS_OF_CONTROL_ADDED, ZONE_CHANGED_INDOORS, waypoint update, AREA_POIS_UPDATED
+        -- for teleports with a spell => use a teleport spell list (excluding class spells) + UNIT_SPELLCAST_SUCCEEDED
 
         if not isInitialLogin and not isReloadingUi then
-            C_Timer.After(3, function()
-                local last = AprRC:GetLastStep()
-                if AprRC:DeepCompare(AprRCData.BeforePortal.lastStep, last) then
+            C_Timer.After(5, function()
+                local lastStep = AprRC:GetLastStep()
+                local beforePortal = AprRCData.BeforePortal or {}
+                local portalStep = beforePortal.stepForCoord
+                local portalStepCoord = portalStep.Coord
+                local portalStepZone = portalStep.Zone
+
+                local lastStepBeforePortal = beforePortal.lastStep
+                -- Same last step so we need to add a new one
+
+                if lastStepBeforePortal and lastStep and AprRC:DeepCompare(lastStepBeforePortal, lastStep) then
                     APR.questionDialog:CreateQuestionPopup(
                         "Set a waypoint where you were before teleporting?", function()
-                            local step = {
-                                Waypoint = AprRC:FindClosestIncompleteQuest(),
-                                ExtraLineText = "USE_PORTAL",
-                                Coord = AprRCData.BeforePortal.lastStep.Coord
-                            }
-                            AprRC:NewStep(step)
-                            print("|cff00bfffWaypoint|r Added")
+                            local reuseLast = false
+                            if lastStep.Waypoint and lastStep.Coord then
+                                if lastStep.Coord.x == portalStepCoord.x and lastStep.Coord.y == portalStepCoord.y then
+                                    reuseLast = true
+                                end
+                            end
+
+                            if reuseLast then
+                                lastStep.ExtraLineText = "USE_PORTAL"
+                                lastStep.Zone = portalStepZone
+                                AprRC:AddZoneStepTrigger(lastStep)
+                                print("|cff00bfffWaypoint|r Updated")
+                            else
+                                local step = {
+                                    Waypoint = AprRC:FindClosestIncompleteQuest(),
+                                    ExtraLineText = "USE_PORTAL",
+                                    Coord = portalStepCoord,
+                                    Zone = portalStepZone,
+                                }
+                                AprRC:AddZoneStepTrigger(step)
+                                AprRC:NewStep(step)
+                                print("|cff00bfffWaypoint|r Added")
+                            end
                         end)
-                elseif AprRC:IsCurrentStepFarAway() then
-                    last.Coord = AprRCData.BeforePortal.lastStep.Coord
-                    last.ExtraLineText = "USE_PORTAL"
-                    AprRCData.BeforePortal = {}
-                    print("|cff00bfffLast Step coord updated|r Added")
+                elseif lastStep then
+                    if AprRC:IsCurrentStepFarAway() then
+                        lastStep.Coord = portalStepCoord
+                        lastStep.Zone = portalStepZone
+                    end
+                    lastStep.ExtraLineText = "USE_PORTAL"
+                    print("|cff00bfffLast Step coord updated|r")
                 end
+                AprRCData.BeforePortal = {}
             end)
         end
+        -- reset on login
         if isInitialLogin then
             AprRCData.BeforePortal = {}
         end

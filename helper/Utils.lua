@@ -30,7 +30,7 @@ function AprRC:DeepCompare(t1, t2)
     if type(t1) ~= "table" or type(t2) ~= "table" then return false end
     for k1, v1 in pairs(t1) do
         local v2 = t2[k1]
-        if v2 == nil or not deepCompare(v1, v2) then return false end
+        if v2 == nil or not self:DeepCompare(v1, v2) then return false end
     end
     for k2, v2 in pairs(t2) do
         if t1[k2] == nil then return false end
@@ -266,4 +266,14 @@ function AprRC:IsCampaignQuest(questID)
     local questIndex = C_QuestLog.GetLogIndexForQuestID(questID)
     local questInfo = C_QuestLog.GetInfo(questIndex)
     return questInfo and questInfo.campaignID ~= nil
+end
+
+function AprRC:AddZoneStepTrigger(step)
+    local y, x = UnitPosition("player")
+    if x and y then
+        x = tonumber(string.format("%.2f", x))
+        y = tonumber(string.format("%.2f", y))
+        step.ZoneStepTrigger = { x = x, y = y, Range = 15 }
+        step.Range = nil
+    end
 end
