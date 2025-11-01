@@ -255,30 +255,26 @@ local function SetGossipOptionID(self)
     local gossipInfo = self:GetData().info
     local gossipIcon = gossipInfo.icon
     local gossipOptionID = gossipInfo.gossipOptionID
-    local npcID = APR:GetTargetID("npc")
 
     if gossipIcon == 132053 and not tContains({ 51901, 51902 }, gossipOptionID) then -- bubble icon and not Chromie select timeline
         if not AprRC:IsCurrentStepFarAway() then
             local currentStep = AprRC:GetLastStep()
-            if AprRC:HasStepOption("GossipOptionIDs") then
-                if not tContains(currentStep.GossipOptionIDs, gossipOptionID) then
-                    tinsert(currentStep.GossipOptionIDs, gossipOptionID)
+            local shouldUseCurrentStep = currentStep and
+                (currentStep.Qpart or currentStep.QpartPart or currentStep.GossipOptionIDs)
+
+            if shouldUseCurrentStep then
+                if currentStep.GossipOptionIDs then
+                    if not tContains(currentStep.GossipOptionIDs, gossipOptionID) then
+                        tinsert(currentStep.GossipOptionIDs, gossipOptionID)
+                    end
+                else
+                    currentStep.GossipOptionIDs = { gossipOptionID }
                 end
             else
-                currentStep.GossipOptionIDs = { gossipOptionID }
+                local step = { GossipOptionIDs = { gossipOptionID } }
+                AprRC:SetStepCoord(step)
+                AprRC:NewStep(step)
             end
-            -- if npcID then
-            --     if not currentStep.NPCIDs then
-            --         currentStep.NPCIDs = {}
-            --     end
-            --     if not tContains(currentStep.NPCIDs, npcID) then
-            --         tinsert(currentStep.NPCIDs, npcID)
-            --     end
-            -- end
-        else
-            local step = { GossipOptionIDs = { gossipOptionID } } --, NPCIDs = { npcID } }
-            AprRC:SetStepCoord(step)
-            AprRC:NewStep(step)
         end
     end
 end
