@@ -310,18 +310,37 @@ function AprRC.command:SlashCmd(input)
                 statusText = "Click on an objective to create a Qpartpart ",
                 questList = AprRC.QuestObjectiveSelector:GetQuestList(),
                 onClick = function(questID, objectiveID)
+                    local objectivesInfo = C_QuestLog.GetQuestObjectives(questID)
+                    local objectiveInfo = objectivesInfo and objectivesInfo[objectiveID]
+                    local defaultText = AprRC:GetQpartpartTrigTextProgress(objectiveInfo)
+
+                    -- Show the popup dialog with the default "x/y" value
                     AprRC.questionDialog:CreateEditBoxPopupWithCallback("Text Trigger for Qpart Part", function(text)
+                        local trimmedText = strtrim(text or "")
+                        if trimmedText == "" then return end
+
+                        -- Auto-append "/total" if not manually included
+                        if not string.find(trimmedText, "/", 1, true) and objectiveInfo then
+                            local total = tonumber(objectiveInfo.numRequired) or 0
+                            if total > 0 then
+                                trimmedText = trimmedText .. "/" .. total
+                            end
+                        end
+
+                        -- Create the step and insert into the route
                         local step = {
-                            TrigText = text,
+                            TrigText = trimmedText,
                             QpartPart = { [questID] = { objectiveID } }
                         }
                         AprRC:SetStepCoord(step)
                         AprRC:NewStep(step)
+
                         print("|cff00bfffQpartPart - [" ..
                             C_QuestLog.GetTitleForQuestID(questID) .. "] - " .. objectiveID .. "|r Added")
-                        print("|cff00bfffTrigText - " .. text .. "|r Added")
-                    end)
+                        print("|cff00bfffTrigText - " .. trimmedText .. "|r Added")
+                    end, defaultText)
                 end
+
             })
             return
         elseif inputText == "zonetrigger" then

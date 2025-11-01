@@ -277,3 +277,24 @@ function AprRC:AddZoneStepTrigger(step)
         step.Range = nil
     end
 end
+
+function AprRC:GetQpartpartTrigTextProgress(objectiveInfo)
+    if not objectiveInfo then return "1/1" end
+
+    local total = tonumber(objectiveInfo.numRequired) or 0
+    local current = tonumber(objectiveInfo.numFulfilled) or 0
+
+    -- Try to parse from text if needed
+    if (total == 0 or current == 0) and objectiveInfo.text then
+        local fulfilledText, requiredText = objectiveInfo.text:match("(%d+)%s*/%s*(%d+)")
+        current = tonumber(fulfilledText) or current
+        total = tonumber(requiredText) or total
+    end
+
+    if total > 0 then
+        local nextCount = math.min(current + 1, total)
+        return string.format("%d/%d", nextCount, total)
+    end
+
+    return "1/1"
+end

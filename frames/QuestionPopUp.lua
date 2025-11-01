@@ -2,8 +2,11 @@ local _G = _G
 
 AprRC.questionDialog = AprRC:NewModule("QuestionDialog")
 
-function AprRC.questionDialog:CreateEditBoxPopupWithCallback(text, onAcceptCallback)
-    local dialogName = "EDITBOX_DIALOG"
+function AprRC.questionDialog:CreateEditBoxPopupWithCallback(text, onAcceptCallback, defaultText)
+    local dialogName = "APRRC_EDITBOX_DIALOG"
+
+    local currentDefaultText = defaultText or ""
+
     StaticPopupDialogs[dialogName] = {
         text = text or "General Kenobi",
         hasEditBox = true,
@@ -11,11 +14,11 @@ function AprRC.questionDialog:CreateEditBoxPopupWithCallback(text, onAcceptCallb
         button2 = CANCEL,
         OnShow = function(self)
             local box = _G[self:GetName() .. "EditBox"]
-            local button = _G[self:GetName() .. "Button1"] -- Récupère le bouton OK
+            local button = _G[self:GetName() .. "Button1"]
 
             if box then
                 box:SetWidth(275)
-                box:SetText('')
+                box:SetText(currentDefaultText)
                 box:HighlightText()
                 box:SetFocus()
 
@@ -25,8 +28,8 @@ function AprRC.questionDialog:CreateEditBoxPopupWithCallback(text, onAcceptCallb
                     button:Enable()
                 end
 
-                box:SetScript("OnTextChanged", function(self)
-                    if self:GetText() == "" then
+                box:SetScript("OnTextChanged", function(self2)
+                    if self2:GetText() == "" then
                         button:Disable()
                     else
                         button:Enable()
@@ -36,15 +39,17 @@ function AprRC.questionDialog:CreateEditBoxPopupWithCallback(text, onAcceptCallb
         end,
         OnAccept = function(self)
             local editBox = _G[self:GetName() .. "EditBox"]
-            local text = editBox:GetText()
-            if text ~= "" and onAcceptCallback and type(onAcceptCallback) == "function" then
-                onAcceptCallback(text)
+            local inputText = editBox:GetText()
+            if inputText ~= "" and type(onAcceptCallback) == "function" then
+                onAcceptCallback(inputText)
             end
         end,
         timeout = 0,
         whileDead = true,
         hideOnEscape = false,
+        preferredIndex = 3, -- ensures no conflict with other popups
     }
 
+    -- Trigger the popup
     StaticPopup_Show(dialogName)
 end
