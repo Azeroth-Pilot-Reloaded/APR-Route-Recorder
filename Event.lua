@@ -270,11 +270,11 @@ local function SetGossipOptionID(self)
                 else
                     currentStep.GossipOptionIDs = { gossipOptionID }
                 end
-            else
-                local step = { GossipOptionIDs = { gossipOptionID } }
-                AprRC:SetStepCoord(step)
-                AprRC:NewStep(step)
             end
+        else
+            local step = { GossipOptionIDs = { gossipOptionID } }
+            AprRC:SetStepCoord(step)
+            AprRC:NewStep(step)
         end
     end
 end
