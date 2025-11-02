@@ -7,6 +7,7 @@ AprRC.Color = {
     white = { 1, 1, 1 },
     red = { 1, 0, 0 },
     darkblue = { 0, 0.5, 0.5 },
+    blue = { 0, 87 / 255, 183 / 255 },
 
 }
 AprRC.Backdrop = {

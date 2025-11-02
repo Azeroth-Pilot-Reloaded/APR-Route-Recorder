@@ -43,7 +43,7 @@ local function CreateButton(parent, texture, tooltipText, onClick)
 
     btn:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
-        GameTooltip:AddLine(tooltipText, unpack(AprRC.Color.darkblue))
+        GameTooltip:AddLine(tooltipText, unpack(AprRC.Color.white))
         GameTooltip:Show()
     end)
     btn:SetScript("OnLeave", function(self) GameTooltip:Hide() end)

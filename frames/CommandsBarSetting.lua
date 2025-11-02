@@ -46,6 +46,7 @@ local allCommands = {
     { command = "race",                              label = "Race",                                    texture = iconPath .. "Race" },
     { command = "range",                             label = "Range",                                   texture = iconPath .. "Range" },
     { command = "addreset",                          label = "Reset Route",                             texture = iconPath .. "ResetRoute" },
+    { command = "adventuremap",                      label = "Adventure Map Visible",                   texture = iconPath .. "IsAdventureMapVisible" },
     { command = "spelltrigger",                      label = "Spell Trigger",                           texture = iconPath .. "SpellTrigger" },
     { command = "vehicle",                           label = "Vehicle Exit",                            texture = iconPath .. "VehicleExit" },
     { command = "mountvehicle",                      label = "Mount Vehicle",                           texture = iconPath .. "MountVehicle" },

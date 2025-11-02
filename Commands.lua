@@ -83,6 +83,7 @@ function AprRC.command:SlashCmd(input)
         print("|cffeda55f/aprrc achievement |r- " .. "HasAchievement")
         print("|cffeda55f/aprrc addjob |r- " .. "LearnProfession")
         print("|cffeda55f/aprrc addreset |r- " .. "ResetRoute")
+        print("|cffeda55f/aprrc adventuremap |r- " .. "IsAdventureMapVisible")
         print("|cffeda55f/aprrc aura |r- " .. "HasAura")
         print("|cffeda55f/aprrc button, btn |r- " .. "Button")
         print("|cffeda55f/aprrc buffs |r- " .. "Buffs")
@@ -168,6 +169,11 @@ function AprRC.command:SlashCmd(input)
         elseif inputText == "addreset" then
             local step = { ResetRoute = true }
             AprRC:NewStep(step)
+            return
+        elseif inputText == "adventuremap" then
+            local currentStep = AprRC:GetLastStep()
+            currentStep.IsAdventureMapVisible = true
+            print("|cff00bfffIsAdventureMapVisible|r Added")
             return
         elseif inputText == "aura" then
             AprRC.autocomplete:ShowAuraAutoComplete(function(_, spellID, frame)
