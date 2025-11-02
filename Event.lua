@@ -109,7 +109,7 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
                         return
                     end
                     local currentStep = AprRC:GetLastStep()
-                    currentStep.ExtraActionB = 1
+                    currentStep.ExtraActionB = true
                 end)
                 ExtraActionButton1.isHookedAprRC = true
             end
@@ -215,7 +215,7 @@ function AprRC.event.functions.spell(event, unitTarget, castGUID, spellID)
             key = "UseHS"
         elseif spellID == 126389 then
             local currentStep = AprRC:GetLastStep()
-            currentStep.UseGlider = 1
+            currentStep.UseGlider = true
             return
         elseif chromieTimelineSpellID[spellID] then
             local step = {}
@@ -246,7 +246,7 @@ function AprRC.event.functions.vehicle(event, ...)
     if event == "UNIT_EXITING_VEHICLE" then
         if not AprRC:HasStepOption("VehicleExit") then
             local currentStep = AprRC:GetLastStep()
-            currentStep.VehicleExit = 1
+            currentStep.VehicleExit = true
         end
     end
 end
@@ -379,7 +379,7 @@ function AprRC.event.functions.fly(event, ...)
 
             --Boat
             if tContains(boatsNodeID, AprRC.CurrentTaxiNode) then
-                currentStep.Boat = 1
+                currentStep.Boat = true
             end
 
             -- reset
@@ -688,7 +688,6 @@ end
 -- - Bloodlust
 -- - DenyNPC
 
--- - ExitTutorial ["ExitTutorial"] = 62567 (IsOnQuest(questID)
 -------------------------------
 
 -- AprRC.EventFrame:RegisterEvent("CONFIRM_XP_LOSS") -- deathskip ??

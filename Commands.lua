@@ -16,6 +16,88 @@ local function CanDoCommand()
 end
 function AprRC.command:SlashCmd(input)
     local inputText = string.lower(input)
+    local function ParseQuestIDs(rawText)
+        local ids = {}
+        for token in string.gmatch(rawText or "", "[^,]+") do
+            local trimmed = strtrim(token or "")
+            if trimmed ~= "" then
+                if not trimmed:match("^%d+$") then
+                    return nil
+                end
+                table.insert(ids, tonumber(trimmed, 10))
+            end
+        end
+        if #ids == 0 then
+            return nil
+        end
+        return ids
+    end
+
+    local function ParseQuestID(rawText)
+        local ids = ParseQuestIDs(rawText)
+        if ids and #ids == 1 then
+            return ids[1]
+        end
+        return nil
+    end
+
+    local function ParsePositiveNumber(rawText)
+        local trimmed = strtrim(rawText or "")
+        if trimmed == "" or not trimmed:match("^%d+%.?%d*$") then
+            return nil
+        end
+        return tonumber(trimmed)
+    end
+
+    local function ParsePositiveInteger(rawText)
+        local trimmed = strtrim(rawText or "")
+        if trimmed == "" or not trimmed:match("^%d+$") then
+            return nil
+        end
+        return tonumber(trimmed, 10)
+    end
+    local questCheckCommands = {
+        iscompleted = {
+            key = "IsQuestsCompletedOnAccount",
+            prompt = "Is Quest Completed On Account (QuestID number)",
+            message = "IsQuestsCompletedOnAccount",
+        },
+        isuncompleted = {
+            key = "IsQuestsUncompletedOnAccount",
+            prompt = "Is Quest Uncompleted On Account (QuestID number)",
+            message = "IsQuestsUncompletedOnAccount",
+        },
+        isoneofquestscompleted = {
+            key = "IsOneOfQuestsCompleted",
+            prompt = "Is One Of Quests Completed (QuestID number)",
+            message = "IsOneOfQuestsCompleted",
+        },
+        isoneofquestsuncompleted = {
+            key = "IsOneOfQuestsUncompleted",
+            prompt = "Is One Of Quests Uncompleted (QuestID number)",
+            message = "IsOneOfQuestsUncompleted",
+        },
+        isoneofquestscompletedonaccount = {
+            key = "IsOneOfQuestsCompletedOnAccount",
+            prompt = "Is One Of Quests Completed On Account (QuestID number)",
+            message = "IsOneOfQuestsCompletedOnAccount",
+        },
+        isoneofquestsuncompletedonaccount = {
+            key = "IsOneOfQuestsUncompletedOnAccount",
+            prompt = "Is One Of Quests Uncompleted On Account (QuestID number)",
+            message = "IsOneOfQuestsUncompletedOnAccount",
+        },
+        isquestscompleted = {
+            key = "IsQuestsCompleted",
+            prompt = "Is Quests Completed (QuestID number)",
+            message = "IsQuestsCompleted",
+        },
+        isquestsuncompleted = {
+            key = "IsQuestsUncompleted",
+            prompt = "Is Quests Uncompleted (QuestID number)",
+            message = "IsQuestsUncompleted",
+        },
+    }
     if inputText == "export" then
         if AprRCData.CurrentRoute.name ~= "" then
             AprRC:UpdateRouteByName(AprRCData.CurrentRoute.name, AprRCData.CurrentRoute)
@@ -48,6 +130,8 @@ function AprRC.command:SlashCmd(input)
         print("|cffeda55f/aprrc coordframe |r- " .. "Coord Frame")
         print("|cffeda55f/aprrc donedb |r- " .. "DoneDB")
         print("|cffeda55f/aprrc eta |r- " .. "ETA")
+        print("|cffeda55f/aprrc gossipeta |r- " .. "GossipETA")
+        print("|cffeda55f/aprrc specialetahide |r- " .. "SpecialETAHide")
         print("|cffeda55f/aprrc export |r- " .. "To export data")
         print("|cffeda55f/aprrc faction |r- " .. "Faction")
         print("|cffeda55f/aprrc fillers, filler |r- " .. "Fillers")
@@ -56,11 +140,18 @@ function AprRC.command:SlashCmd(input)
         print("|cffeda55f/aprrc grind |r- " .. "Grind")
         print("|cffeda55f/aprrc help, h |r- " .. L_APR["HELP_COMMAND"])
         print("|cffeda55f/aprrc instance |r- " .. "InstanceQuest")
-        print("|cffeda55f/aprrc isCompleted |r- " .. "IsQuestCompletedOnAccount")
-        print("|cffeda55f/aprrc isUncompleted |r- " .. "IsQuestUncompletedOnAccount")
+        print("|cffeda55f/aprrc isCompleted |r- " .. "IsQuestsCompletedOnAccount")
+        print("|cffeda55f/aprrc isQuestsCompleted |r- " .. "IsQuestsCompleted")
+        print("|cffeda55f/aprrc isOneOfQuestsCompleted |r- " .. "IsOneOfQuestsCompleted")
+        print("|cffeda55f/aprrc isOneOfQuestsCompletedOnAccount |r- " .. "IsOneOfQuestsCompletedOnAccount")
+        print("|cffeda55f/aprrc isUncompleted |r- " .. "IsQuestsUncompletedOnAccount")
+        print("|cffeda55f/aprrc isQuestsUncompleted |r- " .. "IsQuestsUncompleted")
+        print("|cffeda55f/aprrc isOneOfQuestsUncompleted |r- " .. "IsOneOfQuestsUncompleted")
+        print("|cffeda55f/aprrc isOneOfQuestsUncompletedOnAccount |r- " .. "IsOneOfQuestsUncompletedOnAccount")
         print("|cffeda55f/aprrc lootitem, lt |r- " .. "LootItem")
         print("|cffeda55f/aprrc noachievement |r- " .. "DontHaveAchievement")
         print("|cffeda55f/aprrc noarrow |r- " .. "NoArrow")
+        print("|cffeda55f/aprrc noautoflightmap |r- " .. "NoAutoFlightMap")
         print("|cffeda55f/aprrc noaura |r- " .. "DontHaveAura")
         print("|cffeda55f/aprrc notskipvid, nsv |r- " .. "Dontskipvid")
         print("|cffeda55f/aprrc pickupdb |r- " .. "PickUpDB")
@@ -71,7 +162,10 @@ function AprRC.command:SlashCmd(input)
         print("|cffeda55f/aprrc spell |r- " .. "HasSpell")
         print("|cffeda55f/aprrc spelltrigger |r- " .. "SpellTrigger")
         print("|cffeda55f/aprrc text, txt |r- " .. "ExtraLineText")
+        print("|cffeda55f/aprrc useitem |r- " .. "UseItem")
+        print("|cffeda55f/aprrc usespell |r- " .. "UseSpell")
         print("|cffeda55f/aprrc vehicle |r- " .. "VehicleExit")
+        print("|cffeda55f/aprrc mountvehicle |r- " .. "MountVehicle")
         print("|cffeda55f/aprrc warmode |r- " .. "WarMode")
         print("|cffeda55f/aprrc waypoint |r- " .. "Waypoint")
         print("|cffeda55f/aprrc zonetrigger |r- " .. "ZoneStepTrigger")
@@ -89,14 +183,19 @@ function AprRC.command:SlashCmd(input)
         elseif inputText == "waypointdb" then
             if AprRC:HasStepOption("Waypoint") then
                 AprRC.questionDialog:CreateEditBoxPopupWithCallback("Waypoint DB (QuestID) - Also add Waypoint QuestID",
-                    function(questId)
+                    function(text)
+                        local questID = ParseQuestID(text)
+                        if not questID then
+                            AprRC:Error("Invalid QuestID format")
+                            return
+                        end
                         local currentStep = AprRC:GetLastStep()
                         if AprRC:HasStepOption("WaypointDB") then
-                            tinsert(currentStep.WaypointDB, tonumber(questId, 10))
+                            tinsert(currentStep.WaypointDB, questID)
                         else
-                            currentStep.WaypointDB = { currentStep.Waypoint, tonumber(questId, 10) }
+                            currentStep.WaypointDB = { currentStep.Waypoint, questID }
                         end
-                        print("|cff00bfffWaypointDB - " .. tonumber(questId, 10) .. "|r Added")
+                        print("|cff00bfffWaypointDB - " .. questID .. "|r Added")
                     end)
             else
                 AprRC:Error('Missing Waypoint option on current step')
@@ -135,22 +234,58 @@ function AprRC.command:SlashCmd(input)
             return
         elseif inputText == "range" then
             AprRC.questionDialog:CreateEditBoxPopupWithCallback("Range (number)", function(text)
+                local rangeValue = ParsePositiveNumber(text)
+                if not rangeValue then
+                    AprRC:Error("Invalid range value")
+                    return
+                end
                 local currentStep = AprRC:GetLastStep()
-                currentStep.Range = tonumber(text, 10)
+                currentStep.Range = rangeValue
                 print("|cff00bfffRange|r Added")
             end)
             return
         elseif inputText == "eta" then
             AprRC.questionDialog:CreateEditBoxPopupWithCallback("ETA (second)", function(text)
+                local etaValue = ParsePositiveInteger(text)
+                if not etaValue then
+                    AprRC:Error("Invalid ETA value")
+                    return
+                end
                 local currentStep = AprRC:GetLastStep()
-                currentStep.ETA = tonumber(text, 10)
+                currentStep.ETA = etaValue
                 print("|cff00bfffETA|r Added")
             end)
             return
+        elseif inputText == "gossipeta" then
+            AprRC.questionDialog:CreateEditBoxPopupWithCallback("Gossip ETA (second)", function(text)
+                local gossipEtaValue = ParsePositiveInteger(text)
+                if not gossipEtaValue then
+                    AprRC:Error("Invalid Gossip ETA value")
+                    return
+                end
+                local currentStep = AprRC:GetLastStep()
+                currentStep.GossipETA = gossipEtaValue
+                print("|cff00bfffGossipETA|r Added")
+            end)
+            return
+        elseif inputText == "specialetahide" then
+            if not AprRC:HasStepOption("SpecialETAHide") then
+                local currentStep = AprRC:GetLastStep()
+                currentStep.SpecialETAHide = true
+                print("|cff00bfffSpecialETAHide|r Added")
+            else
+                AprRC:Error("|cff00bfffSpecialETAHide|r already exist on this step")
+            end
+            return
         elseif inputText == "grind" then
             AprRC.questionDialog:CreateEditBoxPopupWithCallback("Grind (lvl)", function(text)
+                local grindLevel = ParsePositiveInteger(text)
+                if not grindLevel then
+                    AprRC:Error("Invalid Grind level")
+                    return
+                end
                 local step = {}
-                step.Grind = tonumber(text, 10)
+                step.Grind = grindLevel
                 AprRC:SetStepCoord(step)
                 AprRC:NewStep(step)
                 print("|cff00bfffGrind|r Added")
@@ -161,21 +296,19 @@ function AprRC.command:SlashCmd(input)
             currentStep.InstanceQuest = true
             print("|cff00bfffInstanceQuest|r Added")
             return
-        elseif inputText == "isCompleted" then
-            AprRC.questionDialog:CreateEditBoxPopupWithCallback("Is Quest Completed On Account (QuestID number)",
-                function(text)
-                    local currentStep = AprRC:GetLastStep()
-                    currentStep.IsQuestCompletedOnAccount = tonumber(text, 10)
-                    print("|cff00bfffIsQuestCompletedOnAccount|r Added")
-                end)
-            return
-        elseif inputText == "isUncompleted" then
-            AprRC.questionDialog:CreateEditBoxPopupWithCallback("Is Quest Uncompleted On Account (QuestID number)",
-                function(text)
-                    local currentStep = AprRC:GetLastStep()
-                    currentStep.IsQuestUncompletedOnAccount = tonumber(text, 10)
-                    print("|cff00bfffIsQuestUncompletedOnAccount|r Added")
-                end)
+        elseif questCheckCommands[inputText] then
+            local config = questCheckCommands[inputText]
+            AprRC.questionDialog:CreateEditBoxPopupWithCallback(config.prompt, function(text)
+                local questIDs = ParseQuestIDs(text)
+                if not questIDs then
+                    AprRC:Error("Invalid QuestID list")
+                    return
+                end
+                local currentStep = AprRC:GetLastStep()
+                currentStep[config.key] = questIDs
+                print("|cff00bfff" ..
+                    config.message .. " - { " .. table.concat(questIDs, ", ") .. " }|r Added")
+            end)
             return
         elseif inputText == "lootitem" or inputText == "lt" then
             AprRC.autocomplete:ShowItemAutoComplete(questID, objectiveID, function(_, itemID, frame)
@@ -191,16 +324,23 @@ function AprRC.command:SlashCmd(input)
             return
         elseif inputText == "notskipvid" or inputText == "nsv" then
             local currentStep = AprRC:GetLastStep()
-            currentStep.Dontskipvid = 1
+            currentStep.Dontskipvid = true
             print("|cff00bfffDontskipvid|r Added")
             return
         elseif inputText == "noarrow" then
             local currentStep = AprRC:GetLastStep()
-            currentStep.NoArrow = 1
+            currentStep.NoArrow = true
             -- remove useless coord for NoArrow
             currentStep.Coord = nil
             currentStep.Range = nil
             print("|cff00bfffNoArrow|r Added")
+            return
+        elseif inputText == "noautoflightmap" then
+            if not AprRC:HasStepOption("NoAutoFlightMap") then
+                local currentStep = AprRC:GetLastStep()
+                currentStep.NoAutoFlightMap = true
+                print("|cff00bfffNoAutoFlightMap|r Added")
+            end
             return
         elseif inputText == "text" or inputText == "txt" then
             AprRC.autocomplete:ShowLocaleAutoComplete()
@@ -236,6 +376,78 @@ function AprRC.command:SlashCmd(input)
                 AceGUI:Release(frame)
             end, true)
             return
+        elseif inputText == "useitem" then
+            local questList = AprRC.QuestObjectiveSelector:GetQuestList()
+            if #questList == 0 then
+                AprRC:Error("No quests available to bind UseItem")
+                return
+            end
+
+            AprRC.QuestObjectiveSelector:Show({
+                title = "Use Item quest list",
+                statusText = "Click on an objective to select the quest for the UseItem step",
+                questList = questList,
+                onClick = function(questID)
+                    AprRC.autocomplete:ShowItemAutoComplete(questID, nil, function(_, itemID, frame)
+                        local numericItemID = tonumber(itemID, 10)
+                        if not numericItemID then
+                            AprRC:Error("Invalid item selection")
+                            return
+                        end
+
+                        local targetQuestID = tonumber(questID, 10) or AprRC:FindClosestIncompleteQuest()
+                        local _, itemSpellID = C_Item.GetItemSpell(numericItemID)
+                        local step = {
+                            UseItem = {
+                                itemID = numericItemID,
+                                itemSpellID = itemSpellID or 0,
+                                questID = targetQuestID,
+                            }
+                        }
+                        AprRC:SetStepCoord(step)
+                        AprRC:NewStep(step)
+
+                        print("|cff00bfffUseItem|r Added")
+                        AceGUI:Release(frame)
+                    end)
+                end
+            })
+            return
+        elseif inputText == "usespell" then
+            local questList = AprRC.QuestObjectiveSelector:GetQuestList()
+            if #questList == 0 then
+                AprRC:Error("No quests available to bind UseSpell")
+                return
+            end
+
+            AprRC.QuestObjectiveSelector:Show({
+                title = "Use Spell quest list",
+                statusText = "Click on an objective to select the quest for the UseSpell step",
+                questList = questList,
+                onClick = function(questID, objectiveID)
+                    AprRC.autocomplete:ShowSpellAutoComplete(questID, objectiveID, function(_, spellID, frame)
+                        local numericSpellID = tonumber(spellID, 10)
+                        if not numericSpellID then
+                            AprRC:Error("Invalid spell selection")
+                            return
+                        end
+
+                        local targetQuestID = tonumber(questID, 10) or AprRC:FindClosestIncompleteQuest()
+                        local step = {
+                            UseSpell = {
+                                questID = targetQuestID,
+                                spellID = numericSpellID,
+                            }
+                        }
+                        AprRC:SetStepCoord(step)
+                        AprRC:NewStep(step)
+
+                        print("|cff00bfffUseSpell|r Added")
+                        AceGUI:Release(frame)
+                    end, true)
+                end
+            })
+            return
         elseif inputText == "spelltrigger" then
             AprRC.autocomplete:ShowSpellAutoComplete(_, _, function(_, spellID, frame)
                 local currentStep = AprRC:GetLastStep()
@@ -249,17 +461,22 @@ function AprRC.command:SlashCmd(input)
         elseif inputText == "pickupdb" then
             if AprRC:HasStepOption("PickUp") then
                 AprRC.questionDialog:CreateEditBoxPopupWithCallback("PickUp DB (QuestID) - Also add PickUp QuestID",
-                    function(questId)
+                    function(text)
+                        local questID = ParseQuestID(text)
+                        if not questID then
+                            AprRC:Error("Invalid QuestID format")
+                            return
+                        end
                         local currentStep = AprRC:GetLastStep()
                         if AprRC:HasStepOption("PickUpDB") then
-                            tinsert(currentStep.PickUpDB, tonumber(questId, 10))
+                            tinsert(currentStep.PickUpDB, questID)
                         else
-                            currentStep.PickUpDB = { tonumber(questId, 10) }
+                            currentStep.PickUpDB = { questID }
                             for _, qID in pairs(currentStep.PickUp) do
                                 tinsert(currentStep.PickUpDB, qID)
                             end
                         end
-                        print("|cff00bfffPickUpDB - " .. tonumber(questId, 10) .. "|r Added")
+                        print("|cff00bfffPickUpDB - " .. questID .. "|r Added")
                     end)
             else
                 AprRC:Error('Missing PickUp option on current step')
@@ -268,18 +485,23 @@ function AprRC.command:SlashCmd(input)
         elseif inputText == "qpartdb" then
             if AprRC:HasStepOption("Qpart") then
                 AprRC.questionDialog:CreateEditBoxPopupWithCallback("Qpart DB (QuestID) - Also add Qpart QuestID",
-                    function(questId)
+                    function(text)
+                        local questID = ParseQuestID(text)
+                        if not questID then
+                            AprRC:Error("Invalid QuestID format")
+                            return
+                        end
                         local currentStep = AprRC:GetLastStep()
                         if AprRC:HasStepOption("QpartDB") then
-                            tinsert(currentStep.QpartDB, tonumber(questId, 10))
+                            tinsert(currentStep.QpartDB, questID)
                         else
-                            currentStep.QpartDB = { tonumber(questId, 10) }
+                            currentStep.QpartDB = { questID }
 
                             for qID, _ in pairs(currentStep.Qpart) do
                                 tinsert(currentStep.QpartDB, qID)
                             end
                         end
-                        print("|cff00bfffQpartDB - " .. tonumber(questId, 10) .. "|r Added")
+                        print("|cff00bfffQpartDB - " .. questID .. "|r Added")
                     end)
             else
                 AprRC:Error('Missing Qpart option on current step')
@@ -288,17 +510,22 @@ function AprRC.command:SlashCmd(input)
         elseif inputText == "donedb" then
             if AprRC:HasStepOption("Done") then
                 AprRC.questionDialog:CreateEditBoxPopupWithCallback("Done DB (QuestID) - Also add Done QuestID",
-                    function(questId)
+                    function(text)
+                        local questID = ParseQuestID(text)
+                        if not questID then
+                            AprRC:Error("Invalid QuestID format")
+                            return
+                        end
                         local currentStep = AprRC:GetLastStep()
                         if AprRC:HasStepOption("DoneDB") then
-                            tinsert(currentStep.DoneDB, tonumber(questId, 10))
+                            tinsert(currentStep.DoneDB, questID)
                         else
-                            currentStep.DoneDB = { tonumber(questId, 10) }
+                            currentStep.DoneDB = { questID }
                             for _, qID in pairs(currentStep.Done) do
                                 tinsert(currentStep.DoneDB, qID)
                             end
                         end
-                        print("|cff00bfffDoneDB - " .. tonumber(questId, 10) .. "|r Added")
+                        print("|cff00bfffDoneDB - " .. questID .. "|r Added")
                     end)
             else
                 AprRC:Error('Missing Done option on current step')
@@ -397,11 +624,20 @@ function AprRC.command:SlashCmd(input)
         elseif inputText == "vehicle" then
             if not AprRC:HasStepOption("VehicleExit") then
                 local currentStep = AprRC:GetLastStep()
-                currentStep.VehicleExit = 1
+                currentStep.VehicleExit = true
                 print("|cff00bfffDVehicleExit|r Added")
                 return
             end
             AprRC:Error("|cff00bfffVehicleExit|r already exist on this step")
+            return
+        elseif inputText == "mountvehicle" then
+            if not AprRC:HasStepOption("MountVehicle") then
+                local currentStep = AprRC:GetLastStep()
+                currentStep.MountVehicle = true
+                print("|cff00bfffMountVehicle|r Added")
+                return
+            end
+            AprRC:Error("|cff00bfffMountVehicle|r already exist on this step")
             return
         elseif inputText == "warmode" then
             if not AprRC:HasStepOption("WarMode") then
@@ -414,7 +650,7 @@ function AprRC.command:SlashCmd(input)
             return
         elseif inputText == "save" then
             if AprRCData.CurrentRoute.name ~= "" then
-                local step = { RouteCompleted = 1 }
+                local step = { RouteCompleted = true }
                 AprRC:NewStep(step)
                 -- //TODO: Open Edit box with this route then reset currentRoute
                 AprRC.settings.profile.recordBarFrame.isRecording = false
