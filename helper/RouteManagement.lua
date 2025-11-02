@@ -189,3 +189,26 @@ function AprRC:getZone()
     end
     return playerMapId
 end
+
+function AprRC:AddBuffToStep(spellId, tooltipMessage)
+    local step = self:GetLastStep()
+    if not step then
+        return nil
+    end
+
+    step.Buffs = step.Buffs or {}
+
+    for _, buff in ipairs(step.Buffs) do
+        if buff.spellId == spellId then
+            buff.tooltipMessage = tooltipMessage
+            return buff
+        end
+    end
+
+    local newBuff = {
+        spellId = spellId,
+        tooltipMessage = tooltipMessage,
+    }
+    table.insert(step.Buffs, newBuff)
+    return newBuff
+end

@@ -228,6 +228,47 @@ function AprRC:FormatTextToTableString(text)
     return text
 end
 
+function AprRC:ParseQuestIDs(rawText)
+    local ids = {}
+    for token in string.gmatch(rawText or "", "[^,]+") do
+        local trimmed = strtrim(token or "")
+        if trimmed ~= "" then
+            if not trimmed:match("^%d+$") then
+                return nil
+            end
+            table.insert(ids, tonumber(trimmed, 10))
+        end
+    end
+    if #ids == 0 then
+        return nil
+    end
+    return ids
+end
+
+function AprRC:ParseQuestID(rawText)
+    local questIDs = self:ParseQuestIDs(rawText)
+    if questIDs and #questIDs == 1 then
+        return questIDs[1]
+    end
+    return nil
+end
+
+function AprRC:ParsePositiveNumber(rawText)
+    local trimmed = strtrim(rawText or "")
+    if trimmed == "" or not trimmed:match("^%d+%.?%d*$") then
+        return nil
+    end
+    return tonumber(trimmed)
+end
+
+function AprRC:ParsePositiveInteger(rawText)
+    local trimmed = strtrim(rawText or "")
+    if trimmed == "" or not trimmed:match("^%d+$") then
+        return nil
+    end
+    return tonumber(trimmed, 10)
+end
+
 function AprRC:CustomSortKeys(tbl)
     local priorityList = {
         "Waypoint", "WaypointDB", "PickUp", "PickUpDB", "Qpart", "QpartPart", "QpartDB", "Done", "DoneDB",
@@ -236,7 +277,7 @@ function AprRC:CustomSortKeys(tbl)
         "ChromiePick", "SetHS", "GetFP", "UseHS", "UseDalaHS", "UseGarrisonHS", "UseFlightPath", "Name", "NodeID",
         "WarMode", "Coord", "Fillers", "BuyMerchant", "Button", "SpellButton", "ExtraLineText",
         "ExtraLineText2", "ExtraLineText3", "ExtraLineText4", "ExtraLineText5", "ExtraLineText6", "ExtraLineText7",
-        "GossipOptionID", "GossipOptionIDs", "Range", "NoArrow", "ZoneStepTrigger",
+        "GossipOptionIDs", "Range", "NoArrow", "ZoneStepTrigger", "Buffs",
     }
 
     local function customSort(a, b)

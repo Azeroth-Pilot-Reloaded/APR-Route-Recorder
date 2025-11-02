@@ -294,3 +294,74 @@ function AprRC.autocomplete:ShowAuraAutoComplete(onConfirm)
         true
     )
 end
+
+function AprRC.autocomplete:ShowLocaleAutoComplete()
+    self:ShowAutoComplete(
+        "Extra Line Text",
+        L_APR,
+        function(text, key, frame)
+            if not key then
+                key = AprRC:ExtraLineTextToKey(text)
+                AprRCData.ExtraLineTexts[key] = text
+            end
+            local currentStep = AprRC:GetLastStep()
+
+            local baseName = "ExtraLineText"
+            local index = 2
+            local propertyName = baseName
+
+            if currentStep[baseName] then
+                while currentStep[baseName .. index] do
+                    index = index + 1
+                end
+                propertyName = baseName .. index
+            end
+
+            currentStep[propertyName] = key
+
+            print("|cff00bfffExtraLineTexts|r Added")
+            AceGUI:Release(frame)
+        end
+    )
+end
+
+function AprRC.autocomplete:ShowTooltipMessageAutoComplete(onConfirm)
+    self:ShowAutoComplete(
+        "Tooltip Message",
+        L_APR,
+        function(text, key, frame)
+            if not key then
+                key = AprRC:ExtraLineTextToKey(text)
+                AprRCData.ExtraLineTexts[key] = text
+            end
+
+            if type(onConfirm) == "function" then
+                onConfirm({
+                    tooltipKey = key,
+                })
+            end
+
+            AceGUI:Release(frame)
+        end
+    )
+end
+
+function AprRC.autocomplete:ShowBuffSelector(onConfirm)
+    self:ShowAuraAutoComplete(function(_, spellID, frame)
+        AceGUI:Release(frame)
+        local spellIdNumber = tonumber(spellID, 10)
+        if not spellIdNumber then
+            AprRC:Error("Invalid aura selection")
+            return
+        end
+
+        self:ShowTooltipMessageAutoComplete(function(result)
+            if type(onConfirm) == "function" then
+                onConfirm({
+                    spellId = spellIdNumber,
+                    tooltipMessage = result.tooltipKey,
+                })
+            end
+        end)
+    end)
+end

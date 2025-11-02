@@ -16,46 +16,6 @@ local function CanDoCommand()
 end
 function AprRC.command:SlashCmd(input)
     local inputText = string.lower(input)
-    local function ParseQuestIDs(rawText)
-        local ids = {}
-        for token in string.gmatch(rawText or "", "[^,]+") do
-            local trimmed = strtrim(token or "")
-            if trimmed ~= "" then
-                if not trimmed:match("^%d+$") then
-                    return nil
-                end
-                table.insert(ids, tonumber(trimmed, 10))
-            end
-        end
-        if #ids == 0 then
-            return nil
-        end
-        return ids
-    end
-
-    local function ParseQuestID(rawText)
-        local ids = ParseQuestIDs(rawText)
-        if ids and #ids == 1 then
-            return ids[1]
-        end
-        return nil
-    end
-
-    local function ParsePositiveNumber(rawText)
-        local trimmed = strtrim(rawText or "")
-        if trimmed == "" or not trimmed:match("^%d+%.?%d*$") then
-            return nil
-        end
-        return tonumber(trimmed)
-    end
-
-    local function ParsePositiveInteger(rawText)
-        local trimmed = strtrim(rawText or "")
-        if trimmed == "" or not trimmed:match("^%d+$") then
-            return nil
-        end
-        return tonumber(trimmed, 10)
-    end
     local questCheckCommands = {
         iscompleted = {
             key = "IsQuestsCompletedOnAccount",
@@ -125,6 +85,7 @@ function AprRC.command:SlashCmd(input)
         print("|cffeda55f/aprrc addreset |r- " .. "ResetRoute")
         print("|cffeda55f/aprrc aura |r- " .. "HasAura")
         print("|cffeda55f/aprrc button, btn |r- " .. "Button")
+        print("|cffeda55f/aprrc buffs |r- " .. "Buffs")
         print("|cffeda55f/aprrc class |r- " .. "Class")
         print("|cffeda55f/aprrc coord |r- " .. "Coord")
         print("|cffeda55f/aprrc coordframe |r- " .. "Coord Frame")
@@ -184,7 +145,7 @@ function AprRC.command:SlashCmd(input)
             if AprRC:HasStepOption("Waypoint") then
                 AprRC.questionDialog:CreateEditBoxPopupWithCallback("Waypoint DB (QuestID) - Also add Waypoint QuestID",
                     function(text)
-                        local questID = ParseQuestID(text)
+                        local questID = AprRC:ParseQuestID(text)
                         if not questID then
                             AprRC:Error("Invalid QuestID format")
                             return
@@ -234,7 +195,7 @@ function AprRC.command:SlashCmd(input)
             return
         elseif inputText == "range" then
             AprRC.questionDialog:CreateEditBoxPopupWithCallback("Range (number)", function(text)
-                local rangeValue = ParsePositiveNumber(text)
+                local rangeValue = AprRC:ParsePositiveNumber(text)
                 if not rangeValue then
                     AprRC:Error("Invalid range value")
                     return
@@ -246,7 +207,7 @@ function AprRC.command:SlashCmd(input)
             return
         elseif inputText == "eta" then
             AprRC.questionDialog:CreateEditBoxPopupWithCallback("ETA (second)", function(text)
-                local etaValue = ParsePositiveInteger(text)
+                local etaValue = AprRC:ParsePositiveInteger(text)
                 if not etaValue then
                     AprRC:Error("Invalid ETA value")
                     return
@@ -258,7 +219,7 @@ function AprRC.command:SlashCmd(input)
             return
         elseif inputText == "gossipeta" then
             AprRC.questionDialog:CreateEditBoxPopupWithCallback("Gossip ETA (second)", function(text)
-                local gossipEtaValue = ParsePositiveInteger(text)
+                local gossipEtaValue = AprRC:ParsePositiveInteger(text)
                 if not gossipEtaValue then
                     AprRC:Error("Invalid Gossip ETA value")
                     return
@@ -279,7 +240,7 @@ function AprRC.command:SlashCmd(input)
             return
         elseif inputText == "grind" then
             AprRC.questionDialog:CreateEditBoxPopupWithCallback("Grind (lvl)", function(text)
-                local grindLevel = ParsePositiveInteger(text)
+                local grindLevel = AprRC:ParsePositiveInteger(text)
                 if not grindLevel then
                     AprRC:Error("Invalid Grind level")
                     return
@@ -299,7 +260,7 @@ function AprRC.command:SlashCmd(input)
         elseif questCheckCommands[inputText] then
             local config = questCheckCommands[inputText]
             AprRC.questionDialog:CreateEditBoxPopupWithCallback(config.prompt, function(text)
-                local questIDs = ParseQuestIDs(text)
+                local questIDs = AprRC:ParseQuestIDs(text)
                 if not questIDs then
                     AprRC:Error("Invalid QuestID list")
                     return
@@ -341,6 +302,18 @@ function AprRC.command:SlashCmd(input)
                 currentStep.NoAutoFlightMap = true
                 print("|cff00bfffNoAutoFlightMap|r Added")
             end
+            return
+        elseif inputText == "buffs" then
+            AprRC.autocomplete:ShowBuffSelector(function(buffData)
+                if not buffData then
+                    return
+                end
+                local addedBuff = AprRC:AddBuffToStep(buffData.spellId, buffData.tooltipMessage)
+                if addedBuff then
+                    print(string.format("|cff00bfffBuffs|r Added - spellId: %d, tooltipMessage: %s",
+                        addedBuff.spellId, addedBuff.tooltipMessage))
+                end
+            end)
             return
         elseif inputText == "text" or inputText == "txt" then
             AprRC.autocomplete:ShowLocaleAutoComplete()
@@ -462,7 +435,7 @@ function AprRC.command:SlashCmd(input)
             if AprRC:HasStepOption("PickUp") then
                 AprRC.questionDialog:CreateEditBoxPopupWithCallback("PickUp DB (QuestID) - Also add PickUp QuestID",
                     function(text)
-                        local questID = ParseQuestID(text)
+                        local questID = AprRC:ParseQuestID(text)
                         if not questID then
                             AprRC:Error("Invalid QuestID format")
                             return
@@ -486,7 +459,7 @@ function AprRC.command:SlashCmd(input)
             if AprRC:HasStepOption("Qpart") then
                 AprRC.questionDialog:CreateEditBoxPopupWithCallback("Qpart DB (QuestID) - Also add Qpart QuestID",
                     function(text)
-                        local questID = ParseQuestID(text)
+                        local questID = AprRC:ParseQuestID(text)
                         if not questID then
                             AprRC:Error("Invalid QuestID format")
                             return
@@ -511,7 +484,7 @@ function AprRC.command:SlashCmd(input)
             if AprRC:HasStepOption("Done") then
                 AprRC.questionDialog:CreateEditBoxPopupWithCallback("Done DB (QuestID) - Also add Done QuestID",
                     function(text)
-                        local questID = ParseQuestID(text)
+                        local questID = AprRC:ParseQuestID(text)
                         if not questID then
                             AprRC:Error("Invalid QuestID format")
                             return
