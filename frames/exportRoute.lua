@@ -83,6 +83,14 @@ function AprRC.export:Show()
     scrollContainer:AddChild(editbox)
     AprRC.export.editbox = editbox
 
+    local lastTextLen = 0
+    local function SetEditboxText(text)
+        editbox:SetText(text)
+        lastTextLen = (editbox:GetText() or ""):len()
+    end
+
+    local isAutoIndenting = false
+
     local bottomGroup = AceGUI:Create("SimpleGroup")
     bottomGroup:SetFullWidth(true)
     bottomGroup:SetLayout("Flow")
@@ -118,6 +126,47 @@ function AprRC.export:Show()
         end)
     end
 
+    editbox:SetCallback("OnTextChanged", function(widget, event, text)
+        if isAutoIndenting then
+            return
+        end
+        local eb = widget.editBox
+        if not eb then
+            return
+        end
+        local fullText = eb:GetText() or ""
+        local newLen = #fullText
+        local prevLen = lastTextLen or 0
+
+        -- Only auto-indent when text length just increased (user typed something, likely newline)
+        if newLen <= prevLen then
+            lastTextLen = newLen
+            return
+        end
+
+        local cursor = eb:GetCursorPosition()
+        local beforeCursor = fullText:sub(1, cursor)
+        if beforeCursor:sub(-1) ~= "\n" then
+            lastTextLen = newLen
+            return
+        end
+
+        local preNewline = beforeCursor:sub(1, -2)
+        local lastNewlinePos = preNewline:match(".*()\n")
+        local lineStart = lastNewlinePos and (lastNewlinePos + 1) or 1
+        local previousLine = preNewline:sub(lineStart)
+        local indent = previousLine:match("^(%s*)") or ""
+        if indent == "" then
+            lastTextLen = newLen
+            return
+        end
+
+        isAutoIndenting = true
+        eb:Insert(indent)
+        isAutoIndenting = false
+        lastTextLen = (eb:GetText() or ""):len()
+    end)
+
     local function StartAutoRefresh(dropdown, editbox)
         if not refreshTimer then
             refreshTimer = AceTimer:ScheduleRepeatingTimer(function()
@@ -126,7 +175,7 @@ function AprRC.export:Show()
                         AprRC:UpdateRouteByName(AprRCData.CurrentRoute.name, AprRCData.CurrentRoute)
                         local route = AprRCData.Routes[dropdown:GetValue()]
                         if route then
-                            editbox:SetText(route.raw or AprRC:TableToString(route.steps))
+                            SetEditboxText(route.raw or AprRC:TableToString(route.steps))
                             UpdateStepCount(route.steps)
                             AutoScrollToBottom()
                         end
@@ -211,7 +260,7 @@ function AprRC.export:Show()
         end
         dropdown:SetValue(defaultIndex)
         local defaultRoute = AprRCData.Routes[defaultIndex]
-        editbox:SetText(defaultRoute.raw or AprRC:TableToString(defaultRoute.steps))
+        SetEditboxText(defaultRoute.raw or AprRC:TableToString(defaultRoute.steps))
         SetBackupFromRoute(defaultRoute.steps)
         UpdateStepCount(defaultRoute.steps)
         AutoScrollToBottom()
@@ -220,7 +269,7 @@ function AprRC.export:Show()
     dropdown:SetCallback("OnValueChanged", function(widget, event, index)
         local selectedRoute = AprRCData.Routes[index]
         if selectedRoute then
-            editbox:SetText(selectedRoute.raw or AprRC:TableToString(selectedRoute.steps))
+            SetEditboxText(selectedRoute.raw or AprRC:TableToString(selectedRoute.steps))
             selectedRouteName = selectedRoute.name
             SetBackupFromRoute(selectedRoute.steps)
             if selectedRouteName == AprRCData.CurrentRoute.name then
