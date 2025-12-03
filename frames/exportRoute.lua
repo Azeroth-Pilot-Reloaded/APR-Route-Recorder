@@ -17,12 +17,37 @@ end
 function AprRC.export:Show()
     local refreshTimer
 
-
     frame = AceGUI:Create("Frame")
     frame:SetTitle("Export")
     frame:SetLayout("Flow")
     frame:SetStatusText(L_APR["COPY_HELPER"])
-    frame:SetHeight(775)
+    AprRC.settings.profile.exportFrame = AprRC.settings.profile.exportFrame or { width = 700, height = 775 }
+    frame:SetStatusTable(AprRC.settings.profile.exportFrame)
+
+    local topGroup = AceGUI:Create("SimpleGroup")
+    topGroup:SetFullWidth(true)
+    topGroup:SetLayout("Flow")
+    frame:AddChild(topGroup)
+
+    local stepLabel = AceGUI:Create("Label")
+    stepLabel:SetFullWidth(true)
+    stepLabel:SetText("Steps: 0")
+
+    local checkbox
+    local ResizeEditBoxHeight
+    local AutoScrollToBottom
+
+    local function SetBackupFromRoute(routeSteps)
+        AprRCData.BackupRoute = {}
+        for k, v in pairs(routeSteps or {}) do
+            AprRCData.BackupRoute[k] = v
+        end
+    end
+
+    local function UpdateStepCount(routeSteps)
+        local count = routeSteps and #routeSteps or 0
+        stepLabel:SetText(string.format("Steps: %d", count))
+    end
 
     local dropdown = AceGUI:Create("Dropdown")
     dropdown:SetLabel("Select Route")
@@ -41,7 +66,8 @@ function AprRC.export:Show()
         end
     end
     dropdown:SetList(routeList)
-    frame:AddChild(dropdown)
+    topGroup:AddChild(dropdown)
+    topGroup:AddChild(stepLabel)
 
     local scrollContainer = AceGUI:Create("SimpleGroup")
     scrollContainer:SetFullWidth(true)
@@ -57,10 +83,38 @@ function AprRC.export:Show()
     scrollContainer:AddChild(editbox)
     AprRC.export.editbox = editbox
 
-    local function AutoScrollToBottom()
+    local bottomGroup = AceGUI:Create("SimpleGroup")
+    bottomGroup:SetFullWidth(true)
+    bottomGroup:SetLayout("Flow")
+    frame:AddChild(bottomGroup)
+
+    ResizeEditBoxHeight = function()
+        if not frame then
+            return
+        end
+        -- Make sure the control groups report their current height before sizing the editor.
+        frame:DoLayout()
+        local contentHeight = frame.content:GetHeight() or 0
+        local topHeight = topGroup.frame:GetHeight() or 0
+        local bottomHeight = bottomGroup.frame:GetHeight() or 0
+        local padding = 12 -- small spacer to account for Flow layout gaps
+        local available = contentHeight - topHeight - bottomHeight - padding
+        local newHeight = math.max(0, available)
+        scrollContainer:SetHeight(newHeight)
+        frame:DoLayout()
+    end
+
+    AutoScrollToBottom = function()
         C_Timer.After(0.1, function()
             local scrollFrame = editbox.scrollFrame
             scrollFrame:SetVerticalScroll(scrollFrame:GetVerticalScrollRange())
+        end)
+    end
+
+    if frame.frame and not frame._resizeHooked then
+        frame._resizeHooked = true
+        frame.frame:HookScript("OnSizeChanged", function()
+            ResizeEditBoxHeight()
         end)
     end
 
@@ -72,7 +126,8 @@ function AprRC.export:Show()
                         AprRC:UpdateRouteByName(AprRCData.CurrentRoute.name, AprRCData.CurrentRoute)
                         local route = AprRCData.Routes[dropdown:GetValue()]
                         if route then
-                            editbox:SetText(AprRC:TableToString(route.steps))
+                            editbox:SetText(route.raw or AprRC:TableToString(route.steps))
+                            UpdateStepCount(route.steps)
                             AutoScrollToBottom()
                         end
                     end
@@ -89,16 +144,6 @@ function AprRC.export:Show()
     end
 
 
-    local btnExportELT = AceGUI:Create("Button")
-    btnExportELT:SetText("Export Extra Line Text")
-    btnExportELT:SetWidth(200)
-    btnExportELT:SetCallback("OnClick", function()
-        AprRC.exportExtraLineText.Show()
-        AceGUI:Release(frame)
-        frame = nil
-    end)
-    frame:AddChild(btnExportELT)
-
     local btnSave = AceGUI:Create("Button")
     btnSave:SetText("Save Route")
     btnSave:SetWidth(200)
@@ -109,18 +154,26 @@ function AprRC.export:Show()
             AprRC:Error("Route not saved, incorrect format")
             return
         end
-        local newRoute = { name = selectedRouteName, steps = newStepRouteTable }
+        local newRoute = { name = selectedRouteName, steps = newStepRouteTable, raw = routeText }
         AprRC:UpdateRouteByName(selectedRouteName, newRoute)
         if AprRCData.CurrentRoute.name == selectedRouteName then
             AprRCData.CurrentRoute = newRoute
         end
-        AprRCData.BackupRoute = { }
-        for k, v in pairs(newStepRouteTable) do
-            AprRCData.BackupRoute[k] = v
-        end
+        SetBackupFromRoute(newStepRouteTable)
+        UpdateStepCount(newStepRouteTable)
         AutoScrollToBottom()
     end)
-    frame:AddChild(btnSave)
+    bottomGroup:AddChild(btnSave)
+
+    local btnExportELT = AceGUI:Create("Button")
+    btnExportELT:SetText("Export Extra Line Text")
+    btnExportELT:SetWidth(200)
+    btnExportELT:SetCallback("OnClick", function()
+        AprRC.exportExtraLineText.Show()
+        AceGUI:Release(frame)
+        frame = nil
+    end)
+    bottomGroup:AddChild(btnExportELT)
 
     local exportToAPRBtn = AceGUI:Create("Button")
     exportToAPRBtn:SetText("Export this route into APR")
@@ -133,9 +186,9 @@ function AprRC.export:Show()
         APR.RouteList.Custom[name] = name:match("%d+-(.*)")
         AutoScrollToBottom()
     end)
-    frame:AddChild(exportToAPRBtn)
+    bottomGroup:AddChild(exportToAPRBtn)
 
-    local checkbox = AceGUI:Create("CheckBox")
+    checkbox = AceGUI:Create("CheckBox")
     checkbox:SetLabel("Enable Auto Refresh")
     checkbox:SetWidth(200)
     checkbox:SetValue(false)
@@ -146,23 +199,30 @@ function AprRC.export:Show()
         else
             StopAutoRefresh()
         end
+        local currentIdx = dropdown:GetValue()
+        local selectedRoute = currentIdx and AprRCData.Routes[currentIdx]
+        UpdateStepCount(selectedRoute and selectedRoute.steps or nil)
     end)
-    frame:AddChild(checkbox)
+    bottomGroup:AddChild(checkbox)
 
     if defaultIndex then
         if AprRCData.Routes[defaultIndex].name == AprRCData.CurrentRoute.name then
             checkbox:SetDisabled(false)
         end
         dropdown:SetValue(defaultIndex)
-        editbox:SetText(AprRC:TableToString(AprRCData.Routes[defaultIndex].steps))
+        local defaultRoute = AprRCData.Routes[defaultIndex]
+        editbox:SetText(defaultRoute.raw or AprRC:TableToString(defaultRoute.steps))
+        SetBackupFromRoute(defaultRoute.steps)
+        UpdateStepCount(defaultRoute.steps)
         AutoScrollToBottom()
     end
 
     dropdown:SetCallback("OnValueChanged", function(widget, event, index)
         local selectedRoute = AprRCData.Routes[index]
         if selectedRoute then
-            editbox:SetText(AprRC:TableToString(selectedRoute.steps))
+            editbox:SetText(selectedRoute.raw or AprRC:TableToString(selectedRoute.steps))
             selectedRouteName = selectedRoute.name
+            SetBackupFromRoute(selectedRoute.steps)
             if selectedRouteName == AprRCData.CurrentRoute.name then
                 checkbox:SetDisabled(false)
             else
@@ -171,6 +231,8 @@ function AprRC.export:Show()
                 StopAutoRefresh()
             end
             AutoScrollToBottom()
+            ResizeEditBoxHeight()
+            UpdateStepCount(selectedRoute.steps)
         end
     end)
 
@@ -179,4 +241,7 @@ function AprRC.export:Show()
         AceGUI:Release(widget)
         frame = nil
     end)
+
+    UpdateStepCount(defaultIndex and AprRCData.Routes[defaultIndex].steps or nil)
+    ResizeEditBoxHeight()
 end

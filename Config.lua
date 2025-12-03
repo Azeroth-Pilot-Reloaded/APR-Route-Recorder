@@ -50,6 +50,11 @@ function AprRC.settings:InitializeSettings()
                 tutorialShown = true
             },
             commandBarSettingFrame = {},
+            exportFrame = {
+                width = 700,
+                height = 775,
+                position = {},
+            },
             --debug
             minimap = { minimapPos = 285 },
             enableMinimapButton = true,

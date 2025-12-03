@@ -204,9 +204,20 @@ function AprRC:TableToString(tbl)
     return textFormated
 end
 
+local function StripLuaComments(text)
+    if not text then return "" end
+    -- Remove block comments --[[ ... ]]
+    text = text:gsub("%-%-%[%[[%s%S]-%]%]", "")
+    -- Remove single-line comments -- ... (avoid touching block starters already removed)
+    text = text:gsub("%-%-[^\n]*", "")
+    return text
+end
+
 function AprRC:StringToTable(str, dontUseCleaner)
-    local cleanedStr = str
-    if not dontUseCleaner then str:gsub("[%s\n\r\t]+", "") end
+    local cleanedStr = str or ""
+    if not dontUseCleaner then
+        cleanedStr = StripLuaComments(cleanedStr)
+    end
 
     local func, err = loadstring("return " .. cleanedStr)
     if not func then
