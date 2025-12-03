@@ -433,6 +433,10 @@ function AprRC.event.functions.qpart(event, questID)
     -- Save player position for right coord on qpart update
     local step = {}
     AprRC:SetStepCoord(step)
+
+    local previousState = AprRC.lastQuestState[questID] or {}
+    AprRC.lastQuestState[questID] = AprRC.lastQuestState[questID] or {}
+
     local function setButton(questID, index, step)
         -- itemID
         local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)
@@ -446,14 +450,15 @@ function AprRC.event.functions.qpart(event, questID)
         end
     end
 
-    local function setQpart(lastState, objective, questID, index)
-        if lastState.numFulfilled < objective.numFulfilled then
+    local function setQpart(lastFulfilled, objective, questID, index)
+        local previousValue = lastFulfilled or 0
+        local currentValue = objective.numFulfilled or 0
+        if previousValue < currentValue then
             local currentStep = AprRC:GetLastStep()
-            --
-            if (currentStep.Qpart and currentStep.Qpart[questID] and currentStep.Qpart[questID][index]) or AprRC:IsQuestInLookup(questID, index) then
-                -- update
-                AprRC.lastQuestState[questID][index] = { numFulfilled = objective.numFulfilled }
-                return
+            if (currentStep.Qpart and currentStep.Qpart[questID] and currentStep.Qpart[questID][index]) or
+                AprRC:IsQuestInLookup(questID, index) then
+                AprRC.lastQuestState[questID][index] = { numFulfilled = currentValue }
+                return true
             end
 
             local range = (objective.type == "monster" or objective.type == "item") and 30 or 5
@@ -499,25 +504,49 @@ function AprRC.event.functions.qpart(event, questID)
                 end
             end
 
-            -- update
-            AprRC.lastQuestState[questID][index] = { numFulfilled = objective.numFulfilled }
             AprRC:AddQuestToLookup(questID, index)
+            AprRC.lastQuestState[questID][index] = { numFulfilled = currentValue }
+            return true
         end
+
+        AprRC.lastQuestState[questID][index] = { numFulfilled = currentValue }
+        return false
     end
-    C_Timer.After(2, function()
+
+    local function processObjectives(stateSnapshot)
         local objectives = C_QuestLog.GetQuestObjectives(questID)
+        if not objectives then
+            return false
+        end
+
+        local hasUpdate = false
         for index, objective in ipairs(objectives) do
-            local lastState = AprRC.lastQuestState[questID] and AprRC.lastQuestState[questID][index]
-            if lastState then
-                setQpart(lastState, objective, questID, index)
-            else
-                -- save if not existing
-                AprRC.lastQuestState[questID] = AprRC.lastQuestState[questID] or {}
-                AprRC.lastQuestState[questID][index] = { numFulfilled = objective.numFulfilled }
-                setQpart(AprRC.lastQuestState[questID][index], objective, questID, index)
+            local lastState = stateSnapshot[index] and stateSnapshot[index].numFulfilled
+            if setQpart(lastState, objective, questID, index) then
+                hasUpdate = true
             end
         end
-    end)
+        return hasUpdate
+    end
+
+    local function retryProcess(attemptsLeft)
+        if attemptsLeft <= 0 then
+            AprRC:Error("Qpart update failed after retries", questID)
+            return
+        end
+        C_Timer.After(0.4, function()
+            local stateSnapshot = AprRC.lastQuestState[questID] or previousState
+            if not processObjectives(stateSnapshot) then
+                retryProcess(attemptsLeft - 1)
+            end
+        end)
+    end
+
+    local updated = processObjectives(previousState)
+    if not updated then
+        -- Retry multiple times (short delay) to survive laggy objective updates without losing the initial snapshot
+        retryProcess(5)
+    end
 end
 
 function AprRC.event.functions.loot(event, message, ...)
