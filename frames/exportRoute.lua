@@ -83,10 +83,99 @@ function AprRC.export:Show()
     scrollContainer:AddChild(editbox)
     AprRC.export.editbox = editbox
 
+    local history = {}
+    local historyIndex = 0
+    local historyLimit = 50
+    local isUndoRedo = false
+    local ignoreHistory = false
     local lastTextLen = 0
-    local function SetEditboxText(text)
-        editbox:SetText(text)
+
+    local function PushHistorySnapshot(text)
+        if ignoreHistory or not text then
+            return
+        end
+        -- drop redo branch when a new change happens
+        for i = historyIndex + 1, #history do
+            history[i] = nil
+        end
+        local current = history[historyIndex]
+        if current and current.text == text then
+            return
+        end
+        historyIndex = historyIndex + 1
+        history[historyIndex] = { text = text, cursor = editbox.editBox and editbox.editBox:GetCursorPosition() or 0 }
+        if #history > historyLimit then
+            table.remove(history, 1)
+            historyIndex = historyIndex - 1
+        end
+    end
+
+    local function ResetHistoryWith(text)
+        history = {}
+        historyIndex = 0
+        ignoreHistory = false
+        PushHistorySnapshot(text)
+    end
+
+    local function ApplyHistoryState(state)
+        if not state then
+            return
+        end
+        ignoreHistory = true
+        isUndoRedo = true
+        editbox:SetText(state.text or "")
+        local cursor = math.min(state.cursor or 0, (state.text or ""):len())
+        if editbox.editBox then
+            editbox.editBox:SetCursorPosition(cursor)
+        end
+        lastTextLen = (state.text or ""):len()
+        isUndoRedo = false
+        ignoreHistory = false
+    end
+
+    local function PerformUndo()
+        if historyIndex <= 1 then
+            return
+        end
+        historyIndex = historyIndex - 1
+        ApplyHistoryState(history[historyIndex])
+    end
+
+    local function PerformRedo()
+        if historyIndex >= #history then
+            return
+        end
+        historyIndex = historyIndex + 1
+        ApplyHistoryState(history[historyIndex])
+    end
+
+    local function HandleHistoryKey(self, key)
+        local ctrl = IsControlKeyDown() or IsMetaKeyDown()
+        if not ctrl then
+            return false
+        end
+        if key == "Z" then
+            if IsShiftKeyDown() then
+                PerformRedo()
+            else
+                PerformUndo()
+            end
+            return true
+        elseif key == "Y" then
+            PerformRedo()
+            return true
+        end
+        return false
+    end
+
+    local function SetEditboxText(text, pushHistory)
+        ignoreHistory = not pushHistory
+        editbox:SetText(text or "")
         lastTextLen = (editbox:GetText() or ""):len()
+        ignoreHistory = false
+        if pushHistory then
+            PushHistorySnapshot(editbox:GetText())
+        end
     end
 
     local isAutoIndenting = false
@@ -126,8 +215,17 @@ function AprRC.export:Show()
         end)
     end
 
+    if editbox.editBox then
+        editbox.editBox:HookScript("OnKeyDown", function(self, key)
+            if HandleHistoryKey(self, key) then
+                return
+            end
+        end)
+    end
+
     editbox:SetCallback("OnTextChanged", function(widget, event, text)
-        if isAutoIndenting then
+        if isAutoIndenting or isUndoRedo then
+            lastTextLen = (widget.editBox:GetText() or ""):len()
             return
         end
         local eb = widget.editBox
@@ -139,32 +237,27 @@ function AprRC.export:Show()
         local prevLen = lastTextLen or 0
 
         -- Only auto-indent when text length just increased (user typed something, likely newline)
-        if newLen <= prevLen then
-            lastTextLen = newLen
-            return
+        if newLen > prevLen then
+            local cursor = eb:GetCursorPosition()
+            local beforeCursor = fullText:sub(1, cursor)
+            if beforeCursor:sub(-1) == "\n" then
+                local preNewline = beforeCursor:sub(1, -2)
+                local lastNewlinePos = preNewline:match(".*()\n")
+                local lineStart = lastNewlinePos and (lastNewlinePos + 1) or 1
+                local previousLine = preNewline:sub(lineStart)
+                local indent = previousLine:match("^(%s*)") or ""
+                if indent ~= "" then
+                    isAutoIndenting = true
+                    eb:Insert(indent)
+                    isAutoIndenting = false
+                    fullText = eb:GetText() or fullText
+                    newLen = #fullText
+                end
+            end
         end
 
-        local cursor = eb:GetCursorPosition()
-        local beforeCursor = fullText:sub(1, cursor)
-        if beforeCursor:sub(-1) ~= "\n" then
-            lastTextLen = newLen
-            return
-        end
-
-        local preNewline = beforeCursor:sub(1, -2)
-        local lastNewlinePos = preNewline:match(".*()\n")
-        local lineStart = lastNewlinePos and (lastNewlinePos + 1) or 1
-        local previousLine = preNewline:sub(lineStart)
-        local indent = previousLine:match("^(%s*)") or ""
-        if indent == "" then
-            lastTextLen = newLen
-            return
-        end
-
-        isAutoIndenting = true
-        eb:Insert(indent)
-        isAutoIndenting = false
-        lastTextLen = (eb:GetText() or ""):len()
+        lastTextLen = newLen
+        PushHistorySnapshot(fullText)
     end)
 
     local function StartAutoRefresh(dropdown, editbox)
@@ -211,6 +304,7 @@ function AprRC.export:Show()
         SetBackupFromRoute(newStepRouteTable)
         UpdateStepCount(newStepRouteTable)
         AutoScrollToBottom()
+        ResetHistoryWith(routeText)
     end)
     bottomGroup:AddChild(btnSave)
 
@@ -260,7 +354,9 @@ function AprRC.export:Show()
         end
         dropdown:SetValue(defaultIndex)
         local defaultRoute = AprRCData.Routes[defaultIndex]
-        SetEditboxText(defaultRoute.raw or AprRC:TableToString(defaultRoute.steps))
+        local initialText = defaultRoute.raw or AprRC:TableToString(defaultRoute.steps)
+        SetEditboxText(initialText, true)
+        ResetHistoryWith(initialText)
         SetBackupFromRoute(defaultRoute.steps)
         UpdateStepCount(defaultRoute.steps)
         AutoScrollToBottom()
@@ -269,7 +365,9 @@ function AprRC.export:Show()
     dropdown:SetCallback("OnValueChanged", function(widget, event, index)
         local selectedRoute = AprRCData.Routes[index]
         if selectedRoute then
-            SetEditboxText(selectedRoute.raw or AprRC:TableToString(selectedRoute.steps))
+            local routeText = selectedRoute.raw or AprRC:TableToString(selectedRoute.steps)
+            SetEditboxText(routeText, true)
+            ResetHistoryWith(routeText)
             selectedRouteName = selectedRoute.name
             SetBackupFromRoute(selectedRoute.steps)
             if selectedRouteName == AprRCData.CurrentRoute.name then
