@@ -89,6 +89,7 @@ function AprRC.export:Show()
     local isUndoRedo = false
     local ignoreHistory = false
     local lastTextLen = 0
+    local stopAutoRefreshFn = nil
 
     local function GetRouteText(route)
         if not route then
@@ -215,6 +216,13 @@ function AprRC.export:Show()
         end)
     end
 
+    StopAutoRefresh = function()
+        if refreshTimer then
+            AceTimer:CancelTimer(refreshTimer)
+            refreshTimer = nil
+        end
+    end
+
     if frame.frame and not frame._resizeHooked then
         frame._resizeHooked = true
         frame.frame:HookScript("OnSizeChanged", function()
@@ -265,6 +273,12 @@ function AprRC.export:Show()
 
         lastTextLen = newLen
         PushHistorySnapshot(fullText)
+
+        -- Disable auto refresh on first manual edit
+        if checkbox and checkbox:GetValue() then
+            checkbox:SetValue(false)
+            StopAutoRefresh()
+        end
     end)
 
     local function StartAutoRefresh(dropdown, editbox)
@@ -282,13 +296,6 @@ function AprRC.export:Show()
                     end
                 end
             end, 2)
-        end
-    end
-
-    local function StopAutoRefresh()
-        if refreshTimer then
-            AceTimer:CancelTimer(refreshTimer)
-            refreshTimer = nil
         end
     end
 
