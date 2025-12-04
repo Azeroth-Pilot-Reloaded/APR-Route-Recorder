@@ -21,7 +21,6 @@ function AprRC.export:Show()
     frame:SetTitle("Export")
     frame:SetLayout("Flow")
     frame:SetStatusText(L_APR["COPY_HELPER"])
-    AprRC.settings.profile.exportFrame = AprRC.settings.profile.exportFrame or { width = 700, height = 775 }
     frame:SetStatusTable(AprRC.settings.profile.exportFrame)
 
     local topGroup = AceGUI:Create("SimpleGroup")

@@ -49,7 +49,11 @@ function AprRC.settings:InitializeSettings()
                 position = {},
                 tutorialShown = true
             },
-            commandBarSettingFrame = {},
+            commandBarSettingFrame = {
+                width = 700,
+                height = 400,
+                position = {},
+            },
             exportFrame = {
                 width = 700,
                 height = 775,
