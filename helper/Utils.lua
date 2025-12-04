@@ -204,20 +204,9 @@ function AprRC:TableToString(tbl)
     return textFormated
 end
 
-local function StripLuaComments(text)
-    if not text then return "" end
-    -- Remove block comments --[[ ... ]]
-    text = text:gsub("%-%-%[%[[%s%S]-%]%]", "")
-    -- Remove single-line comments -- ... (avoid touching block starters already removed)
-    text = text:gsub("%-%-[^\n]*", "")
-    return text
-end
-
 function AprRC:StringToTable(str, dontUseCleaner)
     local cleanedStr = str or ""
-    if not dontUseCleaner then
-        cleanedStr = StripLuaComments(cleanedStr)
-    end
+    if not dontUseCleaner then cleanedStr = cleanedStr:gsub("[%s\n\r\t]+", "") end
 
     local func, err = loadstring("return " .. cleanedStr)
     if not func then
@@ -230,6 +219,45 @@ function AprRC:StringToTable(str, dontUseCleaner)
             AprRC:Debug("Error when executing the string converted to a table", tableResult)
         end
     end
+end
+
+function AprRC:ValidateRouteTable(routeTable)
+    if type(routeTable) ~= "table" then
+        return false, "not a table"
+    end
+    for key, step in pairs(routeTable) do
+        if type(key) ~= "number" then
+            return false, string.format("unexpected entry '%s' (only step tables allowed)", tostring(key))
+        end
+        if type(step) ~= "table" then
+            return false, string.format("step %s is not a table", tostring(key))
+        end
+    end
+    return true
+end
+
+function AprRC:StripLuaComments(text)
+    if not text or text == "" then
+        return ""
+    end
+    -- remove block comments --[[ ... ]]
+    text = text:gsub("%-%-%[%[.-%]%]", "")
+    -- remove single-line comments -- ...
+    text = text:gsub("%-%-[^\n]*", "")
+    return text
+end
+
+function AprRC:HasLuaComments(text)
+    if not text or text == "" then
+        return false
+    end
+    if text:match("%-%-%[%[") and text:match("%]%]") then
+        return true
+    end
+    if text:match("%-%-") then
+        return true
+    end
+    return false
 end
 
 function AprRC:FormatTextToTableString(text)
@@ -292,8 +320,9 @@ function AprRC:CustomSortKeys(tbl)
     }
 
     local function customSort(a, b)
-        local indexA = tIndexOf(priorityList, a)
-        local indexB = tIndexOf(priorityList, b)
+        local typeA, typeB = type(a), type(b)
+        local indexA = typeA == "string" and tIndexOf(priorityList, a) or nil
+        local indexB = typeB == "string" and tIndexOf(priorityList, b) or nil
 
         if indexA and indexB then
             return indexA < indexB
@@ -301,9 +330,22 @@ function AprRC:CustomSortKeys(tbl)
             return true
         elseif indexB then
             return false
-        else
-            return a < b
         end
+
+        if typeA == typeB then
+            if typeA == "number" or typeA == "string" then
+                return a < b
+            else
+                return tostring(a) < tostring(b)
+            end
+        end
+
+        -- Ensure deterministic order across mixed types: numbers first, then strings, then others.
+        if typeA == "number" then return true end
+        if typeB == "number" then return false end
+        if typeA == "string" then return true end
+        if typeB == "string" then return false end
+        return tostring(a) < tostring(b)
     end
 
     local keys = {}

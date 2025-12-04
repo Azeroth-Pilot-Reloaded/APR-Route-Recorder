@@ -90,6 +90,13 @@ function AprRC.export:Show()
     local ignoreHistory = false
     local lastTextLen = 0
 
+    local function GetRouteText(route)
+        if not route then
+            return ""
+        end
+        return AprRC:TableToString(route.steps)
+    end
+
     local function PushHistorySnapshot(text)
         if ignoreHistory or not text then
             return
@@ -268,7 +275,7 @@ function AprRC.export:Show()
                         AprRC:UpdateRouteByName(AprRCData.CurrentRoute.name, AprRCData.CurrentRoute)
                         local route = AprRCData.Routes[dropdown:GetValue()]
                         if route then
-                            SetEditboxText(route.raw or AprRC:TableToString(route.steps))
+                            SetEditboxText(GetRouteText(route), false)
                             UpdateStepCount(route.steps)
                             AutoScrollToBottom()
                         end
@@ -291,12 +298,24 @@ function AprRC.export:Show()
     btnSave:SetWidth(200)
     btnSave:SetCallback("OnClick", function()
         local routeText = editbox:GetText()
+        if AprRC:HasLuaComments(routeText) then
+            AprRC:Error("Route not saved: remove Lua comments (\"--\" or \"--[[ ]]\" blocks) before saving.")
+            return
+        end
         local newStepRouteTable = AprRC:StringToTable(routeText)
         if not newStepRouteTable then
             AprRC:Error("Route not saved, incorrect format")
             return
         end
-        local newRoute = { name = selectedRouteName, steps = newStepRouteTable, raw = routeText }
+        local isValid, reason = AprRC:ValidateRouteTable(newStepRouteTable)
+        if not isValid then
+            AprRC:Error("Route not saved, invalid step structure: " .. tostring(reason))
+            return
+        end
+        local newRoute = {
+            name = selectedRouteName,
+            steps = newStepRouteTable
+        }
         AprRC:UpdateRouteByName(selectedRouteName, newRoute)
         if AprRCData.CurrentRoute.name == selectedRouteName then
             AprRCData.CurrentRoute = newRoute
@@ -354,7 +373,7 @@ function AprRC.export:Show()
         end
         dropdown:SetValue(defaultIndex)
         local defaultRoute = AprRCData.Routes[defaultIndex]
-        local initialText = defaultRoute.raw or AprRC:TableToString(defaultRoute.steps)
+        local initialText = GetRouteText(defaultRoute)
         SetEditboxText(initialText, true)
         ResetHistoryWith(initialText)
         SetBackupFromRoute(defaultRoute.steps)
@@ -365,7 +384,7 @@ function AprRC.export:Show()
     dropdown:SetCallback("OnValueChanged", function(widget, event, index)
         local selectedRoute = AprRCData.Routes[index]
         if selectedRoute then
-            local routeText = selectedRoute.raw or AprRC:TableToString(selectedRoute.steps)
+            local routeText = GetRouteText(selectedRoute)
             SetEditboxText(routeText, true)
             ResetHistoryWith(routeText)
             selectedRouteName = selectedRoute.name
