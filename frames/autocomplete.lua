@@ -7,20 +7,42 @@ AprRC.autocomplete = AprRC:NewModule('AutoComplete')
 function AprRC.autocomplete:ShowAutoComplete(title, list, onConfirm, formatItem, width, height, showAllOnEmpty)
     showAllOnEmpty = showAllOnEmpty or false
     local frame = AceGUI:Create("Frame")
+    local isClosing = false
+    local activeTimers = {}
+    local editbox, scrollFrame
+    local debounceTimer = nil
+    local function trackTimer(timer)
+        if timer then
+            table.insert(activeTimers, timer)
+        end
+    end
     frame:SetTitle(title)
     frame.statustext:GetParent():Hide()
-    frame:SetCallback("OnClose", function(widget) AceGUI:Release(widget) end)
+    frame:SetCallback("OnClose", function(widget)
+        isClosing = true
+        if debounceTimer and debounceTimer.Cancel then
+            debounceTimer:Cancel()
+        end
+        for _, t in ipairs(activeTimers) do
+            if t and t.Cancel then
+                t:Cancel()
+            end
+        end
+        editbox:SetCallback("OnTextChanged", nil)
+        scrollFrame:ReleaseChildren()
+        AceGUI:Release(widget)
+    end)
     frame:SetWidth(width or 1000)
     frame:SetHeight(height or 450)
     frame:EnableResize(false)
     frame:SetLayout("Flow")
 
-    local editbox = AceGUI:Create("EditBox")
+    editbox = AceGUI:Create("EditBox")
     editbox:SetLabel("Enter text")
     editbox:SetFullWidth(true)
     editbox:DisableButton(true)
 
-    local scrollFrame = AceGUI:Create("ScrollFrame")
+    scrollFrame = AceGUI:Create("ScrollFrame")
     scrollFrame:SetFullWidth(true)
     scrollFrame:SetLayout("Flow")
     scrollFrame:SetHeight(300)
@@ -34,12 +56,12 @@ function AprRC.autocomplete:ShowAutoComplete(title, list, onConfirm, formatItem,
         onConfirm(editbox:GetText(), editbox.key, frame)
     end)
 
-    local debounceTimer = nil
     local function UpdateAutoCompleteList(text)
         if debounceTimer then
             debounceTimer:Cancel()
         end
         debounceTimer = C_Timer.NewTimer(0.3, function()
+            if isClosing then return end
             scrollFrame:ReleaseChildren() -- Clear current list
             editbox.key = nil
             local matches = {}
@@ -54,6 +76,7 @@ function AprRC.autocomplete:ShowAutoComplete(title, list, onConfirm, formatItem,
 
             -- Render items in chunks to avoid lag
             local function RenderMatches(startIndex, endIndex)
+                if isClosing then return end
                 for i = startIndex, endIndex do
                     local match = matches[i]
                     if match then
@@ -87,9 +110,11 @@ function AprRC.autocomplete:ShowAutoComplete(title, list, onConfirm, formatItem,
                     end
                 end
                 if endIndex < #matches then
-                    C_Timer.After(0.01, function()
+                    local timer = C_Timer.NewTimer(0.01, function()
+                        if isClosing then return end
                         RenderMatches(endIndex + 1, math.min(endIndex + 10, #matches))
                     end)
+                    trackTimer(timer)
                 end
             end
 
@@ -102,6 +127,7 @@ function AprRC.autocomplete:ShowAutoComplete(title, list, onConfirm, formatItem,
 
             debounceTimer = nil
         end)
+        trackTimer(debounceTimer)
     end
 
     editbox:SetCallback("OnTextChanged", function(widget, event, text)

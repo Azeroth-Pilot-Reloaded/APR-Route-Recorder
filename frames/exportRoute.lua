@@ -8,14 +8,18 @@ AprRC.export = AprRC:NewModule('Export')
 
 local frame
 function AprRC.export:Hide()
-    if frame then
-        AceGUI:Release(frame)
+    -- Always go through :Hide() so the OnClose callback can run its cleanup.
+    if frame and frame.Hide then
+        frame:Hide()
     end
-    frame = nil
 end
 
 function AprRC.export:Show()
     local refreshTimer
+
+    local isClosing = false
+    local origSizeChanged
+    local origKeyDown
 
     frame = AceGUI:Create("Frame")
     frame:SetTitle("Export")
@@ -224,15 +228,25 @@ function AprRC.export:Show()
 
     if frame.frame and not frame._resizeHooked then
         frame._resizeHooked = true
-        frame.frame:HookScript("OnSizeChanged", function()
-            ResizeEditBoxHeight()
+        origSizeChanged = frame.frame:GetScript("OnSizeChanged")
+        frame.frame:SetScript("OnSizeChanged", function(...)
+            if origSizeChanged then
+                origSizeChanged(...)
+            end
+            if not isClosing then
+                ResizeEditBoxHeight()
+            end
         end)
     end
 
     if editbox.editBox then
-        editbox.editBox:HookScript("OnKeyDown", function(self, key)
+        origKeyDown = editbox.editBox:GetScript("OnKeyDown")
+        editbox.editBox:SetScript("OnKeyDown", function(self, key, ...)
             if HandleHistoryKey(self, key) then
                 return
+            end
+            if origKeyDown then
+                origKeyDown(self, key, ...)
             end
         end)
     end
@@ -409,7 +423,17 @@ function AprRC.export:Show()
     end)
 
     frame:SetCallback("OnClose", function(widget)
+        isClosing = true
         StopAutoRefresh()
+        if frame and frame.frame then
+            frame.frame:SetScript("OnSizeChanged", origSizeChanged)
+            frame._resizeHooked = nil
+        end
+        if editbox and editbox.editBox then
+            editbox.editBox:SetScript("OnKeyDown", origKeyDown)
+        end
+        editbox:SetCallback("OnTextChanged", nil)
+        AprRC.export.editbox = nil
         AceGUI:Release(widget)
         frame = nil
     end)
