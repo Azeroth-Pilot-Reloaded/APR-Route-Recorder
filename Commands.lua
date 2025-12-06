@@ -340,7 +340,23 @@ function AprRC.command:SlashCmd(input)
                     if not currentStep.Fillers[questID] then
                         currentStep.Fillers[questID] = {}
                     end
-                    table.insert(currentStep.Fillers[questID], objectiveID)
+                    if not tContains(currentStep.Fillers[questID], objectiveID) then
+                        table.insert(currentStep.Fillers[questID], objectiveID)
+                    else
+                        print("|cffff0000This objective is already present in the fillers for this quest.|r")
+                    end
+
+                    -- insert button if available
+                    local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)
+                    local link = GetQuestLogSpecialItemInfo(questLogIndex)
+                    if link then
+                        local itemID = AprRC:GetItemIDFromLink(link)
+                        if not currentStep.Button then
+                            currentStep.Button = {}
+                        end
+                        table.insert(currentStep.Button, questID .. "-" .. objectiveID, itemID)
+                    end
+
                     print("|cff00bfffFillers - [" ..
                         C_QuestLog.GetTitleForQuestID(questID) .. "] - " .. objectiveID .. "|r Added")
                 end

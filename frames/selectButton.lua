@@ -47,7 +47,8 @@ function AprRC.SelectButton:ShowQuestSelector(type)
                 if not currentStep.Button then
                     currentStep.Button = {}
                 end
-                currentStep.Button[questID .. "-" .. objectiveID] = tonumber(itemID, 10)
+                table.insert(currentStep.Button, questID .. "-" .. objectiveID, tonumber(itemID, 10))
+
                 print("|cff00bfff Button |r Added")
                 AceGUI:Release(frame)
             end)
