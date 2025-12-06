@@ -32,6 +32,8 @@ function AprRC.SelectRoute:Show()
     confirmBtn:SetCallback("OnClick", function()
         local route = AprRC:FindRouteByName(selectedRouteName)
         AprRCData.CurrentRoute = { name = selectedRouteName, steps = route.steps }
+        AprRC:EnsureQuestLookup(selectedRouteName)
+        AprRC:RebuildQuestLookupFromRoute(AprRCData.CurrentRoute)
         AceGUI:Release(frame)
         AprRC.record:UpdateRecordButton()
     end)

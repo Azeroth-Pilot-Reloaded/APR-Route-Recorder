@@ -455,13 +455,18 @@ function AprRC.event.functions.qpart(event, questID)
         local currentValue = objective.numFulfilled or 0
         if previousValue < currentValue then
             local currentStep = AprRC:GetLastStep()
-            if (currentStep.Qpart and currentStep.Qpart[questID] and currentStep.Qpart[questID][index]) or
+            local hasAlreadyInStep = currentStep.Qpart and currentStep.Qpart[questID] and
+                tContains(currentStep.Qpart[questID], index)
+            if hasAlreadyInStep or
                 AprRC:IsQuestInLookup(questID, index) then
                 AprRC.lastQuestState[questID][index] = { numFulfilled = currentValue }
+
                 return true
             end
 
-            local range = (objective.type == "monster" or objective.type == "item") and 30 or 5
+            local range = (objective.numRequired > 1 and (objective.type == "monster" or objective.type == "item")) and
+                30 or
+                5
             local function newStep()
                 step.Qpart = {}
                 step.Qpart[questID] = { index }
@@ -506,14 +511,17 @@ function AprRC.event.functions.qpart(event, questID)
 
             AprRC:AddQuestToLookup(questID, index)
             AprRC.lastQuestState[questID][index] = { numFulfilled = currentValue }
+
             return true
         end
 
         AprRC.lastQuestState[questID][index] = { numFulfilled = currentValue }
+
         return false
     end
 
     local function processObjectives(stateSnapshot)
+
         local objectives = C_QuestLog.GetQuestObjectives(questID)
         if not objectives then
             return false
@@ -521,6 +529,7 @@ function AprRC.event.functions.qpart(event, questID)
 
         local hasUpdate = false
         for index, objective in ipairs(objectives) do
+
             local lastState = stateSnapshot[index] and stateSnapshot[index].numFulfilled
             if setQpart(lastState, objective, questID, index) then
                 hasUpdate = true
@@ -545,7 +554,7 @@ function AprRC.event.functions.qpart(event, questID)
     local updated = processObjectives(previousState)
     if not updated then
         -- Retry multiple times (short delay) to survive laggy objective updates without losing the initial snapshot
-        retryProcess(5)
+        retryProcess(10)
     end
 end
 

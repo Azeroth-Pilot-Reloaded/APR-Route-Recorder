@@ -8,9 +8,10 @@ end
 
 function AprRC:InitRoute(name)
     local mapID = C_Map.GetBestMapForUnit("player")
-    AprRC:ResetQuestLookup()
+    local routeName = mapID .. '-' .. name
+    AprRC:ResetQuestLookup(routeName)
     AprRC:ResetTaxiLookup()
-    AprRCData.CurrentRoute = { name = mapID .. '-' .. name, steps = { {} } }
+    AprRCData.CurrentRoute = { name = routeName, steps = { {} } }
     tinsert(AprRCData.Routes, AprRCData.CurrentRoute)
 end
 
@@ -158,18 +159,65 @@ function AprRC:UpdateRouteByName(routeName, newRouteData)
     end
 end
 
-function AprRC:AddQuestToLookup(questID, objective)
-    local key = questID .. "-" .. objective
-    AprRCData.QuestLookup[key] = true
+local function getRouteKey(routeName)
+    if routeName and routeName ~= "" then
+        return routeName
+    end
+    if AprRCData and AprRCData.CurrentRoute and AprRCData.CurrentRoute.name and AprRCData.CurrentRoute.name ~= "" then
+        return AprRCData.CurrentRoute.name
+    end
+    return "default"
 end
 
-function AprRC:IsQuestInLookup(questID, objective)
-    local key = questID .. "-" .. objective
-    return AprRCData.QuestLookup[key] or false
+function AprRC:EnsureQuestLookup(routeName)
+    AprRCData.QuestLookup = AprRCData.QuestLookup or {}
+    local key = getRouteKey(routeName)
+    AprRCData.QuestLookup[key] = AprRCData.QuestLookup[key] or {}
+    return AprRCData.QuestLookup[key], key
 end
 
-function AprRC:ResetQuestLookup()
-    AprRCData.QuestLookup = {}
+function AprRC:AddQuestToLookup(questID, objective, routeName)
+    local lookup = self:EnsureQuestLookup(routeName)
+    if not questID or not objective then
+        return
+    end
+    local key = questID .. "-" .. objective
+    lookup[key] = true
+end
+
+function AprRC:IsQuestInLookup(questID, objective, routeName)
+    local lookup = self:EnsureQuestLookup(routeName)
+    local key = questID .. "-" .. objective
+    return lookup[key] or false
+end
+
+function AprRC:ResetQuestLookup(routeName)
+    AprRCData.QuestLookup = AprRCData.QuestLookup or {}
+    local key = getRouteKey(routeName)
+        AprRCData.QuestLookup[key] = {}
+end
+
+function AprRC:RebuildQuestLookupFromRoute(route)
+    route = route or (AprRCData and AprRCData.CurrentRoute)
+    if not route or not route.steps then return end
+
+    self:ResetQuestLookup(route.name)
+    for _, step in ipairs(route.steps) do
+        if step.Qpart then
+            for qid, objectives in pairs(step.Qpart) do
+                for _, objIndex in ipairs(objectives) do
+                    self:AddQuestToLookup(qid, objIndex, route.name)
+                end
+            end
+        end
+        if step.QpartPart then
+            for qid, objectives in pairs(step.QpartPart) do
+                for _, objIndex in ipairs(objectives) do
+                    self:AddQuestToLookup(qid, objIndex, route.name)
+                end
+            end
+        end
+    end
 end
 
 function AprRC:ResetTaxiLookup()

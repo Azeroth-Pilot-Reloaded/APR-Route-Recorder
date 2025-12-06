@@ -44,6 +44,8 @@ function AprRC:OnInitialize()
     AprRC.record:OnInit()
     AprRC.event:MyRegisterEvent()
     AprRC:saveQuestInfo()
+    AprRC:EnsureQuestLookup(AprRCData.CurrentRoute and AprRCData.CurrentRoute.name)
+    AprRC:RebuildQuestLookupFromRoute(AprRCData.CurrentRoute)
 
     -- Register to Chat
     C_ChatInfo.RegisterAddonMessagePrefix("AprRCChat")
