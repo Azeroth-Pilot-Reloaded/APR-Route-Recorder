@@ -99,6 +99,10 @@ end)
 ---------------------------------------------------------------------------------------
 
 function AprRC.record:OnInit()
+    AprRC.settings.profile.recordBarFrame = AprRC.settings.profile.recordBarFrame or {}
+    AprRC.settings.profile.recordBarFrame.position =
+        AprRC.settings.profile.recordBarFrame.position or {}
+
     LibWindow.RegisterConfig(RecordBarFrame, AprRC.settings.profile.recordBarFrame.position)
     RecordBarFrame.RegisteredForLibWindow = true
     LibWindow.MakeDraggable(RecordBarFrame)
@@ -112,10 +116,18 @@ function AprRC.record:RefreshFrameAnchor()
         RecordBarFrame:Hide()
         return
     end
+
     RecordBarFrame:EnableMouse(true)
     self:AdjustBarRotation(RecordBarFrame)
     UpdateRecordButton(recordBtn)
-    LibWindow.RestorePosition(RecordBarFrame)
+
+    if RecordBarFrame.RegisteredForLibWindow
+        and AprRC.settings.profile.recordBarFrame
+        and AprRC.settings.profile.recordBarFrame.position
+        and AprRC.settings.profile.recordBarFrame.position.point then
+        LibWindow.RestorePosition(RecordBarFrame)
+    end
+
     RecordBarFrame:Show()
 end
 

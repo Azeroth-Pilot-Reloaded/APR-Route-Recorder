@@ -109,25 +109,46 @@ end
 ---------------------------------------------------------------------------------------
 
 function AprRC.CommandBar:OnInit()
+    -- Always ensure that the structure exists
+    AprRC.settings.profile.commandBarFrame = AprRC.settings.profile.commandBarFrame or {}
+    AprRC.settings.profile.commandBarFrame.position =
+        AprRC.settings.profile.commandBarFrame.position or {}
+
     LibWindow.RegisterConfig(CommandBarFrame, AprRC.settings.profile.commandBarFrame.position)
     CommandBarFrame.RegisteredForLibWindow = true
     LibWindow.MakeDraggable(CommandBarFrame)
-    LibWindow.RestorePosition(CommandBarFrame)
-    CommandBarFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
 
+    -- If no saved position, set to center
+    if AprRC.settings.profile.commandBarFrame.position.point then
+        LibWindow.RestorePosition(CommandBarFrame)
+    else
+        CommandBarFrame:ClearAllPoints()
+        CommandBarFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+    end
 
     self:RefreshFrameAnchor()
 end
 
 function AprRC.CommandBar:RefreshFrameAnchor()
-    if not AprRC.settings.profile.enableAddon or not AprRC.settings.profile.recordBarFrame.isRecording or C_PetBattles.IsInBattle() then
+    if not AprRC.settings.profile.enableAddon
+        or not AprRC.settings.profile.recordBarFrame.isRecording
+        or C_PetBattles.IsInBattle() then
         CommandBarFrame:Hide()
         AprRC.TutoFrame:HideCustomTutorialFrame(AprRC.CommandBar.settingTutoFrameID)
         return
     end
+
     CommandBarFrame:Show()
     CommandBarFrame:EnableMouse(true)
-    LibWindow.RestorePosition(CommandBarFrame)
+
+    -- Only restore the position if LibWindow has a config for this frame
+    if CommandBarFrame.RegisteredForLibWindow
+        and AprRC.settings.profile.commandBarFrame
+        and AprRC.settings.profile.commandBarFrame.position
+        and AprRC.settings.profile.commandBarFrame.position.point then
+        LibWindow.RestorePosition(CommandBarFrame)
+    end
+
     self:UpdateFrame()
 end
 
