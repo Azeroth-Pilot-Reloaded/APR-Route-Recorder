@@ -114,6 +114,7 @@ function AprRC.command:SlashCmd(input)
         print("|cffeda55f/aprrc noachievement |r- " .. "DontHaveAchievement")
         print("|cffeda55f/aprrc noarrow |r- " .. "NoArrow")
         print("|cffeda55f/aprrc noautoflightmap |r- " .. "NoAutoFlightMap")
+        print("|cffeda55f/aprrc denynpc |r- " .. "DenyNPC")
         print("|cffeda55f/aprrc noaura |r- " .. "DontHaveAura")
         print("|cffeda55f/aprrc notskipvid, nsv |r- " .. "Dontskipvid")
         print("|cffeda55f/aprrc pickupdb |r- " .. "PickUpDB")
@@ -130,6 +131,7 @@ function AprRC.command:SlashCmd(input)
         print("|cffeda55f/aprrc mountvehicle |r- " .. "MountVehicle")
         print("|cffeda55f/aprrc warmode |r- " .. "WarMode")
         print("|cffeda55f/aprrc waypoint |r- " .. "Waypoint")
+        print("|cffeda55f/aprrc nonskippablewaypoint |r- " .. "NonSkippableWaypoint")
         print("|cffeda55f/aprrc zonetrigger |r- " .. "ZoneStepTrigger")
         return
     end
@@ -162,6 +164,21 @@ function AprRC.command:SlashCmd(input)
             else
                 AprRC:Error('Missing Waypoint option on current step')
             end
+            return
+        elseif inputText == "nonskippablewaypoint" then
+            if not AprRC:HasStepOption("Waypoint") then
+                AprRC:Error('Missing Waypoint option on current step')
+                return
+            end
+
+            local currentStep = AprRC:GetLastStep()
+            if currentStep.NonSkippableWaypoint then
+                AprRC:Error("|cff00bfffNonSkippableWaypoint|r already exist on this step")
+                return
+            end
+
+            currentStep.NonSkippableWaypoint = true
+            print("|cff00bfffNonSkippableWaypoint|r Added")
             return
         elseif inputText == "addjob" then
             AprRC.autocomplete:ShowProfessionAutoComplete()
@@ -308,6 +325,23 @@ function AprRC.command:SlashCmd(input)
                 currentStep.NoAutoFlightMap = true
                 print("|cff00bfffNoAutoFlightMap|r Added")
             end
+            return
+        elseif inputText == "denynpc" then
+            local targetId = APR and APR.GetTargetID and APR:GetTargetID()
+            if not targetId then
+                AprRC:Error("No target selected to add DenyNPC")
+                return
+            end
+
+            local numericTargetId = tonumber(targetId, 10)
+            if not numericTargetId then
+                AprRC:Error("Invalid target selection for DenyNPC")
+                return
+            end
+
+            local currentStep = AprRC:GetLastStep()
+            currentStep.DenyNPC = numericTargetId
+            print("|cff00bfffDenyNPC - " .. numericTargetId .. "|r Added")
             return
         elseif inputText == "buffs" then
             AprRC.autocomplete:ShowBuffSelector(function(buffData)

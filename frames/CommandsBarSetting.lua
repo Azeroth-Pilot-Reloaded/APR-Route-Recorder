@@ -50,6 +50,7 @@ local allCommands = {
     { command = "lootitem",                          label = "Loot Item",                               texture = iconPath .. "LootItem" },
     { command = "noarrow",                           label = "No Arrow",                                texture = iconPath .. "NoArrow" },
     { command = "noautoflightmap",                   label = "No Auto Flight Map",                      texture = iconPath .. "NoAutoFlightMap" },
+    { command = "denynpc",                           label = "Deny NPC",                                texture = iconPath .. "DontHaveAura" },
     { command = "pickupdb",                          label = "PickUp DB",                               texture = iconPath .. "PickUpDB" },
     { command = "qpartdb",                           label = "Qpart DB",                                texture = iconPath .. "QpartDB" },
     { command = "qpartpart",                         label = "Qpart Part",                              texture = iconPath .. "QpartPart" },
@@ -63,6 +64,7 @@ local allCommands = {
     { command = "warmode",                           label = "WarMode",                                 texture = iconPath .. "WarMode" },
     { command = "waypoint",                          label = "Waypoint",                                texture = iconPath .. "Waypoint" },
     { command = "waypointdb",                        label = "Waypoint DB",                             texture = iconPath .. "WaypointDB" },
+    { command = "nonskippablewaypoint",              label = "Non-Skippable Waypoint",                  texture = iconPath .. "Waypoint" },
     { command = "zonetrigger",                       label = "Zone Step Trigger",                       texture = iconPath .. "ZoneStepTrigger" },
 }
 
