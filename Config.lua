@@ -121,6 +121,7 @@ function AprRC.settings:createBlizzOptions()
                 width = 0.75,
                 func = function()
                     APR.questionDialog:CreateQuestionPopup(
+                        L_APR["RESET_SETTINGS_CONFIRM"],
                         nil,
                         function() AprRC.settings:ResetSettings() end
                     )

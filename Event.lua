@@ -151,6 +151,7 @@ function AprRC.event.functions.accept(event, questId)
     if C_QuestLog.IsWorldQuest(questId) then
         APR.questionDialog:CreateQuestionPopup(
             "New world quest, do you want to add it?",
+            "New world quest, do you want to add it?",
             function()
                 AddQuestToStep(questId)
             end
@@ -521,7 +522,6 @@ function AprRC.event.functions.qpart(event, questID)
     end
 
     local function processObjectives(stateSnapshot)
-
         local objectives = C_QuestLog.GetQuestObjectives(questID)
         if not objectives then
             return false
@@ -529,7 +529,6 @@ function AprRC.event.functions.qpart(event, questID)
 
         local hasUpdate = false
         for index, objective in ipairs(objectives) do
-
             local lastState = stateSnapshot[index] and stateSnapshot[index].numFulfilled
             if setQpart(lastState, objective, questID, index) then
                 hasUpdate = true
@@ -652,6 +651,7 @@ function AprRC.event.functions.portal(event, ...)
 
                 if lastStepBeforePortal and lastStep and AprRC:DeepCompare(lastStepBeforePortal, lastStep) then
                     APR.questionDialog:CreateQuestionPopup(
+                        "Set a waypoint where you were before teleporting?",
                         "Set a waypoint where you were before teleporting?", function()
                             local reuseLast = false
                             if lastStep.Waypoint and lastStep.Coord then

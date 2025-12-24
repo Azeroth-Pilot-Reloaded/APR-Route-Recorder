@@ -56,6 +56,7 @@ recordBtn:SetScript("OnClick", function()
         if not AprRC:IsTableEmpty(AprRCData.Routes) then
             APR.questionDialog:CreateQuestionPopup(
                 "Continue route " .. AprRCData.CurrentRoute.name .. "?",
+                "Continue route " .. AprRCData.CurrentRoute.name .. "?",
                 function()
                     UpdateRecordButton(recordBtn)
                 end,
