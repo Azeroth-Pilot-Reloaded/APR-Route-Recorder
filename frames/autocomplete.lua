@@ -65,10 +65,14 @@ function AprRC.autocomplete:ShowAutoComplete(title, list, onConfirm, formatItem,
             scrollFrame:ReleaseChildren() -- Clear current list
             editbox.key = nil
             local matches = {}
+            local searchText = AprRC:RemoveContiguousSpaces(strtrim((text or ""):lower()))
+            local searchPattern = searchText ~= "" and AprRC:EscapeLuaPattern(searchText) or nil
 
-            if text ~= "" or showAllOnEmpty then
+            if searchText ~= "" or showAllOnEmpty then
                 for key, value in pairs(list) do
-                    if text == "" or string.match(value:lower(), text:lower()) then
+                    local candidate = value and value:lower() or ""
+                    candidate = AprRC:RemoveContiguousSpaces(candidate)
+                    if searchText == "" or string.find(candidate, searchPattern) then
                         table.insert(matches, { key = key, value = value })
                     end
                 end
@@ -377,7 +381,7 @@ function AprRC.autocomplete:ShowBuffSelector(onConfirm)
         AceGUI:Release(frame)
         local spellIdNumber = tonumber(spellID, 10)
         if not spellIdNumber then
-            AprRC:Error("Invalid aura selection")
+            APR:PrintError("Invalid aura selection")
             return
         end
 

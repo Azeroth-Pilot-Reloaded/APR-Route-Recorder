@@ -35,7 +35,7 @@ end
 function AprRC.SelectButton:ShowQuestSelector(type)
     local questList = AprRC.QuestObjectiveSelector:GetQuestListFromLastStep()
     if #questList == 0 then
-        AprRC:Error("No Qpart or Filler quests available on your last step")
+        APR:PrintError("No Qpart or Filler quests available on your last step")
         return
     end
 
@@ -47,7 +47,7 @@ function AprRC.SelectButton:ShowQuestSelector(type)
                 if not currentStep.Button then
                     currentStep.Button = {}
                 end
-                table.insert(currentStep.Button, questID .. "-" .. objectiveID, tonumber(itemID, 10))
+                currentStep.Button[questID .. "-" .. objectiveID] = tonumber(itemID, 10)
 
                 print("|cff00bfff Button |r Added")
                 AceGUI:Release(frame)

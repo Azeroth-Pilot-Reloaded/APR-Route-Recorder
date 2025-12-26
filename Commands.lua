@@ -6,10 +6,10 @@ AprRC.command = AprRC:NewModule("Command")
 
 local function CanDoCommand()
     if not AprRC.settings.profile.enableAddon then
-        AprRC:Error("The addon is disabled")
+        APR:PrintError("The addon is disabled")
         return false
     elseif not AprRC.settings.profile.recordBarFrame.isRecording then
-        AprRC:Error("You're not recording a route")
+        APR:PrintError("You're not recording a route")
         return false
     end
     return true
@@ -150,7 +150,7 @@ function AprRC.command:SlashCmd(input)
                     function(text)
                         local questID = AprRC:ParseQuestID(text)
                         if not questID then
-                            AprRC:Error("Invalid QuestID format")
+                            APR:PrintError("Invalid QuestID format")
                             return
                         end
                         local currentStep = AprRC:GetLastStep()
@@ -162,18 +162,18 @@ function AprRC.command:SlashCmd(input)
                         print("|cff00bfffWaypointDB - " .. questID .. "|r Added")
                     end)
             else
-                AprRC:Error('Missing Waypoint option on current step')
+                APR:PrintError('Missing Waypoint option on current step')
             end
             return
         elseif inputText == "nonskippablewaypoint" then
             if not AprRC:HasStepOption("Waypoint") then
-                AprRC:Error('Missing Waypoint option on current step')
+                APR:PrintError('Missing Waypoint option on current step')
                 return
             end
 
             local currentStep = AprRC:GetLastStep()
             if currentStep.NonSkippableWaypoint then
-                AprRC:Error("|cff00bfffNonSkippableWaypoint|r already exist on this step")
+                APR:PrintError("|cff00bfffNonSkippableWaypoint|r already exist on this step")
                 return
             end
 
@@ -220,7 +220,7 @@ function AprRC.command:SlashCmd(input)
             AprRC.questionDialog:CreateEditBoxPopupWithCallback("Range (number)", function(text)
                 local rangeValue = AprRC:ParsePositiveNumber(text)
                 if not rangeValue then
-                    AprRC:Error("Invalid range value")
+                    APR:PrintError("Invalid range value")
                     return
                 end
                 local currentStep = AprRC:GetLastStep()
@@ -232,7 +232,7 @@ function AprRC.command:SlashCmd(input)
             AprRC.questionDialog:CreateEditBoxPopupWithCallback("ETA (second)", function(text)
                 local etaValue = AprRC:ParsePositiveInteger(text)
                 if not etaValue then
-                    AprRC:Error("Invalid ETA value")
+                    APR:PrintError("Invalid ETA value")
                     return
                 end
                 local currentStep = AprRC:GetLastStep()
@@ -244,7 +244,7 @@ function AprRC.command:SlashCmd(input)
             AprRC.questionDialog:CreateEditBoxPopupWithCallback("Gossip ETA (second)", function(text)
                 local gossipEtaValue = AprRC:ParsePositiveInteger(text)
                 if not gossipEtaValue then
-                    AprRC:Error("Invalid Gossip ETA value")
+                    APR:PrintError("Invalid Gossip ETA value")
                     return
                 end
                 local currentStep = AprRC:GetLastStep()
@@ -258,14 +258,14 @@ function AprRC.command:SlashCmd(input)
                 currentStep.SpecialETAHide = true
                 print("|cff00bfffSpecialETAHide|r Added")
             else
-                AprRC:Error("|cff00bfffSpecialETAHide|r already exist on this step")
+                APR:PrintError("|cff00bfffSpecialETAHide|r already exist on this step")
             end
             return
         elseif inputText == "grind" then
             AprRC.questionDialog:CreateEditBoxPopupWithCallback("Grind (lvl)", function(text)
                 local grindLevel = AprRC:ParsePositiveInteger(text)
                 if not grindLevel then
-                    AprRC:Error("Invalid Grind level")
+                    APR:PrintError("Invalid Grind level")
                     return
                 end
                 local step = {}
@@ -285,7 +285,7 @@ function AprRC.command:SlashCmd(input)
             AprRC.questionDialog:CreateEditBoxPopupWithCallback(config.prompt, function(text)
                 local questIDs = AprRC:ParseQuestIDs(text)
                 if not questIDs then
-                    AprRC:Error("Invalid QuestID list")
+                    APR:PrintError("Invalid QuestID list")
                     return
                 end
                 local currentStep = AprRC:GetLastStep()
@@ -329,13 +329,13 @@ function AprRC.command:SlashCmd(input)
         elseif inputText == "denynpc" then
             local targetId = APR and APR.GetTargetID and APR:GetTargetID()
             if not targetId then
-                AprRC:Error("No target selected to add DenyNPC")
+                APR:PrintError("No target selected to add DenyNPC")
                 return
             end
 
             local numericTargetId = tonumber(targetId, 10)
             if not numericTargetId then
-                AprRC:Error("Invalid target selection for DenyNPC")
+                APR:PrintError("Invalid target selection for DenyNPC")
                 return
             end
 
@@ -408,7 +408,7 @@ function AprRC.command:SlashCmd(input)
         elseif inputText == "useitem" then
             local questList = AprRC.QuestObjectiveSelector:GetQuestList()
             if #questList == 0 then
-                AprRC:Error("No quests available to bind UseItem")
+                APR:PrintError("No quests available to bind UseItem")
                 return
             end
 
@@ -420,7 +420,7 @@ function AprRC.command:SlashCmd(input)
                     AprRC.autocomplete:ShowItemAutoComplete(questID, nil, function(_, itemID, frame)
                         local numericItemID = tonumber(itemID, 10)
                         if not numericItemID then
-                            AprRC:Error("Invalid item selection")
+                            APR:PrintError("Invalid item selection")
                             return
                         end
 
@@ -445,7 +445,7 @@ function AprRC.command:SlashCmd(input)
         elseif inputText == "usespell" then
             local questList = AprRC.QuestObjectiveSelector:GetQuestList()
             if #questList == 0 then
-                AprRC:Error("No quests available to bind UseSpell")
+                APR:PrintError("No quests available to bind UseSpell")
                 return
             end
 
@@ -457,7 +457,7 @@ function AprRC.command:SlashCmd(input)
                     AprRC.autocomplete:ShowSpellAutoComplete(questID, objectiveID, function(_, spellID, frame)
                         local numericSpellID = tonumber(spellID, 10)
                         if not numericSpellID then
-                            AprRC:Error("Invalid spell selection")
+                            APR:PrintError("Invalid spell selection")
                             return
                         end
 
@@ -493,7 +493,7 @@ function AprRC.command:SlashCmd(input)
                     function(text)
                         local questID = AprRC:ParseQuestID(text)
                         if not questID then
-                            AprRC:Error("Invalid QuestID format")
+                            APR:PrintError("Invalid QuestID format")
                             return
                         end
                         local currentStep = AprRC:GetLastStep()
@@ -508,7 +508,7 @@ function AprRC.command:SlashCmd(input)
                         print("|cff00bfffPickUpDB - " .. questID .. "|r Added")
                     end)
             else
-                AprRC:Error('Missing PickUp option on current step')
+                APR:PrintError('Missing PickUp option on current step')
             end
             return
         elseif inputText == "qpartdb" then
@@ -517,7 +517,7 @@ function AprRC.command:SlashCmd(input)
                     function(text)
                         local questID = AprRC:ParseQuestID(text)
                         if not questID then
-                            AprRC:Error("Invalid QuestID format")
+                            APR:PrintError("Invalid QuestID format")
                             return
                         end
                         local currentStep = AprRC:GetLastStep()
@@ -533,7 +533,7 @@ function AprRC.command:SlashCmd(input)
                         print("|cff00bfffQpartDB - " .. questID .. "|r Added")
                     end)
             else
-                AprRC:Error('Missing Qpart option on current step')
+                APR:PrintError('Missing Qpart option on current step')
             end
             return
         elseif inputText == "donedb" then
@@ -542,7 +542,7 @@ function AprRC.command:SlashCmd(input)
                     function(text)
                         local questID = AprRC:ParseQuestID(text)
                         if not questID then
-                            AprRC:Error("Invalid QuestID format")
+                            APR:PrintError("Invalid QuestID format")
                             return
                         end
                         local currentStep = AprRC:GetLastStep()
@@ -557,7 +557,7 @@ function AprRC.command:SlashCmd(input)
                         print("|cff00bfffDoneDB - " .. questID .. "|r Added")
                     end)
             else
-                AprRC:Error('Missing Done option on current step')
+                APR:PrintError('Missing Done option on current step')
             end
             return
         elseif inputText == "qpartpart" then
@@ -657,7 +657,7 @@ function AprRC.command:SlashCmd(input)
                 print("|cff00bfffDVehicleExit|r Added")
                 return
             end
-            AprRC:Error("|cff00bfffVehicleExit|r already exist on this step")
+            APR:PrintError("|cff00bfffVehicleExit|r already exist on this step")
             return
         elseif inputText == "mountvehicle" then
             if not AprRC:HasStepOption("MountVehicle") then
@@ -666,7 +666,7 @@ function AprRC.command:SlashCmd(input)
                 print("|cff00bfffMountVehicle|r Added")
                 return
             end
-            AprRC:Error("|cff00bfffMountVehicle|r already exist on this step")
+            APR:PrintError("|cff00bfffMountVehicle|r already exist on this step")
             return
         elseif inputText == "warmode" then
             if not AprRC:HasStepOption("WarMode") then
@@ -675,7 +675,7 @@ function AprRC.command:SlashCmd(input)
                 print("|cff00bfffWarMode|r Added")
                 return
             end
-            AprRC:Error("|cff00bfffWarMode|r already exist on this step")
+            APR:PrintError("|cff00bfffWarMode|r already exist on this step")
             return
         elseif inputText == "save" then
             if AprRCData.CurrentRoute.name ~= "" then
@@ -687,7 +687,7 @@ function AprRC.command:SlashCmd(input)
                 -- AprRCData.CurrentRoute = { name = "", steps = { {} } }
                 print("|cff00bfff RouteCompleted |r Added")
             else
-                AprRC:Error('You current route is empty')
+                APR:PrintError('You current route is empty')
             end
             return
         end

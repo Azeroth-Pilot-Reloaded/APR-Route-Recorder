@@ -6,23 +6,59 @@ function AprRC:Debug(msg, data, force)
     if type(data) == "table" then
         for key, value in pairs(data) do
             print(msg, " - ", key)
-            AprRC:Debug(msg, value)
+            APR:Debug(msg, value)
         end
+    elseif data then
+        print(APR:WrapTextInColorCode(tostring(msg), "00bfff") .. " - ",
+            APR:WrapTextInColorCode(tostring(data), "00ff00"))
     else
-        print("|cff00bfff" .. msg .. "|r - ", data)
+        print(APR:WrapTextInColorCode(tostring(msg), "00bfff"))
     end
 end
 
-function AprRC:Error(errorMessage, data)
-    if (errorMessage and type(errorMessage) == "string") then
-        local redColorCode = "|cffff0000"
-        if data then
-            DEFAULT_CHAT_FRAME:AddMessage(redColorCode .. L["ERROR"] .. ": " .. errorMessage .. "|r - ", data)
-        else
-            DEFAULT_CHAT_FRAME:AddMessage(redColorCode .. L["ERROR"] .. ": " .. errorMessage .. "|r")
-        end
-        UIErrorsFrame:AddMessage(errorMessage, 1, 0, 0, 1, 5)
+local function GetStringUtilFunction(name)
+    local util = _G.C_StringUtil or _G.StringUtil
+    if util and util[name] then
+        return util[name]
     end
+    local globalFunc = _G[name]
+    if type(globalFunc) == "function" then
+        return globalFunc
+    end
+    return nil
+end
+
+function AprRC:EscapeLuaPattern(text)
+    local fn = GetStringUtilFunction("EscapeLuaPatterns")
+    if fn then
+        local ok, result = pcall(fn, text or "")
+        if ok and type(result) == "string" then
+            return result
+        end
+    end
+    return (text or ""):gsub("([%(%)%.%+%-%*%?%[%]%^%$%%])", "%%%1")
+end
+
+function AprRC:RemoveContiguousSpaces(text)
+    local fn = GetStringUtilFunction("RemoveContiguousSpaces")
+    if fn then
+        local ok, result = pcall(fn, text or "")
+        if ok and type(result) == "string" then
+            return result
+        end
+    end
+    return (text or ""):gsub("%s+", " ")
+end
+
+function AprRC:StripHyperlinks(text, maintainColor, maintainBrackets, stripNewlines, maintainAtlases)
+    local fn = GetStringUtilFunction("StripHyperlinks")
+    if fn then
+        local ok, result = pcall(fn, text or "", maintainColor, maintainBrackets, stripNewlines, maintainAtlases)
+        if ok and type(result) == "string" then
+            return result
+        end
+    end
+    return text or ""
 end
 
 function AprRC:DeepCompare(t1, t2)
@@ -38,20 +74,13 @@ function AprRC:DeepCompare(t1, t2)
     return true
 end
 
-function AprRC:IsTableEmpty(table)
-    if (table) then
-        return next(table) == nil
-    end
-    return false
-end
-
 function AprRC:GetItemIDFromLink(link)
     local _, _, itemID = string.find(link, "item:(%d+):")
     return itemID
 end
 
 function AprRC:ExtraLineTextToKey(inputString)
-    local result = string.lower(inputString)
+    local result = self:StripHyperlinks(string.lower(inputString or ""))
     result = string.gsub(result, " a ", " ")
     result = string.gsub(result, " of ", " ")
     result = string.gsub(result, " the ", " ")
@@ -61,6 +90,7 @@ function AprRC:ExtraLineTextToKey(inputString)
     result = string.gsub(result, " - ", " ")
     result = string.gsub(result, "-", " ")
     result = string.gsub(result, "[+='\"`$£€°~^¨<>|#&;,%.:§?!*/(){}%[%]]", "")
+    result = self:RemoveContiguousSpaces(result)
     result = string.gsub(result, "%s", "_")
     result = string.gsub(result, "__+", "_")
     result = string.gsub(result, "_+$", "")
@@ -310,7 +340,8 @@ end
 
 function AprRC:CustomSortKeys(tbl)
     local priorityList = {
-        "Waypoint", "WaypointDB", "NonSkippableWaypoint", "PickUp", "PickUpDB", "Qpart", "QpartPart", "QpartDB", "Done", "DoneDB",
+        "Waypoint", "WaypointDB", "NonSkippableWaypoint", "PickUp", "PickUpDB", "Qpart", "QpartPart", "QpartDB", "Done",
+        "DoneDB",
         "LeaveQuests", "Treasure", "Scenario", "EnterScenario", "DoScenario", "LeaveScenario", "LearnProfession", "Grind",
         "DropQuest", "DroppableQuest", "LootItem", "UseItem", "UseSpell",
         "ChromiePick", "SetHS", "GetFP", "UseHS", "UseDalaHS", "UseGarrisonHS", "UseFlightPath", "Name", "NodeID",

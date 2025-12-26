@@ -3,6 +3,8 @@ local L_APR = LibStub("AceLocale-3.0"):GetLocale("APR")
 
 AprRC = {}
 AprRC = _G.LibStub("AceAddon-3.0"):NewAddon(AprRC, "APR-Recorder", "AceEvent-3.0")
+
+
 AprRC.Color = {
     white = { 1, 1, 1 },
     red = { 1, 0, 0 },
@@ -27,6 +29,9 @@ function AprRC:OnInitialize()
     AprRC.version = C_AddOns.GetAddOnMetadata("APR-Recorder", "Version")
     AprRC.github = GetAddOnMetadata("APR-Recorder", "X-Github")
     AprRC.discord = GetAddOnMetadata("APR-Recorder", "X-Discord")
+    APR.interfaceVersion = select(4, GetBuildInfo())
+    APR.isMidnightVersion = (tonumber(APR.interfaceVersion) or 0) >= 120000
+
 
     -- Init Saved variable
     AprRCData = AprRCData or {}

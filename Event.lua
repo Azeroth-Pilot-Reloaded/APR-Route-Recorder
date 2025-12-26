@@ -303,7 +303,10 @@ function AprRC.event.functions.emote(event, ...)
         local function getEmoteKey()
             for emoteKey, phrases in pairs(L.Emotes) do
                 for _, phrase in ipairs(phrases) do
-                    local pattern = phrase:gsub("%%s", ".+") -- replace placeholders patern to lua
+                    local placeholder = "\001"
+                    local pattern = phrase:gsub("%%s", placeholder)
+                    pattern = AprRC:EscapeLuaPattern(pattern)
+                    pattern = pattern:gsub(placeholder, ".+")
                     pattern = "^" .. pattern .. "$"          -- cast as regex
                     if string.match(message, pattern) then
                         return emoteKey
@@ -539,7 +542,7 @@ function AprRC.event.functions.qpart(event, questID)
 
     local function retryProcess(attemptsLeft)
         if attemptsLeft <= 0 then
-            AprRC:Error("Qpart update failed after retries", questID)
+            APR:PrintError("Qpart update failed after retries", questID)
             return
         end
         C_Timer.After(0.4, function()
@@ -586,10 +589,12 @@ function AprRC.event.functions.loot(event, message, ...)
 end
 
 function AprRC.event.functions.target(event, ...)
-    local targetGUID = UnitGUID("target")
-    if not targetGUID then return end
-    targetName = UnitNameUnmodified("target")
-    targetID = select(6, strsplit("-", targetGUID))
+    local uid = APR:SafeUnitGUID("target")
+    if not uid then
+        return
+    end
+    targetID = APR:GetTargetID("target")
+    targetName = APR:SafeUnitNameUnmodified("target")
 end
 
 function AprRC.event.functions.pet(event, ...)

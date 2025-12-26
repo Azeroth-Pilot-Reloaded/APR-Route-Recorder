@@ -28,7 +28,7 @@ end
 function AprRC:NewStep(step)
     AprRC:Debug("NewStep", step)
     local lastStep = AprRC:GetLastStep()
-    if AprRC:IsTableEmpty(lastStep) then
+    if APR:IsTableEmpty(lastStep) then
         AprRCData.CurrentRoute.steps = {}
     end
     tinsert(AprRCData.CurrentRoute.steps, step)
@@ -194,7 +194,7 @@ end
 function AprRC:ResetQuestLookup(routeName)
     AprRCData.QuestLookup = AprRCData.QuestLookup or {}
     local key = getRouteKey(routeName)
-        AprRCData.QuestLookup[key] = {}
+    AprRCData.QuestLookup[key] = {}
 end
 
 function AprRC:RebuildQuestLookupFromRoute(route)

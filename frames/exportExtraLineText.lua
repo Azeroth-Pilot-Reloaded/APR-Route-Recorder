@@ -54,7 +54,7 @@ function AprRC.exportExtraLineText.Show()
 
 
         if not formattedText then
-            AprRC:Error("Failed to save. Incorrect format.")
+            APR:PrintError("Failed to save. Incorrect format.")
             return
         end
 
