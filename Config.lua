@@ -62,6 +62,7 @@ function AprRC.settings:InitializeSettings()
             --debug
             minimap = { minimapPos = 285 },
             enableMinimapButton = true,
+            enableCampaignQuestsFlag = false,
             debug = false,
             enableAddon = true,
         }
@@ -158,14 +159,33 @@ function AprRC.settings:createBlizzOptions()
 
                 }
             },
-            debug = {
+            miscellaneous = {
                 order = 4,
+                type = "group",
+                name = "Miscellaneous",
+                inline = true,
+                args = {
+                    enableCampaignQuestsFlag = {
+                        order = 4.1,
+                        type = "toggle",
+                        name = "Enable Campaign Quests Flag",
+                        width = "full",
+                        get = GetProfileOption,
+                        set = SetProfileOption,
+                        disabled = function()
+                            return not self.profile.enableAddon
+                        end,
+                    },
+                }
+            },
+            debug = {
+                order = 5,
                 type = "group",
                 name = "Debug",
                 inline = true,
                 args = {
                     enableAddon = {
-                        order = 4.1,
+                        order = 5.1,
                         type = "toggle",
                         name = L_APR["ENABLE_ADDON"],
                         width = "full",
@@ -176,7 +196,7 @@ function AprRC.settings:createBlizzOptions()
                         end,
                     },
                     debug = {
-                        order = 4.2,
+                        order = 5.2,
                         type = "toggle",
                         name = L_APR["DEBUG"],
                         width = "full",

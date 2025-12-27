@@ -141,6 +141,7 @@ function AprRC.command:SlashCmd(input)
                 Waypoint = AprRC:FindClosestIncompleteQuest(),
             }
             AprRC:SetStepCoord(step, 5)
+            AprRC:ApplyCampaignQuestFlag(step, step.Waypoint)
             AprRC:NewStep(step)
             print("|cff00bfffWaypoint|r Added")
             return
@@ -159,6 +160,7 @@ function AprRC.command:SlashCmd(input)
                         else
                             currentStep.WaypointDB = { currentStep.Waypoint, questID }
                         end
+                        AprRC:ApplyCampaignQuestFlag(currentStep, questID)
                         print("|cff00bfffWaypointDB - " .. questID .. "|r Added")
                     end)
             else
@@ -434,6 +436,7 @@ function AprRC.command:SlashCmd(input)
                             }
                         }
                         AprRC:SetStepCoord(step)
+                        AprRC:ApplyCampaignQuestFlag(step, targetQuestID)
                         AprRC:NewStep(step)
 
                         print("|cff00bfffUseItem|r Added")
@@ -469,6 +472,7 @@ function AprRC.command:SlashCmd(input)
                             }
                         }
                         AprRC:SetStepCoord(step)
+                        AprRC:ApplyCampaignQuestFlag(step, targetQuestID)
                         AprRC:NewStep(step)
 
                         print("|cff00bfffUseSpell|r Added")
@@ -505,6 +509,7 @@ function AprRC.command:SlashCmd(input)
                                 tinsert(currentStep.PickUpDB, qID)
                             end
                         end
+                        AprRC:ApplyCampaignQuestFlag(currentStep, questID)
                         print("|cff00bfffPickUpDB - " .. questID .. "|r Added")
                     end)
             else
@@ -530,6 +535,7 @@ function AprRC.command:SlashCmd(input)
                                 tinsert(currentStep.QpartDB, qID)
                             end
                         end
+                        AprRC:ApplyCampaignQuestFlag(currentStep, questID)
                         print("|cff00bfffQpartDB - " .. questID .. "|r Added")
                     end)
             else
@@ -554,6 +560,7 @@ function AprRC.command:SlashCmd(input)
                                 tinsert(currentStep.DoneDB, qID)
                             end
                         end
+                        AprRC:ApplyCampaignQuestFlag(currentStep, questID)
                         print("|cff00bfffDoneDB - " .. questID .. "|r Added")
                     end)
             else
@@ -589,6 +596,7 @@ function AprRC.command:SlashCmd(input)
                             QpartPart = { [questID] = { objectiveID } }
                         }
                         AprRC:SetStepCoord(step)
+                        AprRC:ApplyCampaignQuestFlag(step, questID)
                         AprRC:NewStep(step)
 
                         print("|cff00bfffQpartPart - [" ..
@@ -671,6 +679,7 @@ function AprRC.command:SlashCmd(input)
         elseif inputText == "warmode" then
             if not AprRC:HasStepOption("WarMode") then
                 local step = { WarMode = AprRC:FindClosestIncompleteQuest() }
+                AprRC:ApplyCampaignQuestFlag(step, step.WarMode)
                 AprRC:NewStep(step)
                 print("|cff00bfffWarMode|r Added")
                 return

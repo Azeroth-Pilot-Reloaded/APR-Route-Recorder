@@ -128,21 +128,25 @@ function AprRC.event.functions.accept(event, questId)
             local currentStep = AprRC:GetLastStep()
             currentStep.DropQuest = questId
             currentStep.DroppableQuest.Qid = questId
+            AprRC:ApplyCampaignQuestFlag(currentStep, questId)
             AprRC:saveQuestInfo()
             return
         end
         if AprRC:HasStepOption("ChromiePick") then
             local currentStep = AprRC:GetLastStep()
             currentStep.PickUp = { questId }
+            AprRC:ApplyCampaignQuestFlag(currentStep, questId)
             AprRC:saveQuestInfo()
             return
         end
         if not AprRC:IsCurrentStepFarAway() and AprRC:HasStepOption("PickUp") then
             local currentStep = AprRC:GetLastStep()
             tinsert(currentStep.PickUp, questId)
+            AprRC:ApplyCampaignQuestFlag(currentStep, questId)
         else
             local step = { PickUp = { questId } }
             AprRC:SetStepCoord(step)
+            AprRC:ApplyCampaignQuestFlag(step, questId)
             AprRC:NewStep(step)
         end
         -- update saved quest
@@ -182,9 +186,11 @@ function AprRC.event.functions.done(event, questId, ...)
     if not AprRC:IsCurrentStepFarAway() and AprRC:HasStepOption("Done") then
         local currentStep = AprRC:GetLastStep()
         tinsert(currentStep.Done, questId)
+        AprRC:ApplyCampaignQuestFlag(currentStep, questId)
     else
         local step = { Done = { questId } }
         AprRC:SetStepCoord(step)
+        AprRC:ApplyCampaignQuestFlag(step, questId)
         AprRC:NewStep(step)
     end
     --remove quest from state list
@@ -202,6 +208,7 @@ end
 function AprRC.event.functions.setHS(...)
     local step = { SetHS = AprRC:FindClosestIncompleteQuest() }
     AprRC:SetStepCoord(step)
+    AprRC:ApplyCampaignQuestFlag(step, step.SetHS)
     AprRC:NewStep(step)
 end
 
@@ -231,6 +238,7 @@ function AprRC.event.functions.spell(event, unitTarget, castGUID, spellID)
             local step = {}
             step[key] = AprRC:FindClosestIncompleteQuest()
             step.Zone = AprRC:getZone()
+            AprRC:ApplyCampaignQuestFlag(step, step[key])
             AprRC:NewStep(step)
         end
     end
@@ -239,6 +247,7 @@ end
 function AprRC.event.functions.warMode(event, warModeEnabled)
     if warModeEnabled then
         local step = { WarMode = AprRC:FindClosestIncompleteQuest() }
+        AprRC:ApplyCampaignQuestFlag(step, step.WarMode)
         AprRC:NewStep(step)
     end
 end
@@ -307,7 +316,7 @@ function AprRC.event.functions.emote(event, ...)
                     local pattern = phrase:gsub("%%s", placeholder)
                     pattern = AprRC:EscapeLuaPattern(pattern)
                     pattern = pattern:gsub(placeholder, ".+")
-                    pattern = "^" .. pattern .. "$"          -- cast as regex
+                    pattern = "^" .. pattern .. "$" -- cast as regex
                     if string.match(message, pattern) then
                         return emoteKey
                     end
@@ -368,6 +377,7 @@ function AprRC.event.functions.fly(event, ...)
                 AprRC.isOnTaxi = true
                 controlLostTime = GetTime()
                 step.UseFlightPath = AprRC:FindClosestIncompleteQuest()
+                AprRC:ApplyCampaignQuestFlag(step, step.UseFlightPath)
                 AprRC:NewStep(step)
             end
         end)
@@ -405,29 +415,35 @@ function AprRC.event.functions.buy(event, ...)
         if button and not button.isHooked then
             button:HookScript("OnClick", function()
                 local itemID = GetMerchantItemID(i)
-                if itemID then
-                    local currentStep = AprRC:GetLastStep()
-                    if currentStep and currentStep.BuyMerchant then
-                        local found = false
-                        for _, item in ipairs(currentStep.BuyMerchant) do
-                            if item.itemID == itemID then
-                                item.quantity = item.quantity + 1
-                                found = true
-                                break
+                    if itemID then
+                        local currentStep = AprRC:GetLastStep()
+                        if currentStep and currentStep.BuyMerchant then
+                            local found = false
+                            local questID
+                            for _, item in ipairs(currentStep.BuyMerchant) do
+                                if item.itemID == itemID then
+                                    item.quantity = item.quantity + 1
+                                    questID = item.questID
+                                    found = true
+                                    break
+                                end
                             end
+                            if not found then
+                                questID = AprRC:FindClosestIncompleteQuest()
+                                table.insert(currentStep.BuyMerchant,
+                                    { itemID = itemID, quantity = 1, questID = questID })
+                            end
+                            AprRC:ApplyCampaignQuestFlag(currentStep, questID)
+                            return
                         end
-                        if not found then
-                            table.insert(currentStep.BuyMerchant,
-                                { itemID = itemID, quantity = 1, questID = AprRC:FindClosestIncompleteQuest() })
-                        end
-                        return
-                    end
 
-                    local step = { BuyMerchant = { { itemID = itemID, quantity = 1, questID = AprRC:FindClosestIncompleteQuest() } } }
-                    AprRC:SetStepCoord(step)
-                    AprRC:NewStep(step)
-                end
-            end)
+                        local questID = AprRC:FindClosestIncompleteQuest()
+                        local step = { BuyMerchant = { { itemID = itemID, quantity = 1, questID = questID } } }
+                        AprRC:SetStepCoord(step)
+                        AprRC:ApplyCampaignQuestFlag(step, questID)
+                        AprRC:NewStep(step)
+                    end
+                end)
             button.isHooked = true
         end
     end
@@ -478,7 +494,8 @@ function AprRC.event.functions.qpart(event, questID)
                     step.InstanceQuest = true
                 end
                 setButton(questID, index, step)
-                -- step.IsCampaignQuest = AprRC:IsCampaignQuest(questID) or nil
+                AprRC:ApplyCampaignQuestFlag(step, questID)
+
                 step.Range = range
                 AprRC:NewStep(step)
             end
@@ -508,6 +525,7 @@ function AprRC.event.functions.qpart(event, questID)
                     end
                     tinsert(currentStep.Qpart[questID], index)
                     setButton(questID, index, currentStep)
+                    AprRC:ApplyCampaignQuestFlag(currentStep, questID)
                 else
                     newStep()
                 end
@@ -678,6 +696,7 @@ function AprRC.event.functions.portal(event, ...)
                                     Zone = portalStepZone,
                                 }
                                 AprRC:AddZoneStepTrigger(step)
+                                AprRC:ApplyCampaignQuestFlag(step, step.Waypoint)
                                 AprRC:NewStep(step)
                                 print("|cff00bfffWaypoint|r Added")
                             end

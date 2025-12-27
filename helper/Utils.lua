@@ -389,9 +389,24 @@ function AprRC:CustomSortKeys(tbl)
 end
 
 function AprRC:IsCampaignQuest(questID)
+    if not questID then
+        return nil
+    end
     local questIndex = C_QuestLog.GetLogIndexForQuestID(questID)
+    if not questIndex or questIndex == 0 then
+        return nil
+    end
     local questInfo = C_QuestLog.GetInfo(questIndex)
     return questInfo and questInfo.campaignID ~= nil
+end
+
+function AprRC:ApplyCampaignQuestFlag(step, questID)
+    if not step or not questID then
+        return
+    end
+    if self.settings.profile.enableCampaignQuestsFlag and self:IsCampaignQuest(questID) then
+        step.IsCampaignQuest = true
+    end
 end
 
 function AprRC:AddZoneStepTrigger(step)
