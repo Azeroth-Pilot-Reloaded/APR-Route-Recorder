@@ -110,7 +110,7 @@ function AprRC.command:SlashCmd(input)
         print("|cffeda55f/aprrc isQuestsUncompleted |r- " .. "IsQuestsUncompleted")
         print("|cffeda55f/aprrc isOneOfQuestsUncompleted |r- " .. "IsOneOfQuestsUncompleted")
         print("|cffeda55f/aprrc isOneOfQuestsUncompletedOnAccount |r- " .. "IsOneOfQuestsUncompletedOnAccount")
-        print("|cffeda55f/aprrc lootitem, lt |r- " .. "LootItem")
+        print("|cffeda55f/aprrc LootItems, lt |r- " .. "LootItems")
         print("|cffeda55f/aprrc noachievement |r- " .. "DontHaveAchievement")
         print("|cffeda55f/aprrc noarrow |r- " .. "NoArrow")
         print("|cffeda55f/aprrc noautoflightmap |r- " .. "NoAutoFlightMap")
@@ -296,15 +296,47 @@ function AprRC.command:SlashCmd(input)
                     config.message .. " - { " .. table.concat(questIDs, ", ") .. " }|r Added")
             end)
             return
-        elseif inputText == "lootitem" or inputText == "lt" then
-            AprRC.autocomplete:ShowItemAutoComplete(questID, objectiveID, function(_, itemID, frame)
-                local step = {}
-                step.LootItem = tonumber(itemID, 10)
+        elseif inputText == "lootitems" or inputText == "lt" then
+            AprRC.autocomplete:ShowItemAutoComplete(nil, nil, function(_, itemID, frame)
+                local numericItemID = tonumber(itemID, 10)
+                if not numericItemID then
+                    APR:PrintError("Invalid item selection")
+                    return
+                end
 
-                AprRC:SetStepCoord(step)
-                AprRC:NewStep(step)
+                AprRC.questionDialog:CreateEditBoxPopupWithCallback("Loot items quantity (number)", function(text)
+                    local quantity = AprRC:ParsePositiveInteger(text)
+                    if not quantity or quantity < 1 then
+                        APR:PrintError("Invalid quantity")
+                        return
+                    end
 
-                print("|cff00bfff LootItem |r Added")
+                    local currentStep = AprRC:GetLastStep()
+
+                    if currentStep and currentStep.LootItems then
+                        table.insert(currentStep.LootItems, {
+                            itemID = numericItemID,
+                            quantity = quantity
+                        })
+
+                        print("|cff00bfffLootItems|r updated (added item)")
+                    else
+                        local step = {
+                            LootItems = {
+                                {
+                                    itemID = numericItemID,
+                                    quantity = quantity
+                                }
+                            }
+                        }
+
+                        AprRC:SetStepCoord(step)
+                        AprRC:NewStep(step)
+
+                        print("|cff00bfffLootItems|r Added")
+                    end
+                end, "1")
+
                 AceGUI:Release(frame)
             end)
             return

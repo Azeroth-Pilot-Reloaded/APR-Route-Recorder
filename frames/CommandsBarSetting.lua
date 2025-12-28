@@ -47,7 +47,7 @@ local allCommands = {
     { command = "isOneOfQuestsUncompleted",          label = "Is One Of Quests Uncompleted",            texture = iconPath .. "IsQuestsUncompletedOnAccount" },
     { command = "isOneOfQuestsUncompletedOnAccount", label = "Is One Of Quests Uncompleted On Account", texture = iconPath .. "IsQuestsUncompletedOnAccount" },
     { command = "addjob",                            label = "Learn Profession",                        texture = iconPath .. "LearnProfession" },
-    { command = "lootitem",                          label = "Loot Item",                               texture = iconPath .. "LootItem" },
+    { command = "LootItems",                         label = "Loot Items",                              texture = iconPath .. "LootItem" },
     { command = "noarrow",                           label = "No Arrow",                                texture = iconPath .. "NoArrow" },
     { command = "noautoflightmap",                   label = "No Auto Flight Map",                      texture = iconPath .. "NoAutoFlightMap" },
     { command = "denynpc",                           label = "Deny NPC",                                texture = iconPath .. "DontHaveAura" },

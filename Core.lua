@@ -25,12 +25,12 @@ function AprRC:OnInitialize()
     local GetAddOnMetadata = C_AddOns and C_AddOns.GetAddOnMetadata or _G.GetAddOnMetadata
 
     -- Init on TOC
-    AprRC.title = C_AddOns.GetAddOnMetadata("APR-Recorder", "Title")
-    AprRC.version = C_AddOns.GetAddOnMetadata("APR-Recorder", "Version")
-    AprRC.github = GetAddOnMetadata("APR-Recorder", "X-Github")
-    AprRC.discord = GetAddOnMetadata("APR-Recorder", "X-Discord")
-    APR.interfaceVersion = select(4, GetBuildInfo())
-    APR.isMidnightVersion = (tonumber(APR.interfaceVersion) or 0) >= 120000
+    self.title = C_AddOns.GetAddOnMetadata("APR-Recorder", "Title")
+    self.version = C_AddOns.GetAddOnMetadata("APR-Recorder", "Version")
+    self.github = GetAddOnMetadata("APR-Recorder", "X-Github")
+    self.discord = GetAddOnMetadata("APR-Recorder", "X-Discord")
+    self.interfaceVersion = select(4, GetBuildInfo())
+    self.isMidnightVersion = (tonumber(self.interfaceVersion) or 0) >= 120000
 
 
     -- Init Saved variable
@@ -44,13 +44,13 @@ function AprRC:OnInitialize()
     AprRCData.BackupRoute = AprRCData.BackupRoute or {}
 
     -- Init module
-    AprRC.settings:InitializeBlizOptions()
-    AprRC.CommandBar:OnInit()
-    AprRC.record:OnInit()
-    AprRC.event:MyRegisterEvent()
-    AprRC:saveQuestInfo()
-    AprRC:EnsureQuestLookup(AprRCData.CurrentRoute and AprRCData.CurrentRoute.name)
-    AprRC:RebuildQuestLookupFromRoute(AprRCData.CurrentRoute)
+    self.settings:InitializeBlizOptions()
+    self.CommandBar:OnInit()
+    self.record:OnInit()
+    self.event:MyRegisterEvent()
+    self:saveQuestInfo()
+    self:EnsureQuestLookup(AprRCData.CurrentRoute and AprRCData.CurrentRoute.name)
+    self:RebuildQuestLookupFromRoute(AprRCData.CurrentRoute)
 
     -- Register to Chat
     C_ChatInfo.RegisterAddonMessagePrefix("AprRCChat")
