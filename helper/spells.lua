@@ -22,6 +22,7 @@ AprRC.professionSpellIDs = {
     264247,
     264250,
     156606,
+    471003,
     -- forge
     423332,
     264442,
@@ -45,6 +46,7 @@ AprRC.professionSpellIDs = {
     195097,
     264438,
     309827,
+    471004,
     -- enchant
     423334,
     366255,
@@ -68,6 +70,7 @@ AprRC.professionSpellIDs = {
     264464,
     51313,
     264471,
+    471006,
     -- Inge
     4036,
     12656,
@@ -92,6 +95,7 @@ AprRC.professionSpellIDs = {
     265807,
     366254,
     264481,
+    471007,
     -- tailoring
     26790,
     110426,
@@ -115,6 +119,7 @@ AprRC.professionSpellIDs = {
     265815,
     366258,
     264620,
+    471015,
     -- calli
     45357,
     86008,
@@ -138,6 +143,7 @@ AprRC.professionSpellIDs = {
     265809,
     366251,
     264498,
+    471010,
     -- joaillerie
     73318,
     25229,
@@ -161,6 +167,7 @@ AprRC.professionSpellIDs = {
     265811,
     366250,
     264537,
+    471011,
     -- cuir
     3811,
     110423,
@@ -184,6 +191,7 @@ AprRC.professionSpellIDs = {
     265813,
     366249,
     264581,
+    471012,
     -- Minage
     2656,
     2575,
@@ -208,6 +216,7 @@ AprRC.professionSpellIDs = {
     265843,
     265847,
     423341,
+    471013,
     -- depecage
     8613,
     10768,
@@ -235,6 +244,7 @@ AprRC.professionSpellIDs = {
     392445,
     392440,
     194174,
+    471014,
 
     -- herbo
     193290,
@@ -260,6 +270,7 @@ AprRC.professionSpellIDs = {
     265819,
     441327,
     265834,
+    471009,
     -- archéologie
     78670,
     278910,
@@ -273,6 +284,7 @@ AprRC.professionSpellIDs = {
     89721,
     89722,
     110393,
+    1231127,
     -- cuisine
     2550,
     18260,
@@ -296,6 +308,7 @@ AprRC.professionSpellIDs = {
     265817,
     366256,
     264636,
+    471005,
     -- peche
     271990,
     158743,
@@ -321,4 +334,5 @@ AprRC.professionSpellIDs = {
     271677,
     366253,
     271658,
+    471008,
 }
