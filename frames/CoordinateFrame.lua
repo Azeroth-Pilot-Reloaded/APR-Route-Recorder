@@ -58,8 +58,8 @@ end)
 ----------------------------- Function Coordinate Frames ------------------------------
 ---------------------------------------------------------------------------------------
 
-function AprRC.coordinate:PartyFrameOnInit()
-    LibWindow.RegisterConfig(CoordinateScreenPanel, APR.settings.profile.coordinateFrame)
+function AprRC.coordinate:OnInit()
+    LibWindow.RegisterConfig(CoordinateScreenPanel, AprRC.settings.profile.coordinateFrame)
     CoordinateScreenPanel.RegisteredForLibWindow = true
     LibWindow.MakeDraggable(CoordinateScreenPanel)
     CoordinateScreenPanel:SetPoint("center", UIParent, "center", 0, 0)
@@ -68,7 +68,7 @@ function AprRC.coordinate:PartyFrameOnInit()
 end
 
 function AprRC.coordinate:RefreshFrameAnchor()
-    if (not APR.settings.profile.coordinateShow or not AprRC.settings.profile.enableAddon) then
+    if (not AprRC.settings.profile.coordinateShow or not AprRC.settings.profile.enableAddon) then
         CoordinateScreenPanel:Hide()
         return
     end

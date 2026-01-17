@@ -59,6 +59,8 @@ function AprRC.settings:InitializeSettings()
                 height = 775,
                 position = {},
             },
+            coordinateFrame = {},
+            coordinateShow = false,
             --debug
             minimap = { minimapPos = 285 },
             enableMinimapButton = true,
@@ -195,6 +197,20 @@ function AprRC.settings:createBlizzOptions()
                             self:ToggleAddon()
                         end,
                     },
+                    coordinateShow = {
+                        order = 5.15,
+                        type = "toggle",
+                        name = L_APR["COORD_COMMAND"],
+                        width = "full",
+                        get = GetProfileOption,
+                        set = function(info, value)
+                            SetProfileOption(info, value)
+                            AprRC.coordinate:RefreshFrameAnchor()
+                        end,
+                        disabled = function()
+                            return not self.profile.enableAddon
+                        end,
+                    },
                     debug = {
                         order = 5.2,
                         type = "toggle",
@@ -262,6 +278,7 @@ end
 
 function AprRC.settings:ToggleAddon()
     AprRC.record:RefreshFrameAnchor()
+    AprRC.coordinate:RefreshFrameAnchor()
 end
 
 function AprRC.settings:OpenSettings(name)

@@ -69,7 +69,7 @@ function AprRC.command:SlashCmd(input)
         AprRC:ResetData()
         return
     elseif inputText == 'coordframe' then
-        APR.settings.profile.coordinateShow = not APR.settings.profile.coordinateShow
+        AprRC.settings.profile.coordinateShow = not AprRC.settings.profile.coordinateShow
         AprRC.coordinate:RefreshFrameAnchor()
         return
     elseif inputText == 'backup' then
