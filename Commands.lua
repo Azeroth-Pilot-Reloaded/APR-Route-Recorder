@@ -607,15 +607,20 @@ function AprRC.command:SlashCmd(input)
                 onClick = function(questID, objectiveID)
                     local objectivesInfo = C_QuestLog.GetQuestObjectives(questID)
                     local objectiveInfo = objectivesInfo and objectivesInfo[objectiveID]
-                    local defaultText = AprRC:GetQpartpartTrigTextProgress(objectiveInfo)
+                    local defaultText = AprRC:GetQpartpartTrigTextProgress(questID, objectiveInfo)
 
                     -- Show the popup dialog with the default "x/y" value
                     AprRC.questionDialog:CreateEditBoxPopupWithCallback("Text Trigger for Qpart Part", function(text)
                         local trimmedText = strtrim(text or "")
                         if trimmedText == "" then return end
 
-                        -- Auto-append "/total" if not manually included
-                        if not string.find(trimmedText, "/", 1, true) and objectiveInfo then
+                        local progressPercent = AprRC:GetQuestProgressPercentRounded(questID, objectiveInfo)
+                        if progressPercent and not string.find(trimmedText, "%%") then
+                            if trimmedText:match("^%d+$") then
+                                trimmedText = trimmedText .. "%"
+                            end
+                        elseif not string.find(trimmedText, "/", 1, true) and objectiveInfo then
+                            -- Auto-append "/total" if not manually included
                             local total = tonumber(objectiveInfo.numRequired) or 0
                             if total > 0 then
                                 trimmedText = trimmedText .. "/" .. total

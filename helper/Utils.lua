@@ -419,7 +419,30 @@ function AprRC:AddZoneStepTrigger(step)
     end
 end
 
-function AprRC:GetQpartpartTrigTextProgress(objectiveInfo)
+function AprRC:GetQuestProgressPercentRounded(questID, objectiveInfo)
+    if objectiveInfo and objectiveInfo.type and objectiveInfo.type ~= "progressbar" then
+        return nil
+    end
+
+    local questPercent = questID and GetQuestProgressBarPercent(questID)
+    if questPercent == nil then
+        return nil
+    end
+
+    local numericPercent = tonumber(questPercent)
+    if not numericPercent then
+        return nil
+    end
+
+    return math.floor(numericPercent + 0.5)
+end
+
+function AprRC:GetQpartpartTrigTextProgress(questID, objectiveInfo)
+    local progressPercent = self:GetQuestProgressPercentRounded(questID, objectiveInfo)
+    if progressPercent then
+        return string.format("%d%%", progressPercent)
+    end
+
     if not objectiveInfo then return "1/1" end
 
     local total = tonumber(objectiveInfo.numRequired) or 0
