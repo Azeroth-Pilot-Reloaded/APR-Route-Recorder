@@ -415,35 +415,35 @@ function AprRC.event.functions.buy(event, ...)
         if button and not button.isHooked then
             button:HookScript("OnClick", function()
                 local itemID = GetMerchantItemID(i)
-                    if itemID then
-                        local currentStep = AprRC:GetLastStep()
-                        if currentStep and currentStep.BuyMerchant then
-                            local found = false
-                            local questID
-                            for _, item in ipairs(currentStep.BuyMerchant) do
-                                if item.itemID == itemID then
-                                    item.quantity = item.quantity + 1
-                                    questID = item.questID
-                                    found = true
-                                    break
-                                end
+                if itemID then
+                    local currentStep = AprRC:GetLastStep()
+                    if currentStep and currentStep.BuyMerchant then
+                        local found = false
+                        local questID
+                        for _, item in ipairs(currentStep.BuyMerchant) do
+                            if item.itemID == itemID then
+                                item.quantity = item.quantity + 1
+                                questID = item.questID
+                                found = true
+                                break
                             end
-                            if not found then
-                                questID = AprRC:FindClosestIncompleteQuest()
-                                table.insert(currentStep.BuyMerchant,
-                                    { itemID = itemID, quantity = 1, questID = questID })
-                            end
-                            AprRC:ApplyCampaignQuestFlag(currentStep, questID)
-                            return
                         end
-
-                        local questID = AprRC:FindClosestIncompleteQuest()
-                        local step = { BuyMerchant = { { itemID = itemID, quantity = 1, questID = questID } } }
-                        AprRC:SetStepCoord(step)
-                        AprRC:ApplyCampaignQuestFlag(step, questID)
-                        AprRC:NewStep(step)
+                        if not found then
+                            questID = AprRC:FindClosestIncompleteQuest()
+                            table.insert(currentStep.BuyMerchant,
+                                { itemID = itemID, quantity = 1, questID = questID })
+                        end
+                        AprRC:ApplyCampaignQuestFlag(currentStep, questID)
+                        return
                     end
-                end)
+
+                    local questID = AprRC:FindClosestIncompleteQuest()
+                    local step = { BuyMerchant = { { itemID = itemID, quantity = 1, questID = questID } } }
+                    AprRC:SetStepCoord(step)
+                    AprRC:ApplyCampaignQuestFlag(step, questID)
+                    AprRC:NewStep(step)
+                end
+            end)
             button.isHooked = true
         end
     end
@@ -475,7 +475,7 @@ function AprRC.event.functions.qpart(event, questID)
         local currentValue = objective.numFulfilled or 0
         if previousValue < currentValue then
             local currentStep = AprRC:GetLastStep()
-            local hasAlreadyInStep = currentStep.Qpart and currentStep.Qpart[questID] and
+            local hasAlreadyInStep = currentStep and currentStep.Qpart and currentStep.Qpart[questID] and
                 tContains(currentStep.Qpart[questID], index)
             if hasAlreadyInStep or
                 AprRC:IsQuestInLookup(questID, index) then

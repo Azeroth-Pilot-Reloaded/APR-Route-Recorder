@@ -35,7 +35,7 @@ function AprRC:OnInitialize()
 
     -- Init Saved variable
     AprRCData = AprRCData or {}
-    AprRCData.CurrentRoute = AprRCData.CurrentRoute or { name = "", steps = { {} } }
+    AprRCData.CurrentRoute = AprRCData.CurrentRoute or { name = "", steps = {} }
     AprRCData.Routes = AprRCData.Routes or {}
     AprRCData.ExtraLineTexts = AprRCData.ExtraLineTexts or {}
     AprRCData.QuestLookup = AprRCData.QuestLookup or {}

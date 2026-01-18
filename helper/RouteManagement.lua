@@ -1,7 +1,7 @@
 function AprRC:ResetData()
     AprRC.settings.profile.recordBarFrame.isRecording = false
     AprRCData = {}
-    AprRCData.CurrentRoute = { name = "", steps = { {} } }
+    AprRCData.CurrentRoute = { name = "", steps = {} }
     AprRCData.Routes = {}
     C_UI.Reload()
 end
@@ -11,7 +11,7 @@ function AprRC:InitRoute(name)
     local routeName = mapID .. '-' .. name
     AprRC:ResetQuestLookup(routeName)
     AprRC:ResetTaxiLookup()
-    AprRCData.CurrentRoute = { name = routeName, steps = { {} } }
+    AprRCData.CurrentRoute = { name = routeName, steps = {} }
     tinsert(AprRCData.Routes, AprRCData.CurrentRoute)
 end
 
@@ -74,7 +74,12 @@ function AprRC:IsCurrentStepFarAway(distance)
 end
 
 function AprRC:GetLastStep()
-    return AprRCData.CurrentRoute.steps[#AprRCData.CurrentRoute.steps]
+    local step = AprRCData.CurrentRoute.steps[#AprRCData.CurrentRoute.steps]
+    if not step then
+        step = {}
+        tinsert(AprRCData.CurrentRoute.steps, step)
+    end
+    return step
 end
 
 function AprRC:FindClosestIncompleteQuest()
