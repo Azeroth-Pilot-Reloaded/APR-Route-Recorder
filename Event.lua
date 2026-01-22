@@ -504,7 +504,8 @@ function AprRC.event.functions.qpart(event, questID)
                 or AprRC:HasStepOption("LeaveQuests")
                 or AprRC:HasStepOption("GetFP")
                 or AprRC:HasStepOption("setHS")
-                or AprRC:HasStepOption("Waypoint") then
+                or AprRC:HasStepOption("Waypoint")
+                or AprRC:HasStepOption("TakePortal") then
                 newStep()
             else
                 if not AprRC:IsCurrentStepFarAway() then
@@ -656,8 +657,8 @@ function AprRC.event.functions.portal(event, ...)
         AprRCData.BeforePortal.lastStep = lastStep
     else
         local isInitialLogin, isReloadingUi = ...
-        -- wait 3s; if last step == saved last step then add waypoint + "USE_PORTAL" text -- non-skippable waypoints (new option)
-        -- otherwise check IsCurrentStepFarAway; if too far then override coord + "USE_PORTAL" text
+        -- wait 3s; if last step == saved last step then add TakePortal
+        -- otherwise check IsCurrentStepFarAway; if too far then override coord + TakePortal
         -- for teleports without a portal or cast => detect via LOSS_OF_CONTROL_ADDED, ZONE_CHANGED_INDOORS, waypoint update, AREA_POIS_UPDATED
         -- for teleports with a spell => use a teleport spell list (excluding class spells) + UNIT_SPELLCAST_SUCCEEDED
 
@@ -668,37 +669,44 @@ function AprRC.event.functions.portal(event, ...)
                 local portalStep = beforePortal.stepForCoord
                 local portalStepCoord = portalStep.Coord
                 local portalStepZone = portalStep.Zone
+                local destinationZoneId = AprRC:getZone()
 
                 local lastStepBeforePortal = beforePortal.lastStep
                 -- Same last step so we need to add a new one
 
+                local function applyTakePortal(step)
+                    step.TakePortal = step.TakePortal or {}
+                    step.TakePortal.QuestID = AprRC:FindClosestIncompleteQuest()
+                    step.TakePortal.ZoneId = destinationZoneId
+                    AprRC:ApplyCampaignQuestFlag(step, step.TakePortal.QuestID)
+                end
+
                 if lastStepBeforePortal and lastStep and AprRC:DeepCompare(lastStepBeforePortal, lastStep) then
                     APR.questionDialog:CreateQuestionPopup(
-                        "Set a waypoint where you were before teleporting?",
-                        "Set a waypoint where you were before teleporting?", function()
+                        "Add a TakePortal step where you were before teleporting?",
+                        "Add a TakePortal step where you were before teleporting?", function()
                             local reuseLast = false
-                            if lastStep.Waypoint and lastStep.Coord then
+                            if lastStep.TakePortal and lastStep.Coord then
                                 if lastStep.Coord.x == portalStepCoord.x and lastStep.Coord.y == portalStepCoord.y then
                                     reuseLast = true
                                 end
                             end
 
                             if reuseLast then
-                                lastStep.ExtraLineText = "USE_PORTAL"
                                 lastStep.Zone = portalStepZone
+                                lastStep.Coord = portalStepCoord
+                                applyTakePortal(lastStep)
                                 AprRC:AddZoneStepTrigger(lastStep)
-                                print("|cff00bfffWaypoint|r Updated")
+                                print("|cff00bfffTakePortal|r Updated")
                             else
                                 local step = {
-                                    Waypoint = AprRC:FindClosestIncompleteQuest(),
-                                    ExtraLineText = "USE_PORTAL",
                                     Coord = portalStepCoord,
                                     Zone = portalStepZone,
                                 }
+                                applyTakePortal(step)
                                 AprRC:AddZoneStepTrigger(step)
-                                AprRC:ApplyCampaignQuestFlag(step, step.Waypoint)
                                 AprRC:NewStep(step)
-                                print("|cff00bfffWaypoint|r Added")
+                                print("|cff00bfffTakePortal|r Added")
                             end
                         end)
                 elseif lastStep then
@@ -706,8 +714,8 @@ function AprRC.event.functions.portal(event, ...)
                         lastStep.Coord = portalStepCoord
                         lastStep.Zone = portalStepZone
                     end
-                    lastStep.ExtraLineText = "USE_PORTAL"
-                    print("|cff00bfffLast Step coord updated|r")
+                    applyTakePortal(lastStep)
+                    print("|cff00bfffLast Step updated|r")
                 end
                 AprRCData.BeforePortal = {}
             end)
