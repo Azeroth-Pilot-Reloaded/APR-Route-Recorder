@@ -14,50 +14,112 @@ function AprRC.QuestObjectiveSelector:Show(config)
     frame:EnableResize(true)
     frame:SetLayout("Fill")
 
+    local mainGroup = AceGUI:Create("SimpleGroup")
+    mainGroup:SetFullWidth(true)
+    mainGroup:SetFullHeight(true)
+    mainGroup:SetLayout("Flow")
+    frame:AddChild(mainGroup)
+
+    local searchBox = AceGUI:Create("EditBox")
+    searchBox:SetLabel("Search (QuestID or text)")
+    searchBox:SetFullWidth(true)
+    mainGroup:AddChild(searchBox)
+
     local scrollFrame = AceGUI:Create("ScrollFrame")
     scrollFrame:SetFullWidth(true)
     scrollFrame:SetFullHeight(true)
     scrollFrame:SetLayout("Flow")
 
+    local function GetSearchTokens(text)
+        local tokens = {}
+        text = (text or ""):lower():gsub("^%s+", ""):gsub("%s+$", "")
+        for token in text:gmatch("%S+") do
+            table.insert(tokens, token)
+        end
+        return tokens
+    end
 
-    for _, quest in ipairs(config.questList) do
-        if #quest.objectives > 0 then
-            local questGroup = AceGUI:Create("InlineGroup")
-            questGroup:SetFullWidth(true)
-            questGroup:SetTitle(quest.title)
-            questGroup:SetLayout("List")
+    local function ObjectiveMatchesTokens(quest, objective, tokens)
+        if #tokens == 0 then
+            return true
+        end
 
-            for i, objective in ipairs(quest.objectives) do
-                local objectiveLabel = AceGUI:Create("InteractiveLabel")
-                objectiveLabel:SetText("[" .. objective.objectiveID .. "]" .. " - " .. objective.text)
-                objectiveLabel:SetFullWidth(true)
-                objectiveLabel:SetCallback("OnClick", function()
-                    if config.onClick then
-                        config.onClick(quest.questID, objective.objectiveID)
+        local questTitle = quest.title or ""
+        local questID = quest.questID and tostring(quest.questID) or ""
+        local objectiveText = (objective and objective.text) or ""
+        local haystack = (questTitle .. " " .. questID .. " " .. objectiveText):lower()
+
+        for _, token in ipairs(tokens) do
+            if not haystack:find(token, 1, true) then
+                return false
+            end
+        end
+
+        return true
+    end
+
+    local function BuildQuestList(filterText)
+        scrollFrame:ReleaseChildren()
+
+        local tokens = GetSearchTokens(filterText)
+        local questList = config.questList or {}
+
+        for _, quest in ipairs(questList) do
+            if quest.objectives and #quest.objectives > 0 then
+                local questGroup = nil
+                local isFirst = true
+
+                for _, objective in ipairs(quest.objectives) do
+                    if ObjectiveMatchesTokens(quest, objective, tokens) then
+                        if not questGroup then
+                            questGroup = AceGUI:Create("InlineGroup")
+                            questGroup:SetFullWidth(true)
+                            questGroup:SetTitle(quest.title)
+                            questGroup:SetLayout("List")
+                        end
+
+                        if not isFirst then
+                            local spacer = AceGUI:Create("Label")
+                            spacer:SetText("")
+                            spacer:SetFullWidth(true)
+                            spacer:SetHeight(10)
+                            questGroup:AddChild(spacer)
+                        end
+
+                        local objectiveLabel = AceGUI:Create("InteractiveLabel")
+                        objectiveLabel:SetText("[" .. objective.objectiveID .. "]" .. " - " .. (objective.text or ""))
+                        objectiveLabel:SetFullWidth(true)
+                        objectiveLabel:SetCallback("OnClick", function()
+                            if config.onClick then
+                                config.onClick(quest.questID, objective.objectiveID)
+                            end
+                            AceGUI:Release(frame)
+                        end)
+                        objectiveLabel:SetCallback("OnEnter", function(widget)
+                            widget:SetHighlight("Interface\\QuestFrame\\UI-QuestTitleHighlight")
+                        end)
+                        objectiveLabel:SetCallback("OnLeave", function(widget)
+                            widget:SetHighlight(nil)
+                        end)
+                        questGroup:AddChild(objectiveLabel)
+
+                        isFirst = false
                     end
-                    AceGUI:Release(frame)
-                end)
-                objectiveLabel:SetCallback("OnEnter", function(widget)
-                    widget:SetHighlight("Interface\\QuestFrame\\UI-QuestTitleHighlight")
-                end)
-                objectiveLabel:SetCallback("OnLeave", function(widget)
-                    widget:SetHighlight(nil)
-                end)
-                questGroup:AddChild(objectiveLabel)
-                if i < #quest.objectives then
-                    local spacer = AceGUI:Create("Label")
-                    spacer:SetText("")
-                    spacer:SetFullWidth(true)
-                    spacer:SetHeight(10)
-                    questGroup:AddChild(spacer)
+                end
+
+                if questGroup then
+                    scrollFrame:AddChild(questGroup)
                 end
             end
-
-            scrollFrame:AddChild(questGroup)
         end
     end
 
-    frame:AddChild(scrollFrame)
+    searchBox:SetCallback("OnTextChanged", function(_, _, text)
+        BuildQuestList(text)
+    end)
+
+    mainGroup:AddChild(scrollFrame)
+    BuildQuestList("")
 end
 
 local function GetFormattedQuestObjectives(questID, objectiveIDs)
