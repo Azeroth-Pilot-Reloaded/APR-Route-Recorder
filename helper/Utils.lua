@@ -197,7 +197,14 @@ function AprRC:RouteToString(tbl, level)
                 str = str .. itemIndent .. keyStr .. valueStr .. ",\n"
             end
         else
-            local valueStr = type(v) == "string" and '"' .. v .. '"' or tostring(v)
+            local valueStr
+            if type(v) == "string" then
+                -- Wrap string concatenation in pcall to handle tainted strings
+                local ok, result = pcall(function() return '"' .. v .. '"' end)
+                valueStr = ok and result or '"<tainted>"'
+            else
+                valueStr = tostring(v)
+            end
             str = str .. itemIndent .. keyStr .. valueStr .. ",\n"
         end
     end

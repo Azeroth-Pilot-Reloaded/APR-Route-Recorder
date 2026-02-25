@@ -298,14 +298,20 @@ function AprRC.export:Show()
         if not refreshTimer then
             refreshTimer = AceTimer:ScheduleRepeatingTimer(function()
                 if dropdown:GetValue() then
-                    if AprRCData.CurrentRoute.name ~= "" then
-                        AprRC:UpdateRouteByName(AprRCData.CurrentRoute.name, AprRCData.CurrentRoute)
-                        local route = AprRCData.Routes[dropdown:GetValue()]
-                        if route then
-                            SetEditboxText(GetRouteText(route), false)
-                            UpdateStepCount(route.steps)
-                            AutoScrollToBottom()
+                    -- Wrap in pcall to handle tainted data from combat
+                    local ok, result = pcall(function()
+                        if AprRCData.CurrentRoute.name ~= "" then
+                            AprRC:UpdateRouteByName(AprRCData.CurrentRoute.name, AprRCData.CurrentRoute)
+                            local route = AprRCData.Routes[dropdown:GetValue()]
+                            if route then
+                                SetEditboxText(GetRouteText(route), false)
+                                UpdateStepCount(route.steps)
+                                AutoScrollToBottom()
+                            end
                         end
+                    end)
+                    if not ok and result then
+                        AprRC:Debug("Error in auto refresh (likely tainted during combat):", result)
                     end
                 end
             end, 2)

@@ -59,8 +59,14 @@ function AprRC.command:SlashCmd(input)
         },
     }
     if inputText == "export" then
-        if AprRCData.CurrentRoute.name ~= "" then
-            AprRC:UpdateRouteByName(AprRCData.CurrentRoute.name, AprRCData.CurrentRoute)
+        -- Wrap in pcall to handle tainted data from combat
+        local ok, result = pcall(function()
+            if AprRCData.CurrentRoute.name ~= "" then
+                AprRC:UpdateRouteByName(AprRCData.CurrentRoute.name, AprRCData.CurrentRoute)
+            end
+        end)
+        if not ok and result then
+            AprRC:Debug("Error during export (likely tainted during combat):", result)
         end
         AprRC.export:Hide()
         AprRC.export.Show()
