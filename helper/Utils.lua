@@ -217,6 +217,7 @@ function AprRC:TableToString(tbl)
     -- Update or add _index
     for i, v in ipairs(tbl) do
         if type(v) == "table" then
+            self:NormalizeStepOptionFields(v)
             v._index = i
         end
     end
@@ -345,17 +346,152 @@ function AprRC:ParsePositiveInteger(rawText)
     return tonumber(trimmed, 10)
 end
 
+function AprRC:ResolveAchievementCriteriaIndex(achievementID, criteriaID)
+    local numericAchievementID = tonumber(achievementID, 10)
+    local numericCriteriaID = tonumber(criteriaID, 10)
+    if not numericAchievementID or not numericCriteriaID then
+        return nil
+    end
+
+    if not GetAchievementNumCriteria or not GetAchievementCriteriaInfoByID or not GetAchievementCriteriaInfo then
+        return nil
+    end
+
+    local criteriaDescription = GetAchievementCriteriaInfoByID(numericAchievementID, numericCriteriaID)
+    local numCriteria = GetAchievementNumCriteria(numericAchievementID)
+    if not numCriteria or numCriteria <= 0 then
+        return nil
+    end
+
+    for index = 1, numCriteria do
+        local info = { GetAchievementCriteriaInfo(numericAchievementID, index) }
+        local indexedDescription = info[1]
+
+        if criteriaDescription and indexedDescription and indexedDescription == criteriaDescription then
+            return index
+        end
+
+        for _, value in ipairs(info) do
+            if tonumber(value, 10) == numericCriteriaID then
+                return index
+            end
+        end
+    end
+
+    return nil
+end
+
+function AprRC:NormalizeStepOptionFields(step)
+    if type(step) ~= "table" then
+        return step
+    end
+
+    local function normalizeQuestID(container)
+        if type(container) ~= "table" then
+            return
+        end
+        if container.questID == nil then
+            container.questID = container.QuestID or container.QuestId or container.questId
+        end
+        container.QuestID = nil
+        container.QuestId = nil
+        container.questId = nil
+    end
+
+    local function normalizeMapID(container)
+        if type(container) ~= "table" then
+            return
+        end
+        if container.mapID == nil then
+            container.mapID = container.mapId or container.ZoneId or container.ZoneID or container.zoneID
+        end
+        container.mapId = nil
+        container.ZoneId = nil
+        container.ZoneID = nil
+        container.zoneID = nil
+    end
+
+    if step.Glyph and not step.Achievement then
+        step.Achievement = step.Glyph
+    end
+    step.Glyph = nil
+
+    if step.IsAdventureMap == nil and step.IsAdventureMapVisible ~= nil then
+        step.IsAdventureMap = step.IsAdventureMapVisible
+    end
+    step.IsAdventureMapVisible = nil
+
+    if type(step.Achievement) == "table" then
+        if not step.Achievement.criteriaIndex and step.Achievement.criteriaID and step.Achievement.achievementID then
+            step.Achievement.criteriaIndex = self:ResolveAchievementCriteriaIndex(step.Achievement.achievementID,
+                step.Achievement.criteriaID)
+        end
+    end
+
+    local mapOptions = {
+        "TakePortal", "EnterScenario", "DoScenario", "LeaveScenario", "EnterInstance", "LeaveInstance"
+    }
+    for _, option in ipairs(mapOptions) do
+        local optionData = step[option]
+        if type(optionData) == "table" then
+            normalizeQuestID(optionData)
+            normalizeMapID(optionData)
+        end
+    end
+
+    if type(step.UseItem) == "table" then
+        normalizeQuestID(step.UseItem)
+    end
+
+    if type(step.UseSpell) == "table" then
+        normalizeQuestID(step.UseSpell)
+    end
+
+    if type(step.Scenario) == "table" then
+        normalizeQuestID(step.Scenario)
+    end
+
+    if type(step.Group) == "table" then
+        normalizeQuestID(step.Group)
+    end
+
+    local listWithQuestID = { "LootItems", "BuyMerchant" }
+    for _, option in ipairs(listWithQuestID) do
+        local optionData = step[option]
+        if type(optionData) == "table" then
+            for _, item in ipairs(optionData) do
+                if type(item) == "table" then
+                    normalizeQuestID(item)
+                end
+            end
+        end
+    end
+
+    if type(step.DroppableQuest) == "table" then
+        if step.DroppableQuest.Qid == nil then
+            step.DroppableQuest.Qid = step.DroppableQuest.questID or step.DroppableQuest.QuestID
+        end
+        step.DroppableQuest.questID = nil
+        step.DroppableQuest.QuestID = nil
+    end
+
+    return step
+end
+
 function AprRC:CustomSortKeys(tbl)
     local priorityList = {
         "Waypoint", "TakePortal", "WaypointDB", "NonSkippableWaypoint", "PickUp", "PickUpDB", "Qpart", "QpartPart",
         "QpartDB", "Done",
         "DoneDB",
-        "LeaveQuests", "Treasure", "Scenario", "EnterScenario", "DoScenario", "LeaveScenario", "LearnProfession", "Grind",
+        "LeaveQuests", "Treasure", "Scenario", "Achievement", "EnterScenario", "DoScenario", "LeaveScenario",
+        "EnterInstance", "LeaveInstance", "LearnProfession",
+        "Grind",
         "DropQuest", "DroppableQuest", "LootItems", "UseItem", "UseSpell",
         "ChromiePick", "SetHS", "GetFP", "UseHS", "UseDalaHS", "UseGarrisonHS", "UseFlightPath", "Name", "NodeID",
-        "WarMode", "Coord", "Fillers", "BuyMerchant", "Button", "SpellButton", "ExtraLineText",
+        "WarMode", "Coord", "Coords", "Zone", "Zones", "Fillers", "BuyMerchant", "Button", "SpellButton", "ExtraLineText",
         "ExtraLineText2", "ExtraLineText3", "ExtraLineText4", "ExtraLineText5", "ExtraLineText6", "ExtraLineText7",
-        "GossipOptionIDs", "Range", "NoArrow", "DenyNPC", "ZoneStepTrigger", "Buffs",
+        "GossipOptionIDs", "Range", "NoArrow", "DenyNPC", "NpcDismount", "skipForLvl", "IsAdventureMap",
+        "ZoneStepTrigger", "Buffs",
     }
 
     local function customSort(a, b)

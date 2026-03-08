@@ -58,6 +58,75 @@ function AprRC.command:SlashCmd(input)
             message = "IsQuestsUncompleted",
         },
     }
+
+    local function BuildCurrentCoordData()
+        local tempStep = {}
+        AprRC:SetStepCoord(tempStep)
+        if type(tempStep.Coord) ~= "table" then
+            return nil, nil
+        end
+
+        local coord = {
+            x = tempStep.Coord.x,
+            y = tempStep.Coord.y,
+        }
+        local zone = tempStep.Zone
+        return coord, zone
+    end
+
+    local function AddCoordsEntryToStep(step)
+        local currentCoord, currentZone = BuildCurrentCoordData()
+        if not currentCoord then
+            APR:PrintError("Unable to read player coordinates")
+            return false
+        end
+
+        local coords = {}
+        if type(step.Coords) == "table" then
+            for _, entry in ipairs(step.Coords) do
+                if type(entry) == "table" and entry.x and entry.y then
+                    table.insert(coords, {
+                        x = entry.x,
+                        y = entry.y,
+                        Zone = entry.Zone,
+                    })
+                end
+            end
+        end
+
+        if type(step.Coord) == "table" then
+            table.insert(coords, {
+                x = step.Coord.x,
+                y = step.Coord.y,
+                Zone = step.Zone or currentZone,
+            })
+        end
+
+        table.insert(coords, {
+            x = currentCoord.x,
+            y = currentCoord.y,
+            Zone = currentZone,
+        })
+
+        local zones = {}
+        for _, entry in ipairs(coords) do
+            local zone = tonumber(entry.Zone, 10)
+            if zone and not tContains(zones, zone) then
+                table.insert(zones, zone)
+            end
+        end
+
+        step.Coords = coords
+        step.Coord = nil
+        step.Zone = nil
+
+        if #zones > 0 then
+            step.Zones = zones
+        end
+
+        return true
+    end
+
     if inputText == "export" then
         -- Wrap in pcall to handle tainted data from combat
         local ok, result = pcall(function()
@@ -89,12 +158,13 @@ function AprRC.command:SlashCmd(input)
         print("|cffeda55f/aprrc achievement |r- " .. "HasAchievement")
         print("|cffeda55f/aprrc addjob |r- " .. "LearnProfession")
         print("|cffeda55f/aprrc addreset |r- " .. "ResetRoute")
-        print("|cffeda55f/aprrc adventuremap |r- " .. "IsAdventureMapVisible")
+        print("|cffeda55f/aprrc adventuremap |r- " .. "IsAdventureMap")
         print("|cffeda55f/aprrc aura |r- " .. "HasAura")
         print("|cffeda55f/aprrc button, btn |r- " .. "Button")
         print("|cffeda55f/aprrc buffs |r- " .. "Buffs")
         print("|cffeda55f/aprrc class |r- " .. "Class")
         print("|cffeda55f/aprrc coord |r- " .. "Coord")
+        print("|cffeda55f/aprrc coords |r- " .. "Coords")
         print("|cffeda55f/aprrc coordframe |r- " .. "Coord Frame")
         print("|cffeda55f/aprrc donedb |r- " .. "DoneDB")
         print("|cffeda55f/aprrc eta |r- " .. "ETA")
@@ -121,6 +191,7 @@ function AprRC.command:SlashCmd(input)
         print("|cffeda55f/aprrc noarrow |r- " .. "NoArrow")
         print("|cffeda55f/aprrc noautoflightmap |r- " .. "NoAutoFlightMap")
         print("|cffeda55f/aprrc denynpc |r- " .. "DenyNPC")
+        print("|cffeda55f/aprrc npcdismount |r- " .. "NpcDismount")
         print("|cffeda55f/aprrc noaura |r- " .. "DontHaveAura")
         print("|cffeda55f/aprrc notskipvid, nsv |r- " .. "Dontskipvid")
         print("|cffeda55f/aprrc pickupdb |r- " .. "PickUpDB")
@@ -128,6 +199,7 @@ function AprRC.command:SlashCmd(input)
         print("|cffeda55f/aprrc qpartpart |r- " .. "QpartPart")
         print("|cffeda55f/aprrc race |r- " .. "Race")
         print("|cffeda55f/aprrc range |r- " .. "Range")
+        print("|cffeda55f/aprrc skipforlvl |r- " .. "skipForLvl")
         print("|cffeda55f/aprrc spell |r- " .. "HasSpell")
         print("|cffeda55f/aprrc spelltrigger |r- " .. "SpellTrigger")
         print("|cffeda55f/aprrc text, txt |r- " .. "ExtraLineText")
@@ -197,8 +269,8 @@ function AprRC.command:SlashCmd(input)
             return
         elseif inputText == "adventuremap" then
             local currentStep = AprRC:GetLastStep()
-            currentStep.IsAdventureMapVisible = true
-            print("|cff00bfffIsAdventureMapVisible|r Added")
+            currentStep.IsAdventureMap = true
+            print("|cff00bfffIsAdventureMap|r Added")
             return
         elseif inputText == "aura" then
             AprRC.autocomplete:ShowAuraAutoComplete(function(_, spellID, frame)
@@ -223,6 +295,16 @@ function AprRC.command:SlashCmd(input)
             AprRC:SetStepCoord(currentStep, currentStep.Range)
             currentStep.NoArrow = nil -- remove NoArrow
             print("|cff00bfffCoord|r Added")
+            return
+        elseif inputText == "coords" then
+            local currentStep = AprRC:GetLastStep()
+
+            if not AddCoordsEntryToStep(currentStep) then
+                return
+            end
+
+            currentStep.NoArrow = nil -- remove NoArrow
+            print("|cff00bfffCoords|r Added")
             return
         elseif inputText == "range" then
             AprRC.questionDialog:CreateEditBoxPopupWithCallback("Range (number)", function(text)
@@ -317,13 +399,17 @@ function AprRC.command:SlashCmd(input)
                         return
                     end
 
+                    local targetQuestID = AprRC:FindClosestIncompleteQuest()
+
                     local currentStep = AprRC:GetLastStep()
 
                     if currentStep and currentStep.LootItems then
                         table.insert(currentStep.LootItems, {
                             itemID = numericItemID,
-                            quantity = quantity
+                            quantity = quantity,
+                            questID = targetQuestID,
                         })
+                        AprRC:ApplyCampaignQuestFlag(currentStep, targetQuestID)
 
                         print("|cff00bfffLootItems|r updated (added item)")
                     else
@@ -331,12 +417,14 @@ function AprRC.command:SlashCmd(input)
                             LootItems = {
                                 {
                                     itemID = numericItemID,
-                                    quantity = quantity
+                                    quantity = quantity,
+                                    questID = targetQuestID,
                                 }
                             }
                         }
 
                         AprRC:SetStepCoord(step)
+                        AprRC:ApplyCampaignQuestFlag(step, targetQuestID)
                         AprRC:NewStep(step)
 
                         print("|cff00bfffLootItems|r Added")
@@ -382,6 +470,36 @@ function AprRC.command:SlashCmd(input)
             local currentStep = AprRC:GetLastStep()
             currentStep.DenyNPC = numericTargetId
             print("|cff00bfffDenyNPC - " .. numericTargetId .. "|r Added")
+            return
+        elseif inputText == "npcdismount" then
+            local targetId = APR and APR.GetTargetID and APR:GetTargetID()
+            if not targetId then
+                APR:PrintError("No target selected to add NpcDismount")
+                return
+            end
+
+            local numericTargetId = tonumber(targetId, 10)
+            if not numericTargetId then
+                APR:PrintError("Invalid target selection for NpcDismount")
+                return
+            end
+
+            local currentStep = AprRC:GetLastStep()
+            currentStep.NpcDismount = numericTargetId
+            print("|cff00bfffNpcDismount - " .. numericTargetId .. "|r Added")
+            return
+        elseif inputText == "skipforlvl" then
+            AprRC.questionDialog:CreateEditBoxPopupWithCallback("skipForLvl (level)", function(text)
+                local levelValue = AprRC:ParsePositiveInteger(text)
+                if not levelValue then
+                    APR:PrintError("Invalid skipForLvl value")
+                    return
+                end
+
+                local currentStep = AprRC:GetLastStep()
+                currentStep.skipForLvl = levelValue
+                print("|cff00bfffskipForLvl|r Added")
+            end)
             return
         elseif inputText == "buffs" then
             AprRC.autocomplete:ShowBuffSelector(function(buffData)

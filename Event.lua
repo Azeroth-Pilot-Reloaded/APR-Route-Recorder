@@ -9,6 +9,18 @@ AprRC.event.functions = {}
 
 local targetName, targetID
 local scenarioCriteriaLogged = {}
+local achievementCriteriaLogged = {}
+local lastAdventureMapOpenAt = 0
+local ADVENTURE_MAP_ACCEPT_WINDOW = 15
+local scenarioTransitionState = {
+    initialized = false,
+    inScenario = false,
+    scenarioQuestID = nil,
+    scenarioMapID = nil,
+    inInstance = false,
+    instanceQuestID = nil,
+    instanceMapID = nil,
+}
 
 ---------------------------------------------------------------------------------------
 ------------------------------------- EVENTS ------------------------------------------
@@ -32,6 +44,9 @@ local events = {
     loot = "CHAT_MSG_LOOT",
     target = "PLAYER_TARGET_CHANGED",
     scenario = "SCENARIO_CRITERIA_UPDATE",
+    scenarioTransition = { "PLAYER_ENTERING_WORLD", "ZONE_CHANGED_NEW_AREA", "SCENARIO_UPDATE", "SCENARIO_COMPLETED" },
+    adventureMapOpen = "ADVENTURE_MAP_OPEN",
+    achievement = "CRITERIA_UPDATE",
     portal = { "PLAYER_ENTERING_WORLD", "LOADING_SCREEN_ENABLED" },
     learnProfession = "LEARNED_SPELL_IN_SKILL_LINE"
     -- warMode = "WAR_MODE_STATUS_UPDATE",
@@ -55,6 +70,25 @@ local chromieTimelineSpellID = {
     -- Dragonflight
 }
 local controlLostTime = 0
+
+local function IsAdventureMapContextActive()
+    if AdventureMapFrame and AdventureMapFrame.IsShown and AdventureMapFrame:IsShown() then
+        return true
+    end
+
+    return lastAdventureMapOpenAt > 0 and (GetTime() - lastAdventureMapOpenAt) <= ADVENTURE_MAP_ACCEPT_WINDOW
+end
+
+local function MarkAdventureMapOnStep(step)
+    if type(step) ~= "table" then
+        return
+    end
+
+    if IsAdventureMapContextActive() then
+        step.IsAdventureMap = true
+        step.IsAdventureMapVisible = nil
+    end
+end
 
 ---------------------------------------------------------------------------------------
 ---------------------------------- Events register ------------------------------------
@@ -128,6 +162,7 @@ function AprRC.event.functions.accept(event, questId)
             local currentStep = AprRC:GetLastStep()
             currentStep.DropQuest = questId
             currentStep.DroppableQuest.Qid = questId
+            MarkAdventureMapOnStep(currentStep)
             AprRC:ApplyCampaignQuestFlag(currentStep, questId)
             AprRC:saveQuestInfo()
             return
@@ -135,6 +170,7 @@ function AprRC.event.functions.accept(event, questId)
         if AprRC:HasStepOption("ChromiePick") then
             local currentStep = AprRC:GetLastStep()
             currentStep.PickUp = { questId }
+            MarkAdventureMapOnStep(currentStep)
             AprRC:ApplyCampaignQuestFlag(currentStep, questId)
             AprRC:saveQuestInfo()
             return
@@ -142,10 +178,12 @@ function AprRC.event.functions.accept(event, questId)
         if not AprRC:IsCurrentStepFarAway() and AprRC:HasStepOption("PickUp") then
             local currentStep = AprRC:GetLastStep()
             tinsert(currentStep.PickUp, questId)
+            MarkAdventureMapOnStep(currentStep)
             AprRC:ApplyCampaignQuestFlag(currentStep, questId)
         else
             local step = { PickUp = { questId } }
             AprRC:SetStepCoord(step)
+            MarkAdventureMapOnStep(step)
             AprRC:ApplyCampaignQuestFlag(step, questId)
             AprRC:NewStep(step)
         end
@@ -164,6 +202,10 @@ function AprRC.event.functions.accept(event, questId)
     end
 
     AddQuestToStep(questId)
+end
+
+function AprRC.event.functions.adventureMapOpen(event)
+    lastAdventureMapOpenAt = GetTime()
 end
 
 function AprRC.event.functions.remove(event, questId, ...)
@@ -198,6 +240,10 @@ function AprRC.event.functions.done(event, questId, ...)
 end
 
 function AprRC.event.functions.raidIcon(...)
+    if AprRC:IsInInstanceQuest() then
+        return
+    end
+
     local targetId = APR:GetTargetID()
     if targetId then
         local currentStep = AprRC:GetLastStep()
@@ -309,6 +355,15 @@ end
 function AprRC.event.functions.emote(event, ...)
     local message, sender = ...
     if APR.Username == sender then
+        local function getEmoteNpcID()
+            local npcID = APR:GetTargetID("target")
+            local numericNpcID = tonumber(npcID, 10)
+            if not numericNpcID or UnitPlayerControlled("target") then
+                return 0
+            end
+            return numericNpcID
+        end
+
         local function getEmoteKey()
             for emoteKey, phrases in pairs(L.Emotes) do
                 for _, phrase in ipairs(phrases) do
@@ -327,16 +382,84 @@ function AprRC.event.functions.emote(event, ...)
 
         local emote = getEmoteKey()
         if emote then
+            local emoteData = {
+                npcID = getEmoteNpcID(),
+                emote = emote,
+            }
             local currentStep = AprRC:GetLastStep()
             if not AprRC:IsCurrentStepFarAway() and AprRC:HasStepOption("Emote") then
-                currentStep.Emote = emote
+                currentStep.Emote = emoteData
             else
-                local step = { Emote = emote }
+                local step = { Emote = emoteData }
                 AprRC:SetStepCoord(step)
                 AprRC:NewStep(step)
             end
         end
     end
+end
+
+function AprRC.event.functions.achievement(event, criteriaID)
+    local numericCriteriaID = tonumber(criteriaID, 10)
+    if not numericCriteriaID then
+        return
+    end
+
+    if not GetAchievementInfoFromCriteria then
+        return
+    end
+
+    local achievementID = GetAchievementInfoFromCriteria(numericCriteriaID)
+    local numericAchievementID = tonumber(achievementID, 10)
+    if not numericAchievementID then
+        return
+    end
+
+    local criteriaDescription = ""
+    local criteriaCompleted = nil
+    local quantity, requiredQuantity = nil, nil
+
+    if GetAchievementCriteriaInfoByID then
+        local description, _, completed, currentQty, reqQty = GetAchievementCriteriaInfoByID(numericAchievementID,
+            numericCriteriaID)
+        criteriaDescription = description or ""
+        criteriaCompleted = completed and true or false
+        quantity = currentQty
+        requiredQuantity = reqQty
+    end
+
+    if criteriaCompleted == false then
+        return
+    end
+
+    local criteriaKey = tostring(numericAchievementID) .. "|" .. tostring(numericCriteriaID)
+    if achievementCriteriaLogged[criteriaKey] then
+        return
+    end
+
+    local achievementCompleted = false
+    if GetAchievementInfo then
+        local _, _, _, completed = GetAchievementInfo(numericAchievementID)
+        achievementCompleted = completed and true or false
+    end
+
+    local criteriaIndex = AprRC:ResolveAchievementCriteriaIndex(numericAchievementID, numericCriteriaID)
+
+    local step = {
+        Achievement = {
+            achievementID = numericAchievementID,
+            criteriaIndex = criteriaIndex,
+            criteriaID = numericCriteriaID,
+            criteria = criteriaDescription,
+            quantity = quantity,
+            requiredQuantity = requiredQuantity,
+            achievementAlreadyEarnedOnAccount = achievementCompleted,
+            criteriaAlreadyCompleted = criteriaCompleted and true or false,
+        }
+    }
+    step = AprRC:NormalizeStepOptionFields(step)
+    AprRC:SetStepCoord(step, 1)
+    AprRC:NewStep(step)
+    achievementCriteriaLogged[criteriaKey] = true
 end
 
 function AprRC.event.functions.taxi(event, ...)
@@ -626,23 +749,130 @@ function AprRC.event.functions.scenario(event, ...)
     if not scenarioInfo then return end
 
     local scenarioID = scenarioInfo.scenarioID
+    local scenarioQuestID = scenarioInfo.questID or AprRC:FindClosestIncompleteQuest()
     local stepInfo = C_ScenarioInfo.GetScenarioStepInfo()
     if not stepInfo then return end
     for i = 1, stepInfo.numCriteria do
         local criteria = C_ScenarioInfo.GetCriteriaInfoByStep(stepInfo.stepID, i)
         if criteria.criteriaID == criteriaID and criteria.completed then
             if not scenarioCriteriaLogged[criteriaID] then -- to avoid duplication of step
-                local step = { Scenario = { scenarioID = scenarioID, stepID = stepInfo.stepID, criteriaID = criteriaID, criteriaIndex = i } }
+                local step = {
+                    Scenario = {
+                        scenarioID = scenarioID,
+                        stepID = stepInfo.stepID,
+                        criteriaID = criteriaID,
+                        criteriaIndex = i,
+                        questID = scenarioQuestID,
+                    }
+                }
                 if AprRC:IsInInstanceQuest() then
                     step.InstanceQuest = true
                 end
                 AprRC:SetStepCoord(step, 5)
+                AprRC:ApplyCampaignQuestFlag(step, scenarioQuestID)
                 AprRC:NewStep(step)
                 scenarioCriteriaLogged[criteriaID] = true
             end
             break
         end
     end
+end
+
+function AprRC.event.functions.scenarioTransition(event, ...)
+    local function getCurrentMapID()
+        return C_Map.GetBestMapForUnit("player") or AprRC:getZone()
+    end
+
+    local function getScenarioState()
+        local info = C_ScenarioInfo.GetScenarioInfo()
+        if not info or not info.scenarioID then
+            return false, nil, nil
+        end
+
+        local mapID = getCurrentMapID()
+        local questID = info.questID or AprRC:FindClosestIncompleteQuest()
+        return true, questID, mapID
+    end
+
+    local function getInstanceState()
+        local _, instanceType = IsInInstance()
+        local isTracked = instanceType == "party" or instanceType == "raid"
+        if not isTracked then
+            return false, nil, nil
+        end
+
+        local mapID = getCurrentMapID()
+        local questID = AprRC:FindClosestIncompleteQuest()
+        return true, questID, mapID
+    end
+
+    local function canReuseStepFor(optionKey, mapID)
+        local lastStep = AprRC:GetLastStep()
+        local optionData = lastStep and lastStep[optionKey]
+        if type(optionData) ~= "table" then
+            return false
+        end
+        return optionData.mapID == mapID
+    end
+
+    local function addTransitionStep(optionKey, questID, mapID)
+        if not questID or not mapID then
+            return
+        end
+
+        if canReuseStepFor(optionKey, mapID) then
+            return
+        end
+
+        local step = {}
+        step[optionKey] = {
+            questID = questID,
+            mapID = mapID,
+        }
+        AprRC:SetStepCoord(step)
+        AprRC:ApplyCampaignQuestFlag(step, questID)
+        AprRC:NewStep(step)
+    end
+
+    local inScenario, scenarioQuestID, scenarioMapID = getScenarioState()
+    local inInstance, instanceQuestID, instanceMapID = getInstanceState()
+
+    if not scenarioTransitionState.initialized then
+        scenarioTransitionState.initialized = true
+        scenarioTransitionState.inScenario = inScenario
+        scenarioTransitionState.scenarioQuestID = scenarioQuestID
+        scenarioTransitionState.scenarioMapID = scenarioMapID
+        scenarioTransitionState.inInstance = inInstance
+        scenarioTransitionState.instanceQuestID = instanceQuestID
+        scenarioTransitionState.instanceMapID = instanceMapID
+        return
+    end
+
+    if inScenario and not scenarioTransitionState.inScenario then
+        addTransitionStep("EnterScenario", scenarioQuestID, scenarioMapID)
+        addTransitionStep("DoScenario", scenarioQuestID, scenarioMapID)
+    elseif not inScenario and scenarioTransitionState.inScenario then
+        local leaveQuestID = scenarioTransitionState.scenarioQuestID or scenarioQuestID or
+            AprRC:FindClosestIncompleteQuest()
+        local leaveMapID = scenarioTransitionState.scenarioMapID or scenarioMapID or getCurrentMapID()
+        addTransitionStep("LeaveScenario", leaveQuestID, leaveMapID)
+    end
+
+    if inInstance and not scenarioTransitionState.inInstance then
+        addTransitionStep("EnterInstance", instanceQuestID, instanceMapID)
+    elseif not inInstance and scenarioTransitionState.inInstance then
+        local leaveQuestID = scenarioTransitionState.instanceQuestID or instanceQuestID or
+            AprRC:FindClosestIncompleteQuest()
+        local leaveMapID = scenarioTransitionState.instanceMapID or instanceMapID or getCurrentMapID()
+        addTransitionStep("LeaveInstance", leaveQuestID, leaveMapID)
+    end
+
+    scenarioTransitionState.inScenario = inScenario
+    scenarioTransitionState.scenarioQuestID = scenarioQuestID
+    scenarioTransitionState.scenarioMapID = scenarioMapID
+    scenarioTransitionState.inInstance = inInstance
+    scenarioTransitionState.instanceQuestID = instanceQuestID
+    scenarioTransitionState.instanceMapID = instanceMapID
 end
 
 function AprRC.event.functions.portal(event, ...)
@@ -676,9 +906,9 @@ function AprRC.event.functions.portal(event, ...)
 
                 local function applyTakePortal(step)
                     step.TakePortal = step.TakePortal or {}
-                    step.TakePortal.QuestID = AprRC:FindClosestIncompleteQuest()
-                    step.TakePortal.ZoneId = destinationZoneId
-                    AprRC:ApplyCampaignQuestFlag(step, step.TakePortal.QuestID)
+                    step.TakePortal.questID = AprRC:FindClosestIncompleteQuest()
+                    step.TakePortal.mapID = destinationZoneId
+                    AprRC:ApplyCampaignQuestFlag(step, step.TakePortal.questID)
                 end
 
                 if lastStepBeforePortal and lastStep and AprRC:DeepCompare(lastStepBeforePortal, lastStep) then

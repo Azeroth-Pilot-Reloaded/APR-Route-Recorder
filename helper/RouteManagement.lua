@@ -26,6 +26,7 @@ function AprRC:UpdateRoute()
 end
 
 function AprRC:NewStep(step)
+    step = AprRC:NormalizeStepOptionFields(step)
     AprRC:Debug("NewStep", step)
     local lastStep = AprRC:GetLastStep()
     if APR:IsTableEmpty(lastStep) then
@@ -79,6 +80,7 @@ function AprRC:GetLastStep()
         step = {}
         tinsert(AprRCData.CurrentRoute.steps, step)
     end
+    AprRC:NormalizeStepOptionFields(step)
     return step
 end
 
@@ -134,7 +136,7 @@ end
 
 function AprRC:IsInInstanceQuest()
     local isIntance, type = IsInInstance()
-    return isIntance and type == "scenario"
+    return type == "scenario"
 end
 
 function AprRC:FindRouteByName(routeName)

@@ -33,6 +33,7 @@
 <li><span style="font-size: 14px;">RaidIcon</span></li>
 <li><span style="font-size: 14px;">Pickup</span></li>
 <li><span style="font-size: 14px;">Scenario</span></li>
+<li><span style="font-size: 14px;">Achievement (Criteria Earned)</span></li>
 <li><span style="font-size: 14px;">IsCampaignQuest</span></li>
 <li><span style="font-size: 14px;">Drop Quest</span></li>
 
@@ -65,6 +66,7 @@
 <li><span style="font-size: 14px;">WarMode</span></li>
 <li><span style="font-size: 14px;">Coord (to override)</span></li>
 </ul>
+<p><span style="font-family: arial; font-size: 14px;"><strong>Emote syntax:</strong> <code>Emote = { npcID = 153580, emote = "WAVE" },</code> (uses <code>npcID = 0</code> when there is no NPC target or target is hidden/secret)</span></p>
 
 ![Settings & Commands](https://github.com/Azeroth-Pilot-Reloaded/azeroth-pilot-reloaded/assets/43384589/ef2d04b1-05f9-4828-a259-f486d59409a7)
 
