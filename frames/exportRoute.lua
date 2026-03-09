@@ -368,10 +368,39 @@ function AprRC.export:Show()
     exportToAPRBtn:SetWidth(200)
     exportToAPRBtn:SetCallback("OnClick", function()
         local route = AprRC:FindRouteByName(selectedRouteName)
+        if not route or not route.name or not route.steps then
+            APR:PrintError("Route export failed: invalid route data")
+            return
+        end
+
+        if not APRData or not APR then
+            APR:PrintError("Route export failed: APR is not available")
+            return
+        end
+
         local name = route.name .. ' - Custom'
-        APRData.CustomRoute[name] = route.steps
-        APR.RouteQuestStepList[name] = route.steps
-        APR.RouteList.Custom[name] = name:match("%d+-(.*)")
+
+        APRData.CustomRoute = APRData.CustomRoute or {}
+        APR.RouteQuestStepList = APR.RouteQuestStepList or {}
+
+        local customRouteData = {
+            label = name:match("%d+%-(.*)") or route.name,
+            expansion = APR.EXPANSIONS and APR.EXPANSIONS.Custom,
+            category = APR.CATEGORIES and APR.CATEGORIES.Miscellaneous,
+            conditions = {},
+            steps = route.steps,
+        }
+
+        -- Persist in APR saved variables (consumed by APR:LoadCustomRoutes on reload)
+        APRData.CustomRoute[name] = customRouteData
+        -- Also inject directly in live route table so it is usable immediately
+        APR.RouteQuestStepList[name] = customRouteData
+
+        if APR.routeconfig and APR.routeconfig.SendMessage then
+            APR.routeconfig:SendMessage("APR_Custom_Path_Update")
+        end
+
+        APR:PrintInfo("Route exported to APR: " .. name)
         AutoScrollToBottom()
     end)
     bottomGroup:AddChild(exportToAPRBtn)
