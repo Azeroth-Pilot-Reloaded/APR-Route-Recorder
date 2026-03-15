@@ -59,7 +59,12 @@ function AprRC.settings:InitializeSettings()
                 height = 775,
                 position = {},
             },
-            coordinateFrame = {},
+            coordinateFrame = {
+                point = "TOPRIGHT",
+                x = -98.331787109375,
+                y = -255.6669921875,
+                scale = 1,
+            },
             coordinateShow = false,
             --debug
             minimap = { minimapPos = 285 },
