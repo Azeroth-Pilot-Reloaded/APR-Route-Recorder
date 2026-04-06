@@ -810,7 +810,8 @@ function AprRC.command:SlashCmd(input)
 
                     local selectedCriteria = selectedObjective.criteria
                     if not selectedCriteria then
-                        selectedCriteria = C_ScenarioInfo.GetCriteriaInfoByStep(stepInfo.stepID, selectedObjective.criteriaIndex)
+                        selectedCriteria = C_ScenarioInfo.GetCriteriaInfoByStep(stepInfo.stepID,
+                        selectedObjective.criteriaIndex)
                     end
 
                     local defaultText = AprRC:GetScenarioDefaultTrigText(selectedCriteria)

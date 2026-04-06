@@ -744,7 +744,7 @@ function AprRC.event.functions.pet(event, ...)
 end
 
 function AprRC.event.functions.scenario(event, ...)
-    local criteriaID = ...
+    local criteriaID = tonumber((...), 10)
     local scenarioInfo = C_ScenarioInfo.GetScenarioInfo()
     if not scenarioInfo then return end
 
@@ -752,15 +752,36 @@ function AprRC.event.functions.scenario(event, ...)
     local scenarioQuestID = scenarioInfo.questID or AprRC:FindClosestIncompleteQuest()
     local stepInfo = C_ScenarioInfo.GetScenarioStepInfo()
     if not stepInfo then return end
+
+    local hasSpecificCriteriaID = criteriaID and criteriaID > 0
+
     for i = 1, stepInfo.numCriteria do
         local criteria = C_ScenarioInfo.GetCriteriaInfoByStep(stepInfo.stepID, i)
-        if criteria.criteriaID == criteriaID and criteria.completed then
-            if not scenarioCriteriaLogged[criteriaID] then -- to avoid duplication of step
+        local criteriaRecordID = criteria and tonumber(criteria.criteriaID, 10) or nil
+        local matchesEvent = false
+
+        if hasSpecificCriteriaID then
+            matchesEvent = criteriaRecordID == criteriaID
+        else
+            -- Some scenario events report criteriaID=0 for progress-type updates.
+            -- In that case we must inspect all criteria in the current step.
+            matchesEvent = true
+        end
+
+        if criteria and matchesEvent and criteria.completed then
+            local criteriaLogKey = table.concat({
+                tostring(scenarioID or 0),
+                tostring(stepInfo.stepID or 0),
+                tostring(criteriaRecordID or 0),
+                tostring(i),
+            }, "|")
+
+            if not scenarioCriteriaLogged[criteriaLogKey] then -- to avoid duplication of step
                 local step = {
                     Scenario = {
                         scenarioID = scenarioID,
                         stepID = stepInfo.stepID,
-                        criteriaID = criteriaID,
+                        criteriaID = criteriaRecordID or 0,
                         criteriaIndex = i,
                         questID = scenarioQuestID,
                     }
@@ -771,9 +792,32 @@ function AprRC.event.functions.scenario(event, ...)
                 AprRC:SetStepCoord(step, 5)
                 AprRC:ApplyCampaignQuestFlag(step, scenarioQuestID)
                 AprRC:NewStep(step)
-                scenarioCriteriaLogged[criteriaID] = true
+                scenarioCriteriaLogged[criteriaLogKey] = true
+                AprRC:Debug("Scenario criteria logged", {
+                    key = criteriaLogKey,
+                    scenarioID = scenarioID,
+                    stepID = stepInfo.stepID,
+                    criteriaID = criteriaRecordID or 0,
+                    criteriaIndex = i,
+                    eventCriteriaID = criteriaID,
+                    completed = criteria.completed,
+                    quantityString = criteria.quantityString,
+                })
+            else
+                AprRC:Debug("Scenario criteria already logged", {
+                    key = criteriaLogKey,
+                    scenarioID = scenarioID,
+                    stepID = stepInfo.stepID,
+                    criteriaID = criteriaRecordID or 0,
+                    criteriaIndex = i,
+                    eventCriteriaID = criteriaID,
+                })
             end
-            break
+
+            -- If the event carries a specific criteriaID, one match is enough.
+            if hasSpecificCriteriaID then
+                break
+            end
         end
     end
 end
