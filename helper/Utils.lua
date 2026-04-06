@@ -79,6 +79,131 @@ function AprRC:GetItemIDFromLink(link)
     return itemID
 end
 
+local function ParseScenarioProgressString(progressText)
+    if not progressText or progressText == "" then
+        return nil
+    end
+
+    local text = tostring(progressText)
+
+    local percentText = text:match("(%d+)%s*%%")
+    local percentValue = tonumber(percentText, 10)
+    if percentValue then
+        return {
+            isPercent = true,
+            percent = percentValue,
+        }
+    end
+
+    local currentText, totalText = text:match("(%d+)%s*/%s*(%d+)")
+    local current = tonumber(currentText, 10)
+    local total = tonumber(totalText, 10)
+    if current and total and total > 0 then
+        return {
+            isPercent = false,
+            current = current,
+            total = total,
+        }
+    end
+
+    local numbers = {}
+    for numberText in text:gmatch("(%d+)") do
+        table.insert(numbers, tonumber(numberText, 10))
+    end
+
+    if #numbers >= 2 then
+        for i = 1, #numbers - 1 do
+            local lhs = numbers[i]
+            local rhs = numbers[i + 1]
+            if lhs and rhs and rhs > 0 and rhs >= lhs then
+                return {
+                    isPercent = false,
+                    current = lhs,
+                    total = rhs,
+                }
+            end
+        end
+
+        return {
+            isPercent = false,
+            current = numbers[1],
+            total = numbers[2],
+        }
+    end
+
+    if #numbers == 1 and numbers[1] and numbers[1] > 0 then
+        return {
+            isPercent = false,
+            current = 0,
+            total = numbers[1],
+        }
+    end
+
+    return nil
+end
+
+function AprRC:GetScenarioProgressInfo(criteriaInfo)
+    if type(criteriaInfo) ~= "table" then
+        return nil
+    end
+
+    return ParseScenarioProgressString(criteriaInfo.quantityString)
+end
+
+function AprRC:GetScenarioDefaultTrigText(criteriaInfo)
+    if not criteriaInfo then
+        return "1/1"
+    end
+
+    local progressInfo = AprRC:GetScenarioProgressInfo(criteriaInfo)
+    if progressInfo then
+        if progressInfo.isPercent and progressInfo.percent then
+            return string.format("%d%%", math.min(progressInfo.percent + 1, 100))
+        end
+
+        if progressInfo.total and progressInfo.total > 0 then
+            local current = progressInfo.current or 0
+            local nextCount = math.min(current + 1, progressInfo.total)
+            return string.format("%d/%d", nextCount, progressInfo.total)
+        end
+    end
+
+    return "1/1"
+end
+
+function AprRC:BuildScenarioObjectiveList(stepInfo)
+    local objectives = {}
+    if not stepInfo or not stepInfo.numCriteria then
+        return objectives
+    end
+
+    for i = 1, stepInfo.numCriteria do
+        local criteria = C_ScenarioInfo.GetCriteriaInfoByStep(stepInfo.stepID, i)
+        if criteria then
+            local description = criteria.description or ("Criteria " .. tostring(i))
+            local quantity = criteria.quantityString
+            local label = description
+
+            if quantity and quantity ~= "" then
+                label = label .. " (" .. quantity .. ")"
+            end
+            if criteria.completed then
+                label = "[DONE] " .. label
+            end
+
+            table.insert(objectives, {
+                objectiveID = i,
+                text = label,
+                criteriaID = criteria.criteriaID,
+                criteriaIndex = i,
+                criteria = criteria,
+            })
+        end
+    end
+
+    return objectives
+end
+
 function AprRC:ExtraLineTextToKey(inputString)
     local result = self:StripHyperlinks(string.lower(inputString or ""))
     result = string.gsub(result, " a ", " ")
@@ -581,27 +706,51 @@ function AprRC:GetQuestProgressPercentRounded(questID, objectiveInfo)
     return math.floor(numericPercent + 0.5)
 end
 
-function AprRC:GetQpartpartTrigTextProgress(questID, objectiveInfo)
-    local progressPercent = self:GetQuestProgressPercentRounded(questID, objectiveInfo)
-    if progressPercent then
-        return string.format("%d%%", progressPercent)
+function AprRC:GetObjectiveProgressInfo(questID, objectiveInfo)
+    if not objectiveInfo then
+        return nil
     end
 
-    if not objectiveInfo then return "1/1" end
+    local progressPercent = self:GetQuestProgressPercentRounded(questID, objectiveInfo)
+    if progressPercent then
+        return {
+            isPercent = true,
+            percent = progressPercent,
+        }
+    end
 
     local total = tonumber(objectiveInfo.numRequired) or 0
     local current = tonumber(objectiveInfo.numFulfilled) or 0
-
-    -- Try to parse from text if needed
-    if (total == 0 or current == 0) and objectiveInfo.text then
-        local fulfilledText, requiredText = objectiveInfo.text:match("(%d+)%s*/%s*(%d+)")
-        current = tonumber(fulfilledText) or current
-        total = tonumber(requiredText) or total
+    if total > 0 then
+        return {
+            isPercent = false,
+            current = current,
+            total = total,
+        }
     end
 
-    if total > 0 then
-        local nextCount = math.min(current + 1, total)
-        return string.format("%d/%d", nextCount, total)
+    if objectiveInfo.text and objectiveInfo.text ~= "" then
+        local parsed = ParseScenarioProgressString(objectiveInfo.text)
+        if parsed then
+            return parsed
+        end
+    end
+
+    return nil
+end
+
+function AprRC:GetQpartpartTrigTextProgress(questID, objectiveInfo)
+    local progressInfo = self:GetObjectiveProgressInfo(questID, objectiveInfo)
+    if progressInfo then
+        if progressInfo.isPercent and progressInfo.percent then
+            return string.format("%d%%", math.min(progressInfo.percent + 1, 100))
+        end
+
+        if progressInfo.total and progressInfo.total > 0 then
+            local current = progressInfo.current or 0
+            local nextCount = math.min(current + 1, progressInfo.total)
+            return string.format("%d/%d", nextCount, progressInfo.total)
+        end
     end
 
     return "1/1"

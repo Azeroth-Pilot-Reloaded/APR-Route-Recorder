@@ -19,6 +19,7 @@ local defaultCommands = {
     { command = "btn",       label = "Button",          texture = iconPath .. "Button" },
     { command = "filler",    label = "Fillers",         texture = iconPath .. "Fillers" },
     { command = "qpartpart", label = "Qpart Part",      texture = iconPath .. "QpartPart" },
+    { command = "scenario",  label = "Scenario Trigger", texture = iconPath .. "QpartPart" },
 }
 
 ---------------------------------------------------------------------------------------

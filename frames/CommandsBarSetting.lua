@@ -56,6 +56,7 @@ local allCommands = {
     { command = "pickupdb",                          label = "PickUp DB",                               texture = iconPath .. "PickUpDB" },
     { command = "qpartdb",                           label = "Qpart DB",                                texture = iconPath .. "QpartDB" },
     { command = "qpartpart",                         label = "Qpart Part",                              texture = iconPath .. "QpartPart" },
+    { command = "scenario",                          label = "Scenario Trigger",                        texture = iconPath .. "QpartPart" },
     { command = "race",                              label = "Race",                                    texture = iconPath .. "Race" },
     { command = "range",                             label = "Range",                                   texture = iconPath .. "Range" },
     { command = "addreset",                          label = "Reset Route",                             texture = iconPath .. "ResetRoute" },

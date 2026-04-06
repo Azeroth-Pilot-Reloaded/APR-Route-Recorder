@@ -197,6 +197,7 @@ function AprRC.command:SlashCmd(input)
         print("|cffeda55f/aprrc pickupdb |r- " .. "PickUpDB")
         print("|cffeda55f/aprrc qpartdb |r- " .. "QpartDB")
         print("|cffeda55f/aprrc qpartpart |r- " .. "QpartPart")
+        print("|cffeda55f/aprrc scenario, scenariotrig |r- " .. "Scenario + TrigText")
         print("|cffeda55f/aprrc race |r- " .. "Race")
         print("|cffeda55f/aprrc range |r- " .. "Range")
         print("|cffeda55f/aprrc skipforlvl |r- " .. "skipForLvl")
@@ -738,17 +739,17 @@ function AprRC.command:SlashCmd(input)
                         local trimmedText = strtrim(text or "")
                         if trimmedText == "" then return end
 
-                        local progressPercent = AprRC:GetQuestProgressPercentRounded(questID, objectiveInfo)
-                        if progressPercent and not string.find(trimmedText, "%%") then
+                        local progressInfo = AprRC:GetObjectiveProgressInfo(questID, objectiveInfo)
+                        if progressInfo and progressInfo.isPercent and not string.find(trimmedText, "%%", 1, true) then
                             if trimmedText:match("^%d+$") then
                                 trimmedText = trimmedText .. "%"
                             end
-                        elseif not string.find(trimmedText, "/", 1, true) and objectiveInfo then
-                            -- Auto-append "/total" if not manually included
-                            local total = tonumber(objectiveInfo.numRequired) or 0
-                            if total > 0 then
-                                trimmedText = trimmedText .. "/" .. total
-                            end
+                        elseif progressInfo and progressInfo.total and progressInfo.total > 0
+                            and not string.find(trimmedText, "/", 1, true)
+                            and not string.find(trimmedText, "%%", 1, true)
+                            and trimmedText:match("^%d+$") then
+                            -- Auto-append "/total" for count objectives when only a number is entered.
+                            trimmedText = trimmedText .. "/" .. tostring(progressInfo.total)
                         end
 
                         -- Create the step and insert into the route
@@ -766,6 +767,88 @@ function AprRC.command:SlashCmd(input)
                     end, defaultText)
                 end
 
+            })
+            return
+        elseif inputText == "scenario" or inputText == "scenariotrig" then
+            local scenarioInfo = C_ScenarioInfo.GetScenarioInfo()
+            local stepInfo = C_ScenarioInfo.GetScenarioStepInfo()
+            if not scenarioInfo or not scenarioInfo.scenarioID or not stepInfo then
+                APR:PrintError("No active scenario found")
+                return
+            end
+
+            local scenarioObjectives = AprRC:BuildScenarioObjectiveList(stepInfo)
+            if #scenarioObjectives == 0 then
+                APR:PrintError("No scenario criteria available")
+                return
+            end
+
+            local scenarioTitle = tostring(scenarioInfo.name or scenarioInfo.scenarioID)
+            AprRC.QuestObjectiveSelector:Show({
+                title = "Scenario objectives",
+                statusText = "Select a scenario objective to add",
+                questList = {
+                    {
+                        title = "Scenario - " .. scenarioTitle,
+                        questID = scenarioInfo.scenarioID,
+                        objectives = scenarioObjectives,
+                    }
+                },
+                onClick = function(_, objectiveID)
+                    local selectedObjective
+                    for _, objective in ipairs(scenarioObjectives) do
+                        if objective.objectiveID == objectiveID then
+                            selectedObjective = objective
+                            break
+                        end
+                    end
+
+                    if not selectedObjective or not selectedObjective.criteriaID then
+                        APR:PrintError("Invalid scenario objective selected")
+                        return
+                    end
+
+                    local selectedCriteria = selectedObjective.criteria
+                    if not selectedCriteria then
+                        selectedCriteria = C_ScenarioInfo.GetCriteriaInfoByStep(stepInfo.stepID, selectedObjective.criteriaIndex)
+                    end
+
+                    local defaultText = AprRC:GetScenarioDefaultTrigText(selectedCriteria)
+                    AprRC.questionDialog:CreateEditBoxPopupWithCallback("Text Trigger for Scenario", function(text)
+                        local trimmedText = strtrim(text or "")
+                        if trimmedText == "" then return end
+
+                        local progressInfo = AprRC:GetScenarioProgressInfo(selectedCriteria)
+                        local totalText = progressInfo and progressInfo.total and tostring(progressInfo.total) or nil
+                        if totalText and not string.find(trimmedText, "/", 1, true)
+                            and not string.find(trimmedText, "%%", 1, true)
+                            and trimmedText:match("^%d+$") then
+                            trimmedText = trimmedText .. "/" .. totalText
+                        end
+
+                        local scenarioQuestID = scenarioInfo.questID or AprRC:FindClosestIncompleteQuest()
+                        local step = {
+                            TrigText = trimmedText,
+                            Scenario = {
+                                scenarioID = scenarioInfo.scenarioID,
+                                stepID = stepInfo.stepID,
+                                criteriaID = selectedObjective.criteriaID,
+                                criteriaIndex = selectedObjective.criteriaIndex,
+                                questID = scenarioQuestID,
+                            }
+                        }
+                        if AprRC:IsInInstanceQuest() then
+                            step.InstanceQuest = true
+                        end
+
+                        AprRC:SetStepCoord(step, 5)
+                        AprRC:ApplyCampaignQuestFlag(step, scenarioQuestID)
+                        AprRC:NewStep(step)
+
+                        print("|cff00bfffScenario - [" .. scenarioTitle .. "]|r Added")
+                        print("|cff00bfffTrigText - " .. trimmedText .. "|r Added")
+                    end, defaultText)
+                end
             })
             return
         elseif inputText == "zonetrigger" then
