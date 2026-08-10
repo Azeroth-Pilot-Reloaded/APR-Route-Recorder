@@ -46,7 +46,7 @@ local events = {
     scenario = "SCENARIO_CRITERIA_UPDATE",
     -- scenarioTransition = { "PLAYER_ENTERING_WORLD", "ZONE_CHANGED_NEW_AREA", "SCENARIO_UPDATE", "SCENARIO_COMPLETED" },
     adventureMapOpen = "ADVENTURE_MAP_OPEN",
-    achievement = "CRITERIA_UPDATE",
+    achievement = "CRITERIA_EARNED",
     portal = { "PLAYER_ENTERING_WORLD", "LOADING_SCREEN_ENABLED" },
     learnProfession = "LEARNED_SPELL_IN_SKILL_LINE"
     -- warMode = "WAR_MODE_STATUS_UPDATE",
@@ -398,68 +398,71 @@ function AprRC.event.functions.emote(event, ...)
     end
 end
 
-function AprRC.event.functions.achievement(event, criteriaID)
-    local numericCriteriaID = tonumber(criteriaID, 10)
-    if not numericCriteriaID then
-        return
-    end
-
-    if not GetAchievementInfoFromCriteria then
-        return
-    end
-
-    local achievementID = GetAchievementInfoFromCriteria(numericCriteriaID)
-    local numericAchievementID = tonumber(achievementID, 10)
+function AprRC.event.functions.achievement(event, achievementID, eventDescription, alreadyEarnedOnAccount)
+    local numericAchievementID = tonumber(achievementID)
     if not numericAchievementID then
         return
     end
 
-    local criteriaDescription = ""
-    local criteriaCompleted = nil
-    local quantity, requiredQuantity = nil, nil
-
-    if GetAchievementCriteriaInfoByID then
-        local description, _, completed, currentQty, reqQty = GetAchievementCriteriaInfoByID(numericAchievementID,
-            numericCriteriaID)
-        criteriaDescription = description or ""
-        criteriaCompleted = completed and true or false
-        quantity = currentQty
-        requiredQuantity = reqQty
-    end
-
-    if criteriaCompleted == false then
+    if not GetAchievementNumCriteria or not GetAchievementCriteriaInfo then
         return
     end
 
-    local criteriaKey = tostring(numericAchievementID) .. "|" .. tostring(numericCriteriaID)
-    if achievementCriteriaLogged[criteriaKey] then
+    local numCriteriaSuccess, numCriteria = pcall(GetAchievementNumCriteria, numericAchievementID)
+    if not numCriteriaSuccess then
         return
     end
 
-    local achievementCompleted = false
-    if GetAchievementInfo then
-        local _, _, _, completed = GetAchievementInfo(numericAchievementID)
-        achievementCompleted = completed and true or false
+    if not numCriteria or numCriteria <= 0 then
+        return
     end
 
-    local criteriaIndex = AprRC:ResolveAchievementCriteriaIndex(numericAchievementID, numericCriteriaID)
 
-    local step = {
-        Achievement = {
-            achievementID = numericAchievementID,
-            criteriaIndex = criteriaIndex,
-            criteriaID = numericCriteriaID,
-            criteria = criteriaDescription,
-            quantity = quantity,
-            requiredQuantity = requiredQuantity,
-            achievementAlreadyEarnedOnAccount = achievementCompleted,
-            criteriaAlreadyCompleted = criteriaCompleted and true or false,
-        }
-    }
-    step = AprRC:NormalizeStepOptionFields(step)
-    AprRC:SetStepCoord(step, 1)
-    AprRC:NewStep(step)
-    achievementCriteriaLogged[criteriaKey] = true
+    local matchingCriteriaFound = false
+    for criteriaIndex = 1, numCriteria do
+        -- Some criteria are not immediately available from the client cache.
+        local criteriaInfo = { pcall(GetAchievementCriteriaInfo, numericAchievementID, criteriaIndex) }
+        if criteriaInfo[1] then
+            local criteriaDescription = criteriaInfo[2]
+            local criteriaCompleted = criteriaInfo[4]
+            local quantity = criteriaInfo[5]
+            local requiredQuantity = criteriaInfo[6]
+            local numericCriteriaID = tonumber(criteriaInfo[11])
+
+
+
+            if numericCriteriaID and criteriaDescription == eventDescription then
+                matchingCriteriaFound = true
+                local criteriaKey = tostring(numericAchievementID) .. "|" .. tostring(numericCriteriaID)
+                if not achievementCriteriaLogged[criteriaKey] then
+                    local recordedQuantity = quantity
+                    if not criteriaCompleted and requiredQuantity and requiredQuantity > 0 then
+                        -- CRITERIA_EARNED can fire before the criteria cache reflects its new state.
+                        recordedQuantity = requiredQuantity
+                    end
+
+                    local step = {
+                        Achievement = {
+                            achievementID = numericAchievementID,
+                            criteriaIndex = criteriaIndex,
+                            criteriaID = numericCriteriaID,
+                            -- criteria = criteriaDescription or "",
+                            quantity = recordedQuantity > 1 and recordedQuantity or nil,
+                            requiredQuantity = requiredQuantity > 1 and requiredQuantity or nil,
+                            -- achievementAlreadyEarnedOnAccount = alreadyEarnedOnAccount and true or false,
+                            -- criteriaAlreadyCompleted = true,
+                        }
+                    }
+                    step = AprRC:NormalizeStepOptionFields(step)
+                    AprRC:SetStepCoord(step, 1)
+                    AprRC:NewStep(step)
+                    achievementCriteriaLogged[criteriaKey] = true
+                    return
+                end
+
+            end
+        end
+    end
 end
 
 function AprRC.event.functions.taxi(event, ...)
