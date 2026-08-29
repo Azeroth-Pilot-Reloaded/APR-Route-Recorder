@@ -49,6 +49,7 @@ frames/exportRoute.lua
 frames/QuestionPopUp.lua
 frames/QuestObjectiveSelector.lua
 frames/RecorderBar.lua
+frames/ReputationFrame.lua
 frames/routeSelector.lua
 frames/selectButton.lua
 frames/CoordinateFrame.lua

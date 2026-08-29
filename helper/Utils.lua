@@ -610,13 +610,13 @@ function AprRC:CustomSortKeys(tbl)
         "DoneDB",
         "LeaveQuests", "Treasure", "Scenario", "Achievement", "EnterScenario", "DoScenario", "LeaveScenario",
         "EnterInstance", "LeaveInstance", "LearnProfession",
-        "Grind",
+        "Grind", "Reputation",
         "DropQuest", "DroppableQuest", "LootItems", "UseItem", "UseSpell",
         "ChromiePick", "SetHS", "GetFP", "UseHS", "UseDalaHS", "UseGarrisonHS", "UseFlightPath", "Name", "NodeID",
         "WarMode", "Coord", "Coords", "Zone", "Zones", "Fillers", "BuyMerchant", "Button", "SpellButton", "ExtraLineText",
         "ExtraLineText2", "ExtraLineText3", "ExtraLineText4", "ExtraLineText5", "ExtraLineText6", "ExtraLineText7",
         "GossipOptionIDs", "Range", "NoArrow", "DenyNPC", "NpcDismount", "skipForLvl", "IsAdventureMap",
-        "ZoneStepTrigger", "Buffs",
+        "ZoneStepTrigger", "Buffs", "ReputationLevel", "SkipForReputation",
     }
 
     local function customSort(a, b)

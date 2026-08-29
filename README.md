@@ -45,6 +45,8 @@
 <li><span style="font-size: 14px;">Range (by defaut waypoint : 5, qpart: 15 or 5 depending of the quest type)</span></li>
 <li><span style="font-size: 14px;">ETA (auto for taxi)</span></li>
 <li><span style="font-size: 14px;">Grind</span></li>
+<li><span style="font-size: 14px;">Reputation step</span></li>
+<li><span style="font-size: 14px;">Reputation Level / Skip For Reputation step options</span></li>
 <li><span style="font-size: 14px;">No Arrow</span></li>
 <li><span style="font-size: 14px;">Extra Line Text (with auto complete from APR locale in your language)</span></li>
 <li><span style="font-size: 14px;">PickupDB/QpartDB/DoneDB</span></li>
@@ -95,8 +97,11 @@
 <li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc pickupdb</strong>&nbsp;</em>- Add PickUpDB step option.</span></li>
 <li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc qpartdb</strong>&nbsp;</em>- Add QpartDB step option.</span></li>
 <li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc qpartpart</strong>&nbsp;</em>- Add QpartPart/TrigText step option.</span></li>
+<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc reputation</strong>&nbsp;</em>- Add a Reputation step.</span></li>
+<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc reputationlevel</strong>&nbsp;</em>- Add a ReputationLevel step option.</span></li>
 <li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc race&nbsp;</strong></em>- Add Race step option.</span></li>
 <li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc range&nbsp;</strong></em>- Add Range step option.</span></li>
+<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc skipforreputation</strong>&nbsp;</em>- Add a SkipForReputation step option.</span></li>
 <li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc spelltrigger&nbsp;</strong></em>- Add SpellTrigger step option.</span></li>
 <li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc text, txt</strong>&nbsp;</em>- Add ExtraLineText step option.</span></li>
 <li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc vehicle&nbsp;</strong></em>- Add VehicleExit step option.</span></li>

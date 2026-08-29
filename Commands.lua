@@ -197,10 +197,13 @@ function AprRC.command:SlashCmd(input)
         print("|cffeda55f/aprrc pickupdb |r- " .. "PickUpDB")
         print("|cffeda55f/aprrc qpartdb |r- " .. "QpartDB")
         print("|cffeda55f/aprrc qpartpart |r- " .. "QpartPart")
+        print("|cffeda55f/aprrc reputation |r- " .. "Reputation step")
+        print("|cffeda55f/aprrc reputationlevel |r- " .. "ReputationLevel step option")
         print("|cffeda55f/aprrc scenario, scenariotrig |r- " .. "Scenario + TrigText")
         print("|cffeda55f/aprrc race |r- " .. "Race")
         print("|cffeda55f/aprrc range |r- " .. "Range")
         print("|cffeda55f/aprrc skipforlvl |r- " .. "skipForLvl")
+        print("|cffeda55f/aprrc skipforreputation |r- " .. "SkipForReputation step option")
         print("|cffeda55f/aprrc spell |r- " .. "HasSpell")
         print("|cffeda55f/aprrc spelltrigger |r- " .. "SpellTrigger")
         print("|cffeda55f/aprrc text, txt |r- " .. "ExtraLineText")
@@ -365,6 +368,15 @@ function AprRC.command:SlashCmd(input)
                 AprRC:NewStep(step)
                 print("|cff00bfffGrind|r Added")
             end)
+            return
+        elseif inputText == "reputation" then
+            AprRC.ReputationFrame:Show("Reputation")
+            return
+        elseif inputText == "reputationlevel" then
+            AprRC.ReputationFrame:Show("ReputationLevel")
+            return
+        elseif inputText == "skipforreputation" then
+            AprRC.ReputationFrame:Show("SkipForReputation")
             return
         elseif inputText == "instance" then
             local currentStep = AprRC:GetLastStep()

@@ -236,13 +236,8 @@ function AprRC:IsTaxiInLookup(nodeID)
 end
 
 function AprRC:getZone()
-    local playerMapId
-    local currentMapId = C_Map.GetBestMapForUnit('player')
-    if currentMapId and Enum and Enum.UIMapType then
-        playerMapId = MapUtil.GetMapParentInfo(currentMapId, Enum.UIMapType.Zone, true)
-        playerMapId = playerMapId and playerMapId.mapID or currentMapId
-    end
-    return playerMapId
+    local report = APR:GetZoneDetectionReport()
+    return report.playerCurrent
 end
 
 function AprRC:AddBuffToStep(spellId, tooltipMessage)
