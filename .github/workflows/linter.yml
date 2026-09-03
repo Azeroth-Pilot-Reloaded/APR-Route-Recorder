@@ -10,22 +10,20 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5.0.0
+        uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
 
       - name: Set up Lua
-        uses: leafo/gh-actions-lua@v12.0.0
+        uses: leafo/gh-actions-lua@v13.0.0
         with:
           luaVersion: '5.1'
 
       - name: Set up Luarocks
-        uses: leafo/gh-actions-luarocks@v6
+        uses: leafo/gh-actions-luarocks@v6.1.0
 
       - name: Install Luacheck
-        run:  |
-          sudo apt-get install luarocks
-          sudo luarocks install luacheck
+        run: luarocks install luacheck
 
       - name: Run Luacheck
         run: luacheck ./
