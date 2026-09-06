@@ -27,6 +27,9 @@ local function UpdateRecordButton(button)
     end
     AprRC.CommandBar:RefreshFrameAnchor()
     APR.settings:ToggleAddon()
+    if AprRC.questID then
+        AprRC.questID:RefreshVisibility()
+    end
 end
 
 local function CreateButton(parent, iconPath, message)

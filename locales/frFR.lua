@@ -5,6 +5,19 @@ if not L then return end
 --@localization(locale="frFR", format="lua_additive_table", handle-unlocalized="ignore")@
 
 L.DroppableQuestItem = "Cet objet permet de lancer une quête"
+L.QUEST_ID = "QuestID"
+L.QUEST_IDS = "QuestIDs"
+L.QUEST_ID_SETTINGS = "Affichage des QuestIDs"
+L.QUEST_ID_ENABLE = "Activer l'affichage des QuestIDs"
+L.QUEST_ID_ENABLE_DESC = "Interrupteur global pour les QuestIDs dans l'interface et les infobulles de quête."
+L.QUEST_ID_ALWAYS_VISIBLE = "Afficher hors enregistrement"
+L.QUEST_ID_ALWAYS_VISIBLE_DESC = "Si désactivé, les QuestIDs ne sont affichés que pendant l'enregistrement d'une route."
+L.QUEST_ID_MAP = "Carte du monde"
+L.QUEST_ID_MINIMAP = "Minicarte"
+L.QUEST_ID_QUEST_LOG = "Journal de quêtes"
+L.QUEST_ID_OBJECTIVE_TRACKER = "Liste d'objectifs"
+L.QUEST_ID_INVENTORY = "Objets de quête dans les sacs"
+
 L.Emotes = {
     ["AGREE"] = { "%s est bien d’accord avec %s.", "%s est bien d’accord avec vous.", "Vous êtes bien d’accord avec %s.", "%s est bien d’accord.", "Vous êtes bien d’accord." },
     ["AMAZE"] = { "%s est stupéfait par %s !", "Vous stupéfiez %s !", "Vous êtes stupéfait par %s !", "%s trouve ça stupéfiant !", "Vous trouvez ça stupéfiant !" },

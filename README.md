@@ -15,6 +15,7 @@
 
 <p style="text-align: left;"><span style="font-family: arial; font-size: 18px;"> <strong> <u>Route Recorder</u></strong></span></p>
 <p style="text-align: left;"><span style="font-family: arial; font-size: 18px;">&nbsp;<span style="font-size: 14px;">Allows user actions to be saved as route format for APR</span><br /> <br /> </span></p>
+<p style="text-align: left;"><span style="font-family: arial; font-size: 14px;">Quest IDs can be displayed in quest-log details and tooltips for the quest log, objective tracker, world map, minimap, and quest items in bags. They are shown only while recording by default; the global visibility mode and each surface can be configured independently.</span></p>
 <p><span style="font-family: arial; font-size: 18px;"> <strong> <u>Automatic</u> </strong> <br /></span></p>
 <ul>
 <li><span style="font-size: 14px;">Emote (all language)</span></li>

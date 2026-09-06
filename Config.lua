@@ -70,6 +70,15 @@ function AprRC.settings:InitializeSettings()
             minimap = { minimapPos = 285 },
             enableMinimapButton = true,
             enableCampaignQuestsFlag = false,
+            questIDDisplay = {
+                enabled = true,
+                alwaysVisible = false,
+                map = true,
+                minimap = true,
+                questLog = true,
+                objectiveTracker = true,
+                inventory = true,
+            },
             debug = false,
             enableAddon = true,
         }
@@ -185,6 +194,82 @@ function AprRC.settings:createBlizzOptions()
                     },
                 }
             },
+            questIDDisplay = {
+                order = 4.5,
+                type = "group",
+                name = L.QUEST_ID_SETTINGS,
+                inline = true,
+                args = {
+                    enabled = {
+                        order = 1,
+                        type = "toggle",
+                        name = L.QUEST_ID_ENABLE,
+                        desc = L.QUEST_ID_ENABLE_DESC,
+                        width = "full",
+                        get = function() return self.profile.questIDDisplay.enabled end,
+                        set = function(_, value)
+                            self.profile.questIDDisplay.enabled = value
+                            AprRC.questID:RefreshVisibility()
+                        end,
+                    },
+                    alwaysVisible = {
+                        order = 2,
+                        type = "toggle",
+                        name = L.QUEST_ID_ALWAYS_VISIBLE,
+                        desc = L.QUEST_ID_ALWAYS_VISIBLE_DESC,
+                        width = "full",
+                        get = function() return self.profile.questIDDisplay.alwaysVisible end,
+                        set = function(_, value)
+                            self.profile.questIDDisplay.alwaysVisible = value
+                            AprRC.questID:RefreshVisibility()
+                        end,
+                        disabled = function() return not self.profile.questIDDisplay.enabled end,
+                    },
+                    map = {
+                        order = 3,
+                        type = "toggle",
+                        name = L.QUEST_ID_MAP,
+                        get = function() return self.profile.questIDDisplay.map end,
+                        set = function(_, value) self.profile.questIDDisplay.map = value end,
+                        disabled = function() return not self.profile.questIDDisplay.enabled end,
+                    },
+                    minimap = {
+                        order = 4,
+                        type = "toggle",
+                        name = L.QUEST_ID_MINIMAP,
+                        get = function() return self.profile.questIDDisplay.minimap end,
+                        set = function(_, value) self.profile.questIDDisplay.minimap = value end,
+                        disabled = function() return not self.profile.questIDDisplay.enabled end,
+                    },
+                    questLog = {
+                        order = 5,
+                        type = "toggle",
+                        name = L.QUEST_ID_QUEST_LOG,
+                        get = function() return self.profile.questIDDisplay.questLog end,
+                        set = function(_, value)
+                            self.profile.questIDDisplay.questLog = value
+                            AprRC.questID:RefreshVisibility()
+                        end,
+                        disabled = function() return not self.profile.questIDDisplay.enabled end,
+                    },
+                    objectiveTracker = {
+                        order = 6,
+                        type = "toggle",
+                        name = L.QUEST_ID_OBJECTIVE_TRACKER,
+                        get = function() return self.profile.questIDDisplay.objectiveTracker end,
+                        set = function(_, value) self.profile.questIDDisplay.objectiveTracker = value end,
+                        disabled = function() return not self.profile.questIDDisplay.enabled end,
+                    },
+                    inventory = {
+                        order = 7,
+                        type = "toggle",
+                        name = L.QUEST_ID_INVENTORY,
+                        get = function() return self.profile.questIDDisplay.inventory end,
+                        set = function(_, value) self.profile.questIDDisplay.inventory = value end,
+                        disabled = function() return not self.profile.questIDDisplay.enabled end,
+                    },
+                },
+            },
             debug = {
                 order = 5,
                 type = "group",
@@ -284,6 +369,9 @@ end
 function AprRC.settings:ToggleAddon()
     AprRC.record:RefreshFrameAnchor()
     AprRC.coordinate:RefreshFrameAnchor()
+    if AprRC.questID then
+        AprRC.questID:RefreshVisibility()
+    end
 end
 
 function AprRC.settings:OpenSettings(name)

@@ -4,6 +4,19 @@ if not L then return end
 --@localization(locale="enUS", format="lua_additive_table", handle-unlocalized="ignore")@
 
 L.DroppableQuestItem = "This Item Begins a Quest"
+L.QUEST_ID = "QuestID"
+L.QUEST_IDS = "QuestIDs"
+L.QUEST_ID_SETTINGS = "Quest ID display"
+L.QUEST_ID_ENABLE = "Enable Quest ID display"
+L.QUEST_ID_ENABLE_DESC = "Master switch for Quest IDs in quest-related UI and tooltips."
+L.QUEST_ID_ALWAYS_VISIBLE = "Show outside recording"
+L.QUEST_ID_ALWAYS_VISIBLE_DESC = "When disabled, Quest IDs are only displayed while recording a route."
+L.QUEST_ID_MAP = "World map"
+L.QUEST_ID_MINIMAP = "Minimap"
+L.QUEST_ID_QUEST_LOG = "Quest log"
+L.QUEST_ID_OBJECTIVE_TRACKER = "Objective tracker"
+L.QUEST_ID_INVENTORY = "Quest items in bags"
+
 L.Emotes = {
     ["AGREE"] = { "%s agrees with %s.", "%s agrees with you.", "You agree with %s.", "%s agrees.", "You agree." },
     ["AMAZE"] = { "%s is amazed by %s!", "%s is amazed by you!", "You are amazed by %s!", "%s is amazed!", "You are amazed!" },
