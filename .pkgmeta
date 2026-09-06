@@ -2,3 +2,5 @@ package-as: APR-Recorder
 
 ignore:
   - README.md
+  - SECURITY.md
+  - wiki.md

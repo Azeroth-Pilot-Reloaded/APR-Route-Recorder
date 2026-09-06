@@ -122,7 +122,21 @@ local function GetGhostFrame()
         if not self:IsShown() then return end
         local x, y = GetCursorPosition()
         local scale = UIParent:GetEffectiveScale()
+        self:ClearAllPoints()
         self:SetPoint("CENTER", UIParent, "BOTTOMLEFT", x / scale + 10, y / scale - 10)
+
+        -- InteractiveLabel widgets are pooled by AceGUI. Using SetScript directly
+        -- on their frames leaves our handlers attached after the widget is
+        -- released, so finish the drag from this non-pooled preview instead.
+        if dragging and not IsMouseButtonDown("LeftButton") then
+            local onDrop = dragging.onDrop
+            dragging = nil
+            self:Hide()
+
+            if onDrop then
+                onDrop()
+            end
+        end
     end)
 
     return ghostFrame
@@ -145,15 +159,12 @@ local function CreateInteractiveLabel(cmd, listType, leftCommands, RefreshLists)
         widget:SetHighlight(nil)
     end)
 
-    local f = label.frame
-
     ------------------------------------------------------------
     -- LEFT LIST CLICK HANDLER
     ------------------------------------------------------------
     if listType == "left" then
-        f:SetScript("OnMouseDown", nil)
-        f:SetScript("OnMouseUp", function()
-            print("LEFT CLICK:", cmd.label)
+        label:SetCallback("OnClick", function(_, _, button)
+            if button ~= "LeftButton" then return end
 
             table.insert(AprRCData.CommandBarCommands, cmd)
 
@@ -175,16 +186,7 @@ local function CreateInteractiveLabel(cmd, listType, leftCommands, RefreshLists)
     ------------------------------------------------------------
     -- RIGHT LIST (DRAG/REMOVE/REORDER)
     ------------------------------------------------------------
-
-    f:SetScript("OnMouseDown", function()
-        dragging = cmd
-        local ghost = GetGhostFrame()
-        ghost.icon:SetTexture(cmd.texture)
-        ghost.text:SetText(cmd.label)
-        ghost:Show()
-    end)
-
-    f:SetScript("OnMouseUp", function(_, button)
+    label:SetCallback("OnClick", function(_, _, button)
         -- Right-click REMOVE
         if button == "RightButton" then
             local idx = FindIndexByLabel(cmd.label)
@@ -196,34 +198,41 @@ local function CreateInteractiveLabel(cmd, listType, leftCommands, RefreshLists)
             table.sort(leftCommands, function(a, b) return a.label < b.label end)
 
             dragging = nil
-            ghostFrame:Hide()
+            if ghostFrame then ghostFrame:Hide() end
             RefreshLists()
             AprRC.CommandBar:RefreshFrameAnchor()
             return
         end
 
-        -- Drag reorder
-        if dragging then
-            local _, cy = GetCursorPosition()
-            cy = cy / UIParent:GetEffectiveScale()
+        if button ~= "LeftButton" then return end
 
-            local insertPos = #AprRCData.CommandBarCommands + 1
+        local ghost = GetGhostFrame()
+        ghost.icon:SetTexture(cmd.texture)
+        ghost.text:SetText(cmd.label)
 
-            for i, btn in ipairs(rightButtons) do
-                local centerY = select(2, btn.frame:GetCenter())
-                if cy > (centerY - 15) then
-                    insertPos = i
-                    break
+        dragging = {
+            command = cmd,
+            onDrop = function()
+                local _, cy = GetCursorPosition()
+                cy = cy / UIParent:GetEffectiveScale()
+
+                local insertPos = #AprRCData.CommandBarCommands + 1
+
+                for i, btn in ipairs(rightButtons) do
+                    local centerY = select(2, btn.frame:GetCenter())
+                    if cy > (centerY - 15) then
+                        insertPos = i
+                        break
+                    end
                 end
-            end
 
-            InsertCommand(cmd, insertPos)
-        end
+                InsertCommand(cmd, insertPos)
+                RefreshLists()
+                AprRC.CommandBar:RefreshFrameAnchor()
+            end,
+        }
 
-        dragging = nil
-        ghostFrame:Hide()
-        RefreshLists()
-        AprRC.CommandBar:RefreshFrameAnchor()
+        ghost:Show()
     end)
 
     return label
@@ -319,6 +328,7 @@ function AprRC.CommandBarSetting:CreateFrame()
     ------------------------------------------------------------
     -- REFRESH LISTS
     ------------------------------------------------------------
+    local RefreshLists
     RefreshLists = function()
         if isClosed then return end
         if not leftList or not rightList then return end
@@ -374,30 +384,11 @@ function AprRC.CommandBarSetting:CreateFrame()
         dragging = nil
 
         if ghostFrame then
-            ghostFrame:SetScript("OnUpdate", nil)
             ghostFrame:Hide()
         end
 
         filterBox:SetCallback("OnTextChanged", nil)
         RefreshLists = function() end
-
-        -- Restore the original scripts of the right labels BEFORE Release
-        for _, btn in ipairs(rightButtons) do
-            if btn.frame then
-                if btn._origDown then
-                    btn.frame:SetScript("OnMouseDown", btn._origDown)
-                else
-                    btn.frame:SetScript("OnMouseDown", nil)
-                end
-                if btn._origUp then
-                    btn.frame:SetScript("OnMouseUp", btn._origUp)
-                else
-                    btn.frame:SetScript("OnMouseUp", nil)
-                end
-            end
-            btn._origDown = nil
-            btn._origUp   = nil
-        end
         wipe(rightButtons)
 
         AceGUI:Release(widget)
@@ -413,7 +404,6 @@ end
 function AprRC.CommandBarSetting:Show()
     if frame then
         frame:Hide()
-        frame = nil
     else
         self:CreateFrame()
     end
