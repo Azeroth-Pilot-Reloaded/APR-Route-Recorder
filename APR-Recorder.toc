@@ -31,26 +31,26 @@
 libs/embeds.xml
 locales/locales.xml
 
-Core.lua
-Config.lua
-helper/Utils.lua
-helper/RouteManagement.lua
-helper/spells.lua
+core/Core.lua
+config/Settings.lua
+utils/Utils.lua
+core/RouteManagement.lua
+data/Spells.lua
 
-Commands.lua
-Event.lua
-QuestIDDisplay.lua
+commands/Commands.lua
+recording/Events.lua
+ui/QuestIDDisplay.lua
 
-frames/TutoFrame.lua
-frames/autocomplete.lua
-frames/CommandsBar.lua
-frames/CommandsBarSetting.lua
-frames/exportExtraLineText.lua
-frames/exportRoute.lua
-frames/QuestionPopUp.lua
-frames/QuestObjectiveSelector.lua
-frames/RecorderBar.lua
-frames/ReputationFrame.lua
-frames/routeSelector.lua
-frames/selectButton.lua
-frames/CoordinateFrame.lua
+ui/dialogs/TutoFrame.lua
+ui/dialogs/Autocomplete.lua
+ui/bars/CommandsBar.lua
+ui/bars/CommandsBarSetting.lua
+ui/dialogs/ExportExtraLineText.lua
+ui/dialogs/ExportRoute.lua
+ui/dialogs/QuestionPopUp.lua
+ui/dialogs/QuestObjectiveSelector.lua
+ui/bars/RecorderBar.lua
+ui/dialogs/ReputationFrame.lua
+ui/dialogs/RouteSelector.lua
+ui/dialogs/SelectButton.lua
+ui/bars/CoordinateFrame.lua

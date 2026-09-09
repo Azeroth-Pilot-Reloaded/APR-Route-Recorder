@@ -117,3 +117,18 @@
 <p style="text-align: center;"><span style="font-size: 18px;"> <em> <span style="font-family: arial;"> <strong>Note:</strong> Credits are listed on the APR page <a href="https://legacy.curseforge.com/wow/addons/azeroth-pilot-reloaded"> here<br /> </a></span></em></span><em><strong><span style="font-size: 18px;">Route Recorder by: Neogeekmo</span><br /> </strong> </em></p>
 <p style="padding-left: 60px; text-align: center;">&nbsp;</p>
 <div class="notranslate" style="all: initial;">&nbsp;</div>
+
+## Source layout
+
+- `core/`: addon initialization and route storage.
+- `config/`: addon settings.
+- `commands/`: slash commands and manual recording.
+- `recording/`: game events and automatic recording.
+- `data/`: spell data.
+- `utils/`: shared helpers and serialization.
+- `ui/bars/`: recorder, commands and coordinates.
+- `ui/dialogs/`: route editor, selectors and input dialogs.
+- `ui/QuestIDDisplay.lua`: quest IDs in Blizzard UI.
+- `locales/`, `assets/`, `libs/`: translations, artwork and bundled dependencies.
+
+`APR-Recorder.toc` defines the loading order.
