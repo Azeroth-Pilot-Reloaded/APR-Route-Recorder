@@ -324,10 +324,6 @@ function AprRC.export:Show()
     btnSave:SetWidth(200)
     btnSave:SetCallback("OnClick", function()
         local routeText = editbox:GetText()
-        if AprRC:HasLuaComments(routeText) then
-            APR:PrintError("Route not saved: remove Lua comments (\"--\" or \"--[[ ]]\" blocks) before saving.")
-            return
-        end
         local newStepRouteTable = AprRC:StringToTable(routeText)
         if not newStepRouteTable then
             APR:PrintError("Route not saved, incorrect format")

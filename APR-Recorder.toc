@@ -34,6 +34,7 @@ locales/locales.xml
 core/Core.lua
 config/Settings.lua
 utils/Utils.lua
+utils/LuaData.lua
 core/RouteManagement.lua
 data/Spells.lua
 
