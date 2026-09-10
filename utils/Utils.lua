@@ -265,123 +265,21 @@ function AprRC:ExtraLinetableToString(tbl, level, cache)
     return str
 end
 
-local function qpartTableToString(tbl, level, parrentKey)
-    local indent = string.rep("    ", level)
-    local str = "{\n"
-    local itemIndent = string.rep("    ", level + 1)
-
-    local keys = {}
-    for k in pairs(tbl) do
-        table.insert(keys, k)
-    end
-    table.sort(keys)
-
-    for _, k in ipairs(keys) do
-        local v = tbl[k]
-        local keyStr = ''
-        if parrentKey == "Button" or parrentKey == "SpellButton" then
-            keyStr = '["' .. tostring(k) .. '"] = '
-        else
-            keyStr = "[" .. k .. "] = "
-        end
-        if type(v) == "table" then
-            str = str .. itemIndent .. keyStr .. AprRC:RouteToString(v, level + 1) .. ",\n"
-        else
-            local valueStr = tostring(v)
-            str = str .. itemIndent .. keyStr .. valueStr .. ",\n"
-        end
-    end
-
-    str = str .. indent .. "}"
-    return str
-end
-
 function AprRC:RouteToString(tbl, level)
-    level = level or 0
-    local indent = string.rep("    ", level)
-    local str = "{\n"
-    local itemIndent = string.rep("    ", level + 1)
-    local qpartTableLis = { "Fillers", "Qpart", "QpartPart", "Button", "SpellButton" }
-
-    local keys = self:CustomSortKeys(tbl)
-
-    for _, k in ipairs(keys) do
-        local v = tbl[k]
-        local keyStr = type(k) == "string" and k .. " = " or ""
-
-        if type(v) == "table" then
-            if next(v) == nil then
-                str = str .. itemIndent .. keyStr .. "{}" .. ",\n"
-            else
-                local valueStr
-                if tContains(qpartTableLis, k) then
-                    valueStr = qpartTableToString(v, level + 1, k)
-                else
-                    valueStr = self:RouteToString(v, level + 1)
-                end
-                str = str .. itemIndent .. keyStr .. valueStr .. ",\n"
-            end
-        else
-            local valueStr
-            if type(v) == "string" then
-                -- Wrap string concatenation in pcall to handle tainted strings
-                local ok, result = pcall(function() return '"' .. v .. '"' end)
-                valueStr = ok and result or '"<tainted>"'
-            else
-                valueStr = tostring(v)
-            end
-            str = str .. itemIndent .. keyStr .. valueStr .. ",\n"
-        end
-    end
-
-    str = str .. indent .. "}"
-    return str
+    return self:SerializeData(tbl, level)
 end
 
 function AprRC:TableToString(tbl)
-    -- Update or add _index
-    for i, v in ipairs(tbl) do
-        if type(v) == "table" then
-            self:NormalizeStepOptionFields(v)
-            v._index = i
-        end
+    local copy = self:CopyData(tbl)
+    for i, step in ipairs(copy) do
+        self:NormalizeStepOptionFields(step)
+        step._index = i
     end
-    local text = self:RouteToString(tbl)
-
-    local function formatCoordString(coordString)
-        return coordString:gsub("x%s*=%s*(-?%d+%.%d+)", function(x)
-            return string.format("x = %.1f", tonumber(x))
-        end):gsub("y%s*=%s*(-?%d+%.%d+)", function(y)
-            return string.format("y = %.1f", tonumber(y))
-        end)
-    end
-
-    text = string.gsub(text, "\n                ", " ")
-    text = string.gsub(text, "{\n            ", "{ ")
-    text = string.gsub(text, ",\n        },", " },")
-    text = string.gsub(text, ",\n            ", ", ")
-    text = string.gsub(text, ", }", " }")
-
-    local textFormated = formatCoordString(text)
-
-    return textFormated
+    return self:SerializeData(copy)
 end
 
-function AprRC:StringToTable(str, dontUseCleaner)
-    local cleanedStr = str or ""
-    if not dontUseCleaner then cleanedStr = cleanedStr:gsub("[%s\n\r\t]+", "") end
-
-    local func, err = loadstring("return " .. cleanedStr)
-    if not func then
-        AprRC:Debug("Error when converting the string to a table", err)
-    else
-        local success, tableResult = pcall(func)
-        if success then
-            return tableResult
-        else
-            AprRC:Debug("Error when executing the string converted to a table", tableResult)
-        end
-    end
+function AprRC:StringToTable(str)
+    return self:ParseLuaData(str)
 end
 
 function AprRC:ValidateRouteTable(routeTable)
