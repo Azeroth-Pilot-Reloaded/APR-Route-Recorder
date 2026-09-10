@@ -12,6 +12,7 @@ function AprRC:InitRoute(name)
     AprRC:ResetQuestLookup(routeName)
     AprRC:ResetTaxiLookup()
     AprRCData.CurrentRoute = { name = routeName, steps = {} }
+    self:ResetRecordingSession()
     tinsert(AprRCData.Routes, AprRCData.CurrentRoute)
 end
 
@@ -32,6 +33,10 @@ function AprRC:NewStep(step)
     if APR:IsTableEmpty(lastStep) then
         AprRCData.CurrentRoute.steps = {}
     end
+    if lastStep.RouteCompleted then
+        if step.RouteCompleted then return end
+        table.remove(AprRCData.CurrentRoute.steps)
+    end
     tinsert(AprRCData.CurrentRoute.steps, step)
 end
 
@@ -48,14 +53,14 @@ function AprRC:HasStepOption(stepOption)
 end
 
 function AprRC:SetStepCoord(step, range)
-    local y, x, z, mapID = UnitPosition("player")
-    if x and y and not step.NoArrow then
-        x = tonumber(string.format("%.2f", x))
-        y = tonumber(string.format("%.2f", y))
-        step.Coord = { x = x, y = y }
-        step.Zone = AprRC:getZone()
+    local coord, zone = self:GetPlayerCoord()
+    if coord and not step.NoArrow then
+        step.Coord = coord
+        step.Zone = zone
         step.Range = range
+        return true
     end
+    return false
 end
 
 -- Check if the your are to far away from the current step to create a new one
@@ -67,8 +72,9 @@ function AprRC:IsCurrentStepFarAway(distance)
     end
 
     distance = distance or step.Range or 5
-    local playerY, playerX = UnitPosition("player")
-    local deltaX, deltaY = playerX - step.Coord.x, step.Coord.y - playerY
+    local coord, zone = self:GetPlayerCoord()
+    if not coord or (step.Zone and zone ~= step.Zone) then return true end
+    local deltaX, deltaY = coord.x - step.Coord.x, step.Coord.y - coord.y
     local currentDistance = (deltaX * deltaX + deltaY * deltaY) ^ 0.5
 
     return currentDistance > distance
@@ -135,8 +141,8 @@ function AprRC:saveQuestInfo()
 end
 
 function AprRC:IsInInstanceQuest()
-    local isIntance, type = IsInInstance()
-    return type == "scenario"
+    local _, instanceType = IsInInstance()
+    return instanceType == "scenario" or instanceType == "party" or instanceType == "raid"
 end
 
 function AprRC:FindRouteByName(routeName)

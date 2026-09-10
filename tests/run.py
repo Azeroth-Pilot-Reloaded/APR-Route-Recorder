@@ -5,13 +5,16 @@ from lupa.lua51 import LuaRuntime
 ROOT = Path(__file__).resolve().parents[1]
 lua = LuaRuntime(unpack_returned_tuples=True)
 lua.execute((ROOT / "tests/stubs.lua").read_text(encoding="utf-8"))
-for name in ("utils/Utils.lua", "utils/LuaData.lua", "core/RouteManagement.lua"):
+for name in ("utils/Utils.lua", "utils/LuaData.lua", "utils/Coordinates.lua", "core/RouteManagement.lua", "core/RouteDefinition.lua"):
     lua.execute((ROOT / name).read_text(encoding="utf-8"))
 for name in ("commands/Registry.lua", "commands/Schema.lua"):
     if (ROOT / name).exists():
         lua.execute((ROOT / name).read_text(encoding="utf-8"))
 for name in sorted((ROOT / "commands/options").glob("*.lua")):
     lua.execute(name.read_text(encoding="utf-8"))
+for name in ("commands/Commands.lua", "commands/UseItem.lua", "recording/Session.lua", "recording/Events.lua", "recording/Merchant.lua",
+             "recording/Chromie.lua", "recording/Treasure.lua", "recording/Flight.lua", "recording/DroppedQuest.lua"):
+    lua.execute((ROOT / name).read_text(encoding="utf-8"))
 for name in sorted((ROOT / "tests").glob("*_test.lua")):
     lua.execute(name.read_text(encoding="utf-8"))
 for folder in ("core", "config", "commands", "recording", "utils", "ui", "data"):

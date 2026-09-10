@@ -1,0 +1,7 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/">
+    <Script file="RouteMetadata.lua"/>
+    <Script file="Actions.lua"/>
+    <Script file="Navigation.lua"/>
+    <Script file="Display.lua"/>
+    <Script file="Conditions.lua"/>
+</Ui>

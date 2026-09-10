@@ -102,8 +102,15 @@ function AprRC:ParseLuaData(text)
             if identifier == "false" then return false end
             -- Only APR's public constant tables are accepted, never functions.
             local group, key = identifier:match("^APR%.([%w_]+)%.([%w_]+)$")
+            if not group then
+                group = identifier:match("^APR%.([%w_]+)$")
+                if group and take("[") then
+                    key = value(depth + 1)
+                    if not take("]") then error("Expected ] after constant key") end
+                end
+            end
             local allowed = { EXPANSIONS = true, CATEGORIES = true, PREFAB_TYPES = true, EVENTS = true,
-                Classes = true, Races = true, Specs = true, REPUTATION_TYPE = true, REPUTATION_STANDING = true }
+                Classes = true, RACES = true, Specs = true, REPUTATION_TYPE = true, REPUTATION_STANDING = true }
             local constant = group and allowed[group] and APR[group] and APR[group][key]
             if type(constant) == "string" or type(constant) == "number" then return constant end
         end

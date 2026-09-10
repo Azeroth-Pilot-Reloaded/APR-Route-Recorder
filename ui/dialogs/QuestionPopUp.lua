@@ -6,6 +6,8 @@ function AprRC.questionDialog:CreateEditBoxPopupWithCallback(text, onAcceptCallb
     local dialogName = "APRRC_EDITBOX_DIALOG"
 
     local currentDefaultText = defaultText or ""
+    local context = AprRC.CaptureRecordingContext and AprRC:CaptureRecordingContext()
+    local recording = AprRC.settings.profile.recordBarFrame.isRecording
 
     StaticPopupDialogs[dialogName] = {
         text = text or "General Kenobi",
@@ -13,8 +15,8 @@ function AprRC.questionDialog:CreateEditBoxPopupWithCallback(text, onAcceptCallb
         button1 = CONTINUE,
         button2 = CANCEL,
         OnShow = function(self)
-            local box = _G[self:GetName() .. "EditBox"]
-            local button = _G[self:GetName() .. "Button1"]
+            local box = self.GetEditBox and self:GetEditBox() or _G[self:GetName() .. "EditBox"]
+            local button = self.GetButton1 and self:GetButton1() or _G[self:GetName() .. "Button1"]
 
             if box then
                 box:SetWidth(275)
@@ -38,7 +40,12 @@ function AprRC.questionDialog:CreateEditBoxPopupWithCallback(text, onAcceptCallb
             end
         end,
         OnAccept = function(self)
-            local editBox = _G[self:GetName() .. "EditBox"]
+            if recording and not AprRC:IsRecordingContext(context) then
+                APR:PrintError("Recording changed; reopen the command")
+                return
+            end
+            local editBox = self.GetEditBox and self:GetEditBox() or _G[self:GetName() .. "EditBox"]
+            if not editBox then return end
             local inputText = editBox:GetText()
             if inputText ~= "" and type(onAcceptCallback) == "function" then
                 onAcceptCallback(inputText)

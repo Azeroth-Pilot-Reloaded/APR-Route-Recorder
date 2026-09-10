@@ -7,6 +7,13 @@
 [![GitHub](https://github.com/Azeroth-Pilot-Reloaded/azeroth-pilot-reloaded/assets/43384589/2c9d96ac-f38a-4442-9dfc-cc6b3ce36981)](https://github.com/Azeroth-Pilot-Reloaded/APR-Route-Recorder)
 [![CurseForge](https://github.com/user-attachments/assets/1bae5d08-d88b-403a-b902-ad3aa5c55248)](https://www.curseforge.com/wow/addons/azeroth-pilot-reloaded-route-recorder)
 
+
+## Recording commands
+
+See the [complete command reference](docs/Commands.md) for every supported route field, input examples and automatic/manual coverage. Use `/aprrc help` for commands, `/aprrc route` for route metadata, and `/aprrc export` for the complete route editor. All registered commands are available in the command-bar settings.
+
+The [API audit](docs/API-Audit.md) records the verified Retail build, recording limitations and the remaining APR playback issue.
+
 <p style="text-align: center;">&nbsp;</p>
 <p style="text-align: center;"><span style="font-size: 24px; font-family: arial;"> <strong> <span style="font-size: 14px;"> <em> <a href="https://github.com/Azeroth-Pilot-Reloaded/APR-Route-Recorder"> <span style="font-family: arial;"> If you wish to contribute to our development, head to our GitHub! </span> </a> </em> </span> <em> <span style="font-size: 12px;"> <span style="font-family: arial;"> <br /> <a href="https://discord.gg/YgcdybKdWX" target="_blank" rel="noopener noreferrer"> Visit our Discord for support and translation contribution! </a> </span> </span> <br /> </em> </strong> </span></p>
 <p style="text-align: center;">&nbsp;</p>

@@ -28,4 +28,14 @@ jobs:
       - name: Run Luacheck
         run: luacheck ./
 
+      - name: Set up Python
+        uses: actions/setup-python@v7.0.0
+        with:
+          python-version: '3.13'
+
+      - name: Test recording and route syntax with Lua 5.1
+        run: |
+          python -m pip install -r tests/requirements.txt
+          python tests/run.py
+
 
