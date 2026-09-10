@@ -98,7 +98,7 @@ function AprRC.export:Show()
         if not route then
             return ""
         end
-        return AprRC:TableToString(route.steps)
+        return AprRC:SerializeData(AprRC:BuildRouteDefinition(route))
     end
 
     local function PushHistorySnapshot(text)
@@ -324,20 +324,13 @@ function AprRC.export:Show()
     btnSave:SetWidth(200)
     btnSave:SetCallback("OnClick", function()
         local routeText = editbox:GetText()
-        local newStepRouteTable = AprRC:StringToTable(routeText)
-        if not newStepRouteTable then
-            APR:PrintError("Route not saved, incorrect format")
+        local newRoute, reason = AprRC:ReadRouteDefinition(routeText, selectedRouteName,
+            AprRC:FindRouteByName(selectedRouteName))
+        if not newRoute then
+            APR:PrintError("Route not saved: " .. tostring(reason))
             return
         end
-        local isValid, reason = AprRC:ValidateRouteTable(newStepRouteTable)
-        if not isValid then
-            APR:PrintError("Route not saved, invalid step structure: " .. tostring(reason))
-            return
-        end
-        local newRoute = {
-            name = selectedRouteName,
-            steps = newStepRouteTable
-        }
+        local newStepRouteTable = newRoute.steps
         AprRC:UpdateRouteByName(selectedRouteName, newRoute)
         if AprRCData.CurrentRoute.name == selectedRouteName then
             AprRCData.CurrentRoute = newRoute
@@ -363,9 +356,10 @@ function AprRC.export:Show()
     exportToAPRBtn:SetText("Export this route into APR")
     exportToAPRBtn:SetWidth(200)
     exportToAPRBtn:SetCallback("OnClick", function()
-        local route = AprRC:FindRouteByName(selectedRouteName)
-        if not route or not route.name or not route.steps then
-            APR:PrintError("Route export failed: invalid route data")
+        local route, reason = AprRC:ReadRouteDefinition(editbox:GetText(), selectedRouteName,
+            AprRC:FindRouteByName(selectedRouteName))
+        if not route then
+            APR:PrintError("Route export failed: " .. tostring(reason))
             return
         end
 
@@ -379,13 +373,7 @@ function AprRC.export:Show()
         APRData.CustomRoute = APRData.CustomRoute or {}
         APR.RouteQuestStepList = APR.RouteQuestStepList or {}
 
-        local customRouteData = {
-            label = name:match("%d+%-(.*)") or route.name,
-            expansion = APR.EXPANSIONS and APR.EXPANSIONS.Custom,
-            category = APR.CATEGORIES and APR.CATEGORIES.Miscellaneous,
-            conditions = {},
-            steps = route.steps,
-        }
+        local customRouteData = AprRC:BuildRouteDefinition(route)
 
         -- Persist in APR saved variables (consumed by APR:LoadCustomRoutes on reload)
         APRData.CustomRoute[name] = customRouteData

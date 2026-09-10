@@ -333,7 +333,7 @@ function AprRC:ParseQuestIDs(rawText)
     for token in string.gmatch(rawText or "", "[^,]+") do
         local trimmed = strtrim(token or "")
         if trimmed ~= "" then
-            if not trimmed:match("^%d+$") then
+            if not trimmed:match("^%d+$") or tonumber(trimmed, 10) < 1 then
                 return nil
             end
             table.insert(ids, tonumber(trimmed, 10))
@@ -366,7 +366,8 @@ function AprRC:ParsePositiveInteger(rawText)
     if trimmed == "" or not trimmed:match("^%d+$") then
         return nil
     end
-    return tonumber(trimmed, 10)
+    local value = tonumber(trimmed, 10)
+    return value and value > 0 and value or nil
 end
 
 function AprRC:ResolveAchievementCriteriaIndex(achievementID, criteriaID)
@@ -380,25 +381,10 @@ function AprRC:ResolveAchievementCriteriaIndex(achievementID, criteriaID)
         return nil
     end
 
-    local criteriaDescription = GetAchievementCriteriaInfoByID(numericAchievementID, numericCriteriaID)
     local numCriteria = GetAchievementNumCriteria(numericAchievementID)
-    if not numCriteria or numCriteria <= 0 then
-        return nil
-    end
-
-    for index = 1, numCriteria do
-        local info = { GetAchievementCriteriaInfo(numericAchievementID, index) }
-        local indexedDescription = info[1]
-
-        if criteriaDescription and indexedDescription and indexedDescription == criteriaDescription then
-            return index
-        end
-
-        for _, value in ipairs(info) do
-            if tonumber(value, 10) == numericCriteriaID then
-                return index
-            end
-        end
+    for index = 1, numCriteria or 0 do
+        local _, _, _, _, _, _, _, _, _, indexedID = GetAchievementCriteriaInfo(numericAchievementID, index)
+        if indexedID == numericCriteriaID then return index end
     end
 
     return nil
@@ -444,12 +430,8 @@ function AprRC:NormalizeStepOptionFields(step)
     end
     step.IsAdventureMapVisible = nil
 
-    if type(step.Achievement) == "table" then
-        if not step.Achievement.criteriaIndex and step.Achievement.criteriaID and step.Achievement.achievementID then
-            step.Achievement.criteriaIndex = self:ResolveAchievementCriteriaIndex(step.Achievement.achievementID,
-                step.Achievement.criteriaID)
-        end
-    end
+    if step.SkipForLvl == nil then step.SkipForLvl = step.skipForLvl end
+    step.skipForLvl = nil
 
     local mapOptions = {
         "TakePortal", "EnterScenario", "DoScenario", "LeaveScenario", "EnterInstance", "LeaveInstance"
@@ -577,13 +559,11 @@ function AprRC:ApplyCampaignQuestFlag(step, questID)
 end
 
 function AprRC:AddZoneStepTrigger(step)
-    local y, x = UnitPosition("player")
-    if x and y then
-        x = tonumber(string.format("%.2f", x))
-        y = tonumber(string.format("%.2f", y))
-        step.ZoneStepTrigger = { x = x, y = y, Range = 15 }
-        step.Range = nil
-    end
+    local coord = self:GetPlayerCoord()
+    if not coord then return false end
+    step.ZoneStepTrigger = { x = coord.x, y = coord.y, Range = 15 }
+    step.Range = nil
+    return true
 end
 
 function AprRC:GetQuestProgressPercentRounded(questID, objectiveInfo)

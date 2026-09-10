@@ -35,11 +35,23 @@ core/Core.lua
 config/Settings.lua
 utils/Utils.lua
 utils/LuaData.lua
+utils/Coordinates.lua
 core/RouteManagement.lua
+core/RouteDefinition.lua
 data/Spells.lua
 
+commands/Registry.lua
+commands/Schema.lua
+commands/options/Options.xml
 commands/Commands.lua
+commands/UseItem.lua
+recording/Session.lua
 recording/Events.lua
+recording/Merchant.lua
+recording/Chromie.lua
+recording/Treasure.lua
+recording/Flight.lua
+recording/DroppedQuest.lua
 ui/QuestIDDisplay.lua
 
 ui/dialogs/TutoFrame.lua

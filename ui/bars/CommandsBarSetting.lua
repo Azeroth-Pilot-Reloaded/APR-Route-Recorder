@@ -78,6 +78,8 @@ local allCommands = {
 ------------------------------------------------------------
 -- HELPERS
 ------------------------------------------------------------
+AprRC.options:AddToolbarCommands(allCommands)
+
 local function FindIndexByLabel(label)
     for i, s in ipairs(AprRCData.CommandBarCommands) do
         if s.label == label then return i end

@@ -15,6 +15,7 @@ local function CanDoCommand()
     return true
 end
 function AprRC.command:SlashCmd(input)
+    if AprRC.options:Dispatch(input) then return end
     local inputText = string.lower(input)
     local questCheckCommands = {
         iscompleted = {
@@ -155,8 +156,8 @@ function AprRC.command:SlashCmd(input)
         return
     elseif inputText == "help" or inputText == "h" then
         print(L_APR["COMMAND_LIST"] .. ":")
+        AprRC.options:PrintHelp()
         print("|cffeda55f/aprrc achievement |r- " .. "HasAchievement")
-        print("|cffeda55f/aprrc addjob |r- " .. "LearnProfession")
         print("|cffeda55f/aprrc addreset |r- " .. "ResetRoute")
         print("|cffeda55f/aprrc adventuremap |r- " .. "IsAdventureMap")
         print("|cffeda55f/aprrc aura |r- " .. "HasAura")
@@ -209,9 +210,6 @@ function AprRC.command:SlashCmd(input)
         print("|cffeda55f/aprrc text, txt |r- " .. "ExtraLineText")
         print("|cffeda55f/aprrc useitem |r- " .. "UseItem")
         print("|cffeda55f/aprrc usespell |r- " .. "UseSpell")
-        print("|cffeda55f/aprrc vehicle |r- " .. "VehicleExit")
-        print("|cffeda55f/aprrc mountvehicle |r- " .. "MountVehicle")
-        print("|cffeda55f/aprrc warmode |r- " .. "WarMode")
         print("|cffeda55f/aprrc waypoint |r- " .. "Waypoint")
         print("|cffeda55f/aprrc nonskippablewaypoint |r- " .. "NonSkippableWaypoint")
         print("|cffeda55f/aprrc zonetrigger |r- " .. "ZoneStepTrigger")
@@ -355,20 +353,6 @@ function AprRC.command:SlashCmd(input)
                 APR:PrintError("|cff00bfffSpecialETAHide|r already exist on this step")
             end
             return
-        elseif inputText == "grind" then
-            AprRC.questionDialog:CreateEditBoxPopupWithCallback("Grind (lvl)", function(text)
-                local grindLevel = AprRC:ParsePositiveInteger(text)
-                if not grindLevel then
-                    APR:PrintError("Invalid Grind level")
-                    return
-                end
-                local step = {}
-                step.Grind = grindLevel
-                AprRC:SetStepCoord(step)
-                AprRC:NewStep(step)
-                print("|cff00bfffGrind|r Added")
-            end)
-            return
         elseif inputText == "reputation" then
             AprRC.ReputationFrame:Show("Reputation")
             return
@@ -501,19 +485,6 @@ function AprRC.command:SlashCmd(input)
             currentStep.NpcDismount = numericTargetId
             print("|cff00bfffNpcDismount - " .. numericTargetId .. "|r Added")
             return
-        elseif inputText == "skipforlvl" then
-            AprRC.questionDialog:CreateEditBoxPopupWithCallback("skipForLvl (level)", function(text)
-                local levelValue = AprRC:ParsePositiveInteger(text)
-                if not levelValue then
-                    APR:PrintError("Invalid skipForLvl value")
-                    return
-                end
-
-                local currentStep = AprRC:GetLastStep()
-                currentStep.skipForLvl = levelValue
-                print("|cff00bfffskipForLvl|r Added")
-            end)
-            return
         elseif inputText == "buffs" then
             AprRC.autocomplete:ShowBuffSelector(function(buffData)
                 if not buffData then
@@ -596,19 +567,9 @@ function AprRC.command:SlashCmd(input)
                         end
 
                         local targetQuestID = tonumber(questID, 10) or AprRC:FindClosestIncompleteQuest()
-                        local _, itemSpellID = C_Item.GetItemSpell(numericItemID)
-                        local step = {
-                            UseItem = {
-                                itemID = numericItemID,
-                                itemSpellID = itemSpellID or 0,
-                                questID = targetQuestID,
-                            }
-                        }
-                        AprRC:SetStepCoord(step)
-                        AprRC:ApplyCampaignQuestFlag(step, targetQuestID)
-                        AprRC:NewStep(step)
-
-                        print("|cff00bfffUseItem|r Added")
+                        AprRC:RecordUseItem(targetQuestID, numericItemID, function()
+                            print("|cff00bfffUseItem|r Added")
+                        end)
                         AceGUI:Release(frame)
                     end)
                 end
@@ -823,7 +784,7 @@ function AprRC.command:SlashCmd(input)
                     local selectedCriteria = selectedObjective.criteria
                     if not selectedCriteria then
                         selectedCriteria = C_ScenarioInfo.GetCriteriaInfoByStep(stepInfo.stepID,
-                        selectedObjective.criteriaIndex)
+                            selectedObjective.criteriaIndex)
                     end
 
                     local defaultText = AprRC:GetScenarioDefaultTrigText(selectedCriteria)
@@ -839,7 +800,7 @@ function AprRC.command:SlashCmd(input)
                             trimmedText = trimmedText .. "/" .. totalText
                         end
 
-                        local scenarioQuestID = scenarioInfo.questID or AprRC:FindClosestIncompleteQuest()
+                        local scenarioQuestID = AprRC:FindClosestIncompleteQuest()
                         local step = {
                             TrigText = trimmedText,
                             Scenario = {
@@ -914,34 +875,6 @@ function AprRC.command:SlashCmd(input)
 
                 AceGUI:Release(frame)
             end)
-            return
-        elseif inputText == "vehicle" then
-            if not AprRC:HasStepOption("VehicleExit") then
-                local currentStep = AprRC:GetLastStep()
-                currentStep.VehicleExit = true
-                print("|cff00bfffDVehicleExit|r Added")
-                return
-            end
-            APR:PrintError("|cff00bfffVehicleExit|r already exist on this step")
-            return
-        elseif inputText == "mountvehicle" then
-            if not AprRC:HasStepOption("MountVehicle") then
-                local currentStep = AprRC:GetLastStep()
-                currentStep.MountVehicle = true
-                print("|cff00bfffMountVehicle|r Added")
-                return
-            end
-            APR:PrintError("|cff00bfffMountVehicle|r already exist on this step")
-            return
-        elseif inputText == "warmode" then
-            if not AprRC:HasStepOption("WarMode") then
-                local step = { WarMode = AprRC:FindClosestIncompleteQuest() }
-                AprRC:ApplyCampaignQuestFlag(step, step.WarMode)
-                AprRC:NewStep(step)
-                print("|cff00bfffWarMode|r Added")
-                return
-            end
-            APR:PrintError("|cff00bfffWarMode|r already exist on this step")
             return
         elseif inputText == "save" then
             if AprRCData.CurrentRoute.name ~= "" then
