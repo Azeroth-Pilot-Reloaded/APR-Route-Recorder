@@ -26,6 +26,7 @@ R:Register({
     command = "zone",
     schema = "id",
     example = "627",
+    icon = "Interface\\Icons\\INV_Misc_Map_01",
 })
 
 R:Register({
@@ -34,6 +35,7 @@ R:Register({
     schema = "ids",
     example = "{ 84, 85 }",
     condition = true,
+    icon = "Interface\\Icons\\INV_Misc_Map_01",
 })
 
 R:Register({
@@ -91,6 +93,7 @@ R:Register({
     command = "singlewaypointdisplaydistance",
     schema = "bool",
     example = "true",
+    icon = "Interface\\Icons\\Ability_Hunter_Pathfinding",
 })
 
 R:Register({
@@ -100,6 +103,7 @@ R:Register({
     example = "{ questID = 81888, mapID = 85 }",
     newStep = true,
     coord = true,
+    icon = "Interface\\Icons\\Spell_Arcane_PortalOrgrimmar",
 })
 
 R:Register({
@@ -108,6 +112,7 @@ R:Register({
     schema = "id",
     example = "1719",
     requires = "UseFlightPath",
+    icon = "Interface\\Icons\\INV_Misc_Map08",
 })
 
 R:Register({
@@ -115,6 +120,7 @@ R:Register({
     command = "name",
     schema = "text",
     example = "\"Krasus' Landing\"",
+    icon = "Interface\\Icons\\INV_Misc_Note_01",
 })
 
 R:Register({
@@ -123,6 +129,7 @@ R:Register({
     schema = "bool",
     example = "true",
     requires = "UseFlightPath",
+    icon = "Interface\\Icons\\Ability_Druid_AquaticForm",
 })
 
 R:Register({
