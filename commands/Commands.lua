@@ -154,6 +154,10 @@ function AprRC.command:SlashCmd(input)
             AprRCData.CurrentRoute.steps[k] = v
         end
         return
+    elseif inputText == "resetbar" or inputText == "resetcommandbar" or inputText == "barreset" then
+        AprRC.CommandBar:ResetToDefault()
+        print("|cff00bfffCommandBar|r reset to defaults")
+        return
     elseif inputText == "help" or inputText == "h" then
         print(L_APR["COMMAND_LIST"] .. ":")
         AprRC.options:PrintHelp()
@@ -203,6 +207,7 @@ function AprRC.command:SlashCmd(input)
         print("|cffeda55f/aprrc scenario, scenariotrig |r- " .. "Scenario + TrigText")
         print("|cffeda55f/aprrc race |r- " .. "Race")
         print("|cffeda55f/aprrc range |r- " .. "Range")
+        print("|cffeda55f/aprrc resetbar, resetcommandbar, barreset |r- " .. "Reset Command Bar")
         print("|cffeda55f/aprrc skipforlvl |r- " .. "skipForLvl")
         print("|cffeda55f/aprrc skipforreputation |r- " .. "SkipForReputation step option")
         print("|cffeda55f/aprrc spell |r- " .. "HasSpell")
