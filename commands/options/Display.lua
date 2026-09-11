@@ -26,6 +26,7 @@ R:Register({
     command = "spellbutton",
     schema = S.buttons,
     example = "{ [\"49939-1\"] = 294197 }",
+    icon = "Interface\\Icons\\INV_Misc_EngGizmos_04",
 })
 
 R:Register({
@@ -60,6 +61,7 @@ R:Register({
     command = "previewimages",
     schema = "strings",
     example = "{ \"routeHelper\\\\86644.jpg\" }",
+    icon = "Interface\\Icons\\INV_Misc_Spyglass_03",
 })
 
 R:Register({
@@ -67,6 +69,7 @@ R:Register({
     command = "invehicle",
     schema = { kind = "enum", values = { 1, 2 } },
     example = "1",
+    icon = "Interface\\Icons\\ability_vehicle_launchplayer",
 })
 
 R:Register({
@@ -115,4 +118,5 @@ R:Register({
     command = "xpconsumables",
     schema = S.xp,
     example = "\"MidnightDelves\"",
+    icon = "Interface\\Icons\\INV_Potion_116",
 })

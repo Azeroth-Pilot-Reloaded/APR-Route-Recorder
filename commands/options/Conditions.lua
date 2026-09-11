@@ -18,6 +18,7 @@ R:Register({
     schema = "ids",
     example = "{ 2541 }",
     condition = true,
+    icon = "Interface\\Icons\\INV_Misc_Map_01",
 })
 
 R:Register({
@@ -26,6 +27,7 @@ R:Register({
     schema = "ids",
     example = "{ 2393 }",
     condition = true,
+    icon = "Interface\\Icons\\INV_Misc_Map_01",
 })
 
 R:Register({
@@ -64,6 +66,7 @@ R:Register({
     schema = S.class,
     example = "APR.Classes.Evoker",
     condition = true,
+    icon = "Interface\\Icons\\INV_Sword_04",
 })
 
 R:Register({
@@ -72,6 +75,7 @@ R:Register({
     schema = "id",
     example = "64",
     condition = true,
+    icon = "Interface\\Icons\\Ability_Marksmanship",
 })
 
 R:Register({
@@ -80,6 +84,7 @@ R:Register({
     schema = "level",
     example = "80",
     condition = true,
+    icon = "Interface\\Icons\\INV_Misc_QuestionMark",
 })
 
 R:Register({
@@ -88,6 +93,7 @@ R:Register({
     schema = "level",
     example = "10",
     condition = true,
+    icon = "Interface\\Icons\\INV_Misc_QuestionMark",
 })
 
 R:Register({
@@ -96,6 +102,7 @@ R:Register({
     schema = "level",
     example = "69",
     condition = true,
+    icon = "Interface\\Icons\\INV_Misc_QuestionMark",
 })
 
 R:Register({
@@ -104,6 +111,7 @@ R:Register({
     schema = "positive",
     example = "88",
     condition = true,
+    icon = "Interface\\Icons\\INV_Misc_QuestionMark",
 })
 
 R:Register({
@@ -121,6 +129,7 @@ R:Register({
     schema = "bool",
     example = "true",
     condition = true,
+    icon = "Interface\\Icons\\INV_Misc_QuestionMark",
 })
 
 R:Register({
@@ -188,6 +197,7 @@ R:Register({
     schema = "idOrIds",
     example = "{ 264211, 264434 }",
     condition = true,
+    icon = "Interface\\Icons\\Spell_Shadow_AntiMagicShell",
 })
 
 R:Register({
@@ -196,6 +206,7 @@ R:Register({
     schema = "id",
     example = "93384",
     condition = true,
+    icon = "Interface\\Icons\\INV_Misc_QuestionMark",
 })
 
 R:Register({
@@ -204,6 +215,7 @@ R:Register({
     schema = "id",
     example = "86737",
     condition = true,
+    icon = "Interface\\Icons\\INV_Misc_Book_09",
 })
 
 R:Register({
@@ -212,6 +224,7 @@ R:Register({
     schema = "id",
     example = "86737",
     condition = true,
+    icon = "Interface\\Icons\\INV_Misc_Book_11",
 })
 
 R:Register({
@@ -220,6 +233,7 @@ R:Register({
     schema = S.anyOf,
     example = "{ { IsQuestOnQuest = 86733 }, { IsQuestCompleted = 86852, IsQuestUncompleted = 86733 } }",
     condition = true,
+    icon = "Interface\\Icons\\INV_Misc_Gem_Pearl_04",
 })
 
 R:Register({
@@ -248,6 +262,7 @@ R:Register({
     schema = "id",
     example = "35049",
     condition = true,
+    icon = "Interface\\Icons\\Achievement_Quests_Completed_08",
 })
 
 R:Register({
@@ -256,6 +271,7 @@ R:Register({
     schema = "id",
     example = "35049",
     condition = true,
+    icon = "Interface\\Icons\\INV_Misc_Note_01",
 })
 
 R:Register({
@@ -264,6 +280,7 @@ R:Register({
     schema = "ids",
     example = "{ 31588, 31589 }",
     condition = true,
+    icon = "Interface\\Icons\\Achievement_Quests_Completed_08",
 })
 
 R:Register({
@@ -272,6 +289,7 @@ R:Register({
     schema = "ids",
     example = "{ 31588, 31589 }",
     condition = true,
+    icon = "Interface\\Icons\\INV_Misc_Note_01",
 })
 
 R:Register({
@@ -280,6 +298,7 @@ R:Register({
     schema = "ids",
     example = "{ 49929, 49930 }",
     condition = true,
+    icon = "Interface\\Icons\\Achievement_Quests_Completed_08",
 })
 
 R:Register({
@@ -288,6 +307,7 @@ R:Register({
     schema = "ids",
     example = "{ 49929, 49930 }",
     condition = true,
+    icon = "Interface\\Icons\\INV_Misc_Note_01",
 })
 
 R:Register({
@@ -296,6 +316,7 @@ R:Register({
     schema = "ids",
     example = "{ 31821, 31822 }",
     condition = true,
+    icon = "Interface\\Icons\\Achievement_Quests_Completed_08",
 })
 
 R:Register({
@@ -304,6 +325,7 @@ R:Register({
     schema = "ids",
     example = "{ 31821, 31822 }",
     condition = true,
+    icon = "Interface\\Icons\\INV_Misc_Note_01",
 })
 
 R:Register({
@@ -332,6 +354,7 @@ R:Register({
     schema = "id",
     example = "51226",
     condition = true,
+    icon = "Interface\\Icons\\INV_Misc_Map_01",
 })
 
 R:Register({
@@ -340,6 +363,7 @@ R:Register({
     schema = { kind = "enum", values = { 1, 2 } },
     example = "1",
     condition = true,
+    icon = "Interface\\Icons\\INV_Misc_Idol_03",
 })
 
 R:Register({
@@ -348,6 +372,7 @@ R:Register({
     schema = "bool",
     example = "true",
     condition = true,
+    icon = "Interface\\Icons\\Achievement_Quests_Completed_08",
 })
 
 R:Register({
@@ -356,4 +381,5 @@ R:Register({
     schema = "id",
     example = "120100",
     condition = true,
+    icon = "Interface\\Icons\\INV_Gizmo_02",
 })

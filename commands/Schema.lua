@@ -26,7 +26,6 @@ S.emote = object({ npcID = "nonnegative", emote = "text" }, { "npcID", "emote" }
 S.buffs = list(object({ spellId = "id", tooltipMessage = "text" }, { "spellId" }))
 S.qpart = { kind = "map", key = "id", entry = "ids" }
 S.buttons = { kind = "map", key = "objectiveKey", entry = "id" }
-S.prefab = { kind = "map", key = "text", entry = "positive" }
 S.parallel = list(object({ conditions = "conditions", steps = "steps" }, { "conditions", "steps" }))
 S.anyOf = list("conditions")
 S.note = { kind = "union", choices = { "text", "strings" } }

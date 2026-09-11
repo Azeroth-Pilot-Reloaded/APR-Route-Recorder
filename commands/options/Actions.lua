@@ -116,6 +116,7 @@ R:Register({
     command = "group",
     schema = S.group,
     example = "{ questID = 51384, Number = 3 }",
+    icon = "Interface\\Icons\\INV_Misc_GroupLooking",
 })
 
 R:Register({
@@ -123,6 +124,7 @@ R:Register({
     command = "grouptask",
     schema = "id",
     example = "51384",
+    icon = "Interface\\Icons\\INV_Misc_GroupLooking",
 })
 
 R:Register({
@@ -154,6 +156,7 @@ R:Register({
     example = "{ questID = 86636, mapID = 2502 }",
     newStep = true,
     coord = true,
+    icon = "Interface\\Icons\\INV_Misc_Map_01",
 })
 
 R:Register({
@@ -163,6 +166,7 @@ R:Register({
     example = "{ questID = 86912, mapID = 2505 }",
     newStep = true,
     coord = true,
+    icon = "Interface\\Icons\\INV_Misc_Map_01",
 })
 
 R:Register({
@@ -172,6 +176,7 @@ R:Register({
     example = "{ questID = 86912, mapID = 2505 }",
     newStep = true,
     coord = true,
+    icon = "Interface\\Icons\\INV_Misc_Map_01",
 })
 
 R:Register({
@@ -181,6 +186,7 @@ R:Register({
     example = "{ questID = 12345, mapID = 2505 }",
     newStep = true,
     coord = true,
+    icon = "Interface\\Icons\\Achievement_Dungeon_Heroic_GloryoftheRaider",
 })
 
 R:Register({
@@ -190,6 +196,7 @@ R:Register({
     example = "{ questID = 12345, mapID = 2505 }",
     newStep = true,
     coord = true,
+    icon = "Interface\\Icons\\Achievement_Dungeon_Heroic_GloryoftheRaider",
 })
 
 R:Register({
@@ -310,15 +317,9 @@ R:Register({
     example = "{ factionID = 2590, type = APR.REPUTATION_TYPE.Renown, level = 10 }",
     newStep = true,
     legacy = true,
+    icon = "Interface\\Icons\\Achievement_Reputation_01",
 })
 
-R:Register({
-    key = "LeaveQuest",
-    command = "leavequest",
-    schema = "id",
-    example = "38254",
-    newStep = true,
-})
 R:Register({
     key = "LeaveQuests",
     command = "leavequests",
@@ -327,6 +328,7 @@ R:Register({
     newStep = true,
     hidden = true,
 })
+
 R:Register({
     key = "VehicleExit",
     command = "vehicleexit",
@@ -334,6 +336,7 @@ R:Register({
     example = "true",
     hidden = true,
 })
+
 R:Register({
     key = "MountVehicle",
     command = "mountvehicle",
@@ -411,6 +414,7 @@ R:Register({
     schema = S.note,
     example = "{ \"Open the map\", \"Follow the bridge north\" }",
     newStep = true,
+    icon = "Interface\\Icons\\INV_Inscription_ScrollOfWisdom_01",
 })
 
 R:Register({
@@ -419,4 +423,5 @@ R:Register({
     schema = "bool",
     example = "true",
     newStep = true,
+    icon = "Interface\\Icons\\Achievement_Quests_Completed_08",
 })

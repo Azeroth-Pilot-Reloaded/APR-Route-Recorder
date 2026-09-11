@@ -7,6 +7,7 @@ R:Register({
     schema = "text",
     example = "\"Midnight - Speedrun\"",
     scope = "route",
+    icon = "Interface\\Icons\\INV_Inscription_ScrollOfWisdom_01",
 })
 
 R:Register({
@@ -15,6 +16,7 @@ R:Register({
     schema = { kind = "enum", group = "EXPANSIONS" },
     example = "APR.EXPANSIONS.Midnight",
     scope = "route",
+    icon = "Interface\\Icons\\INV_Misc_Map_01",
 })
 
 R:Register({
@@ -23,6 +25,7 @@ R:Register({
     schema = { kind = "enum", group = "CATEGORIES" },
     example = "APR.CATEGORIES.Leveling",
     scope = "route",
+    icon = "Interface\\Icons\\INV_Misc_Book_09",
 })
 
 R:Register({
@@ -31,15 +34,9 @@ R:Register({
     schema = "id",
     example = "2393",
     scope = "route",
+    icon = "Interface\\Icons\\INV_Misc_Map08",
 })
 
-R:Register({
-    key = "prefab",
-    command = "route prefab",
-    schema = S.prefab,
-    example = "{ [APR.PREFAB_TYPES.Speedrun] = 20 }",
-    scope = "route",
-})
 
 R:Register({
     key = "conditions",
@@ -47,6 +44,7 @@ R:Register({
     schema = "routeConditions",
     example = "{ Level = 80, Faction = \"Alliance\" }",
     scope = "route",
+    icon = "Interface\\Icons\\Spell_Holy_SealOfWisdom",
 })
 
 R:Register({
@@ -55,6 +53,7 @@ R:Register({
     schema = S.routeLinks,
     example = "{ \"2432-Midnight-Intro\" }",
     scope = "route",
+    icon = "Interface\\Icons\\Ability_Hunter_MasterMarksman",
 })
 
 R:Register({
@@ -63,14 +62,17 @@ R:Register({
     schema = "strings",
     example = "{ \"2395-The-War-of-Light-and-Shadow\" }",
     scope = "route",
+    icon = "Interface\\Icons\\Ability_Hunter_RunningShot",
 })
 
 R:Register({
     key = "parallelSteps",
     command = "route parallelsteps",
     schema = S.parallel,
-    example = "{ { conditions = { MinLevel = 88, IsQuestReadyForTurnIn = 93384 }, steps = { { Done = { 93384 }, Zone = 2395 } } } }",
+    example =
+    "{ { conditions = { MinLevel = 88, IsQuestReadyForTurnIn = 93384 }, steps = { { Done = { 93384 }, Zone = 2395 } } } }",
     scope = "route",
+    icon = "Interface\\Icons\\Ability_Rogue_Sprint",
 })
 
 R:Register({
@@ -79,5 +81,5 @@ R:Register({
     schema = S.xp,
     example = "\"MidnightDelves\"",
     scope = "route",
+    icon = "Interface\\Icons\\INV_Potion_116",
 })
-
