@@ -2,8 +2,6 @@ local AceGUI = LibStub("AceGUI-3.0")
 
 AprRC.CommandBarSetting = AprRC:NewModule("CommandBarSetting")
 
-local iconPath = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\"
-
 ------------------------------------------------------------
 -- LOCAL STATE
 ------------------------------------------------------------
@@ -15,80 +13,25 @@ local rightButtons = {}
 ------------------------------------------------------------
 -- COMMAND DEFINITIONS
 ------------------------------------------------------------
-local allCommands = {
-    { command = "btn",                               label = "Button",                                  texture = iconPath .. "Button" },
-    { command = "class",                             label = "Class",                                   texture = iconPath .. "Class" },
-    { command = "coord",                             label = "Coord",                                   texture = iconPath .. "Coord" },
-    { command = "coords",                            label = "Coords",                                  texture = iconPath .. "Coord" },
-    { command = "donedb",                            label = "Done DB",                                 texture = iconPath .. "DoneDB" },
-    { command = "noachievement",                     label = "Don't Have Achievement",                  texture = iconPath .. "DontHaveAchievement" },
-    { command = "noaura",                            label = "Don't Have Aura",                         texture = iconPath .. "DontHaveAura" },
-    { command = "notskipvid",                        label = "Don't skip vid",                          texture = iconPath .. "Dontskipvid" },
-    { command = "eta",                               label = "ETA",                                     texture = iconPath .. "ETA" },
-    { command = "gossipeta",                         label = "Gossip ETA",                              texture = iconPath .. "GossipETA" },
-    { command = "specialetahide",                    label = "Special ETA Hide",                        texture = iconPath .. "SpecialETAHide" },
-    { command = "text",                              label = "Extra Line Text",                         texture = iconPath .. "ExtraLineText" },
-    { command = "faction",                           label = "Faction",                                 texture = iconPath .. "Faction" },
-    { command = "filler",                            label = "Fillers",                                 texture = iconPath .. "Fillers" },
-    { command = "gender",                            label = "Gender",                                  texture = iconPath .. "Gender" },
-    { command = "grind",                             label = "Grind",                                   texture = iconPath .. "Grind" },
-    { command = "achievement",                       label = "Has Achievement",                         texture = iconPath .. "HasAchievement" },
-    { command = "aura",                              label = "Has Aura",                                texture = iconPath .. "HasAura" },
-    { command = "buffs",                             label = "Buffs",                                   texture = iconPath .. "Buffs" },
-    { command = "spell",                             label = "Has Spell",                               texture = iconPath .. "HasSpell" },
-    { command = "useitem",                           label = "Use Item",                                texture = iconPath .. "UseItem" },
-    { command = "usespell",                          label = "Use Spell",                               texture = iconPath .. "UseSpell" },
-    { command = "instance",                          label = "Instance Quest",                          texture = iconPath .. "InstanceQuest" },
-    { command = "isCompleted",                       label = "Is Quest Completed On Account",           texture = iconPath .. "IsQuestsCompletedOnAccount" },
-    { command = "isQuestsCompleted",                 label = "Is Quests Completed",                     texture = iconPath .. "IsQuestsCompletedOnAccount" },
-    { command = "isOneOfQuestsCompleted",            label = "Is One Of Quests Completed",              texture = iconPath .. "IsQuestsCompletedOnAccount" },
-    { command = "isOneOfQuestsCompletedOnAccount",   label = "Is One Of Quests Completed On Account",   texture = iconPath .. "IsQuestsCompletedOnAccount" },
-    { command = "isUncompleted",                     label = "Is Quest Uncompleted On Account",         texture = iconPath .. "IsQuestsUncompletedOnAccount" },
-    { command = "isQuestsUncompleted",               label = "Is Quests Uncompleted",                   texture = iconPath .. "IsQuestsUncompletedOnAccount" },
-    { command = "isOneOfQuestsUncompleted",          label = "Is One Of Quests Uncompleted",            texture = iconPath .. "IsQuestsUncompletedOnAccount" },
-    { command = "isOneOfQuestsUncompletedOnAccount", label = "Is One Of Quests Uncompleted On Account", texture = iconPath .. "IsQuestsUncompletedOnAccount" },
-    { command = "addjob",                            label = "Learn Profession",                        texture = iconPath .. "LearnProfession" },
-    { command = "LootItems",                         label = "Loot Items",                              texture = iconPath .. "LootItem" },
-    { command = "noarrow",                           label = "No Arrow",                                texture = iconPath .. "NoArrow" },
-    { command = "noautoflightmap",                   label = "No Auto Flight Map",                      texture = iconPath .. "NoAutoFlightMap" },
-    { command = "denynpc",                           label = "Deny NPC",                                texture = iconPath .. "DontHaveAura" },
-    { command = "npcdismount",                       label = "Npc Dismount",                            texture = iconPath .. "MountVehicle" },
-    { command = "pickupdb",                          label = "PickUp DB",                               texture = iconPath .. "PickUpDB" },
-    { command = "qpartdb",                           label = "Qpart DB",                                texture = iconPath .. "QpartDB" },
-    { command = "qpartpart",                         label = "Qpart Part",                              texture = iconPath .. "QpartPart" },
-    { command = "scenario",                          label = "Scenario Trigger",                        texture = iconPath .. "QpartPart" },
-    { command = "race",                              label = "Race",                                    texture = iconPath .. "Race" },
-    { command = "range",                             label = "Range",                                   texture = iconPath .. "Range" },
-    { command = "reputation",                        label = "Reputation Step",                         texture = "Interface\\Icons\\Achievement_Reputation_01" },
-    { command = "reputationlevel",                   label = "Reputation Level",                        texture = "Interface\\Icons\\Achievement_Reputation_01" },
-    { command = "addreset",                          label = "Reset Route",                             texture = iconPath .. "ResetRoute" },
-    { command = "adventuremap",                      label = "Is Adventure Map",                        texture = iconPath .. "IsAdventureMapVisible" },
-    { command = "skipforlvl",                        label = "Skip For Lvl",                            texture = iconPath .. "Grind" },
-    { command = "skipforreputation",                 label = "Skip For Reputation",                     texture = "Interface\\Icons\\Achievement_Reputation_01" },
-    { command = "spelltrigger",                      label = "Spell Trigger",                           texture = iconPath .. "SpellTrigger" },
-    { command = "vehicle",                           label = "Vehicle Exit",                            texture = iconPath .. "VehicleExit" },
-    { command = "mountvehicle",                      label = "Mount Vehicle",                           texture = iconPath .. "MountVehicle" },
-    { command = "warmode",                           label = "WarMode",                                 texture = iconPath .. "WarMode" },
-    { command = "waypoint",                          label = "Waypoint",                                texture = iconPath .. "Waypoint" },
-    { command = "waypointdb",                        label = "Waypoint DB",                             texture = iconPath .. "WaypointDB" },
-    { command = "nonskippablewaypoint",              label = "Non-Skippable Waypoint",                  texture = iconPath .. "Waypoint" },
-    { command = "zonetrigger",                       label = "Zone Step Trigger",                       texture = iconPath .. "ZoneStepTrigger" },
-}
+local allCommands = {}
+
+local function RefreshCommandCatalog()
+    wipe(allCommands)
+    AprRC.options:AddToolbarCommands(allCommands)
+end
 
 ------------------------------------------------------------
 -- HELPERS
 ------------------------------------------------------------
-AprRC.options:AddToolbarCommands(allCommands)
-
-local function FindIndexByLabel(label)
+local function FindIndexByCommand(command)
     for i, s in ipairs(AprRCData.CommandBarCommands) do
-        if s.label == label then return i end
+        if strlower(s.command or "") == strlower(command or "") then return i end
     end
     return nil
 end
 
 local function InsertCommand(cmd, pos)
-    local current = FindIndexByLabel(cmd.label)
+    local current = FindIndexByCommand(cmd.command)
     if current then
         table.remove(AprRCData.CommandBarCommands, current)
         if current < pos then pos = pos - 1 end
@@ -172,7 +115,7 @@ local function CreateInteractiveLabel(cmd, listType, leftCommands, RefreshLists)
 
             -- remove from left list
             for i, c in ipairs(leftCommands) do
-                if c.label == cmd.label then
+                if strlower(c.command or "") == strlower(cmd.command or "") then
                     table.remove(leftCommands, i)
                     break
                 end
@@ -191,7 +134,7 @@ local function CreateInteractiveLabel(cmd, listType, leftCommands, RefreshLists)
     label:SetCallback("OnClick", function(_, _, button)
         -- Right-click REMOVE
         if button == "RightButton" then
-            local idx = FindIndexByLabel(cmd.label)
+            local idx = FindIndexByCommand(cmd.command)
             if idx then
                 table.remove(AprRCData.CommandBarCommands, idx)
             end
@@ -314,10 +257,11 @@ function AprRC.CommandBarSetting:CreateFrame()
 
     local function RebuildLeftCommands()
         wipe(leftCommands)
+        RefreshCommandCatalog()
         for _, cmd in ipairs(allCommands) do
             local used = false
             for _, selected in ipairs(AprRCData.CommandBarCommands) do
-                if cmd.label == selected.label then
+                if strlower(cmd.command or "") == strlower(selected.command or "") then
                     used = true
                     break
                 end
@@ -357,10 +301,17 @@ function AprRC.CommandBarSetting:CreateFrame()
         for _, entry in ipairs(AprRCData.CommandBarCommands) do
             local cmd
             for _, c in ipairs(allCommands) do
-                if c.label == entry.label then
+                if strlower(c.command or "") == strlower(entry.command or "") then
                     cmd = c
                     break
                 end
+            end
+            if not cmd and entry.command then
+                cmd = {
+                    command = entry.command,
+                    label = entry.label or entry.command,
+                    texture = entry.texture or AprRC.options:GetToolbarIcon(entry.command),
+                }
             end
             if cmd and CommandMatchesFilter(cmd, filterText) then
                 local label = CreateInteractiveLabel(cmd, "right", leftCommands, RefreshLists)
