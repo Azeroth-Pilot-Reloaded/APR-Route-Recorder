@@ -1,5 +1,6 @@
 local R = AprRC.options
 local S = R.schemas
+local I = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\"
 
 R:Register({
     key = "Faction",
@@ -8,6 +9,7 @@ R:Register({
     example = "\"Horde\"",
     legacy = true,
     condition = true,
+    icon = I .. "Faction",
 })
 
 R:Register({
@@ -33,6 +35,7 @@ R:Register({
     example = "{ \"Orc\", \"Troll\" }",
     legacy = true,
     condition = true,
+    icon = I .. "Race",
 })
 
 R:Register({
@@ -42,6 +45,7 @@ R:Register({
     example = "3",
     legacy = true,
     condition = true,
+    icon = I .. "Gender",
 })
 
 R:Register({
@@ -51,6 +55,7 @@ R:Register({
     example = "{ \"HUNTER\", \"ROGUE\" }",
     legacy = true,
     condition = true,
+    icon = I .. "Class",
 })
 
 R:Register({
@@ -107,6 +112,7 @@ R:Register({
     schema = "level",
     example = "89.18",
     condition = true,
+    icon = I .. "Grind",
 })
 
 R:Register({
@@ -132,6 +138,8 @@ R:Register({
     schema = "id",
     example = "12593",
     condition = true,
+    icon = I .. "HasAchievement",
+    bar = { command = "achievement", label = "Has Achievement" },
 })
 
 R:Register({
@@ -140,6 +148,8 @@ R:Register({
     schema = "id",
     example = "9924",
     condition = true,
+    icon = I .. "DontHaveAchievement",
+    bar = { command = "noachievement", label = "Don't Have Achievement" },
 })
 
 R:Register({
@@ -148,6 +158,8 @@ R:Register({
     schema = "id",
     example = "178207",
     condition = true,
+    icon = I .. "HasAura",
+    bar = { command = "aura", label = "Has Aura" },
 })
 
 R:Register({
@@ -156,6 +168,8 @@ R:Register({
     schema = "id",
     example = "32182",
     condition = true,
+    icon = I .. "DontHaveAura",
+    bar = { command = "noaura", label = "Don't Have Aura" },
 })
 
 R:Register({
@@ -164,6 +178,8 @@ R:Register({
     schema = "id",
     example = "34090",
     condition = true,
+    icon = I .. "HasSpell",
+    bar = { command = "spell", label = "Has Spell" },
 })
 
 R:Register({
@@ -213,6 +229,7 @@ R:Register({
     example = "{ factionID = 2590, type = APR.REPUTATION_TYPE.Renown, level = 10 }",
     legacy = true,
     condition = true,
+    icon = "Interface\\Icons\\Achievement_Reputation_01",
 })
 
 R:Register({
@@ -222,6 +239,7 @@ R:Register({
     example = "{ factionID = 2773, type = APR.REPUTATION_TYPE.Friendship, level = 5 }",
     legacy = true,
     condition = true,
+    icon = "Interface\\Icons\\Achievement_Reputation_01",
 })
 
 R:Register({
@@ -294,6 +312,8 @@ R:Register({
     schema = "ids",
     example = "{ 49929, 49930 }",
     condition = true,
+    icon = I .. "IsQuestsCompletedOnAccount",
+    bar = { command = "isCompleted", label = "Is Quest Completed On Account" },
 })
 
 R:Register({
@@ -302,6 +322,8 @@ R:Register({
     schema = "ids",
     example = "{ 49929, 49930 }",
     condition = true,
+    icon = I .. "IsQuestsUncompletedOnAccount",
+    bar = { command = "isUncompleted", label = "Is Quest Uncompleted On Account" },
 })
 
 R:Register({

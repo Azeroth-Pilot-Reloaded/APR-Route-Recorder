@@ -2,6 +2,15 @@
 AprRC.options = { commands = {}, step = {}, route = {} }
 local options = AprRC.options
 
+function options:GetToolbarIcon(command, definition)
+    if definition and definition.icon then return definition.icon end
+    return "Interface\\Icons\\inv_misc_note_01"
+end
+
+function options:GetBarMeta(definition)
+    return definition and definition.bar or nil
+end
+
 function options:Register(definition)
     local command = definition.command or definition.key:lower()
     definition.command = command
@@ -181,17 +190,96 @@ end
 
 function options:AddToolbarCommands(list)
     local seen = {}
-    for _, entry in ipairs(list) do seen[entry.command:lower()] = true end
-    local extra = {}
-    for command, definition in pairs(self.commands) do
-        if not seen[command] then
-            extra[#extra + 1] = {
-                command = command,
-                label = definition.key .. (definition.scope == "route" and " (route)" or ""),
-                texture = "Interface\\Icons\\INV_Misc_Note_01"
+    for _, entry in ipairs(list) do seen[strlower(entry.command or "")] = true end
+    for _, entry in ipairs(self:GetToolbarCatalog()) do
+        if not seen[strlower(entry.command)] then
+            list[#list + 1] = entry
+            seen[strlower(entry.command)] = true
+        end
+    end
+end
+
+function options:GetToolbarEntry(definition)
+    local bar = self:GetBarMeta(definition)
+    local command = (bar and bar.command) or definition.command
+    return {
+        command = command,
+        label = (bar and bar.label) or definition.key,
+        texture = self:GetToolbarIcon(command, definition),
+    }
+end
+
+function options:GetToolbarCatalog()
+    local defs = {}
+    for _, definition in pairs(self.commands) do defs[#defs + 1] = definition end
+    table.sort(defs, function(a, b)
+        local aBar = self:GetBarMeta(a)
+        local bBar = self:GetBarMeta(b)
+        local aOrder = (aBar and aBar.order) or 1000
+        local bOrder = (bBar and bBar.order) or 1000
+        if aOrder == bOrder then return a.command < b.command end
+        return aOrder < bOrder
+    end)
+
+    local entries = {}
+    local seen = {}
+    for _, definition in ipairs(defs) do
+        local entry = self:GetToolbarEntry(definition)
+        local key = strlower(entry.command)
+        if not seen[key] then
+            entries[#entries + 1] = entry
+            seen[key] = true
+        end
+    end
+    return entries
+end
+
+function options:GetDefaultToolbarCommands()
+    local defaults = {}
+    for _, definition in pairs(self.commands) do
+        local bar = self:GetBarMeta(definition)
+        if bar and bar.isDefault then defaults[#defaults + 1] = definition end
+    end
+    table.sort(defaults, function(a, b)
+        local aBar = self:GetBarMeta(a)
+        local bBar = self:GetBarMeta(b)
+        local aOrder = (aBar and aBar.order) or 1000
+        local bOrder = (bBar and bBar.order) or 1000
+        if aOrder == bOrder then return a.command < b.command end
+        return aOrder < bOrder
+    end)
+
+    local entries = {}
+    for _, definition in ipairs(defaults) do
+        entries[#entries + 1] = self:GetToolbarEntry(definition)
+    end
+    return entries
+end
+
+function options:NormalizeToolbarCommands(list)
+    local normalized = {}
+    local catalog = self:GetToolbarCatalog()
+    local byCommand = {}
+    for _, entry in ipairs(catalog) do
+        byCommand[strlower(entry.command)] = entry
+    end
+
+    for _, entry in ipairs(list or {}) do
+        local key = strlower(entry.command or "")
+        local known = byCommand[key]
+        if known then
+            normalized[#normalized + 1] = {
+                command = known.command,
+                label = known.label,
+                texture = known.texture,
+            }
+        elseif entry.command then
+            normalized[#normalized + 1] = {
+                command = entry.command,
+                label = entry.label or entry.command,
+                texture = entry.texture or self:GetToolbarIcon(entry.command),
             }
         end
     end
-    table.sort(extra, function(a, b) return a.command < b.command end)
-    for _, entry in ipairs(extra) do list[#list + 1] = entry end
+    return normalized
 end

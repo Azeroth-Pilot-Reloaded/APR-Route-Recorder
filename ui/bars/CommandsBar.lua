@@ -9,18 +9,20 @@ AprRC.CommandBar.settingTutoFrameID = nil
 local FRAME_WIDTH = 80
 local FRAME_HEIGHT = 35
 
-local iconPath = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\"
-local defaultCommands = {
-    { command = "waypoint",  label = "Waypoint",         texture = iconPath .. "Waypoint" },
-    { command = "coord",     label = "Coord",            texture = iconPath .. "Coord" },
-    { command = "range",     label = "Range",            texture = iconPath .. "Range" },
-    { command = "noarrow",   label = "No Arrow",         texture = iconPath .. "NoArrow" },
-    { command = "text",      label = "Extra Line Text",  texture = iconPath .. "ExtraLineText" },
-    { command = "btn",       label = "Button",           texture = iconPath .. "Button" },
-    { command = "filler",    label = "Fillers",          texture = iconPath .. "Fillers" },
-    { command = "qpartpart", label = "Qpart Part",       texture = iconPath .. "QpartPart" },
-    { command = "scenario",  label = "Scenario Trigger", texture = iconPath .. "QpartPart" },
-}
+local function ResolveToolbarIcon(command, texture)
+    if AprRC.options and AprRC.options.GetToolbarIcon then
+        return texture or AprRC.options:GetToolbarIcon(command)
+    end
+    return texture
+end
+
+local function CopyDefaultCommands()
+    print()
+    if AprRC.options and AprRC.options.GetDefaultToolbarCommands then
+        return AprRC.options:GetDefaultToolbarCommands()
+    end
+    return {}
+end
 
 ---------------------------------------------------------------------------------------
 --------------------------------- CommandBar Frames -----------------------------------
@@ -59,11 +61,18 @@ function AprRC.CommandBar:UpdateFrame()
     end
     AprRC.CommandBar.btnList = {}
 
-    -- Check if the commands are still the default commands
-    AprRCData.CommandBarCommands = AprRCData.CommandBarCommands or defaultCommands
+    AprRCData.CommandBarCommands = AprRCData.CommandBarCommands or CopyDefaultCommands()
+    if AprRC.options and AprRC.options.NormalizeToolbarCommands then
+        AprRCData.CommandBarCommands = AprRC.options:NormalizeToolbarCommands(AprRCData.CommandBarCommands)
+    end
+    if #AprRCData.CommandBarCommands == 0 then
+        AprRCData.CommandBarCommands = CopyDefaultCommands()
+    end
 
     for _, commandData in ipairs(AprRCData.CommandBarCommands) do
-        local btn = CreateButton(CommandBarFrame, commandData.texture, commandData.label, function()
+        local texture = ResolveToolbarIcon(commandData.command, commandData.texture)
+        commandData.texture = texture
+        local btn = CreateButton(CommandBarFrame, texture, commandData.label, function()
             AprRC.command:SlashCmd(commandData.command)
         end)
         tinsert(AprRC.CommandBar.btnList, btn)
@@ -126,6 +135,21 @@ function AprRC.CommandBar:OnInit()
         CommandBarFrame:ClearAllPoints()
         CommandBarFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
     end
+
+    self:RefreshFrameAnchor()
+end
+
+function AprRC.CommandBar:ResetToDefault()
+    AprRCData.CommandBarCommands = CopyDefaultCommands()
+    AprRC.settings.profile.commandBarFrame.rotation = "HORIZONTAL"
+    AprRC.settings.profile.commandBarFrame.tutorialShown = true
+    AprRC.settings.profile.commandBarFrame.position = {}
+
+    LibWindow.RegisterConfig(CommandBarFrame, AprRC.settings.profile.commandBarFrame.position)
+    CommandBarFrame.RegisteredForLibWindow = true
+
+    CommandBarFrame:ClearAllPoints()
+    CommandBarFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
 
     self:RefreshFrameAnchor()
 end

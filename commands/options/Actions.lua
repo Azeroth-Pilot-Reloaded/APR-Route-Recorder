@@ -1,5 +1,6 @@
 local R = AprRC.options
 local S = R.schemas
+local I = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\"
 
 R:Register({
     key = "PickUp",
@@ -35,6 +36,7 @@ R:Register({
     example = "{ 39688, 39694, 40255, 40256 }",
     legacy = true,
     requires = "PickUp",
+    icon = I .. "PickUpDB",
 })
 
 R:Register({
@@ -54,6 +56,7 @@ R:Register({
     example = "{ 12345, 12346 }",
     legacy = true,
     requires = "Qpart",
+    icon = I .. "QpartDB",
 })
 
 R:Register({
@@ -64,6 +67,8 @@ R:Register({
     legacy = true,
     newStep = true,
     coord = true,
+    icon = I .. "QpartPart",
+    bar = { isDefault = true, order = 80 },
 })
 
 R:Register({
@@ -72,6 +77,8 @@ R:Register({
     schema = S.qpart,
     example = "{ [49529] = { 1 }, [49897] = { 1 } }",
     legacy = true,
+    icon = I .. "Fillers",
+    bar = { command = "filler", label = "Fillers", isDefault = true, order = 70 },
 })
 
 R:Register({
@@ -91,6 +98,7 @@ R:Register({
     example = "{ 12345, 54321 }",
     legacy = true,
     requires = "Done",
+    icon = I .. "DoneDB",
 })
 
 R:Register({
@@ -135,6 +143,8 @@ R:Register({
     newStep = true,
     coord = true,
     legacy = true,
+    icon = I .. "QpartPart",
+    bar = { label = "Scenario Trigger", isDefault = true, order = 90 },
 })
 
 R:Register({
@@ -227,6 +237,7 @@ R:Register({
     newStep = true,
     coord = true,
     legacy = true,
+    icon = I .. "UseItem",
 })
 
 R:Register({
@@ -237,6 +248,7 @@ R:Register({
     newStep = true,
     coord = true,
     legacy = true,
+    icon = I .. "UseSpell",
 })
 
 R:Register({
@@ -267,6 +279,8 @@ R:Register({
     newStep = true,
     coord = true,
     hidden = true,
+    icon = I .. "LearnProfession",
+    bar = { command = "addjob", label = "Learn Profession" },
 })
 
 R:Register({
@@ -277,6 +291,7 @@ R:Register({
     newStep = true,
     coord = true,
     legacy = true,
+    icon = I .. "LootItem",
 })
 
 R:Register({
@@ -285,6 +300,7 @@ R:Register({
     schema = "level",
     example = "60",
     newStep = true,
+    icon = I .. "Grind",
 })
 
 R:Register({
@@ -325,6 +341,7 @@ R:Register({
     example = "true",
     legacy = true,
     hidden = true,
+    icon = I .. "MountVehicle",
 })
 
 R:Register({
@@ -333,6 +350,7 @@ R:Register({
     schema = "id",
     example = "43733",
     legacy = true,
+    icon = I .. "MountVehicle",
 })
 
 R:Register({
@@ -344,6 +362,7 @@ R:Register({
     coord = true,
     legacy = true,
     hidden = true,
+    icon = I .. "WarMode",
 })
 
 R:Register({
@@ -352,6 +371,8 @@ R:Register({
     schema = "bool",
     example = "true",
     newStep = true,
+    icon = I .. "ResetRoute",
+    bar = { command = "addreset", label = "Reset Route" },
 })
 
 R:Register({

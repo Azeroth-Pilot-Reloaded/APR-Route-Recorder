@@ -1,5 +1,6 @@
 local R = AprRC.options
 local S = R.schemas
+local I = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\"
 
 R:Register({
     key = "Coord",
@@ -7,6 +8,8 @@ R:Register({
     schema = S.coord,
     example = "{ x = 4298.4, y = -864.1 }",
     legacy = true,
+    icon = I .. "Coord",
+    bar = { isDefault = true, order = 20 },
 })
 
 R:Register({
@@ -15,6 +18,7 @@ R:Register({
     schema = S.coords,
     example = "{ { Zone = 84, x = 797.7, y = -8624.9 }, { Zone = 85, x = -4436, y = 1590.3 } }",
     legacy = true,
+    icon = I .. "Coord",
 })
 
 R:Register({
@@ -38,6 +42,8 @@ R:Register({
     schema = "positive",
     example = "45",
     legacy = true,
+    icon = I .. "Range",
+    bar = { isDefault = true, order = 30 },
 })
 
 R:Register({
@@ -45,6 +51,7 @@ R:Register({
     command = "zonesteptrigger",
     schema = S.trigger,
     example = "{ x = 4098.2, y = -712.4, Range = 25 }",
+    icon = I .. "ZoneStepTrigger",
 })
 
 R:Register({
@@ -55,6 +62,8 @@ R:Register({
     newStep = true,
     coord = true,
     legacy = true,
+    icon = I .. "Waypoint",
+    bar = { isDefault = true, order = 10 },
 })
 
 R:Register({
@@ -64,6 +73,7 @@ R:Register({
     example = "{ 44543, 44544 }",
     legacy = true,
     requires = "Waypoint",
+    icon = I .. "WaypointDB",
 })
 
 R:Register({
@@ -73,6 +83,7 @@ R:Register({
     example = "true",
     legacy = true,
     requires = "Waypoint",
+    icon = I .. "Waypoint",
 })
 
 R:Register({
@@ -120,6 +131,8 @@ R:Register({
     schema = "bool",
     example = "true",
     legacy = true,
+    icon = I .. "NoArrow",
+    bar = { isDefault = true, order = 40 },
 })
 
 R:Register({
@@ -128,6 +141,7 @@ R:Register({
     schema = "bool",
     example = "true",
     legacy = true,
+    icon = I .. "NoAutoFlightMap",
 })
 
 R:Register({
@@ -135,6 +149,7 @@ R:Register({
     command = "instancequest",
     schema = "bool",
     example = "true",
+    icon = I .. "InstanceQuest",
 })
 
 R:Register({
@@ -142,6 +157,8 @@ R:Register({
     command = "isadventuremap",
     schema = "bool",
     example = "true",
+    icon = I .. "IsAdventureMapVisible",
+    bar = { command = "adventuremap" },
 })
 
 R:Register({
@@ -150,6 +167,7 @@ R:Register({
     schema = "positive",
     example = "75",
     legacy = true,
+    icon = I .. "ETA",
 })
 
 R:Register({
@@ -158,6 +176,7 @@ R:Register({
     schema = "positive",
     example = "45",
     legacy = true,
+    icon = I .. "GossipETA",
 })
 
 R:Register({
@@ -166,5 +185,5 @@ R:Register({
     schema = "bool",
     example = "true",
     legacy = true,
+    icon = I .. "SpecialETAHide",
 })
-

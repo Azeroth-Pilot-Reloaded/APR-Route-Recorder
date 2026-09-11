@@ -1,5 +1,6 @@
 local R = AprRC.options
 local S = R.schemas
+local I = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\"
 
 R:Register({
     key = "Buffs",
@@ -7,6 +8,7 @@ R:Register({
     schema = S.buffs,
     example = "{ { spellId = 311103, tooltipMessage = \"FRESHLEAF_BUFF\" } }",
     legacy = true,
+    icon = I .. "Buffs",
 })
 
 R:Register({
@@ -15,6 +17,8 @@ R:Register({
     schema = S.buttons,
     example = "{ [\"30778-1\"] = 81356 }",
     legacy = true,
+    icon = I .. "Button",
+    bar = { command = "btn", label = "Button", isDefault = true, order = 60 },
 })
 
 R:Register({
@@ -30,6 +34,17 @@ R:Register({
     schema = "id",
     example = "306719",
     legacy = true,
+    icon = I .. "SpellTrigger",
+})
+
+R:Register({
+    key = "ExtraLineText",
+    command = "text",
+    schema = "text",
+    example = "\"Interact with the second console\"",
+    legacy = true,
+    icon = I .. "ExtraLineText",
+    bar = { label = "Extra Line Text", isDefault = true, order = 50 },
 })
 
 R:Register({
@@ -84,6 +99,7 @@ R:Register({
     schema = "id",
     example = "209914",
     legacy = true,
+    icon = I .. "DontHaveAura",
 })
 
 R:Register({
@@ -91,6 +107,7 @@ R:Register({
     command = "dontskipvid",
     schema = "bool",
     example = "true",
+    icon = I .. "Dontskipvid",
 })
 
 R:Register({
