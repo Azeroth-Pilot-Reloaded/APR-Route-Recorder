@@ -5,8 +5,10 @@ function AprRC:RecordUseItem(questID, itemID, onRecorded)
     local attempts = 0
     local function resolve()
         if not self:IsRecordingContext(context) then return end
-        local _, spellID = C_Item.GetItemSpell(itemID)
-        if spellID and spellID > 0 then
+        local ok, _, spellID = pcall(C_Item.GetItemSpell, itemID)
+        local usableSpellID = ok and not (issecretvalue and issecretvalue(spellID))
+            and type(spellID) == "number" and spellID > 0
+        if usableSpellID then
             position.UseItem = { questID = questID, itemID = itemID, itemSpellID = spellID }
             self:ApplyCampaignQuestFlag(position, questID)
             self:NewStep(position)

@@ -10,6 +10,23 @@ AprRC.event:MyRegisterEvent()
 local frameCount = #TestFrames
 AprRC.event:MyRegisterEvent()
 assert(#TestFrames == frameCount, "Event registration leaked frames")
+local function isRegistered(event)
+    for _, frame in ipairs(TestFrames) do
+        if frame.events[event] then return true end
+    end
+    return false
+end
+for _, event in ipairs({
+    "QUEST_ACCEPTED", "QUEST_REMOVED", "QUEST_TURNED_IN", "GOSSIP_SHOW", "GOSSIP_OPTIONS_REFRESHED",
+    "HEARTHSTONE_BOUND", "UNIT_SPELLCAST_SUCCEEDED", "RAID_TARGET_UPDATE", "CHAT_MSG_TEXT_EMOTE",
+    "PET_BATTLE_CLOSE", "PET_BATTLE_OPENING_START", "ADVENTURE_MAP_OPEN",
+    "TAXIMAP_OPENED", "TAXIMAP_CLOSED", "PLAYER_CONTROL_LOST", "PLAYER_CONTROL_GAINED",
+    "QUEST_WATCH_UPDATE", "SCENARIO_CRITERIA_UPDATE", "CRITERIA_EARNED", "ACHIEVEMENT_EARNED",
+    "PLAYER_ENTERING_WORLD", "LOADING_SCREEN_ENABLED",
+    "LEARNED_SPELL_IN_SKILL_LINE", "WAR_MODE_STATUS_UPDATE", "UNIT_ENTERED_VEHICLE", "UNIT_EXITED_VEHICLE",
+}) do
+    assert(isRegistered(event), "Missing automatic event registration: " .. event)
+end
 TestEvent("UNIT_ENTERED_VEHICLE", "party1")
 assert(count() == 0)
 TestEvent("UNIT_ENTERED_VEHICLE", "player")
@@ -20,10 +37,33 @@ AprRC.settings.profile.recordBarFrame.isRecording = false
 TestHooks.SelectOption(100)
 assert(count() == 2, "Gossip hook recorded while stopped")
 fresh()
+C_GossipInfo.GetOptions = function()
+    return {
+        { orderIndex = 1, gossipOptionID = 100 },
+        { orderIndex = 2, gossipOptionID = 101 },
+        { orderIndex = 3, gossipOptionID = 51901 },
+    }
+end
+TestHooks.SelectOptionByIndex(1)
+local gossipButton = {
+    GetData = function() return { info = { gossipOptionID = 101 } } end,
+    HookScript = function(self, _, callback) self.aprrCallback = callback end,
+}
+GossipFrame = {
+    gossipOptions = C_GossipInfo.GetOptions(),
+    GreetingPanel = { ScrollBox = { ScrollTarget = {
+        GetChildren = function() return gossipButton end,
+    } } },
+}
+TestEvent("GOSSIP_SHOW")
+assert(gossipButton.aprrCallback, "The gossip-button fallback was not installed")
+gossipButton.aprrCallback(gossipButton)
 TestHooks.SelectOption(100)
-TestHooks.SelectOption(100)
-TestHooks.SelectOption(101)
+TestHooks.SelectOptionByIndex(2)
 assert(count() == 1 and #AprRC:GetLastStep().GossipOptionIDs == 2)
+TestHooks.SelectOptionByIndex(3)
+assert(#AprRC:GetLastStep().GossipOptionIDs == 2, "Chromie gossip IDs must not leak into normal gossip steps")
+GossipFrame = nil
 fresh()
 local desired = false
 C_PvP.IsWarModeDesired = function() return desired end
@@ -103,7 +143,19 @@ end
 TestEvent("CRITERIA_EARNED", 42, "Identical")
 assert(count() == 0)
 
--- Opening a known taxi map must not record GetFP.
+-- Prefer the quest ID supplied by scenario data over a guessed nearby quest.
+fresh()
+C_ScenarioInfo = {
+    GetScenarioInfo = function() return { scenarioID = 7, questID = 4242 } end,
+    GetScenarioStepInfo = function() return { stepID = 8, numCriteria = 1 } end,
+    GetCriteriaInfoByStep = function()
+        return { criteriaID = 9, completed = true, quantityString = "1/1" }
+    end,
+}
+TestEvent("SCENARIO_CRITERIA_UPDATE", 9)
+assert(count() == 1 and AprRC:GetLastStep().Scenario.questID == 4242)
+
+-- Closing a newly encountered taxi map records GetFP once, after ruling out a flight.
 fresh()
 GetTaxiMapID = function() return 13 end
 C_TaxiMap = {
@@ -115,9 +167,12 @@ C_TaxiMap = {
 }
 TestEvent("TAXIMAP_OPENED")
 TestEvent("TAXIMAP_CLOSED")
-assert(count() == 0)
-TestEvent("TAXIMAP_OPENED")
+TestRunTimers()
 assert(count() == 1 and AprRC:GetLastStep().GetFP == 100)
+TestEvent("TAXIMAP_OPENED")
+TestEvent("TAXIMAP_CLOSED")
+TestRunTimers()
+assert(count() == 1, "A known flight point was recorded twice")
 local clock = 10
 GetTime = function() return clock end
 UnitOnTaxi = function() return true end
@@ -130,6 +185,11 @@ clock = 90
 TestEvent("PLAYER_CONTROL_GAINED")
 assert(flight.ETA == 80 and AprRC:GetLastStep().ETA == nil)
 fresh()
+TestEvent("TAXIMAP_OPENED")
+TestEvent("TAXIMAP_CLOSED")
+fresh()
+TestRunTimers()
+assert(count() == 0, "Pending flight-point discovery leaked into a new route")
 TestEvent("TAXIMAP_OPENED")
 TestHooks.TakeTaxiNode(2)
 fresh()
@@ -169,6 +229,12 @@ GetQuestLogSpecialItemInfo = function() return "item:123:0" end
 TestEvent("QUEST_WATCH_UPDATE", 42)
 assert(count() == 2 and AprRC:GetLastStep().Qpart[42][1] == 1)
 assert(AprRC:GetLastStep().Button["42-1"] == 123)
+fresh()
+AprRC.lastQuestState = { [43] = {} }
+C_QuestLog.GetLogIndexForQuestID = function() return nil end
+C_QuestLog.GetQuestObjectives = function() return { { numFulfilled = 1, numRequired = 1, type = "monster" } } end
+TestEvent("QUEST_WATCH_UPDATE", 43)
+assert(count() == 1 and AprRC:GetLastStep().Qpart[43][1] == 1 and AprRC:GetLastStep().Button == nil)
 
 -- Match mob drops to the actual quest-starting item, not localized tooltip text.
 fresh()

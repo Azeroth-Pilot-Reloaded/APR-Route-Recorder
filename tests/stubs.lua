@@ -24,6 +24,7 @@ function tIndexOf(list, value)
 end
 strtrim = function(text) return text:match("^%s*(.-)%s*$") end
 UnitPosition = function() return 100, 200 end
+UnitOnTaxi = function() return false end
 C_Map = { GetBestMapForUnit = function() return 2393 end }
 function AprRC:getZone() return 2393 end
 AprRCData = { CurrentRoute = { name = "2393-Test", steps = {} }, Routes = {}, QuestLookup = {}, TaxiLookup = {} }
@@ -52,7 +53,7 @@ function TestRunTimers()
     TestTimers = {}
     for _, callback in ipairs(callbacks) do callback() end
 end
-C_GossipInfo = {}
+C_GossipInfo = { GetOptions = function() return {} end }
 C_ChromieTime = {}
 C_PvP = { IsWarModeDesired = function() return false end }
 C_Item = {}

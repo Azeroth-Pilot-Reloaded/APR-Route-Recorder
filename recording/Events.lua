@@ -13,6 +13,10 @@ local lastWarModeDesired
 local lastAdventureMapOpenAt = 0
 local ADVENTURE_MAP_ACCEPT_WINDOW = 15
 
+local function IsUsablePositiveID(value)
+    return not (issecretvalue and issecretvalue(value)) and type(value) == "number" and value > 0
+end
+
 
 ---------------------------------------------------------------------------------------
 ------------------------------------- EVENTS ------------------------------------------
@@ -23,6 +27,7 @@ local events = {
     accept = "QUEST_ACCEPTED",
     remove = "QUEST_REMOVED",
     done = "QUEST_TURNED_IN",
+    gossip = { "GOSSIP_SHOW", "GOSSIP_OPTIONS_REFRESHED" },
     setHS = "HEARTHSTONE_BOUND",
     spell = "UNIT_SPELLCAST_SUCCEEDED",
     raidIcon = "RAID_TARGET_UPDATE",
@@ -286,8 +291,51 @@ function AprRC.event.functions.vehicle(event, unit)
     end
 end
 
+local gossipOptionIDsByOrderIndex = {}
+local ignoredGossipOptionIDs = { [51901] = true, [51902] = true }
+
+local function GetVisibleGossipOptions()
+    if GossipFrame and type(GossipFrame.gossipOptions) == "table" and next(GossipFrame.gossipOptions) then
+        return GossipFrame.gossipOptions
+    end
+    if not C_GossipInfo or not C_GossipInfo.GetOptions then return {} end
+    local ok, options = pcall(C_GossipInfo.GetOptions)
+    return ok and type(options) == "table" and options or {}
+end
+
+local function CacheGossipOptions()
+    gossipOptionIDsByOrderIndex = {}
+    for _, option in ipairs(GetVisibleGossipOptions()) do
+        if type(option) == "table" and IsUsablePositiveID(option.orderIndex)
+            and IsUsablePositiveID(option.gossipOptionID) then
+            gossipOptionIDsByOrderIndex[option.orderIndex] = option.gossipOptionID
+        end
+    end
+end
+
+local function RecordGossipButtonClick(button)
+    local data = button.GetData and button:GetData()
+    local info = data and data.info
+    if info then AprRC:RecordGossipOption(info.gossipOptionID) end
+end
+
+function AprRC.event.functions.gossip()
+    CacheGossipOptions()
+    local scrollTarget = GossipFrame and GossipFrame.GreetingPanel and GossipFrame.GreetingPanel.ScrollBox
+        and GossipFrame.GreetingPanel.ScrollBox.ScrollTarget
+    if not scrollTarget or not scrollTarget.GetChildren then return end
+    for _, child in ipairs({ scrollTarget:GetChildren() }) do
+        local data = child.GetData and child:GetData()
+        if data and data.info and data.info.gossipOptionID and not child.hookedGossipExtraction then
+            child:HookScript("OnClick", RecordGossipButtonClick)
+            child.hookedGossipExtraction = true
+        end
+    end
+end
+
 function AprRC:RecordGossipOption(gossipOptionID)
-    if not self:IsRecordingContext() or type(gossipOptionID) ~= "number" or gossipOptionID <= 0 then return end
+    if not self:IsRecordingContext() or not IsUsablePositiveID(gossipOptionID)
+        or ignoredGossipOptionIDs[gossipOptionID] then return end
     local step = self:GetLastStep()
     if self:IsCurrentStepFarAway() or not (step.Qpart or step.QpartPart or step.GossipOptionIDs or step.PickUp) then
         step = {}
@@ -302,6 +350,19 @@ end
 
 hooksecurefunc(C_GossipInfo, "SelectOption", function(optionID)
     AprRC:RecordGossipOption(optionID)
+end)
+
+-- Blizzard's gossip buttons select by their display order, not by gossipOptionID.
+-- Keep the direct-ID hook above for addons and use the visible option data to
+-- translate the native UI call back to the stable ID expected by APR routes.
+hooksecurefunc(C_GossipInfo, "SelectOptionByIndex", function(orderIndex)
+    if not IsUsablePositiveID(orderIndex) then return end
+    local optionID = gossipOptionIDsByOrderIndex[orderIndex]
+    if not optionID then
+        CacheGossipOptions()
+        optionID = gossipOptionIDsByOrderIndex[orderIndex]
+    end
+    if optionID then AprRC:RecordGossipOption(optionID) end
 end)
 
 function AprRC.event.functions.emote(event, ...)
@@ -378,9 +439,25 @@ end
 local pendingTaxiDiscovery
 function AprRC.event.functions.taxi(event)
     if event == "TAXIMAP_CLOSED" then
+        local currentNode = AprRC.CurrentTaxiNode
+        if not currentNode or not IsUsablePositiveID(currentNode.nodeID) then return end
         local step = {}
         AprRC:SetStepCoord(step)
-        pendingTaxiDiscovery = { context = AprRC:CaptureRecordingContext(), step = step }
+        local pending = {
+            context = AprRC:CaptureRecordingContext(),
+            nodeID = currentNode.nodeID,
+            step = step,
+        }
+        pendingTaxiDiscovery = pending
+        C_Timer.After(2, function()
+            if pendingTaxiDiscovery ~= pending then return end
+            pendingTaxiDiscovery = nil
+            if not AprRC:IsRecordingContext(pending.context) or UnitOnTaxi("player")
+                or AprRC:IsTaxiInLookup(pending.nodeID) then return end
+            pending.step.GetFP = pending.nodeID
+            AprRC:NewStep(pending.step)
+            AprRCData.TaxiLookup[pending.nodeID] = true
+        end)
         return
     elseif event == "TAXIMAP_OPENED" then
         local taxiMapID = GetTaxiMapID()
@@ -390,17 +467,6 @@ function AprRC.event.functions.taxi(event)
         for _, node in ipairs(taxiNodes) do
             if node.state == Enum.FlightPathState.Current then AprRC.CurrentTaxiNode = node end
         end
-    end
-    if pendingTaxiDiscovery and AprRC.CurrentTaxiNode then
-        if AprRC:IsRecordingContext(pendingTaxiDiscovery.context) then
-            local nodeID = AprRC.CurrentTaxiNode.nodeID
-            if not AprRC:IsTaxiInLookup(nodeID) then
-                pendingTaxiDiscovery.step.GetFP = nodeID
-                AprRC:NewStep(pendingTaxiDiscovery.step)
-                AprRCData.TaxiLookup[nodeID] = true
-            end
-        end
-        pendingTaxiDiscovery = nil
     end
 end
 
@@ -421,6 +487,7 @@ function AprRC.event.functions.qpart(event, questID)
     local function setButton(questID, index, step)
         -- itemID
         local questLogIndex = C_QuestLog.GetLogIndexForQuestID(questID)
+        if not questLogIndex then return end
         local link = GetQuestLogSpecialItemInfo(questLogIndex)
         if link then
             local itemID = AprRC:GetItemIDFromLink(link)
@@ -541,7 +608,8 @@ function AprRC.event.functions.scenario(event, ...)
     if not scenarioInfo then return end
 
     local scenarioID = scenarioInfo.scenarioID
-    local scenarioQuestID = AprRC:FindClosestIncompleteQuest()
+    local scenarioQuestID = IsUsablePositiveID(scenarioInfo.questID) and scenarioInfo.questID
+        or AprRC:FindClosestIncompleteQuest()
     local stepInfo = C_ScenarioInfo.GetScenarioStepInfo()
     if not stepInfo then return end
 

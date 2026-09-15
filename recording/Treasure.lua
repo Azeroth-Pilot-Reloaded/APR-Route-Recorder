@@ -21,8 +21,11 @@ frame:SetScript("OnEvent", function()
     if not mapID then return end
     for _, guid in ipairs(C_VignetteInfo.GetVignettes()) do
         local info = C_VignetteInfo.GetVignetteInfo(guid)
-        if info and info.type == Enum.VignetteType.Treasure and info.onMinimap and info.rewardQuestID > 0
-            and not tracked[info.rewardQuestID] and not C_QuestLog.IsQuestFlaggedCompleted(info.rewardQuestID) then
+        local questID = info and info.rewardQuestID
+        local usableQuestID = not (issecretvalue and issecretvalue(questID))
+            and type(questID) == "number" and questID > 0
+        if info and info.type == Enum.VignetteType.Treasure and info.onMinimap and usableQuestID
+            and not tracked[questID] and not C_QuestLog.IsQuestFlaggedCompleted(questID) then
             local position = {}
             local mapPosition = C_VignetteInfo.GetVignettePosition(guid, mapID)
             local _, world
@@ -34,7 +37,7 @@ frame:SetScript("OnEvent", function()
             else
                 AprRC:SetStepCoord(position)
             end
-            tracked[info.rewardQuestID] = { position = position }
+            tracked[questID] = { position = position }
         end
     end
 end)
