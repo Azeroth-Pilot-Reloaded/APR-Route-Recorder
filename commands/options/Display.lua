@@ -49,6 +49,13 @@ R:Register({
 })
 
 R:Register({
+    key = "TrigText",
+    command = "trigtext",
+    schema = "text",
+    example = "\"1/7\"",
+})
+
+R:Register({
     key = "ExtraActionB",
     command = "extraactionb",
     schema = "bool",

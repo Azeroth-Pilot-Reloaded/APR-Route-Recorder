@@ -57,6 +57,12 @@ local imported, err = AprRC:ReadRouteDefinition(AprRC:SerializeData(exported), r
 assert(imported, err)
 assert(imported.XPConsumables == false and imported.parallelSteps[1].steps[1].Done[1] == 42)
 assert(imported.label == "My route" and route.steps[1]._index == nil)
+local triggerRoute, triggerError = AprRC:ReadRouteDefinition(
+    '{ steps = { { Scenario = { scenarioID = 3361, stepID = 16877, criteriaID = 113263, criteriaIndex = 1 }, TrigText = "1/7", TrigText2 = "2/7" } } }',
+    route.name)
+assert(triggerRoute, triggerError)
+assert(triggerRoute.steps[1].TrigText == "1/7" and triggerRoute.steps[1].TrigText2 == "2/7")
+assert(AprRC:ReadRouteDefinition('{ steps = { { TrigText = 7 } } }', route.name) == nil)
 local old = assert(AprRC:ReadRouteDefinition('{ { Note = "New text" } }', route.name, route))
 assert(old.XPConsumables == false and old.label == "My route" and old.steps[1].Note == "New text")
 assert(AprRC:ReadRouteDefinition('{ { RouteCompleted = true }, { Note = "Too late" } }', route.name) == nil)
