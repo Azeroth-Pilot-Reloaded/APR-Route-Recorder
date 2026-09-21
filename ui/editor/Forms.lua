@@ -59,6 +59,18 @@ local function keys(data)
     return result
 end
 
+function Form:RemoveButton(group, body, callback)
+    local controls, single = 0, false
+    for _, child in ipairs(body.children) do
+        if child.type ~= "Label" then
+            controls = controls + 1
+            single = child.type == "EditBox" or child.type == "Dropdown" or child.type == "CheckBox"
+        end
+    end
+    group:SetUserData("compound", controls ~= 1 or not single)
+    UI.IconButton(group, "trash", "Remove", callback)
+end
+
 function Form:Default(schema)
     if schema == "level" then schema = R.schemas.level end
     local valueKind = kind(schema)
@@ -196,11 +208,13 @@ function Form:Render(parent, schema, value, set, context, path, label)
         for _, key in ipairs(ordered) do
             if value[key] ~= nil or required[key] then
                 local group = UI.Group(parent, UI.Label(key))
+                group:SetLayout("APRField")
+                local body = UI.Group(group)
                 local fieldSchema = fields[key]
-                self:Render(group, fieldSchema, value[key], function(entry) value[key] = entry; set(value) end,
+                self:Render(body, fieldSchema, value[key], function(entry) value[key] = entry; set(value) end,
                     context, path .. "/" .. key, UI.Label(key))
                 if not required[key] then
-                    UI.Button(group, "Remove", function() value[key] = nil; changed(value, true) end, 100)
+                    self:RemoveButton(group, body, function() value[key] = nil; changed(value, true) end)
                 end
             end
         end
@@ -225,19 +239,21 @@ function Form:Render(parent, schema, value, set, context, path, label)
         page = math.min(page, pageCount)
         if pageCount > 1 then
             local pager = UI.Group(parent)
-            UI.Button(pager, "Previous", function() context.pages[path] = math.max(1, page - 1); context.redraw() end, 100)
-            UI.Button(pager, "Next", function() context.pages[path] = math.min(pageCount, page + 1); context.redraw() end, 100)
+            UI.IconButton(pager, "previous", "Previous", function() context.pages[path] = math.max(1, page - 1); context.redraw() end)
+            UI.IconButton(pager, "next", "Next", function() context.pages[path] = math.min(pageCount, page + 1); context.redraw() end)
             UI.LabelWidget(pager, page .. " / " .. pageCount)
         end
         for position = (page - 1) * 10 + 1, math.min(page * 10, #entries) do
             local key = entries[position]
             local group = UI.Group(parent, (valueKind == "map" and "#" or T("Entry") .. " ") .. tostring(key))
-            self:Render(group, valueKind == "steps" and "step" or schema.entry, value[key],
+            group:SetLayout("APRField")
+            local body = UI.Group(group)
+            self:Render(body, valueKind == "steps" and "step" or schema.entry, value[key],
                 function(entry) value[key] = entry; set(value) end, context, path .. "/" .. key, T("Value"))
-            UI.Button(group, "Remove", function()
+            self:RemoveButton(group, body, function()
                 if valueKind == "map" then value[key] = nil else table.remove(value, key) end
                 changed(value, true)
-            end, 100)
+            end)
         end
         if valueKind == "map" then
             local getKey

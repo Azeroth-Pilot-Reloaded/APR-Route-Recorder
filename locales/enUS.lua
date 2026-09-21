@@ -831,3 +831,7 @@ L["unknown enum value"] = "unknown enum value"
 L["unsupported field "] = "unsupported field "
 L["unsupported schema "] = "unsupported schema "
 L["value does not match the expected format"] = "value does not match the expected format"
+
+L["Drag to resize columns"] = "Drag to resize columns"
+
+L["Drag commands between columns to add, remove or reorder them."] = "Drag commands between columns to add, remove or reorder them."

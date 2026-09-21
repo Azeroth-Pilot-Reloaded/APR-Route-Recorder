@@ -222,6 +222,7 @@ end
 
 function Editor:DrawTab()
     self:DetachLua()
+    AprRC.CommandBarSetting:CancelDrag()
     self.list, self.inspector, self.listPanel, self.routeForm = nil, nil, nil, nil
     self.stepsSplit = nil
     self.tabs:ReleaseChildren()
@@ -275,7 +276,8 @@ function Editor:Refresh()
     end
     if self.listDirty then self:DrawList() end
     local session = self.session
-    if session and self.follow and not self.confirm and not self.nameDialog and not interacting(self.frame) and
+    if session and self.follow and not AprRC.CommandBarSetting.dragging and
+        not (self.stepsSplit and self.stepsSplit.dragging) and not self.confirm and not self.nameDialog and not interacting(self.frame) and
         not session:IsDirty() and session:IsStale() then
         local atEnd = session.selected >= #session.draft.steps
         session:Reload()
@@ -326,12 +328,17 @@ function Editor:ToggleCompact()
     status.height = math.max(minHeight, self.frame.frame:GetHeight())
     self.frame:SetWidth(status.width)
     self.frame:SetHeight(status.height)
+    self.compactButton:SetIcon(self.compact and "expand" or "compact")
     self.compactButton:SetText(T(self.compact and "Full width" or "Compact mode"))
     self:DrawTab()
 end
 
 function Editor:Show()
-    if self.frame then self.frame:Show(); self.frame.frame:Raise(); return end
+    if self.frame then
+        self.frame:Show(); self.frame.frame:Raise()
+        AprRC.CommandBar:RefreshFrameAnchor()
+        return
+    end
     local frame = GUI:Create("Frame")
     self.frame = frame
     frame:SetTitle("APR  |  " .. T("Route workshop"))
@@ -355,7 +362,11 @@ function Editor:Show()
     self.routeDropdown:SetRelativeWidth(0.54)
     UI.Button(header, "New route", function() self:NameDialog() end, 155)
     self.recordButton = UI.Button(header, "Record this route", function() self:ToggleRecording() end, 210)
-    self.compactButton = UI.Button(header, self.compact and "Full width" or "Compact mode", function() self:ToggleCompact() end, 175)
+    self.compactButton = UI.IconButton(nil, self.compact and "expand" or "compact",
+        self.compact and "Full width" or "Compact mode", function() self:ToggleCompact() end)
+    self.compactButton.frame:SetParent(frame.frame)
+    self.compactButton.frame:SetPoint("TOPRIGHT", frame.frame, "TOPRIGHT", -14, -8)
+    self.compactButton.frame:Show()
     self.recordStatus = UI.LabelWidget(header, "")
     self.summary = UI.LabelWidget(header, "")
     self.tabs = GUI:Create("TabGroup")
@@ -371,8 +382,8 @@ function Editor:Show()
     self.saveButton = UI.Button(footer, "Save", function() self:Save() end, 135)
     self.exportButton = UI.Button(footer, "Export to APR", function() self:Export() end, 170)
     self.copyButton = UI.Button(footer, "Save a copy", function() self:NameDialog(true) end, 195)
-    self.undoButton = UI.Button(footer, "Undo", function() self:Undo(-1) end, 100)
-    self.redoButton = UI.Button(footer, "Redo", function() self:Undo(1) end, 100)
+    self.undoButton = UI.IconButton(footer, "undo", "Undo", function() self:Undo(-1) end)
+    self.redoButton = UI.IconButton(footer, "redo", "Redo", function() self:Undo(1) end)
     UI.Button(footer, "Reload saved route", function()
         local session = self.session
         if not session then return end
@@ -394,6 +405,8 @@ function Editor:Show()
         if self.session then self.session:Persist() end
         if self.timer then self:CancelTimer(self.timer); self.timer = nil end
         self:DetachLua()
+        AprRC.CommandBarSetting:CancelDrag()
+        GUI:Release(self.compactButton); self.compactButton = nil
         if self.confirm then self.confirm:Hide() end
         if self.nameDialog then self.nameDialog:Hide() end
         widget.frame:SetBackdropColor(0, 0, 0, 1)
@@ -409,4 +422,5 @@ function Editor:Show()
     if name and Model:Source(name) then self:SelectRoute(name) else self.session = nil; self:SelectTab("steps") end
     frame:DoLayout()
     self.timer = self:ScheduleRepeatingTimer("Tick", 1)
+    AprRC.CommandBar:RefreshFrameAnchor()
 end

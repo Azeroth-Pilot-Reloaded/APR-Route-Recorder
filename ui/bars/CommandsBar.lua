@@ -6,7 +6,8 @@ Bar.btnList = {}
 
 local frame = CreateFrame("Frame", "CommandBarFrame", UIParent, "BackdropTemplate")
 Bar.frame = frame
-frame:SetFrameStrata("MEDIUM")
+frame:SetFrameStrata("FULLSCREEN_DIALOG")
+frame:SetFrameLevel(300)
 frame:SetClampedToScreen(true)
 frame:SetMovable(true)
 frame:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8X8", edgeFile = "Interface\\Buttons\\WHITE8X8", edgeSize = 1 })
@@ -47,7 +48,11 @@ local function headerButton(text, offset, tooltip, callback)
     button:SetScript("OnLeave", function() GameTooltip:Hide() end)
     return button
 end
-Bar.settingsButton = headerButton("+", -5, L["Bar settings"], function() AprRC.CommandBarSetting:Show(true) end)
+Bar.settingsButton = headerButton("", -5, L["Bar settings"], function() AprRC.CommandBarSetting:Show(true) end)
+local settingsIcon = Bar.settingsButton:CreateTexture(nil, "ARTWORK")
+settingsIcon:SetSize(18, 18)
+settingsIcon:SetPoint("CENTER")
+settingsIcon:SetTexture("Interface\\AddOns\\APR-Recorder\\assets\\icons\\settings")
 Bar.nextButton = headerButton(">", -31, L["Next"], function() Bar.page = (Bar.page or 1) + 1; Bar:UpdateFrame() end)
 Bar.previousButton = headerButton("<", -57, L["Previous"], function() Bar.page = math.max(1, (Bar.page or 1) - 1); Bar:UpdateFrame() end)
 
@@ -147,7 +152,10 @@ function Bar:RefreshFrameAnchor()
     if not profile.enableAddon or not profile.recordBarFrame.isRecording or profile.commandBarFrame.enabled == false
         or (C_PetBattles and C_PetBattles.IsInBattle()) then frame:Hide(); return end
     self:UpdateFrame()
+    local editor = AprRC.routeEditor
+    if editor and editor.frame then frame:SetFrameLevel(editor.frame.frame:GetFrameLevel() + 200) end
     frame:Show()
+    frame:Raise()
 end
 
 -- Retain the old entry point for integrations; geometry now uses a wrapping grid.

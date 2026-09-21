@@ -8,7 +8,14 @@ UI.PageSize = PAGE_SIZE
 local gold, muted = "|cffedc36a", "|cffb3a58b"
 
 function Editor:DrawSteps()
-    local split = UI.Body(self.tabs, "APRSplit")
+    local split = GUI:Create("APRSplitGroup")
+    split:SetLayout("APRSplit")
+    split:SetUserData("body", true)
+    split:SetRatio(AprRC.settings.profile.editorFrame.stepPaneRatio)
+    split:SetCallback("OnRatioChanged", function(_, _, ratio)
+        AprRC.settings.profile.editorFrame.stepPaneRatio = ratio
+    end)
+    self.tabs:AddChild(split)
     self.stepsSplit = split
     split.content.aprCompactPane = self.compact and (self.compactPane or "list") or nil
     self.listPanel = UI.Body(split)
@@ -34,12 +41,12 @@ function Editor:DrawSteps()
         end)
     self.list = UI.Scroll(self.listPanel)
     local footer = UI.Toolbar(self.listPanel, true)
-    self.previousButton = UI.Button(footer, "Previous", function()
+    self.previousButton = UI.IconButton(footer, "previous", "Previous", function()
         self.page = self.page - 1; self:DrawList(); self.list:SetScroll(0)
-    end, 100)
-    self.nextButton = UI.Button(footer, "Next", function()
+    end)
+    self.nextButton = UI.IconButton(footer, "next", "Next", function()
         self.page = self.page + 1; self:DrawList(); self.list:SetScroll(0)
-    end, 100)
+    end)
     UI.Button(footer, "Jump to latest", function()
         self.query, self.filter, self.page = "", "all", math.max(1, math.ceil(#self.session.draft.steps / PAGE_SIZE))
         self.session.selected = math.max(1, #self.session.draft.steps)
@@ -85,13 +92,13 @@ function Editor:DrawSteps()
     end
     self.inspector = UI.Scroll(detail)
     local actions = UI.Toolbar(detail, true)
-    self.moveUp = UI.Button(actions, "Move up", function() self:Move(-1) end, 110)
-    self.moveDown = UI.Button(actions, "Move down", function() self:Move(1) end, 110)
-    self.duplicate = UI.Button(actions, "Duplicate", function()
+    self.moveUp = UI.IconButton(actions, "up", "Move up", function() self:Move(-1) end)
+    self.moveDown = UI.IconButton(actions, "down", "Move down", function() self:Move(1) end)
+    self.duplicate = UI.IconButton(actions, "duplicate", "Duplicate", function()
         local session = self.session
         if session:Insert(session.draft.steps[session.selected], session.selected) then self:AfterStructureChange() end
-    end, 110)
-    self.delete = UI.Button(actions, "Delete", function()
+    end)
+    self.delete = UI.IconButton(actions, "trash", "Delete", function()
         local session, index = self.session, self.session.selected
         local step = session.draft.steps[index]
         self:Confirm(T("Delete the selected step? You can undo this change."), function()
@@ -99,7 +106,7 @@ function Editor:DrawSteps()
                 session:Delete(index); self:AfterStructureChange()
             end
         end)
-    end, 110)
+    end)
     self.positionButton = UI.Button(actions, "Player position", function()
         local step = self.session.draft.steps[self.session.selected]
         local coord, zone = AprRC:GetPlayerCoord()

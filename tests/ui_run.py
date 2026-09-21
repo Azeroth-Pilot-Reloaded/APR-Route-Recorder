@@ -47,6 +47,7 @@ def run():
     load("tests/recorder_button_smoke.lua")
     load("tests/commands_bar_smoke.lua")
     load("tests/compact_ui_smoke.lua")
+    load("tests/workshop_controls_smoke.lua")
 
 
 if __name__ == "__main__":

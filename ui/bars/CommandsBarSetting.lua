@@ -1,29 +1,11 @@
 local GUI = LibStub("AceGUI-3.0")
 AprRC.CommandBarSetting = AprRC:NewModule("CommandBarSetting")
 local Settings = AprRC.CommandBarSetting
-local PAGE_SIZE = 20
 
 function Settings:Find(command)
     for index, entry in ipairs(AprRC.CommandBar:GetCommands()) do
         if strlower(entry.command) == strlower(command) then return index end
     end
-end
-
-function Settings:ToggleFavorite(entry)
-    local index = self:Find(entry.command)
-    if index then table.remove(AprRCData.CommandBarCommands, index)
-    else table.insert(AprRCData.CommandBarCommands, AprRC:CopyData(entry)) end
-    AprRC.CommandBar:RefreshFrameAnchor()
-    self:DrawResults()
-end
-
-function Settings:Move(command, delta)
-    local index = self:Find(command)
-    local list = AprRCData.CommandBarCommands
-    if not index or index + delta < 1 or index + delta > #list then return end
-    table.insert(list, index + delta, table.remove(list, index))
-    AprRC.CommandBar:RefreshFrameAnchor()
-    self:DrawResults()
 end
 
 function Settings:IsVisible()
@@ -37,65 +19,144 @@ function Settings:RefreshRunState()
     for _, button in ipairs(self.runButtons or {}) do button:SetDisabled(not active) end
 end
 
+-- Slot is an insertion position in the original selected list, before removal.
+function Settings:ApplyDrop(entry, destination, slot)
+    local old = self:Find(entry.command)
+    local list = AprRCData.CommandBarCommands
+    if destination == "selected" then
+        slot = math.max(1, math.min(#list + 1, slot or #list + 1))
+        local moved = old and table.remove(list, old) or AprRC:CopyData(entry)
+        if old and old < slot then slot = slot - 1 end
+        table.insert(list, slot, moved)
+    elseif destination == "available" and old then
+        table.remove(list, old)
+    else return end
+    AprRC.CommandBar:RefreshFrameAnchor()
+    self:DrawResults()
+end
+
+function Settings:ToggleFavorite(entry)
+    self:ApplyDrop(entry, self:Find(entry.command) and "available" or "selected")
+end
+
+function Settings:Move(command, delta)
+    local old = self:Find(command)
+    local list = AprRCData.CommandBarCommands
+    if not old or old + delta < 1 or old + delta > #list then return end
+    self:ApplyDrop(list[old], "selected", old + delta + (delta > 0 and 1 or 0))
+end
+
+function Settings:CancelDrag()
+    if self.dragging and self.dragging.row then self.dragging.row.frame:SetAlpha(1) end
+    self.dragging = nil
+    if self.ghost then self.ghost:Hide(); self.ghost:SetScript("OnUpdate", nil) end
+    if self.dropLine then self.dropLine:Hide() end
+end
+
+function Settings:DropTarget()
+    if not self:IsVisible() or not self.selected then return end
+    if MouseIsOver(self.selected.frame) then
+        local _, y = GetCursorPosition()
+        y = y / self.selected.frame:GetEffectiveScale()
+        for index, row in ipairs(self.selected.children) do
+            if y > row.frame:GetTop() - row.frame:GetHeight() / 2 then return "selected", index end
+        end
+        return "selected", #self.selected.children + 1
+    elseif MouseIsOver(self.available.frame) then return "available" end
+end
+
+function Settings:FinishDrag()
+    local drag = self.dragging
+    local target, slot = self:DropTarget()
+    self:CancelDrag()
+    if drag and target then self:ApplyDrop(drag.entry, target, slot) end
+end
+
+function Settings:StartDrag(row)
+    self:CancelDrag()
+    if not self.ghost then
+        self.ghost = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
+        self.ghost:SetFrameStrata("TOOLTIP")
+        self.ghost:SetSize(240, 34)
+        self.ghost:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8X8" })
+        self.ghost:SetBackdropColor(0.1, 0.08, 0.04, 0.95)
+        self.ghost.label = self.ghost:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        self.ghost.label:SetPoint("LEFT", 8, 0); self.ghost.label:SetPoint("RIGHT", -8, 0)
+        self.dropLine = CreateFrame("Frame", nil, UIParent)
+        self.dropLine:SetFrameStrata("TOOLTIP"); self.dropLine:SetHeight(3)
+        local texture = self.dropLine:CreateTexture(nil, "OVERLAY")
+        texture:SetAllPoints(); texture:SetColorTexture(1, 0.82, 0.4, 1)
+    end
+    self.dragging = { entry = row.entry, row = row }
+    row.frame:SetAlpha(0.4)
+    GameTooltip:Hide()
+    self.ghost.label:SetText(row.entry.label)
+    self.ghost:Show()
+    self.ghost:SetScript("OnUpdate", function(_, elapsed)
+        if not self:IsVisible() or IsKeyDown("ESCAPE") then self:CancelDrag(); return end
+        if not IsMouseButtonDown("LeftButton") then self:FinishDrag(); return end
+        local x, y = GetCursorPosition()
+        local scale = UIParent:GetEffectiveScale()
+        self.ghost:ClearAllPoints(); self.ghost:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", x / scale + 16, y / scale + 12)
+        local target, slot = self:DropTarget()
+        self.dropLine:Hide()
+        if target then
+            local scroll = target == "selected" and self.selected or self.available
+            local cursorY = y / scroll.frame:GetEffectiveScale()
+            local direction = cursorY > scroll.frame:GetTop() - 24 and -1 or
+                (cursorY < scroll.frame:GetBottom() + 24 and 1 or 0)
+            if direction ~= 0 then
+                local value = math.max(0, math.min(1000, (scroll.localstatus.scrollvalue or 0) + direction * elapsed * 160))
+                scroll.scrollbar:SetValue(value)
+                scroll:SetScroll(value)
+            end
+        end
+        if target == "selected" then
+            local rows = self.selected.children
+            local anchor = rows[slot] or rows[#rows]
+            self.dropLine:ClearAllPoints()
+            self.dropLine:SetWidth(self.selected.content:GetWidth())
+            self.dropLine:SetPoint("TOPLEFT", anchor and anchor.frame or self.selected.content,
+                rows[slot] and "TOPLEFT" or (anchor and "BOTTOMLEFT" or "TOPLEFT"))
+            self.dropLine:Show()
+        end
+    end)
+end
+
 function Settings:DrawResults()
-    if not self:IsVisible() then return end
-    local UI, R = AprRC.editorUI, AprRC.options
-    local T = UI.Text
-    self.results:ReleaseChildren()
-    self.runButtons = {}
-    if self.showSettings then self:DrawSettings(self.results) end
-    local entries = {}
+    if not self:IsVisible() or not self.available then return end
+    self:CancelDrag()
+    local UI = AprRC.editorUI
     local filter = (self.query or ""):lower()
-    local source = self.category == "favorites" and AprRC.CommandBar:GetCommands() or R:GetToolbarCatalog()
-    for _, entry in ipairs(source) do
-        local matches = (entry.label .. " " .. entry.command):lower():find(filter, 1, true)
-        if matches and (self.category == "favorites" or self.category == "all" or self.category == entry.category) then
-            entries[#entries + 1] = entry
+    self.available:ReleaseChildren(); self.selected:ReleaseChildren()
+    self.runButtons = {}
+    local selected = AprRC.CommandBar:GetCommands()
+    local present = {}
+    local function add(parent, entry, index)
+        local row = GUI:Create("APRCommandRow")
+        row:SetEntry(entry, index ~= nil, index)
+        row:SetCallback("OnToggle", function() self:ToggleFavorite(entry) end)
+        row:SetCallback("OnRun", function() AprRC.CommandBar:Run(entry.command) end)
+        row:SetCallback("OnDragStart", function() self:StartDrag(row) end)
+        row:SetCallback("OnDragStop", function() self:FinishDrag() end)
+        row.run:SetUserData("command", entry.command)
+        self.runButtons[#self.runButtons + 1] = row.run
+        parent:AddChild(row)
+    end
+    for index, entry in ipairs(selected) do
+        present[entry.command:lower()] = true
+        add(self.selected, entry, index)
+    end
+    for _, entry in ipairs(AprRC.options:GetToolbarCatalog()) do
+        if not present[entry.command:lower()] and (entry.label .. " " .. entry.command):lower():find(filter, 1, true) then
+            add(self.available, entry)
         end
     end
-    local pages = math.max(1, math.ceil(#entries / PAGE_SIZE))
-    self.page = math.min(math.max(1, self.page or 1), pages)
-    self.previous:SetDisabled(self.page == 1)
-    self.next:SetDisabled(self.page == pages)
-    self.pageLabel:SetText(self.page .. " / " .. pages)
-    if #entries == 0 then
-        UI.LabelWidget(self.results, T(self.category == "favorites" and filter == "" and
-            "No favorites yet. Add commands from the list below." or "No matching commands."))
-        if self.category == "favorites" then
-            UI.Button(self.results, "All commands", function()
-                self.category, self.page = "all", 1; self.categoryDropdown:SetValue("all"); self:DrawResults()
-            end, 200)
-        end
-    end
-    local lastCategory
-    for index = (self.page - 1) * PAGE_SIZE + 1, math.min(#entries, self.page * PAGE_SIZE) do
-        local entry = entries[index]
-        if self.category ~= "favorites" and entry.category ~= lastCategory then
-            UI.LabelWidget(self.results, "|cffedc36a" .. T(entry.category) .. "|r", true)
-            lastCategory = entry.category
-        end
-        local row = UI.Group(self.results)
-        local run = UI.Button(row, entry.label, function() AprRC.CommandBar:Run(entry.command) end)
-        run:SetFullWidth(true)
-        run:SetUserData("command", entry.command)
-        run:SetCallback("OnEnter", function(widget)
-            GameTooltip:SetOwner(widget.frame, "ANCHOR_TOP")
-            GameTooltip:AddLine("/aprrc " .. entry.command, 1, 0.82, 0.4)
-            GameTooltip:AddLine(T("Commands apply to the last recorded step."), 1, 1, 1, true)
-            GameTooltip:Show()
-        end)
-        run:SetCallback("OnLeave", function() GameTooltip:Hide() end)
-        self.runButtons[#self.runButtons + 1] = run
-        local favorite = self:Find(entry.command)
-        local pin = UI.Button(row, favorite and "Remove from bar" or "Add to bar", function() self:ToggleFavorite(entry) end, 190)
-        pin:SetUserData("favorite", entry.command)
-        if favorite then
-            UI.Button(row, "Move up", function() self:Move(entry.command, -1) end, 110):SetDisabled(favorite == 1)
-            UI.Button(row, "Move down", function() self:Move(entry.command, 1) end, 110):SetDisabled(favorite == #AprRCData.CommandBarCommands)
-        end
-    end
+    if #self.available.children == 0 then UI.LabelWidget(self.available, UI.Text("No matching commands.")) end
+    -- Keep the selected scroll empty when there are no commands, so slot 1 is
+    -- also a valid drop target on an intentionally empty bar.
     self:RefreshRunState()
-    self.results:DoLayout()
+    self.available:DoLayout(); self.selected:DoLayout()
 end
 
 function Settings:DrawSettings(parent)
@@ -105,7 +166,7 @@ function Settings:DrawSettings(parent)
     local profile = AprRC.settings.profile.commandBarFrame
     local function checkbox(key, label, default)
         local box = GUI:Create("CheckBox")
-        box:SetLabel(T(label)); box:SetFullWidth(true)
+        box:SetLabel(T(label)); box:SetRelativeWidth(0.5)
         box:SetValue(profile[key] == nil and default or profile[key])
         box:SetCallback("OnValueChanged", function(_, _, value)
             profile[key] = value; AprRC.CommandBar:RefreshFrameAnchor()
@@ -114,63 +175,61 @@ function Settings:DrawSettings(parent)
     end
     checkbox("enabled", "Show command bar", true)
     checkbox("showLabels", "Show button labels", false)
-    UI.Dropdown(group, T("Orientation"), { HORIZONTAL = T("Horizontal"), VERTICAL = T("Vertical") },
+    local orientation = UI.Dropdown(group, T("Orientation"), { HORIZONTAL = T("Horizontal"), VERTICAL = T("Vertical") },
         profile.rotation or "HORIZONTAL", function(value)
             profile.rotation = value; AprRC.CommandBar:RefreshFrameAnchor()
         end)
-    UI.Dropdown(group, T("Buttons per row"), { [1] = "1", [2] = "2", [3] = "3", [4] = "4", [6] = "6", [8] = "8", [10] = "10", [12] = "12" },
+    orientation:SetFullWidth(false); orientation:SetRelativeWidth(0.5)
+    local columns = UI.Dropdown(group, T("Buttons per row"), { [1] = "1", [2] = "2", [3] = "3", [4] = "4", [6] = "6", [8] = "8", [10] = "10", [12] = "12" },
         profile.buttonsPerRow or 6, function(value)
             profile.buttonsPerRow = value; AprRC.CommandBar:RefreshFrameAnchor()
         end)
+    columns:SetFullWidth(false); columns:SetRelativeWidth(0.5)
     UI.Button(group, "Reset command bar", function()
         AprRC.CommandBar:ResetToDefault(); AprRC.routeEditor:DrawTab()
     end, 220)
 end
 
 function Settings:Draw(parent)
-    local UI = AprRC.editorUI
-    local T = UI.Text
-    self.category = self.category or "favorites"
+    local UI, T = AprRC.editorUI, AprRC.editorUI.Text
     AprRC.CommandBar:GetCommands()
     self.panel = UI.Body(parent)
     local header = UI.Toolbar(self.panel)
+    self.runButtons = {}
+    if self.showSettings then
+        self.available, self.selected, self.search = nil, nil, nil
+        self:DrawSettings(UI.Scroll(self.panel))
+        UI.Button(UI.Toolbar(self.panel, true), "Commands", function()
+            self.showSettings = false; AprRC.routeEditor:DrawTab()
+        end, 170)
+        return
+    end
+    UI.LabelWidget(header, T("Drag commands between columns to add, remove or reorder them."))
     UI.LabelWidget(header, T("Commands apply to the last recorded step."))
     local search = GUI:Create("EditBox")
-    search:SetLabel(T("Search commands"))
-    search:SetFullWidth(true)
-    search:DisableButton(true)
+    search:SetLabel(T("Search commands")); search:SetFullWidth(true); search:DisableButton(true)
     search:SetText(self.query or "")
     search:SetCallback("OnTextChanged", function(_, _, text)
-        self.query, self.page = text, 1
-        -- Search the entire catalog, including commands not yet pinned.
-        if text ~= "" and self.category == "favorites" then
-            self.category = "all"; self.categoryDropdown:SetValue("all")
-        end
-        self:DrawResults(); self.results:SetScroll(0)
+        self.query = text; self:DrawResults(); self.available:SetScroll(0)
     end)
-    header:AddChild(search)
-    self.search = search
-    local categories = { favorites = T("Favorites"), all = T("All commands") }
-    for _, category in ipairs(AprRC.options.categoryOrder) do categories[category] = T(category) end
-    self.categoryDropdown = UI.Dropdown(header, T("Commands"), categories, self.category, function(value)
-        self.category, self.page = value, 1; self:DrawResults(); self.results:SetScroll(0)
-    end)
-    self.categoryDropdown:SetFullWidth(false)
-    self.categoryDropdown:SetRelativeWidth(0.56)
-    UI.Button(header, "Bar settings", function()
+    header:AddChild(search); self.search = search
+    local split = UI.Body(self.panel, "APRSplit")
+    split.content.aprCompactPane = nil
+    for index, label in ipairs({ "Available Commands", "Commands In Bar" }) do
+        local column = UI.Body(split)
+        UI.LabelWidget(UI.Toolbar(column), T(label), true)
+        local scroll = UI.Scroll(column)
+        if index == 1 then self.available = scroll else self.selected = scroll end
+    end
+    local footer = UI.Toolbar(self.panel, true)
+    UI.Button(footer, "Bar settings", function()
         self.showSettings = not self.showSettings; AprRC.routeEditor:DrawTab()
     end, 170)
-    self.results = UI.Scroll(self.panel)
-    local footer = UI.Toolbar(self.panel, true)
-    self.previous = UI.Button(footer, "Previous", function() self.page = self.page - 1; self:DrawResults(); self.results:SetScroll(0) end, 110)
-    self.next = UI.Button(footer, "Next", function() self.page = self.page + 1; self:DrawResults(); self.results:SetScroll(0) end, 110)
-    self.pageLabel = UI.LabelWidget(footer, "")
     self:DrawResults()
 end
 
--- Existing callers now navigate into the workshop instead of creating a window.
 function Settings:Show(showSettings)
-    self.showSettings = showSettings ~= false
+    self.showSettings = showSettings == true
     AprRC.routeEditor:Show()
     AprRC.routeEditor:SelectTab("commands")
 end

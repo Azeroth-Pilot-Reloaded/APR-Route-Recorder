@@ -832,3 +832,7 @@ L["unknown enum value"] = "valeur d'énumération inconnue"
 L["unsupported field "] = "champ non pris en charge "
 L["unsupported schema "] = "schéma non pris en charge "
 L["value does not match the expected format"] = "la valeur ne correspond pas au format attendu"
+
+L["Drag to resize columns"] = "Faites glisser pour redimensionner les colonnes"
+
+L["Drag commands between columns to add, remove or reorder them."] = "Glissez les commandes entre les colonnes pour les ajouter, les retirer ou les r?ordonner."

@@ -819,3 +819,7 @@ L["unknown enum value"] = "未知的枚举值"
 L["unsupported field "] = "不支持的字段 "
 L["unsupported schema "] = "不支持的模式 "
 L["value does not match the expected format"] = "值与预期格式不匹配"
+
+L["Drag to resize columns"] = "???????"
+
+L["Drag commands between columns to add, remove or reorder them."] = "?????????????????????"

@@ -77,6 +77,10 @@ function Native:ClearFocus() self.focus = false; event(self, "OnEditFocusLost") 
 function Native:HasFocus() return self.focus end
 function Native:GetTop() return 780 end
 function Native:GetLeft() return 0 end
+function Native:SetFrameStrata(strata) self.strata = strata end
+function Native:GetFrameStrata() return self.strata or (self.parent and self.parent:GetFrameStrata()) or "MEDIUM" end
+function Native:GetBottom() return self:GetTop() - self:GetHeight() end
+function Native:GetEffectiveScale() return 1 end
 function Native:GetFrameLevel() return self.level or 100 end
 function Native:SetFrameLevel(level) self.level = level end
 function Native:GetChildren() return unpack(self.children) end
@@ -110,7 +114,7 @@ function Native:IsOwned() return false end
 function Native:IsProtected() return false end
 function Native:IsClampedToScreen() return false end
 local noops = {
-    "SetFrameStrata", "SetBackdrop", "SetBackdropColor", "SetBackdropBorderColor", "SetClampedToScreen",
+    "SetBackdrop", "SetBackdropColor", "SetBackdropBorderColor", "SetClampedToScreen",
     "SetResizeBounds", "SetMinResize", "SetMovable", "SetResizable", "SetToplevel", "Raise", "SetJustifyH",
     "SetJustifyV", "SetWordWrap", "SetNonSpaceWrap", "SetTextColor", "SetColorTexture", "SetVertexColor",
     "SetTexCoord", "SetBlendMode", "SetDrawLayer", "SetFontObject", "SetNormalFontObject", "SetDisabledFontObject",
@@ -160,3 +164,9 @@ AprRC.settings.OpenSettings = function() end
 AprRC.exportExtraLineText = { Show = function() end }
 AprRC.CommandBarSetting = { Show = function() end }
 APRData = {}
+
+TestCursorX, TestCursorY, TestMouseDown, TestMouseOver = 0, 0, false, nil
+GetCursorPosition = function() return TestCursorX, TestCursorY end
+IsMouseButtonDown = function() return TestMouseDown end
+MouseIsOver = function(frame) return frame == TestMouseOver end
+IsKeyDown = function() return false end
