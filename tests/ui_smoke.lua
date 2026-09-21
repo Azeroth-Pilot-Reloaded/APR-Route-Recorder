@@ -24,7 +24,8 @@ local function enter(widget, text)
     widget:Fire("OnTextChanged", text)
 end
 
-AprRCData = { CurrentRoute = { name = "", steps = {} }, Routes = {}, QuestLookup = {} }
+-- First-use behavior has its own lifecycle test; keep this pooling test to one window.
+AprRCData = { CurrentRoute = { name = "", steps = {} }, Routes = {}, QuestLookup = {}, TutorialSeen = true }
 E:Show()
 healthy()
 assert(not E.session, "A placeholder route should show the empty state")

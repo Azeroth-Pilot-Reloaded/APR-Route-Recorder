@@ -221,6 +221,7 @@ function Editor:DrawList()
 end
 
 function Editor:DrawInspector()
+    AprRC.TutoFrame:ClearPointer()
     local panel = self.routeForm or self.inspector
     if not panel then return end
     local oldScroll = panel.localstatus.scrollvalue or 0
@@ -252,6 +253,7 @@ function Editor:DrawInspector()
     end
     panel:DoLayout()
     panel:SetScroll(oldScroll)
+    AprRC.TutoFrame:RefreshPointer()
 end
 
 function Editor:DetachLua()

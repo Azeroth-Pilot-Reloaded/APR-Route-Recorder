@@ -251,6 +251,7 @@ end
 
 function Editor:DrawTab()
     if self.fieldPicker then self.fieldPicker:Hide() end
+    AprRC.TutoFrame:ClearPointer()
     self:DetachLua()
     AprRC.CommandBarSetting:CancelDrag()
     self.list, self.inspector, self.listPanel, self.routeForm = nil, nil, nil, nil
@@ -278,10 +279,12 @@ function Editor:DrawTab()
     self:UpdateStatus()
     if self.session and self.follow and not self.session:IsDirty() and
         self.session.selected == #self.session.draft.steps then self:ScrollToLatest() end
+    AprRC.TutoFrame:RefreshPointer()
 end
 
 function Editor:DrawTools()
     local panel = UI.Scroll(self.tabs)
+    self.toolsTutorialButton = UI.Button(panel, "TUTORIAL_REPLAY", function() AprRC.TutoFrame:Show() end, 240)
     AprRC.textStyle:Draw(panel)
     UI.LabelWidget(panel, "|cffedc36a" .. T("Recording tools") .. "|r", true)
     UI.LabelWidget(panel, T("All existing commands, autocomplete dialogs and toolbar settings remain available here."))
@@ -408,6 +411,7 @@ function Editor:Show()
     if self.frame then
         self.frame:Show(); self.frame.frame:Raise()
         AprRC.CommandBar:RefreshFrameAnchor()
+        AprRC.TutoFrame:OnWorkshopShow()
         return
     end
     local frame = AprRC:CreateWidget("Frame")
@@ -479,6 +483,7 @@ function Editor:Show()
     footer:AddChild(follow)
     frame:SetCallback("OnClose", function(widget)
         if self.fieldPicker then self.fieldPicker:Hide() end
+        AprRC.TutoFrame:Close()
         status.width, status.height = widget.frame:GetWidth(), widget.frame:GetHeight()
         if self.session then self.session:Persist() end
         if self.timer then self:CancelTimer(self.timer); self.timer = nil end
@@ -502,4 +507,5 @@ function Editor:Show()
     frame:DoLayout()
     self.timer = self:ScheduleRepeatingTimer("Tick", 1)
     AprRC.CommandBar:RefreshFrameAnchor()
+    AprRC.TutoFrame:OnWorkshopShow()
 end

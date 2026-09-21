@@ -229,6 +229,7 @@ function Settings:DrawSettings(parent)
 end
 
 function Settings:Draw(parent)
+    self.settingsButton = nil
     local UI, T = AprRC.editorUI, AprRC.editorUI.Text
     AprRC.CommandBar:GetCommands()
     self.panel = UI.Body(parent)
@@ -260,7 +261,7 @@ function Settings:Draw(parent)
         if index == 1 then self.available = scroll else self.selected = scroll end
     end
     local footer = UI.Toolbar(self.panel, true)
-    UI.Button(footer, "Bar settings", function()
+    self.settingsButton = UI.Button(footer, "Bar settings", function()
         self.showSettings = not self.showSettings; AprRC.routeEditor:DrawTab()
     end, 170)
     self:DrawResults()

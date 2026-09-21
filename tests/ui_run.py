@@ -29,6 +29,7 @@ def run():
                  "Widget-EditBox", "Widget-MultiLineEditBox", "Widget-DropDown", "Widget-DropDown-Items", "Widget-Slider", "Widget-ColorPicker", "Widget-InteractiveLabel"):
         load("libs/AceGUI-3.0/widgets/AceGUI" + name + ".lua")
     load("ui/TextStyles.lua")
+    load("ui/dialogs/TutoFrame.lua")
     load("ui/dialogs/Autocomplete.lua")
     load("ui/dialogs/QuestObjectiveSelector.lua")
     for name in ("Model", "Labels", "Widgets", "SearchSelect", "Pickers", "Forms", "Workspace", "Views"):
@@ -56,6 +57,7 @@ def run():
     load("commands/Commands.lua")
     load("ui/dialogs/QuestionPopUp.lua")
     load("tests/recording_follow_smoke.lua")
+    load("tests/tutorial_smoke.lua")
     load("tests/save_override_smoke.lua")
     load("tests/pickers_smoke.lua")
     load("tests/search_select_smoke.lua")

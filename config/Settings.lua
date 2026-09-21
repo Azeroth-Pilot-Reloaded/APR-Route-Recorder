@@ -150,6 +150,12 @@ function AprRC.settings:createBlizzOptions()
                 width = "full",
                 name = L["Settings"],
             },
+            tutorial = {
+                order = 2.1,
+                type = "execute",
+                name = L["TUTORIAL_REPLAY"],
+                func = function() AprRC.TutoFrame:Show() end,
+            },
             icon = {
                 order = 3,
                 type = "group",

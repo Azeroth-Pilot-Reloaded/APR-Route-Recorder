@@ -142,6 +142,9 @@ function AprRC.command:SlashCmd(input)
         end
         AprRC.export.Show()
         return
+    elseif inputText == "tutorial" or inputText == "tuto" then
+        AprRC.TutoFrame:Show()
+        return
     elseif inputText == "settings" then
         AprRC.settings:OpenSettings(AprRC.title)
         return
@@ -164,6 +167,7 @@ function AprRC.command:SlashCmd(input)
         return
     elseif inputText == "help" or inputText == "h" then
         print(L_APR["COMMAND_LIST"] .. ":")
+        print("|cffeda55f/aprrc tutorial, tuto |r- " .. L["TUTORIAL_REPLAY"])
         AprRC.options:PrintHelp()
         print("|cffeda55f/aprrc achievement |r- " .. AprRC.editorUI.Label("HasAchievement"))
         print("|cffeda55f/aprrc addreset |r- " .. AprRC.editorUI.Label("ResetRoute"))

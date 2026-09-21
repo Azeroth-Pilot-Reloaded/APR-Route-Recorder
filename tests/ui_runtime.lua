@@ -204,6 +204,35 @@ UIParent = CreateFrame("Frame", "UIParent")
 UIParent:SetSize(1920, 1080)
 GameTooltip = CreateFrame("GameTooltip", "GameTooltip")
 
+-- TutorialPointerFrame's public Show/Hide contract and pooled content surface.
+TutorialPointerFrame = { InUseFrames = {}, nextID = 0 }
+function TutorialPointerFrame:Show(message, direction, anchor)
+    assert(anchor and anchor:IsShown())
+    local frame = CreateFrame("Frame", nil, UIParent)
+    frame:SetFrameStrata("FULLSCREEN_DIALOG")
+    frame:SetFrameLevel(10)
+    frame.Content = CreateFrame("Frame", nil, frame)
+    -- Model independent template layers: raising the pointer root is insufficient.
+    frame.Content:SetFrameStrata("DIALOG")
+    frame.Content:SetFrameLevel(11)
+    frame.Arrow_UP1 = CreateFrame("Frame", nil, frame)
+    frame.Arrow_UP1:SetFrameStrata("FULLSCREEN_DIALOG")
+    frame.Arrow_UP1:SetFrameLevel(100)
+    frame.Glow = CreateFrame("Frame", nil, frame)
+    frame.Glow:SetFrameStrata("FULLSCREEN_DIALOG")
+    frame.Glow:SetFrameLevel(1000)
+    frame.Content:SetSize(380, 220)
+    frame.Content.Text = frame.Content:CreateFontString()
+    frame.Content.Text:SetText(message)
+    frame.anchor = anchor
+    self.nextID = self.nextID + 1
+    self.InUseFrames[self.nextID] = frame
+    return self.nextID
+end
+function TutorialPointerFrame:Hide(id)
+    if self.InUseFrames[id] then self.InUseFrames[id]:Hide(); self.InUseFrames[id] = nil end
+end
+
 function AprRC:NewModule()
     return {
         ScheduleRepeatingTimer = function(self, callback) self.timerCallback = callback; return 1 end,
