@@ -66,6 +66,24 @@ anchor("LEFT", Editor.frame.frame, "RIGHT", 6, 0)
 assert(dropdown(Settings.panel, "Snap to route workshop"):GetValue() == "RIGHT")
 LibStub("AceGUI-3.0"):Release(other)
 
+-- Free movement with the workshop closed must retain each configured snap side.
+for side, points in pairs(expected) do
+    dropdown(Settings.panel, "Snap to route workshop"):Fire("OnValueChanged", side)
+    Editor:Hide()
+    assert(not Bar.snappedTo and profile.snap == side)
+    local freeButton = Bar.btnList[1]
+    freeButton:GetScript("OnMouseDown")(freeButton)
+    freeButton:GetScript("OnDragStart")(freeButton)
+    freeButton:GetScript("OnDragStop")(freeButton)
+    assert(profile.snap == side, "Moving the closed workshop's free bar must preserve snapping")
+    AprRC.CommandBar:RefreshFrameAnchor()
+    assert(not Bar.snappedTo)
+    Settings:Show(true)
+    anchor(points[1], Editor.frame.frame, points[2], points[3], points[4])
+    assert(dropdown(Settings.panel, "Snap to route workshop"):GetValue() == side)
+end
+
+-- Dragging away from an open workshop remains an explicit detach.
 local button = Bar.btnList[1]
 button:GetScript("OnMouseDown")(button)
 button:GetScript("OnDragStart")(button)

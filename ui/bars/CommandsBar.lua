@@ -28,8 +28,10 @@ local function iconButton(texture, label, callback)
             -- SavePosition converts the workshop anchor to screen coordinates.
             LibWindow.SavePosition(frame)
             Bar.snappedTo = nil
+            AprRC.settings.profile.commandBarFrame.snap = "NONE"
         end
-        AprRC.settings.profile.commandBarFrame.snap = "NONE"
+        -- Moving the temporary free bar while the workshop is closed must not
+        -- discard the anchor to restore when the workshop opens again.
         frame:StartMoving()
         GameTooltip:Hide()
     end)
