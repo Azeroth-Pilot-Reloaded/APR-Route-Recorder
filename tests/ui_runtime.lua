@@ -111,6 +111,7 @@ function Native:Enable() self.disabled = false end
 function Native:Disable() self.disabled = true end
 function Native:EnableMouse() end
 function Native:IsOwned() return false end
+function Native:IsMouseOver() return self == TestMouseOver end
 function Native:IsProtected() return false end
 function Native:IsClampedToScreen() return false end
 local noops = {
@@ -168,5 +169,6 @@ APRData = {}
 TestCursorX, TestCursorY, TestMouseDown, TestMouseOver = 0, 0, false, nil
 GetCursorPosition = function() return TestCursorX, TestCursorY end
 IsMouseButtonDown = function() return TestMouseDown end
-MouseIsOver = function(frame) return frame == TestMouseOver end
+-- Retail no longer provides this global. Keep it absent to catch regressions.
+MouseIsOver = nil
 IsKeyDown = function() return false end

@@ -54,7 +54,19 @@ GUI:RegisterLayout("APRField", function(content, children)
     end
     if action then
         action.frame:ClearAllPoints()
-        action.frame:SetPoint("TOPRIGHT", content, "TOPRIGHT", 0, compound and -(height + 4) or -8)
+        if compound then
+            action.frame:SetPoint("TOPRIGHT", content, "TOPRIGHT", 0, -(height + 4))
+        else
+            local control = body.children[1]
+            if control.editbox then
+                -- The widget includes a label above the actual input. Anchor
+                -- to the input itself so the trash stays vertically centered.
+                action.frame:SetPoint("RIGHT", control.editbox, "RIGHT", 36, 0)
+            else
+                local center = control.alignoffset or control.frame:GetHeight() / 2
+                action.frame:SetPoint("TOPRIGHT", content, "TOPRIGHT", 0, action.frame:GetHeight() / 2 - center)
+            end
+        end
         action.frame:Show()
         height = compound and height + 34 or math.max(height, 38)
     end

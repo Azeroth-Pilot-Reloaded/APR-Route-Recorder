@@ -7,6 +7,7 @@ if E.compact then E:ToggleCompact() end
 assert(E.compactButton.type == "APRIconButton")
 assert(E.compactButton.frame:GetPoint() == "TOPRIGHT")
 assert(E.compactButton.tooltip == UI.Text("Compact mode"))
+assert(E.reloadButton.type == "APRIconButton" and E.reloadButton.tooltip == UI.Text("Reload saved route"))
 
 -- Divider responds to the native mouse path and persists its proportion.
 local split = E.stepsSplit
@@ -46,11 +47,11 @@ for _, group in ipairs(holder.children) do
     if group.children and group.children[2] and group.children[2].type == "APRIconButton" then
         local body, action = group.children[1], group.children[2]
         local first = body.children[1]
-        local _, _, anchor, _, y = action.frame:GetPoint()
-        assert(anchor == "TOPRIGHT")
+        local _, relative, anchor, _, y = action.frame:GetPoint()
         if first.type == "EditBox" then
             scalar = action
-            assert(not group:GetUserData("compound") and y == -8)
+            assert(not group:GetUserData("compound") and relative == first.editbox and anchor == "RIGHT" and y == 0,
+                "Trash must be centered on the input, excluding its label")
             assert(body.frame:GetWidth() < group.content:GetWidth())
         elseif first.type == "InlineGroup" then
             compound = action
@@ -109,6 +110,19 @@ assert(#Bar:GetCommands() == 1)
 Settings:StartDrag(Settings.selected.children[1])
 E:SelectTab("steps")
 assert(not Settings.dragging and not Settings.ghost:GetScript("OnUpdate"))
+Settings:Show(false)
+-- A future API failure is reported once and cancels the native update handler.
+local dropTarget = Settings.DropTarget
+Settings.DropTarget = function() error("Simulated drag failure") end
+TestMouseDown = true
+Settings:StartDrag(Settings.selected.children[1])
+Settings.ghost:GetScript("OnUpdate")(Settings.ghost, 0.016)
+assert(not Settings.dragging and not Settings.ghost:GetScript("OnUpdate"))
+assert(not Settings.ghost:IsShown() and not Settings.dropLine:IsShown())
+assert(#UIErrors == 1 and UIErrors[1]:find("Simulated drag failure", 1, true))
+table.remove(UIErrors)
+Settings.DropTarget = dropTarget
+TestMouseDown = false
 Settings:Show(true)
 -- Expanded settings fit in the same tab at both supported minimum widths.
 for _, compact in ipairs({ false, true }) do

@@ -55,20 +55,21 @@ end
 
 function Settings:DropTarget()
     if not self:IsVisible() or not self.selected then return end
-    if MouseIsOver(self.selected.frame) then
+    if self.selected.frame:IsMouseOver() then
         local _, y = GetCursorPosition()
         y = y / self.selected.frame:GetEffectiveScale()
         for index, row in ipairs(self.selected.children) do
             if y > row.frame:GetTop() - row.frame:GetHeight() / 2 then return "selected", index end
         end
         return "selected", #self.selected.children + 1
-    elseif MouseIsOver(self.available.frame) then return "available" end
+    elseif self.available.frame:IsMouseOver() then return "available" end
 end
 
 function Settings:FinishDrag()
     local drag = self.dragging
-    local target, slot = self:DropTarget()
     self:CancelDrag()
+    if not drag then return end
+    local target, slot = self:DropTarget()
     if drag and target then self:ApplyDrop(drag.entry, target, slot) end
 end
 
@@ -93,34 +94,43 @@ function Settings:StartDrag(row)
     self.ghost.label:SetText(row.entry.label)
     self.ghost:Show()
     self.ghost:SetScript("OnUpdate", function(_, elapsed)
-        if not self:IsVisible() or IsKeyDown("ESCAPE") then self:CancelDrag(); return end
-        if not IsMouseButtonDown("LeftButton") then self:FinishDrag(); return end
-        local x, y = GetCursorPosition()
-        local scale = UIParent:GetEffectiveScale()
-        self.ghost:ClearAllPoints(); self.ghost:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", x / scale + 16, y / scale + 12)
-        local target, slot = self:DropTarget()
-        self.dropLine:Hide()
-        if target then
-            local scroll = target == "selected" and self.selected or self.available
-            local cursorY = y / scroll.frame:GetEffectiveScale()
-            local direction = cursorY > scroll.frame:GetTop() - 24 and -1 or
-                (cursorY < scroll.frame:GetBottom() + 24 and 1 or 0)
-            if direction ~= 0 then
-                local value = math.max(0, math.min(1000, (scroll.localstatus.scrollvalue or 0) + direction * elapsed * 160))
-                scroll.scrollbar:SetValue(value)
-                scroll:SetScroll(value)
-            end
-        end
-        if target == "selected" then
-            local rows = self.selected.children
-            local anchor = rows[slot] or rows[#rows]
-            self.dropLine:ClearAllPoints()
-            self.dropLine:SetWidth(self.selected.content:GetWidth())
-            self.dropLine:SetPoint("TOPLEFT", anchor and anchor.frame or self.selected.content,
-                rows[slot] and "TOPLEFT" or (anchor and "BOTTOMLEFT" or "TOPLEFT"))
-            self.dropLine:Show()
+        local ok, reason = pcall(self.UpdateDrag, self, elapsed)
+        if not ok then
+            -- Unhook before reporting: a failure must not fire every frame.
+            self:CancelDrag()
+            geterrorhandler()(reason)
         end
     end)
+end
+
+function Settings:UpdateDrag(elapsed)
+    if not self:IsVisible() or IsKeyDown("ESCAPE") then self:CancelDrag(); return end
+    if not IsMouseButtonDown("LeftButton") then self:FinishDrag(); return end
+    local x, y = GetCursorPosition()
+    local scale = UIParent:GetEffectiveScale()
+    self.ghost:ClearAllPoints(); self.ghost:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", x / scale + 16, y / scale + 12)
+    local target, slot = self:DropTarget()
+    self.dropLine:Hide()
+    if target then
+        local scroll = target == "selected" and self.selected or self.available
+        local cursorY = y / scroll.frame:GetEffectiveScale()
+        local direction = cursorY > scroll.frame:GetTop() - 24 and -1 or
+            (cursorY < scroll.frame:GetBottom() + 24 and 1 or 0)
+        if direction ~= 0 then
+            local value = math.max(0, math.min(1000, (scroll.localstatus.scrollvalue or 0) + direction * elapsed * 160))
+            scroll.scrollbar:SetValue(value)
+            scroll:SetScroll(value)
+        end
+    end
+    if target == "selected" then
+        local rows = self.selected.children
+        local anchor = rows[slot] or rows[#rows]
+        self.dropLine:ClearAllPoints()
+        self.dropLine:SetWidth(self.selected.content:GetWidth())
+        self.dropLine:SetPoint("TOPLEFT", anchor and anchor.frame or self.selected.content,
+            rows[slot] and "TOPLEFT" or (anchor and "BOTTOMLEFT" or "TOPLEFT"))
+        self.dropLine:Show()
+    end
 end
 
 function Settings:DrawResults()

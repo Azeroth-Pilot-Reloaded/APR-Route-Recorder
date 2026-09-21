@@ -36,4 +36,24 @@ AprRC.settings.profile.enableAddon = true
 Recorder:RefreshFrameAnchor()
 assert(button:IsShown())
 AprRC.routeEditor.Show, AprRC.ResetRecordingSession = oldShow, oldReset
+-- Integration refreshes can fail after the recording flag changes. Our own
+-- bar and indicator must already match the new state, including on stop.
+local oldToggle, oldQuestID = APR.settings.ToggleAddon, AprRC.questID
+for _, dependency in ipairs({ "session", "APR", "questID" }) do
+    local function fail() error("Simulated " .. dependency .. " refresh failure") end
+    AprRC.ResetRecordingSession = dependency == "session" and fail or oldReset
+    APR.settings.ToggleAddon = dependency == "APR" and fail or oldToggle
+    AprRC.questID = dependency == "questID" and { RefreshVisibility = fail } or nil
+    AprRC.settings.profile.recordBarFrame.isRecording = true
+    local ok = pcall(Recorder.UpdateRecordButton, Recorder)
+    assert(not ok)
+    assert(AprRC.CommandBar.frame:IsShown() and button.indicator:IsShown(),
+        "Recording controls stayed hidden after " .. dependency .. " failed")
+    AprRC.settings.profile.recordBarFrame.isRecording = false
+    ok = pcall(Recorder.UpdateRecordButton, Recorder)
+    assert(not ok)
+    assert(not AprRC.CommandBar.frame:IsShown() and not button.indicator:IsShown(),
+        "Recording controls stayed visible after " .. dependency .. " failed")
+end
+AprRC.ResetRecordingSession, APR.settings.ToggleAddon, AprRC.questID = oldReset, oldToggle, oldQuestID
 print("Recorder launcher click, drag, position and recording state checks passed.")

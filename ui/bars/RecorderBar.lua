@@ -73,11 +73,14 @@ function Recorder:RefreshFrameAnchor()
 end
 
 function Recorder:UpdateRecordButton()
+    -- The recording flag is already committed by the caller. Synchronize our
+    -- controls before session tracking or external APR/quest UI refreshes: an
+    -- error there must not leave the command bar in its previous hidden state.
+    self:RefreshFrameAnchor()
     AprRC:ResetRecordingSession()
     APR.settings.profile.enableAddon = not AprRC.settings.profile.recordBarFrame.isRecording
     APR.settings:ToggleAddon()
     if AprRC.questID then AprRC.questID:RefreshVisibility() end
-    self:RefreshFrameAnchor()
 end
 
 function Recorder:StopRecord()

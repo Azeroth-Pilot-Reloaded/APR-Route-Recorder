@@ -384,7 +384,7 @@ function Editor:Show()
     self.copyButton = UI.Button(footer, "Save a copy", function() self:NameDialog(true) end, 195)
     self.undoButton = UI.IconButton(footer, "undo", "Undo", function() self:Undo(-1) end)
     self.redoButton = UI.IconButton(footer, "redo", "Redo", function() self:Undo(1) end)
-    UI.Button(footer, "Reload saved route", function()
+    self.reloadButton = UI.IconButton(footer, "refresh", "Reload saved route", function()
         local session = self.session
         if not session then return end
         local function reload()
@@ -392,7 +392,7 @@ function Editor:Show()
             if self.session == session then self.notice = nil; self:DrawTab() end
         end
         if session:IsDirty() then self:Confirm(T("Discard this draft and reload the saved route?"), reload) else reload() end
-    end, 205)
+    end)
     local follow = GUI:Create("CheckBox")
     follow:SetLabel(T("Follow recording"))
     follow:SetWidth(205)
