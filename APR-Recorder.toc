@@ -61,6 +61,12 @@ ui/dialogs/Autocomplete.lua
 ui/bars/CommandsBar.lua
 ui/bars/CommandsBarSetting.lua
 ui/dialogs/ExportExtraLineText.lua
+ui/editor/Model.lua
+ui/editor/Labels.lua
+ui/editor/Widgets.lua
+ui/editor/Forms.lua
+ui/editor/Workspace.lua
+ui/editor/Views.lua
 ui/dialogs/ExportRoute.lua
 ui/dialogs/QuestionPopUp.lua
 ui/dialogs/QuestObjectiveSelector.lua

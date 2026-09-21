@@ -31,9 +31,12 @@ function AprRC.SelectRoute:Show()
     confirmBtn:SetWidth(200)
     confirmBtn:SetCallback("OnClick", function()
         local route = AprRC:FindRouteByName(selectedRouteName)
-        AprRCData.CurrentRoute = { name = selectedRouteName, steps = route.steps }
+        if not route then return end
+        -- Keep metadata and parallel steps when resuming an existing route.
+        AprRCData.CurrentRoute = route
         AprRC:EnsureQuestLookup(selectedRouteName)
         AprRC:RebuildQuestLookupFromRoute(AprRCData.CurrentRoute)
+        AprRC.settings.profile.recordBarFrame.isRecording = true
         AceGUI:Release(frame)
         AprRC.record:UpdateRecordButton()
     end)
@@ -46,6 +49,7 @@ function AprRC.SelectRoute:Show()
         AceGUI:Release(frame)
         AprRC.questionDialog:CreateEditBoxPopupWithCallback("Route Name", function(text)
             AprRC:InitRoute(text)
+            AprRC.settings.profile.recordBarFrame.isRecording = true
             AprRC.record:UpdateRecordButton()
         end)
     end)

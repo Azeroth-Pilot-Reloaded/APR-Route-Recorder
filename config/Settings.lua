@@ -341,11 +341,7 @@ function AprRC.settings:CreateMiniMapButton()
                 self.profile.enableAddon = not self.profile.enableAddon
                 self:ToggleAddon()
             else
-                if SettingsPanel:IsShown() then
-                    self:CloseSettings()
-                else
-                    self:OpenSettings(AprRC.title)
-                end
+                AprRC.export.Show()
             end
         end,
         OnTooltipShow = function(tooltip)
@@ -356,7 +352,7 @@ function AprRC.settings:CreateMiniMapButton()
                 toggleAddon = "|cff00ff00 " .. L_APR["ENABLE"] .. "|r"
             end
             tooltip:AddLine(AprRC.title)
-            tooltip:AddLine(L_APR["LEFT_CLICK"] .. ": |cffeda55f" .. L_APR["SHOW_MENU"] .. "|r",
+            tooltip:AddLine(L_APR["LEFT_CLICK"] .. ": |cffeda55f" .. AprRC.editorUI.Text("Route workshop") .. "|r",
                 unpack(AprRC.Color.white))
             tooltip:AddLine(L_APR["RIGHT_CLICK"] .. ": " .. toggleAddon .. "|cffeda55f " .. L_APR["ADDON"] .. "|r",
                 unpack(AprRC.Color.white))

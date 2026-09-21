@@ -128,7 +128,7 @@ function AprRC.command:SlashCmd(input)
         return true
     end
 
-    if inputText == "export" then
+    if inputText == "export" or inputText == "editor" or inputText == "" then
         -- Wrap in pcall to handle tainted data from combat
         local ok, result = pcall(function()
             if AprRCData.CurrentRoute.name ~= "" then
@@ -138,8 +138,10 @@ function AprRC.command:SlashCmd(input)
         if not ok and result then
             AprRC:Debug("Error during export (likely tainted during combat):", result)
         end
-        AprRC.export:Hide()
         AprRC.export.Show()
+        return
+    elseif inputText == "settings" then
+        AprRC.settings:OpenSettings(AprRC.title)
         return
     elseif inputText == "forcereset" then
         AprRC:ResetData()

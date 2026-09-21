@@ -55,14 +55,21 @@ end
 
 local recordBtn = CreateButton(RecordBarFrame, "Interface\\AddOns\\APR-Recorder\\assets\\icons\\rec", "Record/Stop")
 recordBtn:SetScript("OnClick", function()
-    AprRC.settings.profile.recordBarFrame.isRecording = not AprRC.settings.profile.recordBarFrame.isRecording
-    if AprRC.settings.profile.recordBarFrame.isRecording then
+    if not AprRC.settings.profile.recordBarFrame.isRecording then
+        local function start()
+            AprRC.settings.profile.recordBarFrame.isRecording = true
+            UpdateRecordButton(recordBtn)
+        end
         if not APR:IsTableEmpty(AprRCData.Routes) then
+            if AprRCData.CurrentRoute.name == "" then
+                AprRC.SelectRoute:Show()
+                return
+            end
             APR.questionDialog:CreateQuestionPopup(
                 "Continue route " .. AprRCData.CurrentRoute.name .. "?",
                 "Continue route " .. AprRCData.CurrentRoute.name .. "?",
                 function()
-                    UpdateRecordButton(recordBtn)
+                    start()
                 end,
                 function()
                     AprRC.SelectRoute:Show()
@@ -74,7 +81,7 @@ recordBtn:SetScript("OnClick", function()
         else
             AprRC.questionDialog:CreateEditBoxPopupWithCallback("Route Name", function(text)
                 AprRC:InitRoute(text)
-                UpdateRecordButton(recordBtn)
+                start()
             end)
         end
     else
@@ -82,7 +89,7 @@ recordBtn:SetScript("OnClick", function()
     end
 end)
 
-local exportBtn = CreateButton(RecordBarFrame, "Interface\\AddOns\\APR-Recorder\\assets\\icons\\Export", "Export frame")
+local exportBtn = CreateButton(RecordBarFrame, "Interface\\AddOns\\APR-Recorder\\assets\\icons\\Export", AprRC.editorUI.Text("Route workshop"))
 exportBtn:SetScript("OnClick", function()
     AprRC.command:SlashCmd('export')
 end)
@@ -160,6 +167,7 @@ function AprRC.record:AdjustBarRotation(bar)
 end
 
 function AprRC.record:StopRecord()
+    AprRC.settings.profile.recordBarFrame.isRecording = false
     UpdateRecordButton(recordBtn)
     AprRC:UpdateRoute()
 end
