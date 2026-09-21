@@ -55,6 +55,8 @@ def run():
     load("ui/dialogs/QuestionPopUp.lua")
     load("tests/recording_follow_smoke.lua")
     load("tests/save_override_smoke.lua")
+    load("ui/QuestIDDisplay.lua")
+    load("tests/quest_id_smoke.lua")
 
 
 if __name__ == "__main__":

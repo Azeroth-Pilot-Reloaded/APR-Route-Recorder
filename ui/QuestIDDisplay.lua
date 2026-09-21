@@ -8,20 +8,47 @@ local hookedTrackers = {}
 local activeQuests = {}
 local questObjectives = {}
 local specialItemQuests = {}
+local detailLines = setmetatable({}, { __mode = "k" })
+local hookedDetails = setmetatable({}, { __mode = "k" })
 local ExtractQuestIDsFromTooltipData
 
+-- Never inspect, convert, compare or index secret game values. On older
+-- clients these predicates do not exist and ordinary values remain usable.
+local function Public(value)
+    if issecretvalue and issecretvalue(value) then return nil end
+    if type(value) == "table" and canaccesstable and not canaccesstable(value) then return nil end
+    return value
+end
+
+local function Text(value)
+    value = Public(value)
+    if type(value) == "string" then return value end
+end
+
+local function QuestID(value)
+    value = Public(value)
+    if type(value) ~= "number" and type(value) ~= "string" then return nil end
+    value = tonumber(value)
+    if value and value > 0 and value < math.huge and value % 1 == 0 then return value end
+end
+
+local function UsableFrame(frame)
+    frame = Public(frame)
+    return frame and not (frame.IsForbidden and frame:IsForbidden())
+end
+
 local function AddUnique(list, seen, questID)
-    questID = tonumber(questID)
-    if questID and questID > 0 and not seen[questID] then
+    questID = QuestID(questID)
+    if questID and not seen[questID] then
         seen[questID] = true
         list[#list + 1] = questID
     end
 end
 
 local function GetQuestTitle(questID)
-    local title = C_QuestLog.GetTitleForQuestID(questID)
+    local title = Text(C_QuestLog.GetTitleForQuestID(questID))
     if (not title or title == "") and C_TaskQuest and C_TaskQuest.GetQuestInfoByQuestID then
-        title = C_TaskQuest.GetQuestInfoByQuestID(questID)
+        title = Text(C_TaskQuest.GetQuestInfoByQuestID(questID))
     end
     return title
 end
@@ -37,7 +64,8 @@ function AprRC.questID:IsEnabled(scope)
 end
 
 function AprRC.questID:AddQuestIDsToTooltip(tooltip, questIDs)
-    if not tooltip or not questIDs then return end
+    questIDs = Public(questIDs)
+    if not UsableFrame(tooltip) or not questIDs then return end
 
     if type(questIDs) ~= "table" then
         questIDs = { questIDs }
@@ -50,11 +78,13 @@ function AprRC.questID:AddQuestIDsToTooltip(tooltip, questIDs)
     if #ids == 0 then return end
     table.sort(ids)
 
-    local tooltipName = tooltip.GetName and tooltip:GetName()
+    local tooltipName = tooltip.GetName and Text(tooltip:GetName())
     if tooltipName then
-        for i = 1, tooltip:NumLines() do
+        local count = Public(tooltip:NumLines())
+        if type(count) ~= "number" then return end
+        for i = 1, count do
             local left = _G[tooltipName .. "TextLeft" .. i]
-            local text = left and left:GetText()
+            local text = UsableFrame(left) and Text(left:GetText())
             if text and (text:find(L.QUEST_ID, 1, true) or text:find(L["Quest ID"], 1, true) or text:find("Quest ID", 1, true)) then
                 return
             end
@@ -73,9 +103,10 @@ function AprRC.questID:AddQuestIDsToTooltip(tooltip, questIDs)
 end
 
 function AprRC.questID:EnsureQuestTooltip(owner, questID)
-    if not questID then return end
+    questID = QuestID(questID)
+    if not questID or not UsableFrame(GameTooltip) or not UsableFrame(owner) then return end
 
-    if not GameTooltip:IsShown() or GameTooltip:GetOwner() ~= owner then
+    if not Public(GameTooltip:IsShown()) or Public(GameTooltip:GetOwner()) ~= owner then
         GameTooltip:SetOwner(owner or UIParent, "ANCHOR_CURSOR_RIGHT", 5, 2)
         GameTooltip:SetText(GetQuestTitle(questID) or _G.QUESTS_LABEL or L["Quest"])
         AprRC.textStyle:TooltipLine(GameTooltip)
@@ -88,15 +119,22 @@ function AprRC.questID:RebuildQuestCache()
     wipe(questObjectives)
     wipe(specialItemQuests)
 
-    local numEntries = C_QuestLog.GetNumQuestLogEntries()
+    local numEntries = Public(C_QuestLog.GetNumQuestLogEntries())
+    if type(numEntries) ~= "number" then return end
     for questLogIndex = 1, numEntries do
-        local info = C_QuestLog.GetInfo(questLogIndex)
-        if info and not info.isHeader and info.questID and info.questID > 0 then
-            local questID = info.questID
+        local info = Public(C_QuestLog.GetInfo(questLogIndex))
+        local questID = info and QuestID(info.questID)
+        if questID and not Public(info.isHeader) then
             activeQuests[questID] = true
-            questObjectives[questID] = C_QuestLog.GetQuestObjectives(questID) or {}
+            local objectives = {}
+            for _, objective in ipairs(Public(C_QuestLog.GetQuestObjectives(questID)) or {}) do
+                objective = Public(objective)
+                local text = objective and Text(objective.text)
+                if text then objectives[#objectives + 1] = text:lower() end
+            end
+            questObjectives[questID] = objectives
 
-            local itemLink = GetQuestLogSpecialItemInfo(questLogIndex)
+            local itemLink = Text(GetQuestLogSpecialItemInfo(questLogIndex))
             local itemID = itemLink and tonumber(itemLink:match("item:(%d+)"))
             if itemID then
                 specialItemQuests[itemID] = specialItemQuests[itemID] or {}
@@ -107,14 +145,18 @@ function AprRC.questID:RebuildQuestCache()
 end
 
 function AprRC.questID:GetBagItemQuestIDs(bagID, slotID)
-    local questInfo = C_Container.GetContainerItemQuestInfo(bagID, slotID)
-    if not questInfo or (not questInfo.questID and not questInfo.isQuestItem) then return end
+    bagID, slotID = Public(bagID), Public(slotID)
+    if type(bagID) ~= "number" or type(slotID) ~= "number" then return end
+    local questInfo = Public(C_Container.GetContainerItemQuestInfo(bagID, slotID))
+    if not questInfo then return end
+    local questID, isQuestItem = QuestID(questInfo.questID), Public(questInfo.isQuestItem)
+    if not questID and not isQuestItem then return end
 
     local ids, seen = {}, {}
-    AddUnique(ids, seen, questInfo.questID)
+    AddUnique(ids, seen, questID)
 
-    local itemInfo = C_Container.GetContainerItemInfo(bagID, slotID)
-    local itemID = itemInfo and itemInfo.itemID
+    local itemInfo = Public(C_Container.GetContainerItemInfo(bagID, slotID))
+    local itemID = itemInfo and QuestID(itemInfo.itemID)
     if itemID and specialItemQuests[itemID] then
         for questID in pairs(specialItemQuests[itemID]) do
             AddUnique(ids, seen, questID)
@@ -125,14 +167,13 @@ function AprRC.questID:GetBagItemQuestIDs(bagID, slotID)
     -- For ordinary objective items, match the cached item name against active
     -- item-objective text. This covers the relation the client marks with the
     -- yellow quest-item border without maintaining an external quest database.
-    if questInfo.isQuestItem and itemID then
-        local itemName = C_Item.GetItemNameByID(itemID)
+    if isQuestItem and itemID then
+        local itemName = Text(C_Item.GetItemNameByID(itemID))
         local itemNameLower = itemName and itemName:lower()
         if itemNameLower and itemNameLower ~= "" then
             for questID, objectives in pairs(questObjectives) do
-                for _, objective in ipairs(objectives) do
-                    local objectiveText = objective.text and objective.text:lower()
-                    if objectiveText and objectiveText:find(itemNameLower, 1, true) then
+                for _, objectiveText in ipairs(objectives) do
+                    if objectiveText:find(itemNameLower, 1, true) then
                         AddUnique(ids, seen, questID)
                         break
                     end
@@ -145,7 +186,7 @@ function AprRC.questID:GetBagItemQuestIDs(bagID, slotID)
 end
 
 function AprRC.questID:OnBagItemTooltip(tooltip, bagID, slotID)
-    if not self:IsEnabled("inventory") then return end
+    if not self:IsEnabled("inventory") or not UsableFrame(tooltip) then return end
     local questIDs = self:GetBagItemQuestIDs(bagID, slotID)
     if not questIDs then return end
 
@@ -165,37 +206,44 @@ end
 
 ExtractQuestIDsFromTooltipData = function(data)
     local ids, seen = {}, {}
+    data = Public(data)
     if not data then return ids end
 
     local hasQuestTitle = false
-    local dataID = tonumber(data.id)
+    local dataID = QuestID(data.id)
     local dataQuestTitle = dataID and GetQuestTitle(dataID)
     local titleMatches = false
-    for _, line in ipairs(data.lines or {}) do
-        if line.type == Enum.TooltipDataLineType.QuestTitle then
-            hasQuestTitle = true
-        elseif line.type == Enum.TooltipDataLineType.NestedBlock
-            and line.tooltipType == Enum.TooltipDataType.Quest then
-            AddUnique(ids, seen, line.tooltipID)
-        end
+    for _, line in ipairs(Public(data.lines) or {}) do
+        line = Public(line)
+        if line then
+            if Public(line.type) == Enum.TooltipDataLineType.QuestTitle then
+                hasQuestTitle = true
+            elseif Public(line.type) == Enum.TooltipDataLineType.NestedBlock
+                and Public(line.tooltipType) == Enum.TooltipDataType.Quest then
+                AddUnique(ids, seen, line.tooltipID)
+            end
 
-        if dataQuestTitle and line.leftText and line.leftText:find(dataQuestTitle, 1, true) then
-            titleMatches = true
-        end
+            local leftText = Text(line.leftText)
+            if dataQuestTitle and leftText and leftText:find(dataQuestTitle, 1, true) then
+                titleMatches = true
+            end
 
-        for _, arg in ipairs(line.args or {}) do
-            local field = arg.field and arg.field:lower()
-            if field and field:find("quest", 1, true) and field:find("id", 1, true) then
-                AddUnique(ids, seen, arg.intVal)
+            for _, arg in ipairs(Public(line.args) or {}) do
+                arg = Public(arg)
+                local field = arg and Text(arg.field)
+                field = field and field:lower()
+                if field and field:find("quest", 1, true) and field:find("id", 1, true) then
+                    AddUnique(ids, seen, arg.intVal)
+                end
             end
         end
     end
 
-    if data.type == Enum.TooltipDataType.Quest then
+    if Public(data.type) == Enum.TooltipDataType.Quest then
         AddUnique(ids, seen, dataID)
-    elseif data.type == Enum.TooltipDataType.MinimapMouseover then
+    elseif Public(data.type) == Enum.TooltipDataType.MinimapMouseover then
         if dataID and (hasQuestTitle or titleMatches or activeQuests[dataID]
-            or (C_TaskQuest and C_TaskQuest.IsActive and C_TaskQuest.IsActive(dataID))) then
+            or (C_TaskQuest and C_TaskQuest.IsActive and Public(C_TaskQuest.IsActive(dataID)))) then
             AddUnique(ids, seen, dataID)
         end
     end
@@ -212,105 +260,91 @@ function AprRC.questID:OnMinimapTooltip(tooltip, data)
 end
 
 function AprRC.questID:OnQuestLogHover(button, questID)
-    if not self:IsEnabled("questLog") then return end
-    questID = questID or (button.info and button.info.questID)
-        or (button.questLogIndex and C_QuestLog.GetQuestIDForLogIndex(button.questLogIndex))
+    if not self:IsEnabled("questLog") or not UsableFrame(button) then return end
+    local info, index = Public(button.info), QuestID(button.questLogIndex)
+    questID = QuestID(questID) or (info and QuestID(info.questID))
+        or (index and QuestID(C_QuestLog.GetQuestIDForLogIndex(index)))
     self:EnsureQuestTooltip(button, questID)
 end
 
 function AprRC.questID:OnObjectiveTrackerHover(block, questID)
-    if not self:IsEnabled("objectiveTracker") then return end
-    questID = questID or (block and block.id)
-    if not questID or questID <= 0 then return end
+    if not self:IsEnabled("objectiveTracker") or not UsableFrame(block) then return end
+    questID = QuestID(questID) or QuestID(block.id)
+    if not questID then return end
     self:EnsureQuestTooltip(block, questID)
 end
 
 function AprRC.questID:OnMapQuestHover(pin, questID)
-    if not self:IsEnabled("map") then return end
-    questID = questID or (pin and (pin.questID or (pin.GetQuestID and pin:GetQuestID())))
+    if not self:IsEnabled("map") or not UsableFrame(pin) then return end
+    questID = QuestID(questID) or QuestID(pin.questID) or (pin.GetQuestID and QuestID(pin:GetQuestID()))
     self:EnsureQuestTooltip(pin, questID)
 end
 
 function AprRC.questID:OnQuestBlobTooltip(pin)
-    if not self:IsEnabled("map") or not GameTooltip:IsShown() or GameTooltip:GetOwner() ~= pin then return end
+    if not self:IsEnabled("map") or not UsableFrame(pin) or not UsableFrame(GameTooltip)
+        or not Public(GameTooltip:IsShown()) or Public(GameTooltip:GetOwner()) ~= pin then return end
 
-    local questID
-    local ok, result = pcall(function()
-        local mouseX, mouseY = pin:GetMap():GetNormalizedCursorPosition()
-        return pin:UpdateMouseOverTooltip(mouseX, mouseY)
-    end)
-    if ok then questID = result end
-    questID = questID or pin.focusedQuestID or pin.highlightedQuestID or pin.questID
-    self:AddQuestIDsToTooltip(GameTooltip, questID)
-end
-
-function AprRC.questID:ClearLegacyQuestLogTitleSuffix()
-    local title = _G.QuestInfoTitleHeader
-    if not title then return end
-
-    local text = title:GetText()
-    local oldSuffix = title.aprrcQuestIDSuffix
-    if oldSuffix and text and text:sub(-#oldSuffix) == oldSuffix then
-        text = text:sub(1, #text - #oldSuffix)
-        title:SetText(text)
+    -- UpdateMouseOverTooltip changes Blizzard's blob state. Do not call it a
+    -- second time from an insecure post-hook. Match the already displayed title
+    -- only when it identifies a single active quest; omit ambiguous/secret data.
+    local title = _G.GameTooltipTextLeft1
+    local text = UsableFrame(title) and Text(title:GetText())
+    if not text then return end
+    local match
+    for questID in pairs(activeQuests) do
+        if GetQuestTitle(questID) == text then
+            if match then return end
+            match = questID
+        end
     end
-    title.aprrcQuestIDSuffix = nil
+    self:AddQuestIDsToTooltip(GameTooltip, match)
 end
 
 function AprRC.questID:GetQuestLogDetailLine(parentFrame)
-    local line = parentFrame.aprrcQuestIDLine
+    if not UsableFrame(parentFrame) then return end
+    local line = detailLines[parentFrame]
     if not line then
-        line = parentFrame:CreateFontString(nil, "ARTWORK", "QuestFontNormalSmall")
+        -- Own the label and its anchors, without adding callbacks to Blizzard's
+        -- template or moving any Blizzard regions. Keep it beside the Back button.
+        local header = Public(parentFrame.BackFrame) or parentFrame
+        if not UsableFrame(header) then return end
+        line = header:CreateFontString(nil, "ARTWORK", "QuestFontNormalSmall")
         AprRC.textStyle:TrackFont(line)
-        line:SetWidth(285)
+        line:SetPoint("TOPLEFT", header, "TOPLEFT", 112, -14)
+        line:SetSize(155, 18)
         line:SetJustifyH("LEFT")
         line:SetWordWrap(false)
-        parentFrame.aprrcQuestIDLine = line
-    end
-
-    local details = _G.QuestMapFrame and QuestMapFrame.DetailsFrame
-    local questID = details and details.questID
-    if not questID or not self:IsEnabled("questLog") then
         line:Hide()
-        return
+        detailLines[parentFrame] = line
     end
-
-    local bodyText = _G.QuestInfoObjectivesText
-    if bodyText then
-        line:SetTextColor(bodyText:GetTextColor())
-    end
-
-    line:SetText("|cff" .. QUEST_ID_COLOR .. L.QUEST_ID .. ":|r " .. questID)
-    line:Show()
     return line
 end
 
-function AprRC.questID:InstallQuestLogDetailLayout()
-    local template = _G.QUEST_TEMPLATE_MAP_DETAILS
-    if not template or template.aprrcQuestIDElement then return end
-
-    -- QuestInfo layouts are triples: renderer, x offset, y offset. Inserting
-    -- our own renderer makes the QuestID a real row between the title and the
-    -- objectives, so it uses a body font and participates in Blizzard's layout.
-    table.insert(template.elements, 4, function(parentFrame)
-        return AprRC.questID:GetQuestLogDetailLine(parentFrame)
+function AprRC.questID:InstallQuestLogDetailHook()
+    local details = _G.QuestMapFrame and QuestMapFrame.DetailsFrame
+    if UsableFrame(details) and not hookedDetails[details] then
+        details:HookScript("OnShow", function() self:RefreshQuestLogDetails() end)
+        hookedDetails[details] = true
+    end
+    if not _G.QuestInfo_Display or self.questDetailsHooked then return end
+    hooksecurefunc("QuestInfo_Display", function(template)
+        if template == _G.QUEST_TEMPLATE_MAP_DETAILS then self:RefreshQuestLogDetails() end
     end)
-    table.insert(template.elements, 5, 0)
-    table.insert(template.elements, 6, -2)
-    template.aprrcQuestIDElement = true
+    self.questDetailsHooked = true
 end
 
 function AprRC.questID:RefreshQuestLogDetails()
-    self:ClearLegacyQuestLogTitleSuffix()
-    self:InstallQuestLogDetailLayout()
-
     local details = _G.QuestMapFrame and QuestMapFrame.DetailsFrame
-    if not details or not details:IsShown() or not _G.QuestInfo_Display
-        or not _G.QUEST_TEMPLATE_MAP_DETAILS then
+    if not UsableFrame(details) then return end
+    local questID = QuestID(details.questID)
+    if not questID or not Public(details:IsShown()) or not self:IsEnabled("questLog") then
+        if detailLines[details] then detailLines[details]:Hide() end
         return
     end
-
-    QuestInfo_Display(QUEST_TEMPLATE_MAP_DETAILS, details.ScrollFrame.Contents)
+    local line = self:GetQuestLogDetailLine(details)
+    if not line then return end
+    line:SetText("|cff" .. QUEST_ID_COLOR .. L.QUEST_ID .. ":|r " .. questID)
+    line:Show()
 end
 
 function AprRC.questID:RefreshVisibility()
@@ -338,7 +372,7 @@ end
 
 function AprRC.questID:InstallHooks()
     self:HookObjectiveTrackers()
-    self:InstallQuestLogDetailLayout()
+    self:InstallQuestLogDetailHook()
 
     if _G.TaskPOI_OnEnter and not self.taskPOIHooked then
         hooksecurefunc("TaskPOI_OnEnter", function(pin)
@@ -389,6 +423,7 @@ function AprRC.questID:OnInit()
         else
             AprRC.questID:RebuildQuestCache()
             AprRC.questID:InstallHooks()
+            AprRC.questID:RefreshQuestLogDetails()
         end
     end)
     self.eventFrame = eventFrame
