@@ -9,8 +9,13 @@ local gold, muted = "|cffedc36a", "|cffb3a58b"
 
 function Editor:DrawSteps()
     local split = UI.Body(self.tabs, "APRSplit")
+    self.stepsSplit = split
+    split.content.aprCompactPane = self.compact and (self.compactPane or "list") or nil
     self.listPanel = UI.Body(split)
     local heading = UI.Toolbar(self.listPanel)
+    if self.compact then
+        UI.Button(heading, "Show inspector", function() self:ShowStepPane("inspector") end, 210)
+    end
     local search = GUI:Create("EditBox")
     search:SetLabel(T("Search steps"))
     search:SetFullWidth(true)
@@ -75,6 +80,9 @@ function Editor:DrawSteps()
         self:DrawTab()
     end, 100):SetRelativeWidth(0.27)
     local detail = UI.Body(split)
+    if self.compact then
+        UI.Button(UI.Toolbar(detail), "Back to steps", function() self:ShowStepPane("list") end, 210)
+    end
     self.inspector = UI.Scroll(detail)
     local actions = UI.Toolbar(detail, true)
     self.moveUp = UI.Button(actions, "Move up", function() self:Move(-1) end, 110)
@@ -109,6 +117,15 @@ function Editor:DrawSteps()
     actions:AddChild(moveTo)
     self:DrawList()
     self:DrawInspector()
+end
+
+function Editor:ShowStepPane(pane)
+    self.compactPane = pane
+    GUI:ClearFocus()
+    if self.stepsSplit and self.tab == "steps" then
+        self.stepsSplit.content.aprCompactPane = self.compact and pane or nil
+        self.stepsSplit:DoLayout()
+    end
 end
 
 function Editor:AfterStructureChange()
@@ -155,7 +172,7 @@ function Editor:DrawList()
         local metadata = {}
         if step.Zone then
             local map = C_Map.GetMapInfo and C_Map.GetMapInfo(tonumber(step.Zone) or 0)
-            metadata[#metadata + 1] = map and map.name or ("Map " .. tostring(step.Zone))
+            metadata[#metadata + 1] = map and map.name or (UI.Label("mapID") .. " " .. tostring(step.Zone))
         end
         if type(step.Coord) == "table" then metadata[#metadata + 1] = "x: " .. tostring(step.Coord.x or "?") .. "   y: " .. tostring(step.Coord.y or "?") end
         local conditionCount = 0
@@ -175,6 +192,7 @@ function Editor:DrawList()
             self.formModes, self.formPages = {}, {}
             self:DrawList(); self:DrawInspector()
             self.inspector:SetScroll(0)
+            if self.compact then self:ShowStepPane("inspector") end
         end)
         row:SetCallback("OnEnter", function()
             GameTooltip:SetOwner(row.frame, "ANCHOR_RIGHT")

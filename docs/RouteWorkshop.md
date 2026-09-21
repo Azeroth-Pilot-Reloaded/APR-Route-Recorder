@@ -34,6 +34,13 @@ The floating bar uses a wrapping grid, reuses its buttons and paginates oversize
 lists. Drag its header to move it. An empty favorites list stays empty until changed
 or reset; saved custom commands and their order are preserved.
 
+Use **Compact mode** in the workshop header to halve its current width (1120 to
+560 pixels by default). The Steps tab then shows one pane at a time: select a step
+to open the inspector, or use **Back to steps** to return to the list. **Full width**
+restores the previous editing width. Recording controls, Commands and other tabs
+remain accessible in both modes. Width, height and compact mode are saved across
+reopening and reloads; switching modes preserves unsaved and incomplete Lua drafts.
+
 Drafts are detached from recorded routes and stored in `AprRCData.EditorDrafts`. Closing or switching routes preserves them, including incomplete Lua. Saving validates the entire definition through the existing data-only parser, checks that the recorded route has not changed, backs up the prior steps, and then replaces the saved route. A concurrent change requires saving a separate copy or explicitly discarding the draft. Starting recording from the workshop requires a saved draft.
 
 ## Verification

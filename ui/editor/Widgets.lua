@@ -53,6 +53,22 @@ GUI:RegisterLayout("APRSplit", function(content, children)
     if content.aprLayout then return end
     content.aprLayout = true
     local width, height = content:GetWidth(), content:GetHeight()
+    if content.aprCompactPane then
+        for index, child in ipairs(children) do
+            if index == (content.aprCompactPane == "inspector" and 2 or 1) then
+                child.frame:ClearAllPoints()
+                child.frame:SetPoint("TOPLEFT", content, "TOPLEFT")
+                child:SetWidth(width)
+                child:SetHeight(height)
+                child.frame:Show()
+                child:DoLayout()
+            else
+                child.frame:Hide()
+            end
+        end
+        content.aprLayout = nil
+        return
+    end
     local left = math.floor((width - 14) * 0.49)
     for index, child in ipairs(children) do
         child.frame:ClearAllPoints()

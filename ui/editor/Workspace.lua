@@ -223,6 +223,7 @@ end
 function Editor:DrawTab()
     self:DetachLua()
     self.list, self.inspector, self.listPanel, self.routeForm = nil, nil, nil, nil
+    self.stepsSplit = nil
     self.tabs:ReleaseChildren()
     if self.tab == "tools" then
         self:DrawTools()
@@ -304,6 +305,31 @@ function Editor:Hide()
     if self.frame then self.frame:Hide() end
 end
 
+function Editor:ApplySizeLimits()
+    local width = math.min(self.compact and 440 or 880, UIParent:GetWidth())
+    local height = math.min(self.compact and 680 or 560, UIParent:GetHeight())
+    if self.frame.frame.SetResizeBounds then self.frame.frame:SetResizeBounds(width, height)
+    else self.frame.frame:SetMinResize(width, height) end
+    return width, height
+end
+
+function Editor:ToggleCompact()
+    if not self.frame then return end
+    local status = AprRC.settings.profile.editorFrame
+    local width = self.frame.frame:GetWidth()
+    if not self.compact then status.wideWidth = width end
+    self.compact = not self.compact
+    status.compact = self.compact
+    local minWidth, minHeight = self:ApplySizeLimits()
+    status.width = math.min(UIParent:GetWidth(), math.max(minWidth,
+        self.compact and math.floor(width / 2) or (status.wideWidth or 1120)))
+    status.height = math.max(minHeight, self.frame.frame:GetHeight())
+    self.frame:SetWidth(status.width)
+    self.frame:SetHeight(status.height)
+    self.compactButton:SetText(T(self.compact and "Full width" or "Compact mode"))
+    self:DrawTab()
+end
+
 function Editor:Show()
     if self.frame then self.frame:Show(); self.frame.frame:Raise(); return end
     local frame = GUI:Create("Frame")
@@ -314,20 +340,22 @@ function Editor:Show()
     frame:SetLayout("APRWorkspace")
     AprRC.settings.profile.editorFrame = AprRC.settings.profile.editorFrame or { width = 1120, height = 780 }
     local status = AprRC.settings.profile.editorFrame
-    status.width = math.min(math.max(status.width or 1120, 880), UIParent:GetWidth())
-    status.height = math.min(math.max(status.height or 780, 560), UIParent:GetHeight())
+    self.compact = status.compact == true
+    local minWidth, minHeight = self:ApplySizeLimits()
+    status.width = math.min(math.max(status.width or (self.compact and 560 or 1120), minWidth), UIParent:GetWidth())
+    status.height = math.min(math.max(status.height or 780, minHeight), UIParent:GetHeight())
     frame:SetStatusTable(status)
     local wasClamped = frame.frame:IsClampedToScreen()
     frame.frame:SetClampedToScreen(true)
     frame.frame:SetBackdropColor(0.07, 0.055, 0.035, 0.98)
     frame.frame:SetBackdropBorderColor(0.72, 0.58, 0.34, 1)
-    if frame.frame.SetResizeBounds then frame.frame:SetResizeBounds(880, 560) else frame.frame:SetMinResize(880, 560) end
     local header = UI.Toolbar(frame)
     self.routeDropdown = UI.Dropdown(header, T("Select a route"), {}, nil, function(name) self:SelectRoute(name) end)
     self.routeDropdown:SetFullWidth(false)
     self.routeDropdown:SetRelativeWidth(0.54)
     UI.Button(header, "New route", function() self:NameDialog() end, 155)
     self.recordButton = UI.Button(header, "Record this route", function() self:ToggleRecording() end, 210)
+    self.compactButton = UI.Button(header, self.compact and "Full width" or "Compact mode", function() self:ToggleCompact() end, 175)
     self.recordStatus = UI.LabelWidget(header, "")
     self.summary = UI.LabelWidget(header, "")
     self.tabs = GUI:Create("TabGroup")
@@ -362,6 +390,7 @@ function Editor:Show()
     follow:SetCallback("OnValueChanged", function(_, _, value) self.follow = value; self:Tick() end)
     footer:AddChild(follow)
     frame:SetCallback("OnClose", function(widget)
+        status.width, status.height = widget.frame:GetWidth(), widget.frame:GetHeight()
         if self.session then self.session:Persist() end
         if self.timer then self:CancelTimer(self.timer); self.timer = nil end
         self:DetachLua()
