@@ -1,206 +1,154 @@
-local _G = _G
 local L = LibStub("AceLocale-3.0"):GetLocale("APR-Recorder")
 local LibWindow = LibStub("LibWindow-1.1")
+AprRC.CommandBar = AprRC:NewModule("CommandBar")
+local Bar = AprRC.CommandBar
+Bar.btnList = {}
 
-AprRC.CommandBar = AprRC:NewModule('CommandBar')
-AprRC.CommandBar.btnList = {}
-AprRC.CommandBar.settingTutoFrameID = nil
+local frame = CreateFrame("Frame", "CommandBarFrame", UIParent, "BackdropTemplate")
+Bar.frame = frame
+frame:SetFrameStrata("MEDIUM")
+frame:SetClampedToScreen(true)
+frame:SetMovable(true)
+frame:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8X8", edgeFile = "Interface\\Buttons\\WHITE8X8", edgeSize = 1 })
+frame:SetBackdropColor(0.07, 0.055, 0.035, 0.96)
+frame:SetBackdropBorderColor(0.72, 0.58, 0.34, 1)
 
-local FRAME_WIDTH = 80
-local FRAME_HEIGHT = 35
+local header = CreateFrame("Frame", nil, frame)
+header:SetPoint("TOPLEFT", 5, -3)
+header:SetPoint("TOPRIGHT", -85, -3)
+header:SetHeight(24)
+header:EnableMouse(true)
+header:RegisterForDrag("LeftButton")
+header:SetScript("OnDragStart", function() frame:StartMoving() end)
+header:SetScript("OnDragStop", function() frame:StopMovingOrSizing(); LibWindow.SavePosition(frame) end)
+header:SetScript("OnEnter", function(self)
+    GameTooltip:SetOwner(self, "ANCHOR_TOP")
+    GameTooltip:AddLine(L["Drag the header to move the bar."], 1, 1, 1)
+    GameTooltip:Show()
+end)
+header:SetScript("OnLeave", function() GameTooltip:Hide() end)
+local title = header:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+title:SetAllPoints(header)
+title:SetJustifyH("LEFT")
+title:SetTextColor(0.93, 0.76, 0.42)
+title:SetText(L["Commands"])
 
-local function ResolveToolbarIcon(command, texture)
-    if AprRC.options and AprRC.options.GetToolbarIcon then
-        return texture or AprRC.options:GetToolbarIcon(command)
-    end
-    return texture
-end
-
-local function CopyDefaultCommands()
-    print()
-    if AprRC.options and AprRC.options.GetDefaultToolbarCommands then
-        return AprRC.options:GetDefaultToolbarCommands()
-    end
-    return {}
-end
-
----------------------------------------------------------------------------------------
---------------------------------- CommandBar Frames -----------------------------------
----------------------------------------------------------------------------------------
-local CommandBarFrame = CreateFrame("Frame", "CommandBarFrame", UIParent, "BackdropTemplate")
-CommandBarFrame:SetSize(FRAME_WIDTH, FRAME_HEIGHT)
-CommandBarFrame:SetFrameStrata("MEDIUM")
-CommandBarFrame:SetClampedToScreen(true)
-CommandBarFrame:SetBackdrop(AprRC.Backdrop.defaut)
-CommandBarFrame:SetBackdropColor(unpack(AprRC.Backdrop.defaultBackdrop))
-
-
-local function CreateButton(parent, texture, tooltipText, onClick)
-    local btn = CreateFrame("Button", nil, parent)
-    btn:SetSize(24, 24)
-    btn:SetPoint("TOPLEFT", 0, 0)
-    btn.icon = btn:CreateTexture(nil, "BACKGROUND")
-    btn.icon:SetAllPoints(btn)
-    btn.icon:SetTexture(texture)
-    btn:SetHighlightTexture("Interface\\Buttons\\UI-Common-MouseHilight")
-
-    btn:SetScript("OnEnter", function(self)
-        GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
-        GameTooltip:AddLine(tooltipText, unpack(AprRC.Color.white))
+local function headerButton(text, offset, tooltip, callback)
+    local button = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+    button:SetSize(24, 22)
+    button:SetPoint("TOPRIGHT", offset, -4)
+    button:SetText(text)
+    button:SetScript("OnClick", callback)
+    button:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        GameTooltip:AddLine(tooltip, 1, 1, 1)
         GameTooltip:Show()
     end)
-    btn:SetScript("OnLeave", function(self) GameTooltip:Hide() end)
-    btn:SetScript("OnClick", onClick)
+    button:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    return button
+end
+Bar.settingsButton = headerButton("+", -5, L["Bar settings"], function() AprRC.CommandBarSetting:Show(true) end)
+Bar.nextButton = headerButton(">", -31, L["Next"], function() Bar.page = (Bar.page or 1) + 1; Bar:UpdateFrame() end)
+Bar.previousButton = headerButton("<", -57, L["Previous"], function() Bar.page = math.max(1, (Bar.page or 1) - 1); Bar:UpdateFrame() end)
 
-    return btn
+function Bar:GetCommands()
+    if AprRCData.CommandBarCommands == nil then AprRCData.CommandBarCommands = AprRC.options:GetDefaultToolbarCommands() end
+    AprRCData.CommandBarCommands = AprRC.options:NormalizeToolbarCommands(AprRCData.CommandBarCommands)
+    return AprRCData.CommandBarCommands
 end
 
-function AprRC.CommandBar:UpdateFrame()
-    for _, child in ipairs({ CommandBarFrame:GetChildren() }) do
-        child:Hide()
-    end
-    AprRC.CommandBar.btnList = {}
+function Bar:Run(command)
+    local allowed, reason = AprRC.options:CanEdit(AprRCData.CurrentRoute)
+    if not allowed then APR:PrintError(reason); return false end
+    AprRC.command:SlashCmd(command)
+    if AprRC.routeEditor then AprRC.routeEditor:UpdateStatus() end
+    return true
+end
 
-    AprRCData.CommandBarCommands = AprRCData.CommandBarCommands or CopyDefaultCommands()
-    if AprRC.options and AprRC.options.NormalizeToolbarCommands then
-        AprRCData.CommandBarCommands = AprRC.options:NormalizeToolbarCommands(AprRCData.CommandBarCommands)
-    end
-    if #AprRCData.CommandBarCommands == 0 then
-        AprRCData.CommandBarCommands = CopyDefaultCommands()
-    end
-
-    for _, commandData in ipairs(AprRCData.CommandBarCommands) do
-        local texture = ResolveToolbarIcon(commandData.command, commandData.texture)
-        commandData.texture = texture
-        local btn = CreateButton(CommandBarFrame, texture, commandData.label, function()
-            AprRC.command:SlashCmd(commandData.command)
-        end)
-        tinsert(AprRC.CommandBar.btnList, btn)
-    end
-
-    -- Create RouteCompleted button
-    local routeCompletedBtn = CreateButton(CommandBarFrame,
-        "Interface\\AddOns\\APR-Recorder\\assets\\icons\\RouteCompleted",
-        L["Add the last step (RouteCompleted) of the route so it can be marked as completed"])
-    routeCompletedBtn:SetScript("OnClick", function()
-        AprRC.command:SlashCmd('save')
+local function commandButton()
+    local button = CreateFrame("Button", nil, frame, "BackdropTemplate")
+    button:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8X8" })
+    button:SetBackdropColor(0.18, 0.15, 0.10, 1)
+    button:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
+    button.icon = button:CreateTexture(nil, "ARTWORK")
+    button.icon:SetSize(26, 26)
+    button.icon:SetPoint("LEFT", 3, 0)
+    button.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    button.text = button:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    button.text:SetPoint("LEFT", 34, 0)
+    button.text:SetPoint("RIGHT", -4, 0)
+    button.text:SetJustifyH("LEFT")
+    button:SetScript("OnClick", function(self) Bar:Run(self.command) end)
+    button:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        GameTooltip:AddLine(self.label, 1, 0.82, 0.4)
+        GameTooltip:AddLine("/aprrc " .. self.command, 0.8, 0.8, 0.8)
+        GameTooltip:Show()
     end)
-
-    -- Create rotation button
-    local rotationBtn = CreateButton(CommandBarFrame, "Interface\\AddOns\\APR-Recorder\\assets\\icons\\rotate", L["Rotate"],
-        function()
-            AprRC.settings.profile.commandBarFrame.rotation = AprRC.settings.profile.commandBarFrame.rotation ==
-                "HORIZONTAL" and
-                "VERTICAL" or "HORIZONTAL"
-            AprRC.CommandBar:AdjustBarRotation(CommandBarFrame)
-        end)
-
-    -- Create settings button
-    local settingsBtn = CreateButton(CommandBarFrame, "Interface\\AddOns\\APR-Recorder\\assets\\icons\\settings",
-        L["Commands Settings"], function()
-            AprRC.CommandBarSetting:Show()
-            AprRC.settings.profile.commandBarFrame.tutorialShown = false
-            AprRC.TutoFrame:HideCustomTutorialFrame(AprRC.CommandBar.settingTutoFrameID)
-        end)
-
-    tinsert(AprRC.CommandBar.btnList, routeCompletedBtn)
-    tinsert(AprRC.CommandBar.btnList, rotationBtn)
-    tinsert(AprRC.CommandBar.btnList, settingsBtn)
-    AprRC.CommandBar:AdjustBarRotation(CommandBarFrame)
-    -- Show the tutorial if we are using the default commands
-    if AprRC.settings.profile.commandBarFrame.tutorialShown then
-        AprRC.CommandBar.settingTutoFrameID = AprRC.TutoFrame:ShowCustomTutorialFrame(
-            L["You can add more commands in the Commands Settings panel"], TutorialPointerFrame.Direction.UP, settingsBtn)
-    end
+    button:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    return button
 end
 
----------------------------------------------------------------------------------------
------------------------------ Function CommandBar Frames -----------------------------
----------------------------------------------------------------------------------------
-
-function AprRC.CommandBar:OnInit()
-    -- Always ensure that the structure exists
-    AprRC.settings.profile.commandBarFrame = AprRC.settings.profile.commandBarFrame or {}
-    AprRC.settings.profile.commandBarFrame.position =
-        AprRC.settings.profile.commandBarFrame.position or {}
-
-    LibWindow.RegisterConfig(CommandBarFrame, AprRC.settings.profile.commandBarFrame.position)
-    CommandBarFrame.RegisteredForLibWindow = true
-    LibWindow.MakeDraggable(CommandBarFrame)
-
-    -- If no saved position, set to center
-    if AprRC.settings.profile.commandBarFrame.position.point then
-        LibWindow.RestorePosition(CommandBarFrame)
-    else
-        CommandBarFrame:ClearAllPoints()
-        CommandBarFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+function Bar:UpdateFrame()
+    local profile = AprRC.settings.profile.commandBarFrame
+    local commands = self:GetCommands()
+    local width = profile.showLabels and 156 or 32
+    local requested = profile.rotation == "VERTICAL" and 1 or math.max(1, math.floor(tonumber(profile.buttonsPerRow) or 6))
+    local columns = math.max(1, math.min(requested, math.max(1, #commands), math.floor((UIParent:GetWidth() - 20) / (width + 5))))
+    local maxRows = math.max(1, math.floor((UIParent:GetHeight() - 80) / 37))
+    local capacity = columns * maxRows
+    local pages = math.max(1, math.ceil(#commands / capacity))
+    self.page = math.min(math.max(1, self.page or 1), pages)
+    local first = (self.page - 1) * capacity + 1
+    local count = math.max(0, math.min(capacity, #commands - first + 1))
+    for index = 1, count do
+        local entry = commands[first + index - 1]
+        local button = self.btnList[index]
+        if not button then button = commandButton(); self.btnList[index] = button end
+        button.command, button.label = entry.command, entry.label
+        button.icon:SetTexture(entry.texture)
+        button.text:SetText(entry.label)
+        if profile.showLabels then button.text:Show() else button.text:Hide() end
+        button:SetSize(width, 32)
+        button:ClearAllPoints()
+        button:SetPoint("TOPLEFT", 6 + ((index - 1) % columns) * (width + 5), -32 - math.floor((index - 1) / columns) * 37)
+        button:Show()
     end
+    for index = count + 1, #self.btnList do self.btnList[index]:Hide() end
+    frame:SetSize(math.max(180, columns * (width + 5) + 7), 38 + math.ceil(count / columns) * 37)
+    if pages > 1 then
+        self.nextButton:Show(); self.previousButton:Show()
+        if self.page < pages then self.nextButton:Enable() else self.nextButton:Disable() end
+        if self.page > 1 then self.previousButton:Enable() else self.previousButton:Disable() end
+    else self.nextButton:Hide(); self.previousButton:Hide() end
+end
 
+function Bar:OnInit()
+    local profile = AprRC.settings.profile
+    profile.commandBarFrame = profile.commandBarFrame or {}
+    profile.commandBarFrame.position = profile.commandBarFrame.position or {}
+    LibWindow.RegisterConfig(frame, profile.commandBarFrame.position)
+    frame:ClearAllPoints()
+    frame:SetPoint("CENTER", UIParent, "CENTER", 0, -80)
+    if profile.commandBarFrame.position.point then LibWindow.RestorePosition(frame) end
     self:RefreshFrameAnchor()
 end
 
-function AprRC.CommandBar:ResetToDefault()
-    AprRCData.CommandBarCommands = CopyDefaultCommands()
-    AprRC.settings.profile.commandBarFrame.rotation = "HORIZONTAL"
-    AprRC.settings.profile.commandBarFrame.tutorialShown = true
-    AprRC.settings.profile.commandBarFrame.position = {}
-
-    LibWindow.RegisterConfig(CommandBarFrame, AprRC.settings.profile.commandBarFrame.position)
-    CommandBarFrame.RegisteredForLibWindow = true
-
-    CommandBarFrame:ClearAllPoints()
-    CommandBarFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
-
+function Bar:ResetToDefault()
+    AprRCData.CommandBarCommands = AprRC.options:GetDefaultToolbarCommands()
+    local profile = AprRC.settings.profile.commandBarFrame
+    profile.rotation, profile.enabled, profile.showLabels, profile.buttonsPerRow = "HORIZONTAL", true, false, 6
+    self.page = 1
     self:RefreshFrameAnchor()
 end
 
-function AprRC.CommandBar:RefreshFrameAnchor()
-    if not AprRC.settings.profile.enableAddon
-        or not AprRC.settings.profile.recordBarFrame.isRecording
-        or C_PetBattles.IsInBattle() then
-        CommandBarFrame:Hide()
-        AprRC.TutoFrame:HideCustomTutorialFrame(AprRC.CommandBar.settingTutoFrameID)
-        return
-    end
-
-    CommandBarFrame:Show()
-    CommandBarFrame:EnableMouse(true)
-
-    -- Only restore the position if LibWindow has a config for this frame
-    if CommandBarFrame.RegisteredForLibWindow
-        and AprRC.settings.profile.commandBarFrame
-        and AprRC.settings.profile.commandBarFrame.position
-        and AprRC.settings.profile.commandBarFrame.position.point then
-        LibWindow.RestorePosition(CommandBarFrame)
-    end
-
+function Bar:RefreshFrameAnchor()
+    local profile = AprRC.settings.profile
+    if not profile.enableAddon or not profile.recordBarFrame.isRecording or profile.commandBarFrame.enabled == false
+        or (C_PetBattles and C_PetBattles.IsInBattle()) then frame:Hide(); return end
     self:UpdateFrame()
+    frame:Show()
 end
 
-function AprRC.CommandBar:AdjustBarRotation(bar)
-    local buttons = AprRC.CommandBar.btnList
-    local spacing = 10
-    local offsetX, offsetY = 5, -5
-    local rotation = AprRC.settings.profile.commandBarFrame.rotation
-
-    for i, btn in ipairs(buttons) do
-        if rotation == "HORIZONTAL" then
-            btn:SetPoint("TOPLEFT", offsetX, offsetY)
-            offsetX = offsetX + btn:GetWidth() + spacing
-        else -- VERTICAL
-            btn:SetPoint("TOPLEFT", offsetX, offsetY)
-            offsetY = offsetY - btn:GetHeight() - spacing
-        end
-    end
-
-    local totalButtonWidth = (#buttons * (buttons[1]:GetWidth() + spacing)) - spacing
-    local totalButtonHeight = (#buttons * (buttons[1]:GetHeight() + spacing)) - spacing
-
-    if rotation == "HORIZONTAL" then
-        bar:SetHeight(FRAME_HEIGHT)
-        bar:SetWidth(totalButtonWidth + 10)
-    else
-        bar:SetWidth(FRAME_HEIGHT)
-        bar:SetHeight(totalButtonHeight + 10)
-    end
-end
+-- Retain the old entry point for integrations; geometry now uses a wrapping grid.
+function Bar:AdjustBarRotation() self:UpdateFrame() end

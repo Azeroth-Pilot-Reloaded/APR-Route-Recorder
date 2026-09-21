@@ -16,7 +16,7 @@ The reference was [Alenya's Guides Writer](https://www.curseforge.com/wow/addons
 | Save route and backup of previous steps | Save; `/aprrc backup` remains available |
 | Export to APR, immediately and after reload | Export to APR |
 | Extra-line-text export, save and reset | Tools → Extra line texts (existing dialog) |
-| Custom command bar, rotation, ordering and reset | Existing bar; Tools → Command bar; existing slash commands |
+| Custom command bar, orientation, ordering and reset | Commands tab; favorite controls and inline Bar settings |
 | Quest, achievement and text autocomplete; reputation and objective dialogs | Existing commands and Tools → Actions |
 | Coordinate frame | Tools → Coordinates; `/aprrc coordframe` |
 | All automatic recording hooks | Unchanged recording modules |
@@ -24,6 +24,15 @@ The reference was [Alenya's Guides Writer](https://www.curseforge.com/wow/addons
 | Settings, profiles, quest ID display, addon toggle and reset | Tools → Settings, `/aprrc settings`, existing settings button and minimap right-click |
 
 The visual editor exposes automatically recorded fields as editable properties too. A form edits the selected step; recording commands still edit the last recorded step. These are separate contexts and the Tools tab labels that distinction.
+
+The Commands tab launches recording commands directly from labeled buttons. Search
+matches translated labels and slash command names, including unpinned commands.
+The catalog follows the editor's actions, navigation, display, conditions and route
+metadata groups. Favorites can be added, removed and moved up or down. Bar settings
+share this tab: visibility, optional button labels, orientation, row size and reset.
+The floating bar uses a wrapping grid, reuses its buttons and paginates oversized
+lists. Drag its header to move it. An empty favorites list stays empty until changed
+or reset; saved custom commands and their order are preserved.
 
 Drafts are detached from recorded routes and stored in `AprRCData.EditorDrafts`. Closing or switching routes preserves them, including incomplete Lua. Saving validates the entire definition through the existing data-only parser, checks that the recorded route has not changed, backs up the prior steps, and then replaces the saved route. A concurrent change requires saving a separate copy or explicitly discarding the draft. Starting recording from the workshop requires a saved draft.
 

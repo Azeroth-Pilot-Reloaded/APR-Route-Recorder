@@ -31,17 +31,21 @@ def run():
     for name in ("Model", "Labels", "Widgets", "Forms", "Workspace", "Views"):
         load("ui/editor/" + name + ".lua")
     load("ui/dialogs/ExportRoute.lua")
-    load("tests/ui_smoke.lua")
     lua.execute('''
         local window = LibStub:NewLibrary("LibWindow-1.1", 999)
         function window.RegisterConfig(frame, config) frame.windowConfig = config end
         function window.RestorePosition(frame) frame.restored = true end
         function window.SavePosition(frame) frame.positionSaved = true end
         APR.settings = { profile = {}, ToggleAddon = function() end }
-        AprRC.CommandBar = { RefreshFrameAnchor = function() end }
+        AprRC.settings.profile.commandBarFrame = { position = {} }
     ''')
+    load("ui/bars/CommandsBar.lua")
+    load("ui/bars/CommandsBarSetting.lua")
+    lua.execute('AprRC.CommandBar:OnInit()')
+    load("tests/ui_smoke.lua")
     load("ui/bars/RecorderBar.lua")
     load("tests/recorder_button_smoke.lua")
+    load("tests/commands_bar_smoke.lua")
 
 
 if __name__ == "__main__":

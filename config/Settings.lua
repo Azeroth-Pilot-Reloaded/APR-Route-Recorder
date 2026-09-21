@@ -46,12 +46,9 @@ function AprRC.settings:InitializeSettings()
             commandBarFrame = {
                 rotation = "HORIZONTAL",
                 position = {},
-                tutorialShown = true
-            },
-            commandBarSettingFrame = {
-                width = 700,
-                height = 400,
-                position = {},
+                enabled = true,
+                showLabels = false,
+                buttonsPerRow = 6,
             },
             exportFrame = {
                 width = 700,

@@ -201,11 +201,28 @@ function options:AddToolbarCommands(list)
     end
 end
 
+local navigation = { Coord = true, Coords = true, Zone = true, Range = true, ZoneStepTrigger = true,
+    Waypoint = true, WaypointDB = true, NonSkippableWaypoint = true, SingleWaypointDisplayDistance = true,
+    TakePortal = true, NodeID = true, Name = true, Boat = true, NoArrow = true, NoAutoFlightMap = true,
+    InstanceQuest = true, IsAdventureMap = true, ETA = true, GossipETA = true, SpellETA = true,
+    EmoteETA = true, SpecialETAHide = true }
+options.categoryOrder = { "Actions", "Navigation", "Display", "Conditions", "Route metadata" }
+
+function options:GetCategory(definition)
+    if definition.scope == "route" then return "Route metadata", 5 end
+    if definition.condition then return "Conditions", 4 end
+    if navigation[definition.key] then return "Navigation", 2 end
+    if definition.newStep then return "Actions", 1 end
+    return "Display", 3
+end
+
 function options:GetToolbarEntry(definition)
     local bar = self:GetBarMeta(definition)
     local command = (bar and bar.command) or definition.command
     return {
         command = command,
+        key = definition.key,
+        category = self:GetCategory(definition),
         label = AprRC.editorUI and AprRC.editorUI.Label(definition.key) or definition.key,
         texture = self:GetToolbarIcon(command, definition),
     }
@@ -215,6 +232,9 @@ function options:GetToolbarCatalog()
     local defs = {}
     for _, definition in pairs(self.commands) do defs[#defs + 1] = definition end
     table.sort(defs, function(a, b)
+        local _, aCategory = self:GetCategory(a)
+        local _, bCategory = self:GetCategory(b)
+        if aCategory ~= bCategory then return aCategory < bCategory end
         local aBar = self:GetBarMeta(a)
         local bBar = self:GetBarMeta(b)
         local aOrder = (aBar and aBar.order) or 1000

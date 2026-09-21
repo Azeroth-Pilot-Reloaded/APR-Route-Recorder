@@ -70,6 +70,7 @@ function Editor:UpdateStatus()
         (dirty and "|cffffcf66" .. T("Unsaved draft") or "|cff82d9a0" .. T("Saved")) .. "|r") or "")
     self.frame:SetStatusText(self.notice or (dirty and T("Follow pauses while you edit. Save or reload to resume.") or
         T("Drafts are kept when closing this window, switching routes or reloading the UI.")))
+    if self.tab == "commands" then AprRC.CommandBarSetting:RefreshRunState() end
 end
 
 function Editor:Changed()
@@ -225,6 +226,8 @@ function Editor:DrawTab()
     self.tabs:ReleaseChildren()
     if self.tab == "tools" then
         self:DrawTools()
+    elseif self.tab == "commands" then
+        AprRC.CommandBarSetting:Draw(self.tabs)
     elseif not self.session then
         local empty = UI.Scroll(self.tabs)
         UI.LabelWidget(empty, "|cffedc36a" .. T("Your route starts here.") .. "|r", true)
@@ -252,14 +255,6 @@ function Editor:DrawTools()
     UI.Button(panel, "Coordinates", function() AprRC.command:SlashCmd("coordframe") end)
     UI.Button(panel, "Extra line texts", function() AprRC.exportExtraLineText.Show() end, 190)
     UI.Button(panel, "Command reference", function() AprRC.options:PrintHelp() end, 190)
-    UI.LabelWidget(panel, "|cffedc36a" .. T("Actions") .. "|r", true)
-    UI.LabelWidget(panel, T("These tools apply to the last recorded step. Use Steps to edit a selected step."))
-    local entries = {}
-    for _, entry in ipairs(AprRC.options:GetToolbarCatalog()) do entries[entry.command] = entry.label end
-    local command = UI.Dropdown(panel, T("Actions"), entries, nil, function() end)
-    UI.Button(panel, "Run", function()
-        if command:GetValue() then AprRC.command:SlashCmd(command:GetValue()) end
-    end)
 end
 
 local function interacting(widget)
@@ -340,7 +335,8 @@ function Editor:Show()
     self.tabs:SetAutoAdjustHeight(false)
     self.tabs:SetUserData("body", true)
     self.tabs:SetTabs({ { value = "steps", text = T("Steps") }, { value = "route", text = T("Route") },
-        { value = "lua", text = T("Lua editor") }, { value = "tools", text = T("Tools") } })
+        { value = "lua", text = T("Lua editor") }, { value = "commands", text = T("Commands") },
+        { value = "tools", text = T("Tools") } })
     self.tabs:SetCallback("OnGroupSelected", function(_, _, tab) if not self.selectingTab then self:SelectTab(tab) end end)
     frame:AddChild(self.tabs)
     local footer = UI.Toolbar(frame, true)
