@@ -15,6 +15,8 @@ local function CanDoCommand()
     return true
 end
 function AprRC.command:SlashCmd(input)
+    -- Refresh next frame, after legacy commands have finished mutating the step.
+    AprRC:NotifyRouteChanged()
     if AprRC.options:Dispatch(input) then return end
     local inputText = string.lower(input)
     local questCheckCommands = {

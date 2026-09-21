@@ -346,6 +346,7 @@ function AprRC.ReputationFrame:Show(stepKey)
             currentStep = currentStep or AprRC:GetLastStep()
             currentStep[stepKey] = requirement
         end
+        AprRC:NotifyRouteChanged()
 
         print(string.format("|cff00bfff%s - " .. L["FIELD_Faction"] .. " %d, %s %d|r " .. L["Added"], stepKey, requirement.factionID,
             requirement.type, requirement.level))

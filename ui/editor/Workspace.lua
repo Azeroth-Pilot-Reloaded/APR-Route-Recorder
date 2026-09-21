@@ -77,8 +77,8 @@ function Editor:Changed()
     self.notice = nil
     self.session:Snapshot()
     self:UpdateStatus()
-    -- The timer updates summaries without disturbing keyboard focus in the form.
-    self.listDirty = true
+    -- Only rebuild the list; keep the inspector and its keyboard focus intact.
+    self:DrawList()
 end
 
 function Editor:FormContext()
@@ -246,6 +246,8 @@ function Editor:DrawTab()
     self.tabs:DoLayout()
     self.frame:DoLayout()
     self:UpdateStatus()
+    if self.session and self.follow and not self.session:IsDirty() and
+        self.session.selected == #self.session.draft.steps then self:ScrollToLatest() end
 end
 
 function Editor:DrawTools()
@@ -260,48 +262,85 @@ function Editor:DrawTools()
     UI.Button(panel, "Command reference", function() AprRC.options:PrintHelp() end, 190)
 end
 
-local function interacting(widget)
+local function interacting(widget, ignored)
+    if widget == ignored then return false end
     if widget.type == "ColorPicker" and ColorPickerFrame and ColorPickerFrame:IsShown() then return true end
     local edit = widget.editBox or widget.editbox
     if edit and edit:HasFocus() or widget.open then return true end
     for _, child in ipairs(widget.children or {}) do
-        if interacting(child) then return true end
+        if interacting(child, ignored) then return true end
     end
     return false
 end
 
-function Editor:Refresh()
+function Editor:RequestRefresh()
+    if not self.frame or self.refreshPending then return end
+    self.refreshPending = true
+    C_Timer.After(0, function()
+        self.refreshPending = nil
+        self:Tick()
+    end)
+end
+
+function Editor:ScrollToLatest()
+    if self.list then self.list:SetScroll(1000) end
+    local box = self.luaBox
+    if not box then return end
+    local token = {}
+    self.luaScrollToken = token
+    local function scroll()
+        box.editBox:SetCursorPosition(#box:GetText())
+        box.scrollFrame:SetVerticalScroll(box.scrollFrame:GetVerticalScrollRange())
+    end
+    scroll()
+    -- WoW can calculate the multiline edit box's scroll range after layout.
+    C_Timer.After(0, function()
+        if self.luaScrollToken == token and self.luaBox == box and self.follow and not self.session:IsDirty() then scroll() end
+    end)
+end
+
+function Editor:Refresh(forceFollow)
     if not self.frame then return end
     if self.routeCount ~= #AprRCData.Routes then
         self:RefreshRoutes()
         if not self.session and AprRCData.Routes[1] then self:SelectRoute(AprRCData.Routes[1].name) end
     end
-    if self.listDirty then self:DrawList() end
     local session = self.session
-    if session and self.follow and not AprRC.CommandBarSetting.dragging and
-        not (self.stepsSplit and self.stepsSplit.dragging) and not self.confirm and not self.nameDialog and not interacting(self.frame) and
-        not session:IsDirty() and session:IsStale() then
-        local atEnd = session.selected >= #session.draft.steps
+    local following = self.follow and session and session.name == AprRCData.CurrentRoute.name
+    if session and not AprRC.CommandBarSetting.dragging and
+        not (self.stepsSplit and self.stepsSplit.dragging) and not self.confirm and not self.nameDialog and
+        not interacting(self.frame, following and self.luaBox or nil) and
+        not session:IsDirty() and (session:IsStale() or (forceFollow and following)) then
+        local listScroll = self.list and self.list.localstatus.scrollvalue or 0
+        local luaScroll = self.luaBox and self.luaBox.scrollFrame:GetVerticalScroll() or 0
+        local luaCursor = self.luaBox and self.luaBox.editBox:GetCursorPosition() or 0
+        local luaFocus = self.luaBox and self.luaBox.editBox:HasFocus()
         session:Reload()
         session.rawHistory = nil
-        if atEnd then
+        if following then
             session.selected = math.max(1, #session.draft.steps)
+            self.query, self.filter = "", "all"
             self.page = math.max(1, math.ceil(#session.draft.steps / UI.PageSize))
+            self.formModes, self.formPages = {}, {}
         end
         self:DrawTab()
-        if atEnd and self.list then self.list:SetScroll(1000) end
+        if not following and self.list then self.list:SetScroll(listScroll) end
         if self.luaBox then
-            local frame = self.luaBox.scrollFrame
-            frame:SetVerticalScroll(frame:GetVerticalScrollRange())
+            if luaFocus then self.luaBox.editBox:SetFocus() end
+            if following then self:ScrollToLatest()
+            else
+                self.luaBox.editBox:SetCursorPosition(math.min(luaCursor, #self.luaBox:GetText()))
+                self.luaBox.scrollFrame:SetVerticalScroll(luaScroll)
+            end
         end
     end
     self:UpdateStatus()
 end
 
-function Editor:Tick()
+function Editor:Tick(forceFollow)
     -- Some game data can be unavailable/secret during combat. Keep the draft and
     -- try the next tick, matching the legacy editor's guarded live refresh.
-    local ok, reason = pcall(self.Refresh, self)
+    local ok, reason = pcall(self.Refresh, self, forceFollow)
     if not ok then AprRC:Debug("Route workshop refresh:", reason) end
 end
 
@@ -400,7 +439,7 @@ function Editor:Show()
     follow:SetWidth(205)
     self.follow = self.follow ~= false
     follow:SetValue(self.follow)
-    follow:SetCallback("OnValueChanged", function(_, _, value) self.follow = value; self:Tick() end)
+    follow:SetCallback("OnValueChanged", function(_, _, value) self.follow = value; self:Tick(value) end)
     footer:AddChild(follow)
     frame:SetCallback("OnClose", function(widget)
         status.width, status.height = widget.frame:GetWidth(), widget.frame:GetHeight()

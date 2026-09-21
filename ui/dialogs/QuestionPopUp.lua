@@ -51,6 +51,7 @@ function AprRC.questionDialog:CreateEditBoxPopupWithCallback(text, onAcceptCallb
             local inputText = editBox:GetText()
             if inputText ~= "" and type(onAcceptCallback) == "function" then
                 onAcceptCallback(inputText)
+                AprRC:NotifyRouteChanged()
             end
         end,
         timeout = 0,

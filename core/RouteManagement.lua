@@ -17,6 +17,10 @@ function AprRC:InitRoute(name)
     tinsert(AprRCData.Routes, AprRCData.CurrentRoute)
 end
 
+function AprRC:NotifyRouteChanged()
+    if self.routeEditor then self.routeEditor:RequestRefresh() end
+end
+
 function AprRC:UpdateRoute()
     local currentRouteName = AprRCData.CurrentRoute.name
     for i, route in ipairs(AprRCData.Routes) do
@@ -25,6 +29,7 @@ function AprRC:UpdateRoute()
             break
         end
     end
+    self:NotifyRouteChanged()
 end
 
 function AprRC:NewStep(step)
@@ -39,6 +44,7 @@ function AprRC:NewStep(step)
         table.remove(AprRCData.CurrentRoute.steps)
     end
     tinsert(AprRCData.CurrentRoute.steps, step)
+    self:NotifyRouteChanged()
 end
 
 function AprRC:GetStepByIndex(index)

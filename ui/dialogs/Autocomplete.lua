@@ -55,6 +55,7 @@ function AprRC.autocomplete:ShowAutoComplete(title, list, onConfirm, formatItem,
     btnConfirm:SetDisabled(false)
     btnConfirm:SetCallback("OnClick", function()
         onConfirm(editbox:GetText(), editbox.key, frame)
+        AprRC:NotifyRouteChanged()
     end)
 
     local function UpdateAutoCompleteList(text)

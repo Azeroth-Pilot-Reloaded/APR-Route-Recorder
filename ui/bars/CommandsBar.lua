@@ -83,7 +83,7 @@ function Bar:Run(command)
     local allowed, reason = AprRC.options:CanEdit(AprRCData.CurrentRoute)
     if not allowed then APR:PrintError(reason); return false end
     AprRC.command:SlashCmd(command)
-    if AprRC.routeEditor then AprRC.routeEditor:UpdateStatus() end
+    AprRC:NotifyRouteChanged()
     return true
 end
 

@@ -85,6 +85,7 @@ E:ToggleRecording()
 assert(not AprRC.settings.profile.recordBarFrame.isRecording)
 
 -- Refresh a clean draft, but preserve a dirty draft across a live append.
+E.follow = false
 E:SelectTab("lua")
 E.luaBox.editBox:SetFocus()
 table.insert(AprRCData.CurrentRoute.steps, { Done = { 42 } })
@@ -95,6 +96,7 @@ E:SelectTab("steps")
 E:Tick()
 healthy()
 assert(#E.session.draft.steps == 2)
+E.follow = true
 E.session.draft.steps[1].Note = "Draft"
 E:Changed()
 table.insert(AprRCData.CurrentRoute.steps, { Waypoint = 42 })

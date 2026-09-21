@@ -160,7 +160,6 @@ function Editor:DrawList()
     if not self.list then return end
     local oldScroll = self.list.localstatus.scrollvalue or 0
     self.list:ReleaseChildren()
-    self.listDirty = false
     local session = self.session
     local matches = Model:Filter(session.draft.steps, self.query, self.filter, UI.Label)
     local pages = math.max(1, math.ceil(#matches / PAGE_SIZE))
@@ -249,6 +248,7 @@ function Editor:DrawInspector()
 end
 
 function Editor:DetachLua()
+    self.luaScrollToken = nil
     if self.luaBox then
         self.luaBox.editBox:SetScript("OnKeyDown", self.luaKeyDown)
         self.luaBox:SetCallback("OnTextChanged", nil)
