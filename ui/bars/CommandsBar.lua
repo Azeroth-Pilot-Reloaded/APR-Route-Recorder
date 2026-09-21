@@ -24,12 +24,20 @@ local function iconButton(texture, label, callback)
     button:SetScript("OnMouseDown", function(self) self.dragged = nil end)
     button:SetScript("OnDragStart", function(self)
         self.dragged = true
+        if Bar.snappedTo then
+            -- SavePosition converts the workshop anchor to screen coordinates.
+            LibWindow.SavePosition(frame)
+            Bar.snappedTo = nil
+        end
+        AprRC.settings.profile.commandBarFrame.snap = "NONE"
         frame:StartMoving()
         GameTooltip:Hide()
     end)
     button:SetScript("OnDragStop", function()
         frame:StopMovingOrSizing()
         LibWindow.SavePosition(frame)
+        local settings = AprRC.CommandBarSetting
+        if settings and settings.showSettings and settings:IsVisible() then AprRC.routeEditor:DrawTab() end
     end)
     button:SetScript("OnClick", function(self)
         if self.dragged then self.dragged = nil; return end
@@ -84,13 +92,15 @@ function Bar:UpdateFrame()
     local commands = self:GetCommands()
     local size = self:GetButtonSize()
     local gap = math.max(2, math.floor(size / 8))
-    local requested = profile.rotation == "VERTICAL" and 1 or math.max(1, math.floor(tonumber(profile.buttonsPerRow) or 6))
+    local vertical = profile.rotation == "VERTICAL"
+    local requested = math.max(1, math.floor(tonumber(profile.buttonsPerRow) or 6))
     local scale = frame:GetEffectiveScale() / UIParent:GetEffectiveScale()
     local maxColumns = math.max(1, math.floor((UIParent:GetWidth() / scale - 20 + gap) / (size + gap)))
     local maxRows = math.max(1, math.floor((UIParent:GetHeight() / scale - 20 + gap) / (size + gap)))
-    local columns = math.max(1, math.min(requested, #commands + 1, maxColumns))
-    local capacity = math.max(1, columns * maxRows - 1) -- reserve the settings icon
-    if #commands > capacity then capacity = math.max(1, columns * maxRows - 3) end -- and page controls
+    local primary = math.max(1, math.min(requested, #commands + 1, vertical and maxRows or maxColumns))
+    local slots = primary * (vertical and maxColumns or maxRows)
+    local capacity = math.max(1, slots - 1) -- reserve the settings icon
+    if #commands > capacity then capacity = math.max(1, slots - 3) end -- and page controls
     local pages = math.max(1, math.ceil(#commands / capacity))
     self.page = math.min(math.max(1, self.page or 1), pages)
     local first = (self.page - 1) * capacity + 1
@@ -102,8 +112,9 @@ function Bar:UpdateFrame()
         button.background:SetColorTexture(color[1], color[2], color[3], color[4] or 1)
         if profile.showBackdrop ~= false then button.background:Show() else button.background:Hide() end
         button:ClearAllPoints()
-        button:SetPoint("TOPLEFT", frame, "TOPLEFT", ((index - 1) % columns) * (size + gap),
-            -math.floor((index - 1) / columns) * (size + gap))
+        local along, across = (index - 1) % primary, math.floor((index - 1) / primary)
+        button:SetPoint("TOPLEFT", frame, "TOPLEFT", (vertical and across or along) * (size + gap),
+            -(vertical and along or across) * (size + gap))
         button:Show()
     end
     for index = 1, count do
@@ -129,7 +140,41 @@ function Bar:UpdateFrame()
         self.nextButton.icon:SetAlpha(self.page < pages and 1 or 0.3)
         self.previousButton.icon:SetAlpha(self.page > 1 and 1 or 0.3)
     else self.nextButton:Hide(); self.previousButton:Hide() end
-    frame:SetSize(math.min(columns, total) * (size + gap) - gap, math.ceil(total / columns) * (size + gap) - gap)
+    local along = math.min(primary, total) * (size + gap) - gap
+    local across = math.ceil(total / primary) * (size + gap) - gap
+    frame:SetSize(vertical and across or along, vertical and along or across)
+end
+
+local snapPoints = {
+    LEFT = { "RIGHT", "LEFT", -6, 0 },
+    RIGHT = { "LEFT", "RIGHT", 6, 0 },
+    TOP = { "BOTTOM", "TOP", 0, 6 },
+    BOTTOM = { "TOP", "BOTTOM", 0, -6 },
+}
+
+function Bar:RestoreFreePosition()
+    self.snappedTo = nil
+    frame:ClearAllPoints()
+    frame:SetPoint("CENTER", UIParent, "CENTER", 0, -80)
+    if AprRC.settings.profile.commandBarFrame.position.point then LibWindow.RestorePosition(frame) end
+end
+
+function Bar:ApplyWorkshopAnchor()
+    local editor = AprRC.routeEditor
+    local workshop = editor and editor.frame and editor.frame.frame
+    local points = snapPoints[AprRC.settings.profile.commandBarFrame.snap]
+    if points and workshop and workshop:IsShown() then
+        frame:ClearAllPoints()
+        frame:SetPoint(points[1], workshop, points[2], points[3], points[4])
+        self.snappedTo = workshop
+    elseif self.snappedTo then
+        self:RestoreFreePosition()
+    end
+end
+
+function Bar:DetachWorkshop(workshop)
+    -- AceGUI may reuse this frame for another window after the editor closes.
+    if self.snappedTo == workshop then self:RestoreFreePosition() end
 end
 
 function Bar:OnInit()
@@ -137,9 +182,7 @@ function Bar:OnInit()
     profile.commandBarFrame = profile.commandBarFrame or {}
     profile.commandBarFrame.position = profile.commandBarFrame.position or {}
     LibWindow.RegisterConfig(frame, profile.commandBarFrame.position)
-    frame:ClearAllPoints()
-    frame:SetPoint("CENTER", UIParent, "CENTER", 0, -80)
-    if profile.commandBarFrame.position.point then LibWindow.RestorePosition(frame) end
+    self:RestoreFreePosition()
     self:RefreshFrameAnchor()
 end
 
@@ -147,6 +190,7 @@ function Bar:ResetToDefault()
     AprRCData.CommandBarCommands = AprRC.options:GetDefaultToolbarCommands()
     local profile = AprRC.settings.profile.commandBarFrame
     profile.rotation, profile.enabled, profile.buttonSize, profile.buttonsPerRow = "HORIZONTAL", true, 32, 6
+    profile.snap = "NONE"
     profile.showBackdrop, profile.backdropColor = true, { 0.07, 0.055, 0.035, 0.85 }
     self.page = 1
     self:RefreshFrameAnchor()
@@ -154,6 +198,7 @@ end
 
 function Bar:RefreshFrameAnchor()
     local profile = AprRC.settings.profile
+    self:ApplyWorkshopAnchor()
     if not profile.enableAddon or not profile.recordBarFrame.isRecording or profile.commandBarFrame.enabled == false
         or (C_PetBattles and C_PetBattles.IsInBattle()) then frame:Hide(); return end
     self:UpdateFrame()

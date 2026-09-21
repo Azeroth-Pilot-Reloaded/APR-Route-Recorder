@@ -408,6 +408,7 @@ function Editor:Show()
         if self.timer then self:CancelTimer(self.timer); self.timer = nil end
         self:DetachLua()
         AprRC.CommandBarSetting:CancelDrag()
+        AprRC.CommandBar:DetachWorkshop(widget.frame)
         GUI:Release(self.compactButton); self.compactButton = nil
         if self.confirm then self.confirm:Hide() end
         if self.nameDialog then self.nameDialog:Hide() end

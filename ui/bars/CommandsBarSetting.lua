@@ -205,16 +205,24 @@ function Settings:DrawSettings(parent)
     size:SetValue(AprRC.CommandBar:GetButtonSize())
     size:SetCallback("OnValueChanged", function(_, _, value) AprRC.CommandBar:SetButtonSize(value) end)
     group:AddChild(size)
+    local columns
     local orientation = UI.Dropdown(group, T("Orientation"), { HORIZONTAL = T("Horizontal"), VERTICAL = T("Vertical") },
         profile.rotation or "HORIZONTAL", function(value)
             profile.rotation = value; AprRC.CommandBar:RefreshFrameAnchor()
+            columns:SetLabel(value == "VERTICAL" and T("Buttons per column") or T("Buttons per row"))
         end)
     orientation:SetFullWidth(false); orientation:SetRelativeWidth(0.5)
-    local columns = UI.Dropdown(group, T("Buttons per row"), { [1] = "1", [2] = "2", [3] = "3", [4] = "4", [6] = "6", [8] = "8", [10] = "10", [12] = "12" },
+    columns = UI.Dropdown(group, profile.rotation == "VERTICAL" and T("Buttons per column") or T("Buttons per row"), { [1] = "1", [2] = "2", [3] = "3", [4] = "4", [6] = "6", [8] = "8", [10] = "10", [12] = "12" },
         profile.buttonsPerRow or 6, function(value)
             profile.buttonsPerRow = value; AprRC.CommandBar:RefreshFrameAnchor()
         end)
     columns:SetFullWidth(false); columns:SetRelativeWidth(0.5)
+    UI.Dropdown(group, T("Snap to route workshop"), {
+        NONE = T("Free position"), LEFT = T("Left side"), RIGHT = T("Right side"),
+        TOP = T("Top side"), BOTTOM = T("Bottom side"),
+    }, profile.snap or "NONE", function(value)
+        profile.snap = value; AprRC.CommandBar:RefreshFrameAnchor()
+    end)
     UI.Button(group, "Reset command bar", function()
         AprRC.CommandBar:ResetToDefault(); AprRC.routeEditor:DrawTab()
     end, 220)

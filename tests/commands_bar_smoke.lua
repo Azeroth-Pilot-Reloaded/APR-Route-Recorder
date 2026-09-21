@@ -83,14 +83,20 @@ Settings:Show(false); Settings:Show(true)
 assert(findSlider(Settings.panel):GetValue() == 64)
 
 -- Pagination bounds the bar even with a large favorite list and vertical orientation.
+local screenWidth, screenHeight = UIParent:GetWidth(), UIParent:GetHeight()
+UIParent:SetSize(400, 400)
 AprRCData.CommandBarCommands = AprRC.options:GetToolbarCatalog()
 AprRC.settings.profile.commandBarFrame.rotation = "VERTICAL"
+AprRC.settings.profile.commandBarFrame.buttonsPerRow = 3
 Bar:UpdateFrame()
-assert(Bar.frame:GetHeight() <= UIParent:GetHeight())
-assert(Bar.frame:GetWidth() == 64, "A vertical bar must be exactly one icon wide")
+assert(Bar.frame:GetHeight() == 208, "Vertical mode must use three 64px icons per column with 8px gaps")
+assert(Bar.frame:GetWidth() <= UIParent:GetWidth())
+local _, _, _, x, y = Bar.btnList[4]:GetPoint()
+assert(x == 72 and y == 0, "The fourth icon must begin the second column")
 assert(Bar.nextButton:IsShown())
 Bar.nextButton:GetScript("OnClick")(Bar.nextButton)
 assert(Bar.page == 2)
+UIParent:SetSize(screenWidth, screenHeight)
 AprRC.settings.profile.recordBarFrame.isRecording = false
 Bar:RefreshFrameAnchor()
 Editor:UpdateStatus()

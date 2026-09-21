@@ -51,6 +51,7 @@ function AprRC.settings:InitializeSettings()
                 showBackdrop = true,
                 backdropColor = { 0.07, 0.055, 0.035, 0.85 },
                 buttonsPerRow = 6,
+                snap = "NONE",
             },
             exportFrame = {
                 width = 700,
