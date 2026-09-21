@@ -54,6 +54,7 @@ def run():
     load("commands/Commands.lua")
     load("ui/dialogs/QuestionPopUp.lua")
     load("tests/recording_follow_smoke.lua")
+    load("tests/save_override_smoke.lua")
 
 
 if __name__ == "__main__":

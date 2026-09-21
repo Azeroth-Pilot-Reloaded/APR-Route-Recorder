@@ -84,4 +84,22 @@ local before = AprRC:CopyData(AprRCData.CurrentRoute)
 sameCount.raw = '{ steps = {} }; error("must not execute")'
 assert(not sameCount:Save())
 assert(AprRC:DeepCompare(before, AprRCData.CurrentRoute))
+
+-- Explicit overwrite saves exactly the current draft, with the same data as a
+-- copy, without merging background changes. Validation still applies.
+sameCount.raw = nil
+local expected = assert(sameCount:Read())
+local liveBeforeOverwrite = AprRC:CopyData(AprRCData.CurrentRoute.steps)
+assert(sameCount:Save(true))
+assert(AprRC:DeepCompare(expected, AprRCData.CurrentRoute))
+assert(AprRCData.CurrentRoute == AprRCData.Routes[1])
+assert(AprRC:DeepCompare(liveBeforeOverwrite, AprRCData.BackupRoute))
+assert(not sameCount:IsDirty() and not sameCount:IsStale())
+sameCount.raw = '{ steps = {'
+assert(not sameCount:Save(true), "Overwrite must not bypass Lua validation")
+assert(AprRC:DeepCompare(expected, AprRCData.CurrentRoute))
+sameCount.raw = nil
+AprRCData.Routes, AprRCData.CurrentRoute = {}, { name = "", steps = {} }
+local missing, missingReason = sameCount:Save(true)
+assert(not missing and missingReason == "missing", "Overwrite must not resurrect a deleted route")
 AprRCData = originalData

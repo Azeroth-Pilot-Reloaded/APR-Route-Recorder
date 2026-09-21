@@ -149,11 +149,12 @@ function Session:Delete(index)
     return true
 end
 
-function Session:Save()
+function Session:Save(overwrite)
     local route, reason = self:Read()
     if not route then return false, reason end
-    if self:IsStale() then return false, "conflict" end
     local source = Model:Source(self.name)
+    if not source then return false, "missing" end
+    if not overwrite and self:IsStale() then return false, "conflict" end
     AprRCData.BackupRoute = AprRC:CopyData(source.steps)
     if not AprRC:UpdateRouteByName(self.name, route) then return false, "missing" end
     if AprRCData.CurrentRoute.name == self.name then

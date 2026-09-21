@@ -9,6 +9,7 @@ CLOSE, YES, CANCEL, OKAY, ACCEPT = "Close", "Yes", "Cancel", "OK", "Accept"
 PlaySound = function() end
 SetDesaturation = function() end
 IsControlKeyDown = function() return false end
+IsModifierKeyDown = function() return false end
 IsShiftKeyDown, IsMetaKeyDown = IsControlKeyDown, IsControlKeyDown
 GetCursorInfo, ClearCursor, GetMouseFocus = function() end, function() end, function() end
 GetTime = function() return 0 end

@@ -155,11 +155,11 @@ function Editor:NameDialog(copy)
     input:SetFocus()
 end
 
-function Editor:Save()
+function Editor:Save(overwrite)
     if not self.session then return false end
-    local ok, reason = self.session:Save()
+    local ok, reason = self.session:Save(overwrite)
     if not ok then
-        self:Message(reason == "conflict" and T("The saved route changed. Save a copy to keep your edits, or reload the saved route.") or reason, true)
+        self:Message(reason == "conflict" and T("SAVE_CONFLICT_HELP") or reason, true)
         return false
     end
     self.session.rawHistory = nil
@@ -420,7 +420,13 @@ function Editor:Show()
     self.tabs:SetCallback("OnGroupSelected", function(_, _, tab) if not self.selectingTab then self:SelectTab(tab) end end)
     frame:AddChild(self.tabs)
     local footer = UI.Toolbar(frame, true)
-    self.saveButton = UI.Button(footer, "Save", function() self:Save() end, 135)
+    self.saveButton = UI.Button(footer, "Save", function() self:Save(IsModifierKeyDown()) end, 135)
+    self.saveButton:SetCallback("OnEnter", function(widget)
+        GameTooltip:SetOwner(widget.frame, "ANCHOR_TOP")
+        AprRC:AddTooltipLine(GameTooltip, T("SAVE_OVERRIDE_HELP"), 1, 1, 1, true)
+        GameTooltip:Show()
+    end)
+    self.saveButton:SetCallback("OnLeave", function() GameTooltip:Hide() end)
     self.exportButton = UI.Button(footer, "Export to APR", function() self:Export() end, 170)
     self.copyButton = UI.Button(footer, "Save a copy", function() self:NameDialog(true) end, 195)
     self.undoButton = UI.IconButton(footer, "undo", "Undo", function() self:Undo(-1) end)

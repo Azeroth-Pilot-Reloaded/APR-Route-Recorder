@@ -854,3 +854,6 @@ L["Left side"] = "A sinistra"
 L["Right side"] = "A destra"
 L["Top side"] = "In alto"
 L["Bottom side"] = "In basso"
+
+L["SAVE_OVERRIDE_HELP"] = "Hold Shift, Ctrl or Alt while clicking Save to replace the saved route with exactly the current draft, including your Lua edits. Automatic changes made in the background are overwritten, not merged. This saves the same content as Save a copy, but keeps the current route name."
+L["SAVE_CONFLICT_HELP"] = "The saved route changed. Save a copy to keep your edits, reload the saved route, or hold Shift, Ctrl or Alt while clicking Save to overwrite it with the current draft."
