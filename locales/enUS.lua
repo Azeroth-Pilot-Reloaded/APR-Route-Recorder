@@ -835,3 +835,5 @@ L["value does not match the expected format"] = "value does not match the expect
 L["Drag to resize columns"] = "Drag to resize columns"
 
 L["Drag commands between columns to add, remove or reorder them."] = "Drag commands between columns to add, remove or reorder them."
+
+L["Button size"] = "Button size"

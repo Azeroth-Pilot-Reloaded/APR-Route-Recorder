@@ -145,6 +145,10 @@ function CreateFrame(frameType, name, parent, template)
     return frame
 end
 function Native:CreateTexture(name) return CreateFrame("Texture", name, self) end
+function Native:CreateLine(name) return CreateFrame("Line", name, self) end
+function Native:SetStartPoint(...) self.startPoint = { ... } end
+function Native:SetEndPoint(...) self.endPoint = { ... } end
+function Native:SetThickness(thickness) self.thickness = thickness end
 function Native:CreateFontString(name) return CreateFrame("FontString", name, self) end
 UIParent = CreateFrame("Frame", "UIParent")
 UIParent:SetSize(1920, 1080)

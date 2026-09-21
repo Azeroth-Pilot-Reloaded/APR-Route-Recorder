@@ -10,11 +10,41 @@ GUI:RegisterWidgetType("APRIconButton", function()
     local widget = { type = "APRIconButton", frame = frame, icon = icon }
     function widget:OnAcquire() self:SetWidth(30); self:SetHeight(30); self:SetDisabled(false) end
     function widget:OnRelease() self.tooltip = nil; GameTooltip:Hide() end
-    function widget:SetIcon(name) icon:SetTexture("Interface\\AddOns\\APR-Recorder\\assets\\ui\\" .. name) end
+    function widget:SetIcon(name)
+        if name == "refresh" and not self.refreshLines then
+            -- A continuous clockwise arc with an arrowhead tangent to its end.
+            -- Native lines keep the small control sharp without a raster asset.
+            self.refreshLines = {}
+            local function line(x1, y1, x2, y2)
+                local segment = frame:CreateLine(nil, "ARTWORK")
+                segment:SetColorTexture(239 / 255, 205 / 255, 141 / 255, 1)
+                segment:SetThickness(2)
+                segment:SetStartPoint("CENTER", frame, x1, y1)
+                segment:SetEndPoint("CENTER", frame, x2, y2)
+                self.refreshLines[#self.refreshLines + 1] = segment
+            end
+            local start, finish, segments, radius = math.rad(10), math.rad(-315), 40, 8.5
+            for index = 1, segments do
+                local a = start + (finish - start) * (index - 1) / segments
+                local b = start + (finish - start) * index / segments
+                line(radius * math.cos(a), radius * math.sin(a), radius * math.cos(b), radius * math.sin(b))
+            end
+            local x, y = radius * math.cos(finish), radius * math.sin(finish)
+            local dx, dy = math.sin(finish), -math.cos(finish)
+            line(x - 4.5 * dx - 2.5 * dy, y - 4.5 * dy + 2.5 * dx, x, y)
+            line(x, y, x - 4.5 * dx + 2.5 * dy, y - 4.5 * dy - 2.5 * dx)
+        end
+        for _, segment in ipairs(self.refreshLines or {}) do
+            if name == "refresh" then segment:Show() else segment:Hide() end
+        end
+        if name == "refresh" then icon:Hide()
+        else icon:SetTexture("Interface\\AddOns\\APR-Recorder\\assets\\ui\\" .. name); icon:Show() end
+    end
     function widget:SetText(text) self.tooltip = text end
     function widget:SetDisabled(disabled)
         self.disabled = disabled
         if disabled then frame:Disable(); icon:SetAlpha(0.3) else frame:Enable(); icon:SetAlpha(1) end
+        for _, segment in ipairs(self.refreshLines or {}) do segment:SetAlpha(disabled and 0.3 or 1) end
     end
     frame:SetScript("OnClick", function() if not widget.disabled then widget:Fire("OnClick") end end)
     frame:SetScript("OnEnter", function()

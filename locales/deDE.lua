@@ -823,3 +823,5 @@ L["value does not match the expected format"] = "Der Wert entspricht nicht dem e
 L["Drag to resize columns"] = "Ziehen, um die Spaltenbreite anzupassen"
 
 L["Drag commands between columns to add, remove or reorder them."] = "Ziehe Befehle zwischen den Spalten, um sie hinzuzuf?gen, zu entfernen oder neu anzuordnen."
+
+L["Button size"] = "Schaltfl?chengr??e"

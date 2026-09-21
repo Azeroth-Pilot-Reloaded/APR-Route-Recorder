@@ -13,8 +13,22 @@ assert(count == #Bar.btnList and firstButton == Bar.btnList[1], "Refreshing must
 AprRC.settings.profile.commandBarFrame.showLabels = true
 AprRC.settings.profile.commandBarFrame.buttonsPerRow = 2
 Bar:UpdateFrame()
-assert(Bar.btnList[1].text:IsShown())
-assert(Bar.frame:GetWidth() < 400)
+assert(not Bar.btnList[1].text, "Legacy label preferences must not restore text on the icon bar")
+assert(Bar.frame:GetWidth() == 68, "Two 32px icons and a 4px gap should have no panel padding")
+-- Settings is the next grid item, including when the next item wraps a row.
+local _, _, _, settingsX, settingsY = Bar.settingsButton:GetPoint()
+local commandCount = #Bar:GetCommands()
+assert(settingsX == (commandCount % 2) * 36 and settingsY == -math.floor(commandCount / 2) * 36)
+-- Dragging an icon saves the bar position without executing the command.
+dispatched = nil
+firstButton:GetScript("OnMouseDown")(firstButton)
+firstButton:GetScript("OnDragStart")(firstButton)
+firstButton:GetScript("OnDragStop")(firstButton)
+firstButton:GetScript("OnClick")(firstButton)
+assert(not dispatched and Bar.frame.positionSaved)
+firstButton:GetScript("OnMouseDown")(firstButton)
+firstButton:GetScript("OnClick")(firstButton)
+assert(dispatched == firstButton.command)
 Settings:Show()
 assert(Editor.frame and Editor.tab == "commands" and Settings:IsVisible())
 assert(Settings.available and Settings.selected and #Settings.runButtons > 0)
@@ -45,16 +59,37 @@ Bar:UpdateFrame()
 assert(#Bar:GetCommands() == 0 and not Bar.btnList[1]:IsShown(), "An intentionally empty bar must stay empty")
 Settings:Show(false)
 assert(#Bar:GetCommands() == 0)
+assert(Bar.settingsButton:IsShown() and Bar.frame:GetWidth() == 32 and Bar.frame:GetHeight() == 32)
 Bar:ResetToDefault()
 assert(#Bar:GetCommands() > 0)
+
+-- The embedded size slider updates buttons and icons immediately and persists.
+Settings:Show(true)
+local function findSlider(widget)
+    if widget.type == "Slider" then return widget end
+    for _, child in ipairs(widget.children or {}) do
+        local found = findSlider(child)
+        if found then return found end
+    end
+end
+local slider = assert(findSlider(Settings.panel))
+for _, size in ipairs({ 16, 48, 64 }) do
+    slider.slider:SetValue(size)
+    assert(AprRC.settings.profile.commandBarFrame.buttonSize == size)
+    assert(Bar.btnList[1]:GetWidth() == size and Bar.btnList[1].icon:GetWidth() == size - 4)
+    assert(Bar.settingsButton:GetWidth() == size)
+end
+Settings:Show(false); Settings:Show(true)
+assert(findSlider(Settings.panel):GetValue() == 64)
 
 -- Pagination bounds the bar even with a large favorite list and vertical orientation.
 AprRCData.CommandBarCommands = AprRC.options:GetToolbarCatalog()
 AprRC.settings.profile.commandBarFrame.rotation = "VERTICAL"
 Bar:UpdateFrame()
 assert(Bar.frame:GetHeight() <= UIParent:GetHeight())
+assert(Bar.frame:GetWidth() == 64, "A vertical bar must be exactly one icon wide")
 assert(Bar.nextButton:IsShown())
-Bar.nextButton:GetScript("OnClick")()
+Bar.nextButton:GetScript("OnClick")(Bar.nextButton)
 assert(Bar.page == 2)
 AprRC.settings.profile.recordBarFrame.isRecording = false
 Bar:RefreshFrameAnchor()

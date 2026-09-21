@@ -47,7 +47,7 @@ function AprRC.settings:InitializeSettings()
                 rotation = "HORIZONTAL",
                 position = {},
                 enabled = true,
-                showLabels = false,
+                buttonSize = 32,
                 buttonsPerRow = 6,
             },
             exportFrame = {

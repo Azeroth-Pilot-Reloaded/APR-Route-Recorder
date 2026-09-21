@@ -26,7 +26,7 @@ def run():
     load("libs/AceGUI-3.0/AceGUI-3.0.lua")
     for name in ("Container-Frame", "Container-SimpleGroup", "Container-InlineGroup", "Container-ScrollFrame",
                  "Container-TabGroup", "Widget-Label", "Widget-Heading", "Widget-Button", "Widget-CheckBox",
-                 "Widget-EditBox", "Widget-MultiLineEditBox", "Widget-DropDown", "Widget-DropDown-Items"):
+                 "Widget-EditBox", "Widget-MultiLineEditBox", "Widget-DropDown", "Widget-DropDown-Items", "Widget-Slider"):
         load("libs/AceGUI-3.0/widgets/AceGUI" + name + ".lua")
     for name in ("Model", "Labels", "Widgets", "Forms", "Workspace", "Views"):
         load("ui/editor/" + name + ".lua")
