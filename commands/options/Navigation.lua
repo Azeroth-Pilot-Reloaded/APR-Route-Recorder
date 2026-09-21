@@ -1,5 +1,21 @@
 local R = AprRC.options
 local S = R.schemas
+
+R:Register({
+    key = "SpellETA",
+    command = "spelleta",
+    schema = S.spellETA,
+    example = "{ spellID = 123, seconds = 30 }",
+    icon = "Interface\\Icons\\INV_Misc_PocketWatch_01",
+})
+
+R:Register({
+    key = "EmoteETA",
+    command = "emoteeta",
+    schema = "positive",
+    example = "30",
+    icon = "Interface\\Icons\\INV_Misc_PocketWatch_01",
+})
 local I = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\"
 
 R:Register({

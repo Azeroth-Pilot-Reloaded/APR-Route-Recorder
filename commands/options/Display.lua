@@ -1,5 +1,53 @@
 local R = AprRC.options
 local S = R.schemas
+
+R:Register({
+    key = "Bloodlust",
+    command = "bloodlust",
+    schema = "bool",
+    example = "true",
+    icon = "Interface\\Icons\\Spell_Nature_BloodLust",
+})
+
+R:Register({
+    key = "MerchantNPC",
+    command = "merchantnpc",
+    schema = "id",
+    example = "54",
+    icon = "Interface\\Icons\\INV_Misc_Coin_01",
+})
+
+R:Register({
+    key = "NoAutoAccept",
+    command = "noautoaccept",
+    schema = "bool",
+    example = "true",
+    icon = "Interface\\Icons\\INV_Misc_Book_09",
+})
+
+R:Register({
+    key = "NoAutoTurnIn",
+    command = "noautoturnin",
+    schema = "bool",
+    example = "true",
+    icon = "Interface\\Icons\\INV_Misc_Book_11",
+})
+
+R:Register({
+    key = "ExtraLine",
+    command = "extraline",
+    schema = "id",
+    example = "13544",
+    icon = "Interface\\Icons\\INV_Misc_Note_01",
+})
+
+R:Register({
+    key = "Gossip",
+    command = "gossip",
+    schema = "id",
+    example = "2",
+    icon = "Interface\\Icons\\INV_Misc_Note_01",
+})
 local I = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\"
 
 R:Register({

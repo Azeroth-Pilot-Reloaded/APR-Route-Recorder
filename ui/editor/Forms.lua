@@ -60,6 +60,7 @@ local function keys(data)
 end
 
 function Form:Default(schema)
+    if schema == "level" then schema = R.schemas.level end
     local valueKind = kind(schema)
     if valueKind == "bool" then return true end
     if valueKind == "union" then return self:Default(schema.choices[1]) end
@@ -74,7 +75,7 @@ function Form:Default(schema)
         return result
     end
     if valueKind == "text" or valueKind == "profile" or valueKind == "objectiveKey" then return "" end
-    if valueKind == "id" or valueKind == "positive" or valueKind == "number" or valueKind == "nonnegative" or valueKind == "level" then return 0 end
+    if valueKind == "id" or valueKind == "positive" or valueKind == "number" or valueKind == "nonnegative" or valueKind == "integer" then return 0 end
     return {}
 end
 
@@ -119,6 +120,7 @@ end
 -- A schema-driven form edits values, never Lua source. Structural changes rebuild
 -- the form; typing only updates the detached draft and leaves keyboard focus alone.
 function Form:Render(parent, schema, value, set, context, path, label)
+    if schema == "level" then schema = R.schemas.level end
     path = path or "root"
     local valueKind = kind(schema)
     local function changed(newValue, rebuild)
@@ -145,7 +147,9 @@ function Form:Render(parent, schema, value, set, context, path, label)
         selected = selected or 1
         local entries = {}
         for index, choice in ipairs(schema.choices) do
-            local names = { text = "Text", strings = "List", list = "List", enum = "Choice", profile = "Choice" }
+            local names = { text = "Text", strings = "List", list = "List", enum = "Choice", profile = "Level profile",
+                positive = "Number", id = "Number", object = "Fields" }
+            if choice == R.schemas.absoluteXP then names.object = "Level + XP" end
             entries[index] = T(names[kind(choice)] or "Value") .. " " .. index
         end
         UI.Dropdown(parent, label .. " — " .. T("Format"), entries, selected, function(index)
@@ -236,13 +240,26 @@ function Form:Render(parent, schema, value, set, context, path, label)
             end, 100)
         end
         if valueKind == "map" then
-            local entryKey = GUI:Create("EditBox")
-            entryKey:SetFullWidth(true)
-            entryKey:SetLabel(T(schema.key == "id" and "Quest ID" or "ID / objective (e.g. 12345-1)"))
-            entryKey:DisableButton(true)
-            parent:AddChild(entryKey)
+            local getKey
+            if kind(schema.key) == "enum" then
+                local selected, choices = nil, {}
+                for name, entry in pairs(schema.key.values or APR[schema.key.group] or {}) do
+                    choices[entry] = UI.Label(name)
+                end
+                UI.Dropdown(parent, T("Choice"), choices, nil, function(entry) selected = entry end)
+                getKey = function() return selected end
+            else
+                local entryKey = GUI:Create("EditBox")
+                entryKey:SetFullWidth(true)
+                entryKey:SetLabel(T(schema.key == "id" and "Quest ID" or "ID / objective (e.g. 12345-1)"))
+                entryKey:DisableButton(true)
+                parent:AddChild(entryKey)
+                getKey = function()
+                    return schema.key == "id" and tonumber(entryKey:GetText()) or strtrim(entryKey:GetText())
+                end
+            end
             UI.Button(parent, "Add entry", function()
-                local key = schema.key == "id" and tonumber(entryKey:GetText()) or strtrim(entryKey:GetText())
+                local key = getKey()
                 local valid, reason = R:ValidateValue(schema.key, key)
                 if not valid then context.error(reason); return end
                 if value[key] ~= nil then context.error(T("This key already exists.")); return end

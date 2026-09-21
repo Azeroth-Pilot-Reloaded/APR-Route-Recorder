@@ -51,7 +51,9 @@ function Editor:DrawSteps()
     addType:SetRelativeWidth(0.72)
     UI.Button(footer, "Add", function()
         local key = addType:GetValue() or "Waypoint"
-        local step = { [key] = UI.Form:Default(AprRC.options.step[key].schema) }
+        local definition = AprRC.options.step[key]
+        local step = AprRC:CopyData(definition.defaults or {})
+        step[key] = UI.Form:Default(definition.schema)
         if key == "Waypoint" then
             -- APR uses a quest ID to identify waypoints; prefer this draft's context.
             step.Waypoint = 1

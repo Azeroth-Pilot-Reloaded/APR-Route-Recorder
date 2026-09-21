@@ -1,5 +1,92 @@
 local R = AprRC.options
 local S = R.schemas
+
+R:Register({
+    key = "ExitTutorial",
+    command = "exittutorial",
+    schema = "id",
+    example = "59985",
+    newStep = true,
+    icon = "Interface\\Icons\\INV_Misc_Book_09",
+})
+
+R:Register({
+    key = "LeaveQuest",
+    command = "leavequest",
+    schema = "id",
+    example = "38254",
+    newStep = true,
+    icon = "Interface\\Icons\\INV_Misc_Book_11",
+})
+
+R:Register({
+    key = "DeathSkip",
+    command = "deathskip",
+    schema = "bool",
+    example = "true",
+    newStep = true,
+    defaults = { Hardcore = false },
+    icon = "Interface\\Icons\\Ability_Rogue_FeignDeath",
+})
+
+R:Register({
+    key = "SellItems",
+    command = "sellitems",
+    schema = S.sellItems,
+    example = "{ items = { 7073, 7074 }, npcID = 54 }",
+    newStep = true,
+    coord = true,
+    icon = "Interface\\Icons\\INV_Misc_Coin_01",
+})
+
+R:Register({
+    key = "LearnSkill",
+    command = "learnskill",
+    schema = S.learnSkill,
+    example = "{ spellIDs = { 6673, 100 }, npcID = 911 }",
+    newStep = true,
+    coord = true,
+    icon = "Interface\\Icons\\INV_Misc_Book_09",
+})
+
+R:Register({
+    key = "BankDeposit",
+    command = "bankdeposit",
+    schema = S.itemAction,
+    example = "{ items = { 4371, 5465 } }",
+    newStep = true,
+    coord = true,
+    icon = "Interface\\Icons\\INV_Misc_Bag_10",
+})
+
+R:Register({
+    key = "BankWithdraw",
+    command = "bankwithdraw",
+    schema = S.itemAction,
+    example = "{ items = { 4371 } }",
+    newStep = true,
+    coord = true,
+    icon = "Interface\\Icons\\INV_Misc_Bag_10",
+})
+
+R:Register({
+    key = "DestroyItems",
+    command = "destroyitems",
+    schema = S.itemAction,
+    example = "{ items = { 12345 } }",
+    newStep = true,
+    icon = "Interface\\Icons\\INV_Misc_Bag_10",
+})
+
+R:Register({
+    key = "TameBeast",
+    command = "tamebeast",
+    schema = S.tameBeast,
+    example = "{ npcID = 2163, spellID = 1515 }",
+    newStep = true,
+    coord = true,
+    icon = "Interface\\Icons\\Ability_Hunter_BeastTaming",
+})
 local I = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\"
 
 R:Register({
@@ -293,7 +380,7 @@ R:Register({
 R:Register({
     key = "LootItems",
     command = "lootitems",
-    schema = S.items,
+    schema = S.lootItems,
     example = "{ { questID = 86644, itemID = 244143, quantity = 1 } }",
     newStep = true,
     coord = true,

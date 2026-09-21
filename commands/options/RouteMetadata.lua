@@ -2,6 +2,24 @@ local R = AprRC.options
 local S = R.schemas
 
 R:Register({
+    key = "gameVersion",
+    command = "route gameversion",
+    schema = { kind = "enum", values = { "retail", "forever", "classic" } },
+    example = "\"forever\"",
+    scope = "route",
+    icon = "Interface\\Icons\\INV_Misc_Map_01",
+})
+
+R:Register({
+    key = "prefab",
+    command = "route prefab",
+    schema = S.prefab,
+    example = "{ [APR.PREFAB_TYPES.Speedrun] = { index = 10, conditions = { Race = { \"Orc\", \"Troll\" } } } }",
+    scope = "route",
+    icon = "Interface\\Icons\\INV_Misc_Map_01",
+})
+
+R:Register({
     key = "label",
     command = "route label",
     schema = "text",
@@ -59,7 +77,7 @@ R:Register({
 R:Register({
     key = "nextRoute",
     command = "route nextroute",
-    schema = "strings",
+    schema = S.nextRoutes,
     example = "{ \"2395-The-War-of-Light-and-Shadow\" }",
     scope = "route",
     icon = "Interface\\Icons\\Ability_Hunter_RunningShot",

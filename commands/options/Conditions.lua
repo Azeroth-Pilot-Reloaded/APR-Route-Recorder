@@ -1,5 +1,86 @@
 local R = AprRC.options
 local S = R.schemas
+
+R:Register({
+    key = "Money",
+    command = "money",
+    schema = S.money,
+    example = "{ operator = \">=\", copper = 10000 }",
+    condition = true,
+    icon = "Interface\\Icons\\INV_Misc_Coin_01",
+})
+
+R:Register({
+    key = "ItemCount",
+    command = "itemcount",
+    schema = S.itemCount,
+    example = "{ itemIDs = { 6948 }, operator = \">=\", count = 1 }",
+    condition = true,
+    icon = "Interface\\Icons\\INV_Misc_Bag_10",
+})
+
+R:Register({
+    key = "EquippedItemStat",
+    command = "equippeditemstat",
+    schema = S.equippedItemStat,
+    example = "{ slot = 16, stat = \"ITEM_MOD_DAMAGE_PER_SECOND_SHORT\", operator = \"<\", value = 3.5 }",
+    condition = true,
+    icon = "Interface\\Icons\\INV_Sword_04",
+})
+
+R:Register({
+    key = "Hardcore",
+    command = "hardcore",
+    schema = "bool",
+    example = "false",
+    condition = true,
+    icon = "Interface\\Icons\\Ability_Rogue_FeignDeath",
+})
+
+R:Register({
+    key = "AllOf",
+    command = "allof",
+    schema = S.allOf,
+    example = "{ { IsQuestNotOnQuest = 10 }, { IsQuestNotOnQuest = 20 } }",
+    condition = true,
+    icon = "Interface\\Icons\\Spell_Holy_SealOfWisdom",
+})
+
+R:Register({
+    key = "Not",
+    command = "not",
+    schema = "conditions",
+    example = "{ HasSpell = 6673 }",
+    condition = true,
+    icon = "Interface\\Icons\\Spell_Shadow_AntiMagicShell",
+})
+
+R:Register({
+    key = "Skill",
+    command = "skill",
+    schema = S.skill,
+    example = "{ skill = \"cooking\", rank = 50, operator = \">=\" }",
+    condition = true,
+    icon = "Interface\\Icons\\INV_Misc_Book_09",
+})
+
+R:Register({
+    key = "EquippedItem",
+    command = "equippeditem",
+    schema = S.equippedItem,
+    example = "{ slot = 16, itemID = 2493 }",
+    condition = true,
+    icon = "Interface\\Icons\\INV_Sword_04",
+})
+
+R:Register({
+    key = "Collection",
+    command = "collection",
+    schema = S.collection,
+    example = "{ itemID = 5465, quantity = 50 }",
+    condition = true,
+    icon = "Interface\\Icons\\INV_Misc_Bag_10",
+})
 local I = "Interface\\AddOns\\APR-Recorder\\assets\\icons\\"
 
 R:Register({

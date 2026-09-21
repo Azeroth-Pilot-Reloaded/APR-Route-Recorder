@@ -34,12 +34,13 @@ function options:Parse(definition, text)
     local kind = type(schema) == "table" and schema.kind or schema
     local value, err
     if kind == "text" or kind == "profile" or kind == "level" or kind == "enum" then
-        if text:sub(1, 1) == '"' or text:sub(1, 1) == "'" or text:match("^APR%.") then
+        if text:sub(1, 1) == '"' or text:sub(1, 1) == "'" or text:match("^APR%.") or
+            (kind == "level" and text:sub(1, 1) == "{") then
             value, err = AprRC:ParseLuaData(text)
         else
             value = (kind == "level" or kind == "enum") and tonumber(text) or text
         end
-    elseif kind == "strings" and text:sub(1, 1) ~= "{" then
+    elseif (kind == "strings" or schema == self.schemas.nextRoutes) and text:sub(1, 1) ~= "{" then
         value = {}
         for entry in text:gmatch("[^,]+") do value[#value + 1] = strtrim(entry) end
     elseif (kind == "ids" or kind == "idOrIds") and text:sub(1, 1) ~= "{" then
@@ -64,7 +65,7 @@ function options:Apply(definition, value, route, target)
     if definition.scope == "route" then
         route[definition.key] = AprRC:CopyData(value)
     else
-        local step = definition.newStep and {} or AprRC:CopyData(target or {})
+        local step = AprRC:CopyData(definition.newStep and (definition.defaults or {}) or (target or {}))
         step[definition.key] = AprRC:CopyData(value)
         if definition.requires and not step[definition.requires] then
             return false, "Add " .. definition.requires .. " to this step first"

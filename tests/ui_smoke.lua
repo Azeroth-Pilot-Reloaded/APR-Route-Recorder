@@ -142,7 +142,8 @@ holder:SetLayout("Flow")
 local changed = false
 for _, definitions in ipairs({ AprRC.options.step, AprRC.options.route }) do
     for key, definition in pairs(definitions) do
-        local value = assert(AprRC.options:Parse(definition, definition.example))
+        local value, reason = AprRC.options:Parse(definition, definition.example)
+        assert(value ~= nil, reason)
         local original = AprRC:CopyData(value)
         AprRC.editorUI.Form:Render(holder, definition.schema, value, function() changed = true end,
             { modes = {}, pages = {}, changed = function() changed = true end, redraw = function() end, error = error }, key, key)
@@ -151,6 +152,44 @@ for _, definitions in ipairs({ AprRC.options.step, AprRC.options.route }) do
         holder:ReleaseChildren()
     end
 end
+-- Structured XP is editable through numeric fields, and changing format preserves
+-- the chosen profile rather than flattening a table into an empty text input.
+local formValue = { level = 4, xp = -700 }
+local formContext = { modes = {}, pages = {}, changed = function() end, redraw = function() end, error = error }
+local function renderLevel()
+    holder:ReleaseChildren()
+    AprRC.editorUI.Form:Render(holder, "level", formValue, function(value) formValue = value end,
+        formContext, "requirement", "Requirement")
+end
+renderLevel()
+local xp = assert(walk(holder, function(widget)
+    return widget.type == "EditBox" and widget.label:GetText() == AprRC.editorUI.Label("xp")
+end))
+enter(xp, "-325")
+assert(formValue.xp == -325 and formValue.level == 4)
+local format = assert(walk(holder, function(widget) return widget.type == "Dropdown" end))
+format:Fire("OnValueChanged", 2)
+renderLevel()
+local profile = assert(walk(holder, function(widget)
+    return widget.type == "Dropdown" and widget.label:GetText() == "Requirement"
+end))
+profile:Fire("OnValueChanged", 1)
+assert(formValue == "MidnightDelves")
+healthy()
+
+-- Prefab keys come from APR's enum, including the nested conditional format.
+holder:ReleaseChildren()
+local prefabs = {}
+AprRC.editorUI.Form:Render(holder, AprRC.options.schemas.prefab, prefabs, function(value) prefabs = value end,
+    { modes = {}, pages = {}, changed = function() end, redraw = function() end, error = error }, "prefab", "Prefab")
+local choice = assert(walk(holder, function(widget) return widget.type == "Dropdown" end))
+choice:Fire("OnValueChanged", APR.PREFAB_TYPES.Speedrun)
+local add = assert(walk(holder, function(widget)
+    return widget.type == "Button" and widget.text:GetText() == AprRC.editorUI.Text("Add entry")
+end))
+add:Fire("OnClick")
+assert(prefabs[APR.PREFAB_TYPES.Speedrun] ~= nil)
+healthy()
 GUI:Release(holder)
 healthy()
 print("Real AceGUI workspace, form coverage, pooling and callback smoke tests passed.")

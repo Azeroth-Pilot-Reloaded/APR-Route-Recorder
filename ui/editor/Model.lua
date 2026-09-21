@@ -190,8 +190,11 @@ local actionOrder = {
     "LeaveScenario", "EnterInstance", "LeaveInstance", "UseItem", "UseSpell", "Grind",
     "Reputation", "BuyMerchant", "LootItems", "LeaveQuests", "Emote", "ChromiePick",
     "LearnProfession", "WarMode", "ResetRoute", "VehicleExit", "MountVehicle",
+    "ExitTutorial", "LeaveQuest", "DeathSkip", "SellItems", "LearnSkill",
+    "BankDeposit", "BankWithdraw", "DestroyItems", "TameBeast",
 }
-local questActions = { PickUp = true, Qpart = true, QpartPart = true, Done = true, LeaveQuests = true }
+local questActions = { PickUp = true, Qpart = true, QpartPart = true, Done = true, LeaveQuests = true,
+    LeaveQuest = true, ExitTutorial = true }
 local navigationActions = { Waypoint = true, UseFlightPath = true, GetFP = true, SetHS = true,
     UseHS = true, UseDalaHS = true, UseGarrisonHS = true, TakePortal = true }
 
@@ -206,6 +209,8 @@ function Model:Summary(step)
             ids[#ids + 1] = (key == "Qpart" or key == "QpartPart") and index or value
         end
         table.sort(ids, function(a, b) return tostring(a) < tostring(b) end)
+    elseif questActions[key] and type(step[key]) == "number" then
+        ids[1] = step[key]
     end
     local titles = {}
     for _, id in ipairs(ids) do
