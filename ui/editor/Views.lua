@@ -8,7 +8,7 @@ UI.PageSize = PAGE_SIZE
 local gold, muted = "|cffedc36a", "|cffb3a58b"
 
 function Editor:DrawSteps()
-    local split = GUI:Create("APRSplitGroup")
+    local split = AprRC:CreateWidget("APRSplitGroup")
     split:SetLayout("APRSplit")
     split:SetUserData("body", true)
     split:SetRatio(AprRC.settings.profile.editorFrame.stepPaneRatio)
@@ -23,7 +23,7 @@ function Editor:DrawSteps()
     if self.compact then
         UI.Button(heading, "Show inspector", function() self:ShowStepPane("inspector") end, 210)
     end
-    local search = GUI:Create("EditBox")
+    local search = AprRC:CreateWidget("EditBox")
     search:SetLabel(T("Search steps"))
     search:SetFullWidth(true)
     search:DisableButton(true)
@@ -114,7 +114,7 @@ function Editor:DrawSteps()
         step.Coord, step.Zone = coord, zone
         self:Changed(); self:DrawInspector()
     end, 175)
-    local moveTo = GUI:Create("EditBox")
+    local moveTo = AprRC:CreateWidget("EditBox")
     moveTo:SetLabel(T("Move to step"))
     moveTo:SetWidth(125)
     moveTo:SetCallback("OnEnterPressed", function(_, _, text)
@@ -190,7 +190,7 @@ function Editor:DrawList()
         local color = key == "PickUp" and { 1, 0.82, 0.28 } or key == "Done" and { 0.45, 0.90, 0.55 } or
             category == "travel" and { 0.50, 0.76, 1 } or { 0.89, 0.80, 0.62 }
         local definition = AprRC.options.step[key]
-        local row = GUI:Create("APRStepRow")
+        local row = AprRC:CreateWidget("APRStepRow")
         row:SetStep(index, UI.Label(key), detail, table.concat(metadata, "  ·  "),
             questIcons[key] or (definition and definition.icon) or questIcons.Step, index == session.selected, color)
         row:SetCallback("OnClick", function()
@@ -203,9 +203,9 @@ function Editor:DrawList()
         end)
         row:SetCallback("OnEnter", function()
             GameTooltip:SetOwner(row.frame, "ANCHOR_RIGHT")
-            GameTooltip:AddLine(index .. ". " .. UI.Label(key), 1, 0.82, 0.4)
-            if detail ~= "" then GameTooltip:AddLine(detail, 1, 1, 1, true) end
-            GameTooltip:AddLine(table.concat(metadata, "\n"), 0.7, 0.7, 0.7, true)
+            AprRC:AddTooltipLine(GameTooltip, index .. ". " .. UI.Label(key), 1, 0.82, 0.4)
+            if detail ~= "" then AprRC:AddTooltipLine(GameTooltip, detail, 1, 1, 1, true) end
+            AprRC:AddTooltipLine(GameTooltip, table.concat(metadata, "\n"), 0.7, 0.7, 0.7, true)
             GameTooltip:Show()
         end)
         self.list:AddChild(row)
@@ -260,7 +260,7 @@ end
 function Editor:DrawLua()
     local container = UI.Body(self.tabs)
     UI.LabelWidget(container, T("Ctrl+A then Ctrl+C to copy. Ctrl+Z / Ctrl+Y to undo / redo."))
-    local edit = GUI:Create("MultiLineEditBox")
+    local edit = AprRC:CreateWidget("MultiLineEditBox")
     edit:SetLabel("")
     edit:DisableButton(true)
     edit:SetUserData("body", true)

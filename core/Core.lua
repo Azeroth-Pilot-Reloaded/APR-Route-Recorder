@@ -45,6 +45,7 @@ function AprRC:OnInitialize()
 
     -- Init module
     self.settings:InitializeBlizOptions()
+    self.textStyle:Initialize()
     self.questID:OnInit()
     self.CommandBar:OnInit()
     self.record:OnInit()

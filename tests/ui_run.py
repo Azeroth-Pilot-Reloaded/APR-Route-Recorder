@@ -26,8 +26,9 @@ def run():
     load("libs/AceGUI-3.0/AceGUI-3.0.lua")
     for name in ("Container-Frame", "Container-SimpleGroup", "Container-InlineGroup", "Container-ScrollFrame",
                  "Container-TabGroup", "Widget-Label", "Widget-Heading", "Widget-Button", "Widget-CheckBox",
-                 "Widget-EditBox", "Widget-MultiLineEditBox", "Widget-DropDown", "Widget-DropDown-Items", "Widget-Slider"):
+                 "Widget-EditBox", "Widget-MultiLineEditBox", "Widget-DropDown", "Widget-DropDown-Items", "Widget-Slider", "Widget-ColorPicker"):
         load("libs/AceGUI-3.0/widgets/AceGUI" + name + ".lua")
+    load("ui/TextStyles.lua")
     for name in ("Model", "Labels", "Widgets", "Forms", "Workspace", "Views"):
         load("ui/editor/" + name + ".lua")
     load("ui/dialogs/ExportRoute.lua")
@@ -48,6 +49,7 @@ def run():
     load("tests/commands_bar_smoke.lua")
     load("tests/compact_ui_smoke.lua")
     load("tests/workshop_controls_smoke.lua")
+    load("tests/appearance_smoke.lua")
 
 
 if __name__ == "__main__":

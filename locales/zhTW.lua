@@ -825,3 +825,25 @@ L["Drag to resize columns"] = "拖曳以調整欄寬"
 L["Drag commands between columns to add, remove or reorder them."] = "在兩欄之間拖曳指令以新增、移除或調整順序。"
 
 L["Button size"] = "按鈕大小"
+
+L["Show icon background"] = "顯示圖示背景"
+
+L["Icon background color"] = "圖示背景顏色"
+
+L["Text appearance"] = "文字外觀"
+
+L["Font"] = "字型"
+
+L["Font style"] = "字型樣式"
+
+L["Default font"] = "預設字型"
+
+L["No outline"] = "無描邊"
+
+L["Outline"] = "描邊"
+
+L["Thick outline"] = "粗描邊"
+
+L["Monochrome"] = "單色"
+
+L["Monochrome outline"] = "單色描邊"

@@ -4,7 +4,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 AprRC.SelectRoute = AprRC:NewModule('SelectRoute')
 
 function AprRC.SelectRoute:Show()
-    local frame = AceGUI:Create("Frame")
+    local frame = AprRC:CreateWidget("Frame")
     frame:SetTitle(L["Select Route"])
     frame.statustext:GetParent():Hide()
     frame:SetCallback("OnClose", function(widget) AceGUI:Release(widget) end)
@@ -12,7 +12,7 @@ function AprRC.SelectRoute:Show()
     frame:SetHeight(100)
     frame:SetLayout("Flow")
 
-    local dropdown = AceGUI:Create("Dropdown")
+    local dropdown = AprRC:CreateWidget("Dropdown")
     dropdown:SetFullWidth(true)
     local routeList = {}
     for index, route in ipairs(AprRCData.Routes) do
@@ -27,7 +27,7 @@ function AprRC.SelectRoute:Show()
         selectedRouteName = routeList[index]
     end)
 
-    local confirmBtn = AceGUI:Create("Button")
+    local confirmBtn = AprRC:CreateWidget("Button")
     confirmBtn:SetText(CONTINUE)
     confirmBtn:SetWidth(200)
     confirmBtn:SetCallback("OnClick", function()
@@ -43,7 +43,7 @@ function AprRC.SelectRoute:Show()
     end)
     frame:AddChild(confirmBtn)
 
-    local newRouteBtn = AceGUI:Create("Button")
+    local newRouteBtn = AprRC:CreateWidget("Button")
     newRouteBtn:SetText(NEW)
     newRouteBtn:SetWidth(200)
     newRouteBtn:SetCallback("OnClick", function()

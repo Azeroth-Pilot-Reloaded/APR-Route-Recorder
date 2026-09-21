@@ -6,7 +6,7 @@ local Form = {}
 UI.Form = Form
 
 function UI.LabelWidget(parent, text, heading)
-    local widget = GUI:Create(heading and "Heading" or "Label")
+    local widget = AprRC:CreateWidget(heading and "Heading" or "Label")
     widget:SetFullWidth(true)
     widget:SetText(text)
     parent:AddChild(widget)
@@ -14,7 +14,7 @@ function UI.LabelWidget(parent, text, heading)
 end
 
 function UI.Button(parent, text, callback, width)
-    local widget = GUI:Create("Button")
+    local widget = AprRC:CreateWidget("Button")
     widget:SetText(T(text))
     widget:SetWidth(width or 140)
     widget:SetCallback("OnClick", callback)
@@ -23,7 +23,7 @@ function UI.Button(parent, text, callback, width)
 end
 
 function UI.Group(parent, title)
-    local group = GUI:Create(title and "InlineGroup" or "SimpleGroup")
+    local group = AprRC:CreateWidget(title and "InlineGroup" or "SimpleGroup")
     group:SetFullWidth(true)
     group:SetLayout("Flow")
     if title then group:SetTitle(title) end
@@ -32,7 +32,7 @@ function UI.Group(parent, title)
 end
 
 function UI.Dropdown(parent, label, entries, value, callback)
-    local widget = GUI:Create("Dropdown")
+    local widget = AprRC:CreateWidget("Dropdown")
     widget:SetFullWidth(true)
     widget:SetLabel(label)
     local order = {}
@@ -170,7 +170,7 @@ function Form:Render(parent, schema, value, set, context, path, label)
         end)
         self:Render(parent, schema.choices[selected], value, set, context, path .. "/variant", label)
     elseif valueKind == "bool" then
-        local widget = GUI:Create("CheckBox")
+        local widget = AprRC:CreateWidget("CheckBox")
         widget:SetFullWidth(true)
         widget:SetLabel(label)
         widget:SetValue(value == true)
@@ -265,7 +265,7 @@ function Form:Render(parent, schema, value, set, context, path, label)
                 UI.Dropdown(parent, T("Choice"), choices, nil, function(entry) selected = entry end)
                 getKey = function() return selected end
             else
-                local entryKey = GUI:Create("EditBox")
+                local entryKey = AprRC:CreateWidget("EditBox")
                 entryKey:SetFullWidth(true)
                 entryKey:SetLabel(T(schema.key == "id" and "Quest ID" or "ID / objective (e.g. 12345-1)"))
                 entryKey:DisableButton(true)
@@ -292,7 +292,7 @@ function Form:Render(parent, schema, value, set, context, path, label)
     else
         local multiline = valueKind == "strings" or (valueKind == "text" and
             (path:find("Note", 1, true) or path:find("ExtraLineText", 1, true) or tostring(value):find("\n", 1, true)))
-        local widget = GUI:Create(multiline and "MultiLineEditBox" or "EditBox")
+        local widget = AprRC:CreateWidget(multiline and "MultiLineEditBox" or "EditBox")
         widget:SetFullWidth(true)
         widget:DisableButton(true)
         if multiline then widget:SetNumLines(4) end

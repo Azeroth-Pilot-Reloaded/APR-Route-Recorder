@@ -6,7 +6,7 @@ AprRC.QuestObjectiveSelector = AprRC:NewModule('QuestObjectiveSelector')
 
 
 function AprRC.QuestObjectiveSelector:Show(config)
-    local frame = AceGUI:Create("Frame")
+    local frame = AprRC:CreateWidget("Frame")
     frame:SetTitle(config.title or L["Quest Objective Selector"])
     frame:SetStatusText(config.statusText or L["Select a quest objective"])
     frame:SetCallback("OnClose", function(widget) AceGUI:Release(widget) end)
@@ -15,18 +15,18 @@ function AprRC.QuestObjectiveSelector:Show(config)
     frame:EnableResize(true)
     frame:SetLayout("Fill")
 
-    local mainGroup = AceGUI:Create("SimpleGroup")
+    local mainGroup = AprRC:CreateWidget("SimpleGroup")
     mainGroup:SetFullWidth(true)
     mainGroup:SetFullHeight(true)
     mainGroup:SetLayout("Flow")
     frame:AddChild(mainGroup)
 
-    local searchBox = AceGUI:Create("EditBox")
+    local searchBox = AprRC:CreateWidget("EditBox")
     searchBox:SetLabel(L["Search (QuestID or text)"])
     searchBox:SetFullWidth(true)
     mainGroup:AddChild(searchBox)
 
-    local scrollFrame = AceGUI:Create("ScrollFrame")
+    local scrollFrame = AprRC:CreateWidget("ScrollFrame")
     scrollFrame:SetFullWidth(true)
     scrollFrame:SetFullHeight(true)
     scrollFrame:SetLayout("Flow")
@@ -73,21 +73,21 @@ function AprRC.QuestObjectiveSelector:Show(config)
                 for _, objective in ipairs(quest.objectives) do
                     if ObjectiveMatchesTokens(quest, objective, tokens) then
                         if not questGroup then
-                            questGroup = AceGUI:Create("InlineGroup")
+                            questGroup = AprRC:CreateWidget("InlineGroup")
                             questGroup:SetFullWidth(true)
                             questGroup:SetTitle(quest.title)
                             questGroup:SetLayout("List")
                         end
 
                         if not isFirst then
-                            local spacer = AceGUI:Create("Label")
+                            local spacer = AprRC:CreateWidget("Label")
                             spacer:SetText("")
                             spacer:SetFullWidth(true)
                             spacer:SetHeight(10)
                             questGroup:AddChild(spacer)
                         end
 
-                        local objectiveLabel = AceGUI:Create("InteractiveLabel")
+                        local objectiveLabel = AprRC:CreateWidget("InteractiveLabel")
                         objectiveLabel:SetText("[" .. objective.objectiveID .. "]" .. " - " .. (objective.text or ""))
                         objectiveLabel:SetFullWidth(true)
                         objectiveLabel:SetCallback("OnClick", function()

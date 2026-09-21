@@ -14,6 +14,8 @@ frame:SetMovable(true)
 local function iconButton(texture, label, callback)
     local button = CreateFrame("Button", nil, frame)
     button.label = label
+    button.background = button:CreateTexture(nil, "BACKGROUND")
+    button.background:SetAllPoints(button)
     button.icon = button:CreateTexture(nil, "ARTWORK")
     button.icon:SetPoint("CENTER")
     button.icon:SetTexture(texture)
@@ -35,9 +37,9 @@ local function iconButton(texture, label, callback)
     end)
     button:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_TOP")
-        GameTooltip:AddLine(self.label, 1, 0.82, 0.4)
-        if self.command then GameTooltip:AddLine("/aprrc " .. self.command, 0.8, 0.8, 0.8) end
-        GameTooltip:AddLine(L["Drag to move"], 0.8, 0.8, 0.8)
+        AprRC:AddTooltipLine(GameTooltip, self.label, 1, 0.82, 0.4)
+        if self.command then AprRC:AddTooltipLine(GameTooltip, "/aprrc " .. self.command, 0.8, 0.8, 0.8) end
+        AprRC:AddTooltipLine(GameTooltip, L["Drag to move"], 0.8, 0.8, 0.8)
         GameTooltip:Show()
     end)
     button:SetScript("OnLeave", function() GameTooltip:Hide() end)
@@ -96,6 +98,9 @@ function Bar:UpdateFrame()
     local function place(button, index)
         button:SetSize(size, size)
         button.icon:SetSize(size - 4, size - 4)
+        local color = profile.backdropColor or { 0.07, 0.055, 0.035, 0.85 }
+        button.background:SetColorTexture(color[1], color[2], color[3], color[4] or 1)
+        if profile.showBackdrop ~= false then button.background:Show() else button.background:Hide() end
         button:ClearAllPoints()
         button:SetPoint("TOPLEFT", frame, "TOPLEFT", ((index - 1) % columns) * (size + gap),
             -math.floor((index - 1) / columns) * (size + gap))
@@ -142,6 +147,7 @@ function Bar:ResetToDefault()
     AprRCData.CommandBarCommands = AprRC.options:GetDefaultToolbarCommands()
     local profile = AprRC.settings.profile.commandBarFrame
     profile.rotation, profile.enabled, profile.buttonSize, profile.buttonsPerRow = "HORIZONTAL", true, 32, 6
+    profile.showBackdrop, profile.backdropColor = true, { 0.07, 0.055, 0.035, 0.85 }
     self.page = 1
     self:RefreshFrameAnchor()
 end

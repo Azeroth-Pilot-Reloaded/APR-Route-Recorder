@@ -161,7 +161,7 @@ function AprRC.ReputationFrame:Show(stepKey)
         activeFrame = nil
     end
 
-    local frame = AceGUI:Create("Frame")
+    local frame = AprRC:CreateWidget("Frame")
     activeFrame = frame
     frame:SetTitle(config.title)
     frame:SetStatusText(config.statusText)
@@ -195,38 +195,38 @@ function AprRC.ReputationFrame:Show(stepKey)
         knownByID[reputation.factionID] = reputation
     end
 
-    local factionDropdown = AceGUI:Create("Dropdown")
+    local factionDropdown = AprRC:CreateWidget("Dropdown")
     factionDropdown:SetLabel(L["Known reputation"])
     factionDropdown:SetList(factionList, factionOrder)
     factionDropdown:SetValue("manual")
     factionDropdown:SetFullWidth(true)
     frame:AddChild(factionDropdown)
 
-    local factionIDEdit = AceGUI:Create("EditBox")
+    local factionIDEdit = AprRC:CreateWidget("EditBox")
     factionIDEdit:SetLabel(L["Faction ID"])
     factionIDEdit:DisableButton(true)
     factionIDEdit:SetRelativeWidth(0.68)
     frame:AddChild(factionIDEdit)
 
-    local detectButton = AceGUI:Create("Button")
+    local detectButton = AprRC:CreateWidget("Button")
     detectButton:SetText(L["Detect type / current level"])
     detectButton:SetRelativeWidth(0.32)
     frame:AddChild(detectButton)
 
-    local typeDropdown = AceGUI:Create("Dropdown")
+    local typeDropdown = AprRC:CreateWidget("Dropdown")
     typeDropdown:SetLabel(L["Reputation type"])
     typeDropdown:SetList(REPUTATION_TYPES, REPUTATION_TYPE_ORDER)
     typeDropdown:SetValue("standard")
     typeDropdown:SetRelativeWidth(0.5)
     frame:AddChild(typeDropdown)
 
-    local levelEdit = AceGUI:Create("EditBox")
+    local levelEdit = AprRC:CreateWidget("EditBox")
     levelEdit:SetLabel(L["Standing (1-8)"])
     levelEdit:DisableButton(true)
     levelEdit:SetRelativeWidth(0.5)
     frame:AddChild(levelEdit)
 
-    local infoLabel = AceGUI:Create("Label")
+    local infoLabel = AprRC:CreateWidget("Label")
     infoLabel:SetFullWidth(true)
     infoLabel:SetText(GetStandardStandingHelp())
     frame:AddChild(infoLabel)
@@ -326,7 +326,7 @@ function AprRC.ReputationFrame:Show(stepKey)
         RefreshInfo(currentProgress)
     end
 
-    local addButton = AceGUI:Create("Button")
+    local addButton = AprRC:CreateWidget("Button")
     addButton:SetText(config.createStep and L["Add step"] or L["Add option"])
     addButton:SetRelativeWidth(0.5)
     addButton:SetCallback("OnClick", function()
@@ -354,7 +354,7 @@ function AprRC.ReputationFrame:Show(stepKey)
     end)
     frame:AddChild(addButton)
 
-    local cancelButton = AceGUI:Create("Button")
+    local cancelButton = AprRC:CreateWidget("Button")
     cancelButton:SetText(CANCEL or L["Cancel"])
     cancelButton:SetRelativeWidth(0.5)
     cancelButton:SetCallback("OnClick", function()

@@ -838,3 +838,25 @@ L["Drag to resize columns"] = "Faites glisser pour redimensionner les colonnes"
 L["Drag commands between columns to add, remove or reorder them."] = "Glissez les commandes entre les colonnes pour les ajouter, les retirer ou les réordonner."
 
 L["Button size"] = "Taille des boutons"
+
+L["Show icon background"] = "Afficher le fond des icônes"
+
+L["Icon background color"] = "Couleur du fond des icônes"
+
+L["Text appearance"] = "Apparence du texte"
+
+L["Font"] = "Police"
+
+L["Font style"] = "Style de police"
+
+L["Default font"] = "Police par défaut"
+
+L["No outline"] = "Sans contour"
+
+L["Outline"] = "Contour"
+
+L["Thick outline"] = "Contour épais"
+
+L["Monochrome"] = "Monochrome"
+
+L["Monochrome outline"] = "Monochrome avec contour"

@@ -825,3 +825,25 @@ L["Drag to resize columns"] = "드래그하여 열 너비 조절"
 L["Drag commands between columns to add, remove or reorder them."] = "명령을 열 사이로 드래그하여 추가하거나 제거하거나 순서를 변경하세요."
 
 L["Button size"] = "버튼 크기"
+
+L["Show icon background"] = "아이콘 배경 표시"
+
+L["Icon background color"] = "아이콘 배경 색상"
+
+L["Text appearance"] = "텍스트 모양"
+
+L["Font"] = "글꼴"
+
+L["Font style"] = "글꼴 스타일"
+
+L["Default font"] = "기본 글꼴"
+
+L["No outline"] = "외곽선 없음"
+
+L["Outline"] = "외곽선"
+
+L["Thick outline"] = "두꺼운 외곽선"
+
+L["Monochrome"] = "단색"
+
+L["Monochrome outline"] = "단색 외곽선"

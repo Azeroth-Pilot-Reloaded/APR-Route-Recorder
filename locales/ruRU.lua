@@ -825,3 +825,25 @@ L["Drag to resize columns"] = "Перетащите, чтобы изменить
 L["Drag commands between columns to add, remove or reorder them."] = "Перетаскивайте команды между столбцами, чтобы добавлять, удалять или менять их порядок."
 
 L["Button size"] = "Размер кнопок"
+
+L["Show icon background"] = "Показывать фон значков"
+
+L["Icon background color"] = "Цвет фона значков"
+
+L["Text appearance"] = "Оформление текста"
+
+L["Font"] = "Шрифт"
+
+L["Font style"] = "Стиль шрифта"
+
+L["Default font"] = "Шрифт по умолчанию"
+
+L["No outline"] = "Без контура"
+
+L["Outline"] = "Контур"
+
+L["Thick outline"] = "Толстый контур"
+
+L["Monochrome"] = "Монохромный"
+
+L["Monochrome outline"] = "Монохромный с контуром"

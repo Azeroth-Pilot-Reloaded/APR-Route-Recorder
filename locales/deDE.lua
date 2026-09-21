@@ -825,3 +825,25 @@ L["Drag to resize columns"] = "Ziehen, um die Spaltenbreite anzupassen"
 L["Drag commands between columns to add, remove or reorder them."] = "Ziehe Befehle zwischen den Spalten, um sie hinzuzufügen, zu entfernen oder neu anzuordnen."
 
 L["Button size"] = "Schaltflächengröße"
+
+L["Show icon background"] = "Symbolhintergrund anzeigen"
+
+L["Icon background color"] = "Farbe des Symbolhintergrunds"
+
+L["Text appearance"] = "Textdarstellung"
+
+L["Font"] = "Schriftart"
+
+L["Font style"] = "Schriftstil"
+
+L["Default font"] = "Standardschrift"
+
+L["No outline"] = "Keine Kontur"
+
+L["Outline"] = "Kontur"
+
+L["Thick outline"] = "Dicke Kontur"
+
+L["Monochrome"] = "Monochrom"
+
+L["Monochrome outline"] = "Monochrom mit Kontur"

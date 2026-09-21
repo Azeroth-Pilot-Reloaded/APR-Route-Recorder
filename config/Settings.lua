@@ -48,6 +48,8 @@ function AprRC.settings:InitializeSettings()
                 position = {},
                 enabled = true,
                 buttonSize = 32,
+                showBackdrop = true,
+                backdropColor = { 0.07, 0.055, 0.035, 0.85 },
                 buttonsPerRow = 6,
             },
             exportFrame = {
@@ -62,6 +64,7 @@ function AprRC.settings:InitializeSettings()
                 scale = 1,
             },
             coordinateShow = false,
+            textAppearance = { font = "DEFAULT", flags = "NONE" },
             --debug
             minimap = { minimapPos = 285 },
             enableMinimapButton = true,
@@ -190,6 +193,7 @@ function AprRC.settings:createBlizzOptions()
                     },
                 }
             },
+            textAppearance = AprRC.textStyle:CreateOptions(),
             questIDDisplay = {
                 order = 4.5,
                 type = "group",
@@ -347,10 +351,10 @@ function AprRC.settings:CreateMiniMapButton()
             else
                 toggleAddon = "|cff00ff00 " .. L_APR["ENABLE"] .. "|r"
             end
-            tooltip:AddLine(AprRC.title)
-            tooltip:AddLine(L_APR["LEFT_CLICK"] .. ": |cffeda55f" .. AprRC.editorUI.Text("Route workshop") .. "|r",
+            AprRC:AddTooltipLine(tooltip, AprRC.title)
+            AprRC:AddTooltipLine(tooltip, L_APR["LEFT_CLICK"] .. ": |cffeda55f" .. AprRC.editorUI.Text("Route workshop") .. "|r",
                 unpack(AprRC.Color.white))
-            tooltip:AddLine(L_APR["RIGHT_CLICK"] .. ": " .. toggleAddon .. "|cffeda55f " .. L_APR["ADDON"] .. "|r",
+            AprRC:AddTooltipLine(tooltip, L_APR["RIGHT_CLICK"] .. ": " .. toggleAddon .. "|cffeda55f " .. L_APR["ADDON"] .. "|r",
                 unpack(AprRC.Color.white))
         end
     })

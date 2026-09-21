@@ -7,7 +7,7 @@ AprRC.routeEditor = Editor
 local sessions = {}
 
 function UI.Body(parent, layout)
-    local group = GUI:Create("SimpleGroup")
+    local group = AprRC:CreateWidget("SimpleGroup")
     group:SetLayout(layout or "APRWorkspace")
     group:SetUserData("body", true)
     parent:AddChild(group)
@@ -15,7 +15,7 @@ function UI.Body(parent, layout)
 end
 
 function UI.Scroll(parent)
-    local widget = GUI:Create("ScrollFrame")
+    local widget = AprRC:CreateWidget("ScrollFrame")
     widget:SetLayout("Flow")
     widget:SetUserData("body", true)
     parent:AddChild(widget)
@@ -36,7 +36,7 @@ end
 
 function Editor:Confirm(text, callback)
     if self.confirm then self.confirm:Show(); return end
-    local dialog = GUI:Create("Frame")
+    local dialog = AprRC:CreateWidget("Frame")
     self.confirm = dialog
     dialog:SetTitle(T("Route workshop"))
     dialog:SetWidth(470)
@@ -122,14 +122,14 @@ function Editor:NameDialog(copy)
         source, reason = self.session:Read()
         if not source then self:Message(reason, true); return end
     end
-    local dialog = GUI:Create("Frame")
+    local dialog = AprRC:CreateWidget("Frame")
     self.nameDialog = dialog
     dialog:SetTitle(T(copy and "Save a copy" or "New route"))
     dialog:SetWidth(490)
     dialog:SetHeight(230)
     dialog:EnableResize(false)
     dialog:SetLayout("Flow")
-    local input = GUI:Create("EditBox")
+    local input = AprRC:CreateWidget("EditBox")
     input:SetLabel(T("Route name"))
     input:SetFullWidth(true)
     input:DisableButton(true)
@@ -250,6 +250,7 @@ end
 
 function Editor:DrawTools()
     local panel = UI.Scroll(self.tabs)
+    AprRC.textStyle:Draw(panel)
     UI.LabelWidget(panel, "|cffedc36a" .. T("Recording tools") .. "|r", true)
     UI.LabelWidget(panel, T("All existing commands, autocomplete dialogs and toolbar settings remain available here."))
     UI.Button(panel, "Settings", function() AprRC.settings:OpenSettings(AprRC.title) end)
@@ -260,6 +261,7 @@ function Editor:DrawTools()
 end
 
 local function interacting(widget)
+    if widget.type == "ColorPicker" and ColorPickerFrame and ColorPickerFrame:IsShown() then return true end
     local edit = widget.editBox or widget.editbox
     if edit and edit:HasFocus() or widget.open then return true end
     for _, child in ipairs(widget.children or {}) do
@@ -339,7 +341,7 @@ function Editor:Show()
         AprRC.CommandBar:RefreshFrameAnchor()
         return
     end
-    local frame = GUI:Create("Frame")
+    local frame = AprRC:CreateWidget("Frame")
     self.frame = frame
     frame:SetTitle("APR  |  " .. T("Route workshop"))
     -- Several legacy dialogs hide this region before returning frames to the pool.
@@ -369,7 +371,7 @@ function Editor:Show()
     self.compactButton.frame:Show()
     self.recordStatus = UI.LabelWidget(header, "")
     self.summary = UI.LabelWidget(header, "")
-    self.tabs = GUI:Create("TabGroup")
+    self.tabs = AprRC:CreateWidget("TabGroup")
     self.tabs:SetLayout("APRFill")
     self.tabs:SetAutoAdjustHeight(false)
     self.tabs:SetUserData("body", true)
@@ -393,7 +395,7 @@ function Editor:Show()
         end
         if session:IsDirty() then self:Confirm(T("Discard this draft and reload the saved route?"), reload) else reload() end
     end)
-    local follow = GUI:Create("CheckBox")
+    local follow = AprRC:CreateWidget("CheckBox")
     follow:SetLabel(T("Follow recording"))
     follow:SetWidth(205)
     self.follow = self.follow ~= false

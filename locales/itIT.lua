@@ -825,3 +825,25 @@ L["Drag to resize columns"] = "Trascina per ridimensionare le colonne"
 L["Drag commands between columns to add, remove or reorder them."] = "Trascina i comandi tra le colonne per aggiungerli, rimuoverli o riordinarli."
 
 L["Button size"] = "Dimensione dei pulsanti"
+
+L["Show icon background"] = "Mostra lo sfondo delle icone"
+
+L["Icon background color"] = "Colore dello sfondo delle icone"
+
+L["Text appearance"] = "Aspetto del testo"
+
+L["Font"] = "Carattere"
+
+L["Font style"] = "Stile del carattere"
+
+L["Default font"] = "Carattere predefinito"
+
+L["No outline"] = "Senza contorno"
+
+L["Outline"] = "Contorno"
+
+L["Thick outline"] = "Contorno spesso"
+
+L["Monochrome"] = "Monocromatico"
+
+L["Monochrome outline"] = "Monocromatico con contorno"

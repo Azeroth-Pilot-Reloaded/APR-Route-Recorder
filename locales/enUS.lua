@@ -837,3 +837,25 @@ L["Drag to resize columns"] = "Drag to resize columns"
 L["Drag commands between columns to add, remove or reorder them."] = "Drag commands between columns to add, remove or reorder them."
 
 L["Button size"] = "Button size"
+
+L["Show icon background"] = "Show icon background"
+
+L["Icon background color"] = "Icon background color"
+
+L["Text appearance"] = "Text appearance"
+
+L["Font"] = "Font"
+
+L["Font style"] = "Font style"
+
+L["Default font"] = "Default font"
+
+L["No outline"] = "No outline"
+
+L["Outline"] = "Outline"
+
+L["Thick outline"] = "Thick outline"
+
+L["Monochrome"] = "Monochrome"
+
+L["Monochrome outline"] = "Monochrome outline"

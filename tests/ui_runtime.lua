@@ -47,7 +47,16 @@ function Native:SetPoint(...) self.points[#self.points + 1] = { ... } end
 function Native:SetAllPoints(relative) self.allPoints = relative or self.parent end
 function Native:GetPoint(index) return unpack(self.points[index or 1] or {}) end
 function Native:GetNumPoints() return #self.points end
-function Native:SetParent(parent) self.parent = parent end
+function Native:SetParent(parent)
+    if self.parent == parent then return end
+    if self.parent then
+        for index, child in ipairs(self.parent.children) do
+            if child == self then table.remove(self.parent.children, index); break end
+        end
+    end
+    self.parent = parent
+    if parent then parent.children[#parent.children + 1] = self end
+end
 function Native:GetParent() return self.parent end
 function Native:GetName() return self.name end
 function Native:Show() if not self.shown then self.shown = true; event(self, "OnShow") end end
@@ -83,7 +92,25 @@ function Native:GetBottom() return self:GetTop() - self:GetHeight() end
 function Native:GetEffectiveScale() return 1 end
 function Native:GetFrameLevel() return self.level or 100 end
 function Native:SetFrameLevel(level) self.level = level end
-function Native:GetChildren() return unpack(self.children) end
+function Native:GetChildren()
+    local result = {}
+    for _, child in ipairs(self.children) do
+        if child.frameType ~= "FontString" and child.frameType ~= "Texture" and child.frameType ~= "Line" then
+            result[#result + 1] = child
+        end
+    end
+    return unpack(result)
+end
+function Native:GetRegions()
+    local result = {}
+    for _, child in ipairs(self.children) do
+        if child.frameType == "FontString" or child.frameType == "Texture" or child.frameType == "Line" then
+            result[#result + 1] = child
+        end
+    end
+    return unpack(result)
+end
+function Native:IsObjectType(kind) return self.frameType:lower() == kind:lower() end
 function Native:SetScrollChild(child) self.scrollChild = child end
 function Native:SetVerticalScroll(value) self.scroll = value end
 function Native:GetVerticalScroll() return self.scroll or 0 end
@@ -106,7 +133,12 @@ function Native:SetPushedTexture(texture) self.pushed = texture end
 function Native:GetNormalTexture() return self:CreateTexture() end
 function Native:GetPushedTexture() return self:CreateTexture() end
 function Native:GetDisabledTexture() return self:CreateTexture() end
-function Native:SetFont() return true end
+function Native:GetFont() return self.fontPath or "Fonts\\FRIZQT__.TTF", self.fontSize or 12, self.fontFlags or "" end
+function Native:SetFont(path, size, flags)
+    if path == "Missing.ttf" then return false end
+    self.fontPath, self.fontSize, self.fontFlags = path, size, flags
+    return true
+end
 function Native:Enable() self.disabled = false end
 function Native:Disable() self.disabled = true end
 function Native:EnableMouse() end
@@ -124,9 +156,26 @@ local noops = {
     "SetMinMaxValues", "SetValueStep", "SetThumbTexture", "LockHighlight", "UnlockHighlight", "SetOwner",
     "AddLine", "StartMoving", "StartSizing", "StopMovingOrSizing", "RegisterForClicks", "SetDisabledTexture",
     "RegisterEvent", "UnregisterEvent", "SetAutoFocus", "SetAlpha", "SetScale", "SetSpacing", "SetIndentedWordWrap",
-    "RegisterForDrag",
+    "RegisterForDrag", "SetDesaturated",
 }
 for _, name in ipairs(noops) do Native[name] = function() end end
+function Native:SetColorTexture(...) self.rgba = { ... } end
+function Native:AddLine(text)
+    self.numLines = (self.numLines or 0) + 1
+    local region = _G[self.name .. "TextLeft" .. self.numLines] or self:CreateFontString(self.name .. "TextLeft" .. self.numLines)
+    region:SetText(text)
+end
+function Native:NumLines() return self.numLines or 0 end
+function Native:ClearLines() self.numLines = 0; event(self, "OnTooltipCleared") end
+function hooksecurefunc(target, method, callback)
+    if type(target) == "string" then target, method, callback = _G, target, method end
+    local original = target[method]
+    target[method] = function(...)
+        local result = { original(...) }
+        callback(...)
+        return unpack(result)
+    end
+end
 function CreateFrame(frameType, name, parent, template)
     local frame = setmetatable({ frameType = frameType, name = name, parent = parent, scripts = {}, points = {},
         children = {}, shown = true }, { __index = Native })

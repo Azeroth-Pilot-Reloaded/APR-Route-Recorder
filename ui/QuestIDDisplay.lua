@@ -68,6 +68,7 @@ function AprRC.questID:AddQuestIDsToTooltip(tooltip, questIDs)
 
     local label = #values > 1 and L.QUEST_IDS or L.QUEST_ID
     tooltip:AddDoubleLine(label .. ":", table.concat(values, ", "), 0.2, 0.8, 1, 1, 1, 1)
+    AprRC.textStyle:TooltipLine(tooltip)
     tooltip:Show()
 end
 
@@ -77,6 +78,7 @@ function AprRC.questID:EnsureQuestTooltip(owner, questID)
     if not GameTooltip:IsShown() or GameTooltip:GetOwner() ~= owner then
         GameTooltip:SetOwner(owner or UIParent, "ANCHOR_CURSOR_RIGHT", 5, 2)
         GameTooltip:SetText(GetQuestTitle(questID) or _G.QUESTS_LABEL or L["Quest"])
+        AprRC.textStyle:TooltipLine(GameTooltip)
     end
     self:AddQuestIDsToTooltip(GameTooltip, questID)
 end
@@ -259,6 +261,7 @@ function AprRC.questID:GetQuestLogDetailLine(parentFrame)
     local line = parentFrame.aprrcQuestIDLine
     if not line then
         line = parentFrame:CreateFontString(nil, "ARTWORK", "QuestFontNormalSmall")
+        AprRC.textStyle:TrackFont(line)
         line:SetWidth(285)
         line:SetJustifyH("LEFT")
         line:SetWordWrap(false)

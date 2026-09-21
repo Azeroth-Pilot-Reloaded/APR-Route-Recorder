@@ -16,6 +16,7 @@ function AprRC.questionDialog:CreateEditBoxPopupWithCallback(text, onAcceptCallb
         button1 = CONTINUE,
         button2 = CANCEL,
         OnShow = function(self)
+            AprRC.textStyle:TemporaryFrame(self)
             local box = self.GetEditBox and self:GetEditBox() or _G[self:GetName() .. "EditBox"]
             local button = self.GetButton1 and self:GetButton1() or _G[self:GetName() .. "Button1"]
 

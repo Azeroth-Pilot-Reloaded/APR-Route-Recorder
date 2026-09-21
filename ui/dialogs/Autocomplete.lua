@@ -7,7 +7,7 @@ AprRC.autocomplete = AprRC:NewModule('AutoComplete')
 
 function AprRC.autocomplete:ShowAutoComplete(title, list, onConfirm, formatItem, width, height, showAllOnEmpty)
     showAllOnEmpty = showAllOnEmpty or false
-    local frame = AceGUI:Create("Frame")
+    local frame = AprRC:CreateWidget("Frame")
     local isClosing = false
     local activeTimers = {}
     local editbox, scrollFrame
@@ -38,18 +38,18 @@ function AprRC.autocomplete:ShowAutoComplete(title, list, onConfirm, formatItem,
     frame:EnableResize(false)
     frame:SetLayout("Flow")
 
-    editbox = AceGUI:Create("EditBox")
+    editbox = AprRC:CreateWidget("EditBox")
     editbox:SetLabel(L["Enter text"])
     editbox:SetFullWidth(true)
     editbox:DisableButton(true)
 
-    scrollFrame = AceGUI:Create("ScrollFrame")
+    scrollFrame = AprRC:CreateWidget("ScrollFrame")
     scrollFrame:SetFullWidth(true)
     scrollFrame:SetLayout("Flow")
     scrollFrame:SetHeight(300)
     scrollFrame.frame:Hide()
 
-    local btnConfirm = AceGUI:Create("Button")
+    local btnConfirm = AprRC:CreateWidget("Button")
     btnConfirm:SetText(L["Confirm"])
     btnConfirm:SetWidth(100)
     btnConfirm:SetDisabled(false)
@@ -85,7 +85,7 @@ function AprRC.autocomplete:ShowAutoComplete(title, list, onConfirm, formatItem,
                 for i = startIndex, endIndex do
                     local match = matches[i]
                     if match then
-                        local interacLabel = AceGUI:Create("InteractiveLabel")
+                        local interacLabel = AprRC:CreateWidget("InteractiveLabel")
                         interacLabel:SetText(formatItem and formatItem(match) or match.value)
                         interacLabel:SetColor(255, 255, 255)
                         interacLabel:SetFullWidth(true)
@@ -99,12 +99,7 @@ function AprRC.autocomplete:ShowAutoComplete(title, list, onConfirm, formatItem,
                             widget:SetHighlight("Interface\\QuestFrame\\UI-QuestTitleHighlight")
                             GameTooltip:SetOwner(widget.frame, "ANCHOR_RIGHT")
                             GameTooltip:ClearLines()
-                            local font, size, flags = GameFontNormal:GetFont()
-                            GameTooltip:AddLine(L["Key: "] .. match.key, 1, 1, 0, false)
-                            local line = _G["GameTooltipTextLeft" .. GameTooltip:NumLines()]
-                            if line then
-                                line:SetFont(font, size, flags)
-                            end
+                            AprRC:AddTooltipLine(GameTooltip, L["Key: "] .. match.key, 1, 1, 0, false)
                             GameTooltip:Show()
                         end)
                         interacLabel:SetCallback("OnLeave", function(widget)
