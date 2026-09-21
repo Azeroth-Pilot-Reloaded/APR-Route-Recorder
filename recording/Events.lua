@@ -179,8 +179,8 @@ function AprRC.event.functions.accept(event, questId)
     end
     if C_QuestLog.IsWorldQuest(questId) then
         APR.questionDialog:CreateQuestionPopup(
-            "New world quest, do you want to add it?",
-            "New world quest, do you want to add it?",
+            L["New world quest, do you want to add it?"],
+            L["New world quest, do you want to add it?"],
             function()
                 AddQuestToStep(questId)
             end
@@ -580,7 +580,7 @@ function AprRC.event.functions.qpart(event, questID)
 
     local function retryProcess(attemptsLeft)
         if attemptsLeft <= 0 then
-            APR:PrintError("Qpart update failed after retries", questID)
+            APR:PrintError(L["Qpart update failed after retries"], questID)
             return
         end
         C_Timer.After(0.4, function()
@@ -708,7 +708,7 @@ function AprRC.event.functions.portal(event, initialLogin, reloading)
         local last = AprRC:GetLastStep()
         if last.UseHS or last.UseDalaHS or last.UseGarrisonHS then return end
         -- A loading screen alone does not identify a portal. Confirm the inferred transition.
-        APR.questionDialog:CreateQuestionPopup("Record a portal to map " .. mapID .. "?",
+        APR.questionDialog:CreateQuestionPopup(L["Record a portal to map %s?"]:format(mapID),
             "Record a portal to map " .. mapID .. "?", function()
                 if not AprRC:IsRecordingContext(pending.context) then return end
                 local step = pending.step

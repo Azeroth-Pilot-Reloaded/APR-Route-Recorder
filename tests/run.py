@@ -2,10 +2,12 @@
 from pathlib import Path
 from lupa.lua51 import LuaRuntime
 from ui_run import run as run_ui_tests
+from localization_run import run as run_localization_tests
 
 ROOT = Path(__file__).resolve().parents[1]
 lua = LuaRuntime(unpack_returned_tuples=True)
 lua.execute((ROOT / "tests/stubs.lua").read_text(encoding="utf-8"))
+lua.execute((ROOT / "locales/enUS.lua").read_text(encoding="utf-8"))
 for name in ("utils/Utils.lua", "utils/LuaData.lua", "utils/Coordinates.lua", "core/RouteManagement.lua", "core/RouteDefinition.lua"):
     lua.execute((ROOT / name).read_text(encoding="utf-8"))
 for name in ("commands/Registry.lua", "commands/Schema.lua"):
@@ -29,3 +31,4 @@ for line in (ROOT / "APR-Recorder.toc").read_text(encoding="utf-8").splitlines()
         assert (ROOT / line).is_file(), line
 print("Regression tests, Lua 5.1 syntax and TOC paths passed.")
 run_ui_tests()
+run_localization_tests()

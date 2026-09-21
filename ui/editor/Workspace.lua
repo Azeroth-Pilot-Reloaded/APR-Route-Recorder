@@ -171,7 +171,7 @@ function Editor:Export()
     if not self.session then return end
     local route, reason = self.session:Read()
     if not route then self:Message(reason, true); return end
-    if not APR or not APRData then self:Message("APR is not available", true); return end
+    if not APR or not APRData then self:Message(T("APR is not available"), true); return end
     local name = route.name .. " - Custom"
     local definition = AprRC:BuildRouteDefinition(route)
     APRData.CustomRoute = APRData.CustomRoute or {}

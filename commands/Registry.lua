@@ -1,3 +1,4 @@
+local L = LibStub("AceLocale-3.0"):GetLocale("APR-Recorder")
 -- Shared command dispatch; option definitions live in commands/options/.
 AprRC.options = { commands = {}, step = {}, route = {} }
 local options = AprRC.options
@@ -22,9 +23,9 @@ end
 
 function options:CanEdit(route)
     if not AprRC.settings.profile.enableAddon or not AprRC.settings.profile.recordBarFrame.isRecording then
-        return false, "Start recording a route first"
+        return false, L["Start recording a route first"]
     end
-    if route and route ~= AprRCData.CurrentRoute then return false, "The selected route changed; reopen the command" end
+    if route and route ~= AprRCData.CurrentRoute then return false, L["The selected route changed; reopen the command"] end
     return true
 end
 
@@ -51,7 +52,7 @@ function options:Parse(definition, text)
             value = text
         end
     end
-    if value == nil then return nil, err or "A value is required" end
+    if value == nil then return nil, err or L["A value is required"] end
     local valid, reason = self:ValidateValue(schema, value, definition.key)
     if not valid then return nil, reason end
     return value
@@ -68,10 +69,10 @@ function options:Apply(definition, value, route, target)
         local step = AprRC:CopyData(definition.newStep and (definition.defaults or {}) or (target or {}))
         step[definition.key] = AprRC:CopyData(value)
         if definition.requires and not step[definition.requires] then
-            return false, "Add " .. definition.requires .. " to this step first"
+            return false, L["Add %s to this step first"]:format(definition.requires)
         end
         if definition.key == "DropQuest" and step.DroppableQuest.Qid ~= value then
-            return false, "DropQuest must match DroppableQuest.Qid"
+            return false, L["DropQuest must match DroppableQuest.Qid"]
         end
         if definition.newStep and definition.coord then AprRC:SetStepCoord(step) end
         if definition.newStep or not target then
@@ -79,7 +80,7 @@ function options:Apply(definition, value, route, target)
         else
             local found
             for _, candidate in ipairs(route.steps) do if candidate == target then found = true end end
-            if not found then return false, "The edited step was removed; reopen the command" end
+            if not found then return false, L["The edited step was removed; reopen the command"] end
             for key in pairs(target) do target[key] = nil end
             for key, entry in pairs(step) do target[key] = entry end
         end
@@ -124,7 +125,7 @@ function options:Dispatch(input)
     local target = route.steps[#route.steps]
     local function submit(text)
         if not AprRC:IsRecordingContext(context) then
-            APR:PrintError("Recording changed; reopen the command")
+            APR:PrintError(L["Recording changed; reopen the command"])
             return false
         end
         local value, err = self:Parse(definition, text)
@@ -135,7 +136,7 @@ function options:Dispatch(input)
         if not ok then
             APR:PrintError(why); return false
         end
-        print("|cff00bfff" .. definition.key .. "|r Added")
+        print("|cff00bfff" .. definition.key .. "|r " .. L["Added"])
         return true
     end
     if argument ~= "" then
@@ -156,21 +157,21 @@ function options:PrintHelp(scope)
     table.sort(keys)
     for _, command in ipairs(keys) do
         local definition = self.commands[command]
-        print("|cffeda55f/aprrc " .. command .. "|r - " .. definition.key .. " (" ..
-            (definition.scope == "route" and "route" or definition.newStep and "new step" or "current step") .. ")")
+        print("|cffeda55f/aprrc " .. command .. "|r - " .. AprRC.editorUI.Label(definition.key) .. " (" ..
+            L[definition.scope == "route" and "Route" or definition.newStep and "New step" or "Current step"] .. ")")
     end
 end
 
 function options:ShowInput(definition, target, route, submit)
     local gui = LibStub("AceGUI-3.0")
     local frame = gui:Create("Frame")
-    frame:SetTitle(definition.key)
-    frame:SetStatusText(definition.help or "Enter a value, then apply it to the recorded route.")
+    frame:SetTitle(AprRC.editorUI.Label(definition.key))
+    frame:SetStatusText(definition.help or L["Enter a value, then apply it to the recorded route."])
     frame:SetWidth(650)
     frame:SetHeight(360)
     frame:SetLayout("Flow")
     local edit = gui:Create("MultiLineEditBox")
-    edit:SetLabel("Example: " .. (definition.example or ""))
+    edit:SetLabel(L["Example: "] .. (definition.example or ""))
     edit:SetFullWidth(true)
     edit:SetNumLines(10)
     edit:DisableButton(true)
@@ -183,7 +184,7 @@ function options:ShowInput(definition, target, route, submit)
     edit:SetText(current ~= nil and AprRC:SerializeData(current) or definition.example or "")
     frame:AddChild(edit)
     local button = gui:Create("Button")
-    button:SetText("Apply")
+    button:SetText(L["Apply"])
     button:SetCallback("OnClick", function() if submit(edit:GetText()) then gui:Release(frame) end end)
     frame:AddChild(button)
     frame:SetCallback("OnClose", function(widget) gui:Release(widget) end)
@@ -205,7 +206,7 @@ function options:GetToolbarEntry(definition)
     local command = (bar and bar.command) or definition.command
     return {
         command = command,
-        label = (bar and bar.label) or definition.key,
+        label = AprRC.editorUI and AprRC.editorUI.Label(definition.key) or definition.key,
         texture = self:GetToolbarIcon(command, definition),
     }
 end

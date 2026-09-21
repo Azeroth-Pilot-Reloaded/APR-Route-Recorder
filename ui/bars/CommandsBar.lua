@@ -81,13 +81,13 @@ function AprRC.CommandBar:UpdateFrame()
     -- Create RouteCompleted button
     local routeCompletedBtn = CreateButton(CommandBarFrame,
         "Interface\\AddOns\\APR-Recorder\\assets\\icons\\RouteCompleted",
-        "Add the last step (RouteCompleted) of the route so it can be marked as completed")
+        L["Add the last step (RouteCompleted) of the route so it can be marked as completed"])
     routeCompletedBtn:SetScript("OnClick", function()
         AprRC.command:SlashCmd('save')
     end)
 
     -- Create rotation button
-    local rotationBtn = CreateButton(CommandBarFrame, "Interface\\AddOns\\APR-Recorder\\assets\\icons\\rotate", "Rotate",
+    local rotationBtn = CreateButton(CommandBarFrame, "Interface\\AddOns\\APR-Recorder\\assets\\icons\\rotate", L["Rotate"],
         function()
             AprRC.settings.profile.commandBarFrame.rotation = AprRC.settings.profile.commandBarFrame.rotation ==
                 "HORIZONTAL" and
@@ -97,7 +97,7 @@ function AprRC.CommandBar:UpdateFrame()
 
     -- Create settings button
     local settingsBtn = CreateButton(CommandBarFrame, "Interface\\AddOns\\APR-Recorder\\assets\\icons\\settings",
-        "Commands Settings", function()
+        L["Commands Settings"], function()
             AprRC.CommandBarSetting:Show()
             AprRC.settings.profile.commandBarFrame.tutorialShown = false
             AprRC.TutoFrame:HideCustomTutorialFrame(AprRC.CommandBar.settingTutoFrameID)
@@ -110,7 +110,7 @@ function AprRC.CommandBar:UpdateFrame()
     -- Show the tutorial if we are using the default commands
     if AprRC.settings.profile.commandBarFrame.tutorialShown then
         AprRC.CommandBar.settingTutoFrameID = AprRC.TutoFrame:ShowCustomTutorialFrame(
-            "You can add more commands in the Commands Settings panel", TutorialPointerFrame.Direction.UP, settingsBtn)
+            L["You can add more commands in the Commands Settings panel"], TutorialPointerFrame.Direction.UP, settingsBtn)
     end
 end
 

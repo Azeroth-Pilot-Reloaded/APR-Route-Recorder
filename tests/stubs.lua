@@ -1,5 +1,8 @@
 local locale = setmetatable({}, { __index = function(_, key) return key end })
-LibStub = function() return { GetLocale = function() return locale end } end
+LibStub = function() return {
+    GetLocale = function() return locale end,
+    NewLocale = function(_, _, language) if language == "enUS" then return locale end end,
+} end
 AprRC = { settings = { profile = { enableAddon = true, recordBarFrame = { isRecording = true } } } }
 function AprRC:NewModule() return {} end
 APR = { LevelRequirementProfiles = { MidnightDelves = {} },

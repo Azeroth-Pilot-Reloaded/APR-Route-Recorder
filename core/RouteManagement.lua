@@ -1,3 +1,4 @@
+local L = LibStub("AceLocale-3.0"):GetLocale("APR-Recorder")
 function AprRC:ResetData()
     AprRC.settings.profile.recordBarFrame.isRecording = false
     AprRCData = {}
@@ -147,7 +148,7 @@ end
 
 function AprRC:FindRouteByName(routeName)
     if not AprRCData or not AprRCData.Routes or #AprRCData.Routes == 0 then
-        AprRC:Debug("No routes available", nil)
+        AprRC:Debug(L["No routes available"], nil)
         return nil, nil
     end
 
@@ -158,7 +159,7 @@ function AprRC:FindRouteByName(routeName)
         end
     end
 
-    AprRC:Debug("No routes available for the name: ", routeName)
+    AprRC:Debug(L["No routes available for the name: "], routeName)
     return nil, nil
 end
 

@@ -1,3 +1,4 @@
+local L = LibStub("AceLocale-3.0"):GetLocale("APR-Recorder")
 local options = AprRC.options
 local S = {}
 options.schemas = S
@@ -73,7 +74,7 @@ local routeConditions = {
 function options:ValidateValue(schema, value, path, depth)
     depth = (depth or 0) + 1
     path = path or "value"
-    if depth > 40 then return false, path .. ": nesting limit exceeded" end
+    if depth > 40 then return false, path .. ": " .. L["Nesting limit exceeded"] end
     local kind = type(schema) == "table" and schema.kind or schema
     local function fail(message) return false, path .. ": " .. message end
     local function child(childSchema, entry, key)
@@ -81,53 +82,53 @@ function options:ValidateValue(schema, value, path, depth)
     end
     if kind == "union" then
         for _, choice in ipairs(schema.choices) do if child(choice, value, "value") then return true end end
-        return fail("value does not match the expected format")
+        return fail(L["value does not match the expected format"])
     elseif kind == "bool" then
-        if type(value) ~= "boolean" then return fail("expected true or false") end
+        if type(value) ~= "boolean" then return fail(L["expected true or false"]) end
     elseif kind == "number" or kind == "positive" or kind == "id" or kind == "nonnegative" or kind == "integer" then
-        if type(value) ~= "number" or value ~= value or math.abs(value) == math.huge then return fail("expected a finite number") end
-        if (kind == "positive" or kind == "id") and value <= 0 then return fail("must be greater than zero") end
-        if (kind == "id" or kind == "nonnegative" or kind == "integer") and value % 1 ~= 0 then return fail("expected an integer") end
-        if kind == "nonnegative" and value < 0 then return fail("must be zero or greater") end
+        if type(value) ~= "number" or value ~= value or math.abs(value) == math.huge then return fail(L["expected a finite number"]) end
+        if (kind == "positive" or kind == "id") and value <= 0 then return fail(L["must be greater than zero"]) end
+        if (kind == "id" or kind == "nonnegative" or kind == "integer") and value % 1 ~= 0 then return fail(L["expected an integer"]) end
+        if kind == "nonnegative" and value < 0 then return fail(L["must be zero or greater"]) end
     elseif kind == "text" then
-        if type(value) ~= "string" or strtrim(value) == "" then return fail("expected nonempty text") end
+        if type(value) ~= "string" or strtrim(value) == "" then return fail(L["expected nonempty text"]) end
     elseif kind == "objectiveKey" then
         if type(value) ~= "string" or not (value:match("^%d+%-%d+$") or value:match("^%d+$")) then
-            return fail('expected a string key such as "12345-1" or "12345"')
+            return fail(L["expected a string key such as \"12345-1\" or \"12345\""])
         end
         local quest, objective = value:match("^(%d+)%-?(%d*)$")
-        if tonumber(quest) < 1 or (objective ~= "" and tonumber(objective) < 1) then return fail("IDs must be positive") end
+        if tonumber(quest) < 1 or (objective ~= "" and tonumber(objective) < 1) then return fail(L["IDs must be positive"]) end
     elseif kind == "level" then
         return child(S.level, value, "level")
     elseif kind == "profile" then
         if type(value) ~= "string" or not APR.LevelRequirementProfiles or not APR.LevelRequirementProfiles[value] then
-            return fail("unknown APR level profile")
+            return fail(L["unknown APR level profile"])
         end
     elseif kind == "enum" then
         local values = schema.values or APR[schema.group] or {}
         for _, candidate in pairs(values) do if candidate == value then return true end end
-        return fail("unknown enum value")
+        return fail(L["unknown enum value"])
     elseif kind == "idOrIds" and type(value) == "number" then
         return child("id", value, "id")
     elseif kind == "list" or kind == "ids" or kind == "idOrIds" or kind == "strings" or kind == "steps" then
-        if type(value) ~= "table" then return fail("expected a list") end
+        if type(value) ~= "table" then return fail(L["expected a list"]) end
         local size = 0
         for key in pairs(value) do
-            if type(key) ~= "number" or key < 1 or key % 1 ~= 0 then return fail("expected consecutive list indices") end
+            if type(key) ~= "number" or key < 1 or key % 1 ~= 0 then return fail(L["expected consecutive list indices"]) end
             size = size + 1
         end
         for index = 1, size do
-            if value[index] == nil then return fail("list indices must be consecutive") end
+            if value[index] == nil then return fail(L["list indices must be consecutive"]) end
             local entrySchema = kind == "list" and schema.entry or kind == "strings" and "text" or kind == "steps" and "step" or "id"
             local ok, reason = child(entrySchema, value[index], index)
             if not ok then return false, reason end
-            if kind == "steps" and value[index].RouteCompleted and index ~= size then return fail("RouteCompleted must be last") end
+            if kind == "steps" and value[index].RouteCompleted and index ~= size then return fail(L["RouteCompleted must be last"]) end
         end
-        if size == 0 and kind ~= "steps" and schema ~= S.anyOf and schema ~= S.allOf then return fail("list must not be empty") end
+        if size == 0 and kind ~= "steps" and schema ~= S.anyOf and schema ~= S.allOf then return fail(L["list must not be empty"]) end
     elseif kind == "object" or kind == "map" or kind == "conditions" or kind == "routeConditions" or kind == "step" then
-        if type(value) ~= "table" then return fail("expected a table") end
+        if type(value) ~= "table" then return fail(L["expected a table"]) end
         if kind == "object" then
-            for _, key in ipairs(schema.required) do if value[key] == nil then return fail("missing " .. key) end end
+            for _, key in ipairs(schema.required) do if value[key] == nil then return fail(L["Missing %s"]:format(key)) end end
         end
         for key, entry in pairs(value) do
             local entrySchema
@@ -150,38 +151,38 @@ function options:ValidateValue(schema, value, path, depth)
                 end
                 if kind == "step" and key == "_index" then entrySchema = "id" end
             end
-            if not entrySchema then return fail("unsupported field " .. tostring(key)) end
+            if not entrySchema then return fail(L["unsupported field "] .. tostring(key)) end
             local ok, reason = child(entrySchema, entry, key)
             if not ok then return false, reason end
         end
-        if schema == S.reputation and value.type == "standard" and value.level > 8 then return fail("standard standing must be 1-8") end
+        if schema == S.reputation and value.type == "standard" and value.level > 8 then return fail(L["standard standing must be 1-8"]) end
         if schema == S.sellItems and not (value.items or value.junk == true) then
-            return fail("items or junk = true is required")
+            return fail(L["items or junk = true is required"])
         end
         if schema == S.learnSkill then
             if not (value.spellID or value.spellIDs or value.allAvailable == true) then
-                return fail("spellID, spellIDs or allAvailable = true is required")
+                return fail(L["spellID, spellIDs or allAvailable = true is required"])
             end
-            if value.allAvailable and not value.npcID then return fail("allAvailable requires npcID") end
+            if value.allAvailable and not value.npcID then return fail(L["allAvailable requires npcID"]) end
         end
-        if schema == S.spellETA and not (value.spellID or value.itemID) then return fail("spellID or itemID is required") end
-        if schema == S.itemCount and not (value.itemID or value.itemIDs) then return fail("itemID or itemIDs is required") end
-        if schema == S.skill and not (value.skill or value.skillID or value.name) then return fail("skill, skillID or name is required") end
+        if schema == S.spellETA and not (value.spellID or value.itemID) then return fail(L["spellID or itemID is required"]) end
+        if schema == S.itemCount and not (value.itemID or value.itemIDs) then return fail(L["itemID or itemIDs is required"]) end
+        if schema == S.skill and not (value.skill or value.skillID or value.name) then return fail(L["skill, skillID or name is required"]) end
         if schema == S.scenario and not (value.criteriaID or value.criteriaIndex or value.stepID or value.scenarioID) then
-            return fail("a scenario, step or criterion ID is required")
+            return fail(L["a scenario, step or criterion ID is required"])
         end
         if kind == "step" then
             if value.DropQuest and value.DroppableQuest and value.DropQuest ~= value.DroppableQuest.Qid then
-                return fail("DropQuest must match DroppableQuest.Qid")
+                return fail(L["DropQuest must match DroppableQuest.Qid"])
             end
             for key, definition in pairs(self.step) do
                 if value[key] ~= nil and definition.requires and value[definition.requires] == nil then
-                    return fail(key .. " requires " .. definition.requires)
+                    return fail(L["%s requires %s"]:format(key, definition.requires))
                 end
             end
         end
     else
-        return fail("unsupported schema " .. tostring(kind))
+        return fail(L["unsupported schema "] .. tostring(kind))
     end
     return true
 end

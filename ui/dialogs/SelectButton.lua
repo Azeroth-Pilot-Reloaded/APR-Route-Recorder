@@ -1,10 +1,11 @@
+local L = LibStub("AceLocale-3.0"):GetLocale("APR-Recorder")
 local AceGUI = LibStub("AceGUI-3.0")
 
 AprRC.SelectButton = AprRC:NewModule('SelectButton')
 
 function AprRC.SelectButton:Show()
     local frame = AceGUI:Create("Frame")
-    frame:SetTitle("Button Type")
+    frame:SetTitle(L["Button Type"])
     frame.statustext:GetParent():Hide()
     frame:SetCallback("OnClose", function(widget) AceGUI:Release(widget) end)
     frame:SetWidth(300)
@@ -28,14 +29,14 @@ function AprRC.SelectButton:Show()
         buttonGroup:AddChild(button)
     end
 
-    AddButton("Item", function() self:ShowQuestSelector("Item") end)
-    AddButton("Spell", function() self:ShowQuestSelector("Spell") end)
+    AddButton(L["Item"], function() self:ShowQuestSelector("Item") end)
+    AddButton(L["Spell"], function() self:ShowQuestSelector("Spell") end)
 end
 
 function AprRC.SelectButton:ShowQuestSelector(type)
     local questList = AprRC.QuestObjectiveSelector:GetQuestListFromLastStep()
     if #questList == 0 then
-        APR:PrintError("No Qpart or Filler quests available on your last step")
+        APR:PrintError(L["No Qpart or Filler quests available on your last step"])
         return
     end
 
@@ -49,7 +50,7 @@ function AprRC.SelectButton:ShowQuestSelector(type)
                 end
                 currentStep.Button[questID .. "-" .. objectiveID] = tonumber(itemID, 10)
 
-                print("|cff00bfff Button |r Added")
+                print("|cff00bfff Button |r " .. L["Added"])
                 AceGUI:Release(frame)
             end)
         end
@@ -61,7 +62,7 @@ function AprRC.SelectButton:ShowQuestSelector(type)
                     currentStep.SpellButton = {}
                 end
                 currentStep.SpellButton[questID .. "-" .. objectiveID] = tonumber(spellID, 10)
-                print("|cff00bfff SpellButton |r Added")
+                print("|cff00bfff SpellButton |r " .. L["Added"])
                 AceGUI:Release(frame)
             end)
         end

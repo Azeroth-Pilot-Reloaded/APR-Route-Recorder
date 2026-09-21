@@ -1,3 +1,4 @@
+local L = LibStub("AceLocale-3.0"):GetLocale("APR-Recorder")
 local AceGUI = LibStub("AceGUI-3.0")
 
 AprRC.CommandBarSetting = AprRC:NewModule("CommandBarSetting")
@@ -188,9 +189,9 @@ end
 ------------------------------------------------------------
 function AprRC.CommandBarSetting:CreateFrame()
     frame = AceGUI:Create("Frame")
-    frame:SetTitle("Command Bar Settings")
+    frame:SetTitle(L["Command Bar Settings"])
     frame:SetLayout("Fill")
-    frame:SetStatusText("Click or Drag commands to manage the bar. Right-click to remove.")
+    frame:SetStatusText(L["Click or Drag commands to manage the bar. Right-click to remove."])
     frame:SetStatusTable(AprRC.settings.profile.commandBarSettingFrame)
 
     local isClosed = false
@@ -208,7 +209,7 @@ function AprRC.CommandBarSetting:CreateFrame()
     -- FILTER
     ------------------------------------------------------------
     local filterBox = AceGUI:Create("EditBox")
-    filterBox:SetLabel("Filter Commands")
+    filterBox:SetLabel(L["Filter Commands"])
     filterBox:SetFullWidth(true)
     mainGroup:AddChild(filterBox)
 
@@ -216,7 +217,7 @@ function AprRC.CommandBarSetting:CreateFrame()
     -- LEFT COLUMN
     --------------------------------------------------------
     local leftContainer = AceGUI:Create("InlineGroup")
-    leftContainer:SetTitle("Available Commands")
+    leftContainer:SetTitle(L["Available Commands"])
     leftContainer:SetRelativeWidth(0.5)
     leftContainer:SetFullHeight(true)
     leftContainer:SetLayout("Fill")
@@ -230,7 +231,7 @@ function AprRC.CommandBarSetting:CreateFrame()
     -- RIGHT COLUMN
     --------------------------------------------------------
     local rightContainer = AceGUI:Create("InlineGroup")
-    rightContainer:SetTitle("Commands In Bar")
+    rightContainer:SetTitle(L["Commands In Bar"])
     rightContainer:SetRelativeWidth(0.5)
     rightContainer:SetFullHeight(true)
     rightContainer:SetLayout("Fill")

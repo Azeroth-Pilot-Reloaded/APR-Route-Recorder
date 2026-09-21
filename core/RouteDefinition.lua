@@ -1,3 +1,4 @@
+local L = LibStub("AceLocale-3.0"):GetLocale("APR-Recorder")
 -- The recorder name is a storage key; everything else belongs to APR's route definition.
 function AprRC:BuildRouteDefinition(route)
     local result = {}
@@ -22,7 +23,7 @@ end
 
 function AprRC:ReadRouteDefinition(text, name, previous)
     local parsed, errorMessage = self:ParseLuaData(text)
-    if type(parsed) ~= "table" then return nil, errorMessage or "Expected a route table" end
+    if type(parsed) ~= "table" then return nil, errorMessage or L["Expected a route table"] end
     local result
     if parsed.steps ~= nil then
         result = parsed
@@ -48,7 +49,7 @@ function AprRC:ReadRouteDefinition(text, name, previous)
     for key, value in pairs(result) do
         if key ~= "steps" and key ~= "name" then
             local definition = self.options.route[key]
-            if not definition then return nil, "Unsupported route field: " .. tostring(key) end
+            if not definition then return nil, L["Unsupported route field: "] .. tostring(key) end
             valid, reason = self.options:ValidateValue(definition.schema, value, key)
             if not valid then return nil, reason end
         end

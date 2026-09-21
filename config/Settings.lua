@@ -148,12 +148,12 @@ function AprRC.settings:createBlizzOptions()
                 order = 2,
                 type = "header",
                 width = "full",
-                name = "Settings",
+                name = L["Settings"],
             },
             icon = {
                 order = 3,
                 type = "group",
-                name = "Minimap",
+                name = L["Minimap"],
                 inline = true,
                 args = {
                     enableMinimapButton = {
@@ -178,13 +178,13 @@ function AprRC.settings:createBlizzOptions()
             miscellaneous = {
                 order = 4,
                 type = "group",
-                name = "Miscellaneous",
+                name = L["Miscellaneous"],
                 inline = true,
                 args = {
                     enableCampaignQuestsFlag = {
                         order = 4.1,
                         type = "toggle",
-                        name = "Enable Campaign Quests Flag",
+                        name = L["Enable Campaign Quests Flag"],
                         width = "full",
                         get = GetProfileOption,
                         set = SetProfileOption,
@@ -273,7 +273,7 @@ function AprRC.settings:createBlizzOptions()
             debug = {
                 order = 5,
                 type = "group",
-                name = "Debug",
+                name = L["Debug"],
                 inline = true,
                 args = {
                     enableAddon = {

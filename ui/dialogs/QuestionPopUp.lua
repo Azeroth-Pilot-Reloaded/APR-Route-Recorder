@@ -1,3 +1,4 @@
+local L = LibStub("AceLocale-3.0"):GetLocale("APR-Recorder")
 local _G = _G
 
 AprRC.questionDialog = AprRC:NewModule("QuestionDialog")
@@ -10,7 +11,7 @@ function AprRC.questionDialog:CreateEditBoxPopupWithCallback(text, onAcceptCallb
     local recording = AprRC.settings.profile.recordBarFrame.isRecording
 
     StaticPopupDialogs[dialogName] = {
-        text = text or "General Kenobi",
+        text = text or L["Enter text"],
         hasEditBox = true,
         button1 = CONTINUE,
         button2 = CANCEL,
@@ -41,7 +42,7 @@ function AprRC.questionDialog:CreateEditBoxPopupWithCallback(text, onAcceptCallb
         end,
         OnAccept = function(self)
             if recording and not AprRC:IsRecordingContext(context) then
-                APR:PrintError("Recording changed; reopen the command")
+                APR:PrintError(L["Recording changed; reopen the command"])
                 return
             end
             local editBox = self.GetEditBox and self:GetEditBox() or _G[self:GetName() .. "EditBox"]

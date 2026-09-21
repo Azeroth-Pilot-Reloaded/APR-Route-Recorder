@@ -1,3 +1,4 @@
+local L = LibStub("AceLocale-3.0"):GetLocale("APR-Recorder")
 function AprRC:RecordUseItem(questID, itemID, onRecorded)
     local context = self:CaptureRecordingContext()
     local position = {}
@@ -18,7 +19,7 @@ function AprRC:RecordUseItem(questID, itemID, onRecorded)
             C_Item.RequestLoadItemDataByID(itemID)
             C_Timer.After(0.2, resolve)
         else
-            APR:PrintError("This item has no available use spell. Supply a verified itemSpellID with /aprrc useitem.")
+            APR:PrintError(L["This item has no available use spell. Supply a verified itemSpellID with /aprrc useitem."])
         end
     end
     resolve()

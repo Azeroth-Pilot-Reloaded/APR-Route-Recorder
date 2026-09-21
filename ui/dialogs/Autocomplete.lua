@@ -1,3 +1,4 @@
+local L = LibStub("AceLocale-3.0"):GetLocale("APR-Recorder")
 local _G = _G
 local AceGUI = LibStub("AceGUI-3.0")
 local L_APR = LibStub("AceLocale-3.0"):GetLocale("APR")
@@ -38,7 +39,7 @@ function AprRC.autocomplete:ShowAutoComplete(title, list, onConfirm, formatItem,
     frame:SetLayout("Flow")
 
     editbox = AceGUI:Create("EditBox")
-    editbox:SetLabel("Enter text")
+    editbox:SetLabel(L["Enter text"])
     editbox:SetFullWidth(true)
     editbox:DisableButton(true)
 
@@ -49,7 +50,7 @@ function AprRC.autocomplete:ShowAutoComplete(title, list, onConfirm, formatItem,
     scrollFrame.frame:Hide()
 
     local btnConfirm = AceGUI:Create("Button")
-    btnConfirm:SetText("Confirm")
+    btnConfirm:SetText(L["Confirm"])
     btnConfirm:SetWidth(100)
     btnConfirm:SetDisabled(false)
     btnConfirm:SetCallback("OnClick", function()
@@ -99,7 +100,7 @@ function AprRC.autocomplete:ShowAutoComplete(title, list, onConfirm, formatItem,
                             GameTooltip:SetOwner(widget.frame, "ANCHOR_RIGHT")
                             GameTooltip:ClearLines()
                             local font, size, flags = GameFontNormal:GetFont()
-                            GameTooltip:AddLine("Key: " .. match.key, 1, 1, 0, false)
+                            GameTooltip:AddLine(L["Key: "] .. match.key, 1, 1, 0, false)
                             local line = _G["GameTooltipTextLeft" .. GameTooltip:NumLines()]
                             if line then
                                 line:SetFont(font, size, flags)
@@ -150,7 +151,7 @@ end
 
 function AprRC.autocomplete:ShowLocaleAutoComplete()
     self:ShowAutoComplete(
-        "Extra Line Text",
+        L["Extra Line Text"],
         L_APR,
         function(text, key, frame)
             if not key then
@@ -172,7 +173,7 @@ function AprRC.autocomplete:ShowLocaleAutoComplete()
 
             currentStep[propertyName] = key
 
-            print("|cff00bfffExtraLineTexts|r Added")
+            print("|cff00bfffExtraLineTexts|r " .. L["Added"])
             AceGUI:Release(frame)
         end
     )
@@ -193,7 +194,7 @@ function AprRC.autocomplete:ShowItemAutoComplete(questID, objectiveID, onConfirm
     end
 
     self:ShowAutoComplete(
-        "Select Item",
+        L["Select Item"],
         itemList,
         onConfirm,
         function(match)
@@ -225,7 +226,7 @@ function AprRC.autocomplete:ShowSpellAutoComplete(questID, objectiveID, onConfir
     end
 
     self:ShowAutoComplete(
-        "Select Spell",
+        L["Select Spell"],
         spellList,
         onConfirm,
         function(match)
@@ -252,7 +253,7 @@ function AprRC.autocomplete:ShowAchievementAutoComplete(onConfirm)
     end
 
     self:ShowAutoComplete(
-        "Select Achievement",
+        L["Select Achievement"],
         achievementList,
         onConfirm,
         function(match)
@@ -273,7 +274,7 @@ function AprRC.autocomplete:ShowProfessionAutoComplete()
     end
 
     self:ShowAutoComplete(
-        "Select Profession",
+        L["Select Profession"],
         spellList,
         function(text, key, frame)
             local step = {
@@ -281,7 +282,7 @@ function AprRC.autocomplete:ShowProfessionAutoComplete()
             }
             AprRC:SetStepCoord(step)
             AprRC:NewStep(step)
-            print("|cff00bfff Learn Profession |r Added")
+            print("|cff00bfff Learn Profession |r " .. L["Added"])
         end,
         function(match)
             local spellInfo = C_Spell.GetSpellInfo(match.key)
@@ -310,7 +311,7 @@ function AprRC.autocomplete:ShowAuraAutoComplete(onConfirm)
     end
 
     self:ShowAutoComplete(
-        "Select Aura",
+        L["Select Aura"],
         auraList,
         onConfirm,
         function(match)
@@ -327,7 +328,7 @@ end
 
 function AprRC.autocomplete:ShowLocaleAutoComplete()
     self:ShowAutoComplete(
-        "Extra Line Text",
+        L["Extra Line Text"],
         L_APR,
         function(text, key, frame)
             if not key then
@@ -349,7 +350,7 @@ function AprRC.autocomplete:ShowLocaleAutoComplete()
 
             currentStep[propertyName] = key
 
-            print("|cff00bfffExtraLineTexts|r Added")
+            print("|cff00bfffExtraLineTexts|r " .. L["Added"])
             AceGUI:Release(frame)
         end
     )
@@ -357,7 +358,7 @@ end
 
 function AprRC.autocomplete:ShowTooltipMessageAutoComplete(onConfirm)
     self:ShowAutoComplete(
-        "Tooltip Message",
+        L["Tooltip Message"],
         L_APR,
         function(text, key, frame)
             if not key then
@@ -381,7 +382,7 @@ function AprRC.autocomplete:ShowBuffSelector(onConfirm)
         AceGUI:Release(frame)
         local spellIdNumber = tonumber(spellID, 10)
         if not spellIdNumber then
-            APR:PrintError("Invalid aura selection")
+            APR:PrintError(L["Invalid aura selection"])
             return
         end
 

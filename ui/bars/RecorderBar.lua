@@ -53,7 +53,7 @@ local function CreateButton(parent, iconPath, message)
     return btn
 end
 
-local recordBtn = CreateButton(RecordBarFrame, "Interface\\AddOns\\APR-Recorder\\assets\\icons\\rec", "Record/Stop")
+local recordBtn = CreateButton(RecordBarFrame, "Interface\\AddOns\\APR-Recorder\\assets\\icons\\rec", L["Record/Stop"])
 recordBtn:SetScript("OnClick", function()
     if not AprRC.settings.profile.recordBarFrame.isRecording then
         local function start()
@@ -66,8 +66,8 @@ recordBtn:SetScript("OnClick", function()
                 return
             end
             APR.questionDialog:CreateQuestionPopup(
-                "Continue route " .. AprRCData.CurrentRoute.name .. "?",
-                "Continue route " .. AprRCData.CurrentRoute.name .. "?",
+                L["Continue route %s?"]:format(AprRCData.CurrentRoute.name),
+                L["Continue route %s?"]:format(AprRCData.CurrentRoute.name),
                 function()
                     start()
                 end,
@@ -79,7 +79,7 @@ recordBtn:SetScript("OnClick", function()
                 false
             )
         else
-            AprRC.questionDialog:CreateEditBoxPopupWithCallback("Route Name", function(text)
+            AprRC.questionDialog:CreateEditBoxPopupWithCallback(L["Route Name"], function(text)
                 AprRC:InitRoute(text)
                 start()
             end)
@@ -94,14 +94,14 @@ exportBtn:SetScript("OnClick", function()
     AprRC.command:SlashCmd('export')
 end)
 
-local rotationBtn = CreateButton(RecordBarFrame, "Interface\\AddOns\\APR-Recorder\\assets\\icons\\rotate", "Rotate")
+local rotationBtn = CreateButton(RecordBarFrame, "Interface\\AddOns\\APR-Recorder\\assets\\icons\\rotate", L["Rotate"])
 rotationBtn:SetScript("OnClick", function()
     AprRC.settings.profile.recordBarFrame.rotation = AprRC.settings.profile.recordBarFrame.rotation == "HORIZONTAL" and
         "VERTICAL" or "HORIZONTAL"
     AprRC.record:AdjustBarRotation(RecordBarFrame)
 end)
 
-local settingsBtn = CreateButton(RecordBarFrame, "Interface\\AddOns\\APR-Recorder\\assets\\icons\\settings", "Settings")
+local settingsBtn = CreateButton(RecordBarFrame, "Interface\\AddOns\\APR-Recorder\\assets\\icons\\settings", L["Settings"])
 settingsBtn:SetScript("OnClick", function()
     AprRC.settings:OpenSettings(AprRC.title)
 end)

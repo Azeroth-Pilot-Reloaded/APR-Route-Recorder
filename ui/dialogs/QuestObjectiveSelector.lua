@@ -1,3 +1,4 @@
+local L = LibStub("AceLocale-3.0"):GetLocale("APR-Recorder")
 local _G = _G
 local AceGUI = LibStub("AceGUI-3.0")
 
@@ -6,8 +7,8 @@ AprRC.QuestObjectiveSelector = AprRC:NewModule('QuestObjectiveSelector')
 
 function AprRC.QuestObjectiveSelector:Show(config)
     local frame = AceGUI:Create("Frame")
-    frame:SetTitle(config.title or "Quest Objective Selector")
-    frame:SetStatusText(config.statusText or "Select a quest objective")
+    frame:SetTitle(config.title or L["Quest Objective Selector"])
+    frame:SetStatusText(config.statusText or L["Select a quest objective"])
     frame:SetCallback("OnClose", function(widget) AceGUI:Release(widget) end)
     frame:SetWidth(800)
     frame:SetHeight(600)
@@ -21,7 +22,7 @@ function AprRC.QuestObjectiveSelector:Show(config)
     frame:AddChild(mainGroup)
 
     local searchBox = AceGUI:Create("EditBox")
-    searchBox:SetLabel("Search (QuestID or text)")
+    searchBox:SetLabel(L["Search (QuestID or text)"])
     searchBox:SetFullWidth(true)
     mainGroup:AddChild(searchBox)
 

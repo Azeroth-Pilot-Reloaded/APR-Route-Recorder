@@ -1,5 +1,9 @@
 local E = AprRC.routeEditor
 local GUI = LibStub("AceGUI-3.0")
+local originalPrint = print
+print = function() end
+AprRC.options:PrintHelp()
+print = originalPrint
 local function healthy()
     assert(#UIErrors == 0, table.concat(UIErrors, "\n"))
 end

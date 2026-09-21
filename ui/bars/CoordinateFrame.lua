@@ -1,3 +1,4 @@
+local L = LibStub("AceLocale-3.0"):GetLocale("APR-Recorder")
 local _G = _G
 local LibWindow = LibStub("LibWindow-1.1")
 
@@ -51,7 +52,7 @@ CoordinateFrame:SetScript("OnUpdate", function(self, elapsed)
 end)
 CoordinateFrame:SetScript("OnMouseDown", function(self, button)
     if button == "RightButton" then
-        APR.questionDialog:CreateEditBoxPopup('Coordinate X,Y', nil, CoordinateFrame.Text:GetText())
+        APR.questionDialog:CreateEditBoxPopup(L["Coordinate X,Y"], nil, CoordinateFrame.Text:GetText())
     end
 end)
 ---------------------------------------------------------------------------------------

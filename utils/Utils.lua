@@ -284,14 +284,14 @@ end
 
 function AprRC:ValidateRouteTable(routeTable)
     if type(routeTable) ~= "table" then
-        return false, "not a table"
+        return false, L["not a table"]
     end
     for key, step in pairs(routeTable) do
         if type(key) ~= "number" then
-            return false, string.format("unexpected entry '%s' (only step tables allowed)", tostring(key))
+            return false, string.format(L["unexpected entry '%s' (only step tables allowed)"], tostring(key))
         end
         if type(step) ~= "table" then
-            return false, string.format("step %s is not a table", tostring(key))
+            return false, string.format(L["step %s is not a table"], tostring(key))
         end
     end
     return true

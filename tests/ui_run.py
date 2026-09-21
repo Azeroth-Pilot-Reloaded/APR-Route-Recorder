@@ -12,13 +12,17 @@ def run():
         lua.execute((ROOT / path).read_text(encoding="utf-8"), name=str(path))
 
     load("tests/stubs.lua")
+    load("tests/ui_runtime.lua")
+    load("libs/LibStub/LibStub.lua")
+    load("libs/AceLocale-3.0/AceLocale-3.0.lua")
+    lua.execute('LibStub("AceLocale-3.0"):NewLocale("APR", "enUS", true, true)')
+    load("locales/enUS.lua")
+    load("locales/frFR.lua")
     for path in ("utils/Utils.lua", "utils/LuaData.lua", "utils/Coordinates.lua", "core/RouteManagement.lua",
                  "core/RouteDefinition.lua", "commands/Registry.lua", "commands/Schema.lua", "recording/Session.lua"):
         load(path)
     for path in sorted((ROOT / "commands/options").glob("*.lua")):
         load(path)
-    load("tests/ui_runtime.lua")
-    load("libs/LibStub/LibStub.lua")
     load("libs/AceGUI-3.0/AceGUI-3.0.lua")
     for name in ("Container-Frame", "Container-SimpleGroup", "Container-InlineGroup", "Container-ScrollFrame",
                  "Container-TabGroup", "Widget-Label", "Widget-Heading", "Widget-Button", "Widget-CheckBox",

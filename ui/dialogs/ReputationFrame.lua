@@ -1,26 +1,27 @@
+local L = LibStub("AceLocale-3.0"):GetLocale("APR-Recorder")
 local AceGUI = LibStub("AceGUI-3.0")
 
 AprRC.ReputationFrame = AprRC:NewModule("ReputationFrame")
 
 local REPUTATION_TYPES = {
-    standard = "Standard reputation",
-    renown = "Renown / major faction",
-    friendship = "Friendship / NPC",
+    standard = L["Standard reputation"],
+    renown = L["Renown / major faction"],
+    friendship = L["Friendship / NPC"],
 }
 local REPUTATION_TYPE_ORDER = { "standard", "renown", "friendship" }
 local STEP_CONFIG = {
     Reputation = {
-        title = "Add Reputation step",
-        statusText = "The route waits until the selected reputation level is reached.",
+        title = L["Add Reputation step"],
+        statusText = L["The route waits until the selected reputation level is reached."],
         createStep = true,
     },
     ReputationLevel = {
-        title = "Add ReputationLevel option",
-        statusText = "The current step is shown only after the selected reputation level is reached.",
+        title = L["Add ReputationLevel option"],
+        statusText = L["The current step is shown only after the selected reputation level is reached."],
     },
     SkipForReputation = {
-        title = "Add SkipForReputation option",
-        statusText = "The current step is skipped once the selected reputation level is reached.",
+        title = L["Add SkipForReputation option"],
+        statusText = L["The current step is skipped once the selected reputation level is reached."],
     },
 }
 
@@ -76,7 +77,7 @@ local function FormatProgress(progress)
         table.insert(details, progress.name)
     end
     if progress.currentLevel then
-        local currentText = "Current: " .. tostring(progress.currentLevel)
+        local currentText = L["Current: "] .. tostring(progress.currentLevel)
         if progress.maxLevel then
             currentText = currentText .. " / " .. tostring(progress.maxLevel)
         end
@@ -102,7 +103,7 @@ function AprRC.ReputationFrame:GetKnownReputations()
             local progress = GetReputationProgress(factionID)
             table.insert(reputations, {
                 factionID = factionID,
-                name = (progress and progress.name) or factionData.name or ("Faction " .. factionID),
+                name = (progress and progress.name) or factionData.name or (L["Faction "] .. factionID),
                 type = (progress and progress.type) or "standard",
                 currentLevel = progress and progress.currentLevel,
                 maxLevel = progress and progress.maxLevel,
@@ -126,19 +127,19 @@ end
 function AprRC.ReputationFrame:BuildRequirement(factionIDText, reputationType, levelText)
     local factionID = AprRC:ParsePositiveInteger(factionIDText)
     if not factionID or factionID < 1 then
-        return nil, "Faction ID must be a positive integer"
+        return nil, L["Faction ID must be a positive integer"]
     end
 
     if not REPUTATION_TYPES[reputationType] then
-        return nil, "Select a reputation type"
+        return nil, L["Select a reputation type"]
     end
 
     local level = AprRC:ParsePositiveInteger(levelText)
     if not level or level < 1 then
-        return nil, "Reputation level must be a positive integer"
+        return nil, L["Reputation level must be a positive integer"]
     end
     if reputationType == "standard" and level > 8 then
-        return nil, "Standard reputation standing must be between 1 and 8"
+        return nil, L["Standard reputation standing must be between 1 and 8"]
     end
 
     return {
@@ -151,7 +152,7 @@ end
 function AprRC.ReputationFrame:Show(stepKey)
     local config = STEP_CONFIG[stepKey]
     if not config then
-        APR:PrintError("Unsupported reputation step option")
+        APR:PrintError(L["Unsupported reputation step option"])
         return
     end
 
@@ -177,7 +178,7 @@ function AprRC.ReputationFrame:Show(stepKey)
 
     local knownReputations = self:GetKnownReputations()
     local knownByID = {}
-    local factionList = { manual = "Enter a faction ID manually" }
+    local factionList = { manual = L["Enter a faction ID manually"] }
     local factionOrder = { "manual" }
     for _, reputation in ipairs(knownReputations) do
         local label = string.format("%s [%d] - %s", reputation.name, reputation.factionID,
@@ -195,32 +196,32 @@ function AprRC.ReputationFrame:Show(stepKey)
     end
 
     local factionDropdown = AceGUI:Create("Dropdown")
-    factionDropdown:SetLabel("Known reputation")
+    factionDropdown:SetLabel(L["Known reputation"])
     factionDropdown:SetList(factionList, factionOrder)
     factionDropdown:SetValue("manual")
     factionDropdown:SetFullWidth(true)
     frame:AddChild(factionDropdown)
 
     local factionIDEdit = AceGUI:Create("EditBox")
-    factionIDEdit:SetLabel("Faction ID")
+    factionIDEdit:SetLabel(L["Faction ID"])
     factionIDEdit:DisableButton(true)
     factionIDEdit:SetRelativeWidth(0.68)
     frame:AddChild(factionIDEdit)
 
     local detectButton = AceGUI:Create("Button")
-    detectButton:SetText("Detect type / current level")
+    detectButton:SetText(L["Detect type / current level"])
     detectButton:SetRelativeWidth(0.32)
     frame:AddChild(detectButton)
 
     local typeDropdown = AceGUI:Create("Dropdown")
-    typeDropdown:SetLabel("Reputation type")
+    typeDropdown:SetLabel(L["Reputation type"])
     typeDropdown:SetList(REPUTATION_TYPES, REPUTATION_TYPE_ORDER)
     typeDropdown:SetValue("standard")
     typeDropdown:SetRelativeWidth(0.5)
     frame:AddChild(typeDropdown)
 
     local levelEdit = AceGUI:Create("EditBox")
-    levelEdit:SetLabel("Standing (1-8)")
+    levelEdit:SetLabel(L["Standing (1-8)"])
     levelEdit:DisableButton(true)
     levelEdit:SetRelativeWidth(0.5)
     frame:AddChild(levelEdit)
@@ -232,18 +233,18 @@ function AprRC.ReputationFrame:Show(stepKey)
 
     local function RefreshInfo(progress)
         local reputationType = typeDropdown:GetValue()
-        local levelLabel = "Target level"
+        local levelLabel = L["Target level"]
         local helpText
 
         if reputationType == "standard" then
-            levelLabel = "Standing (1-8)"
+            levelLabel = L["Standing (1-8)"]
             helpText = GetStandardStandingHelp()
         elseif reputationType == "renown" then
-            levelLabel = "Renown level"
-            helpText = "Enter the target renown level."
+            levelLabel = L["Renown level"]
+            helpText = L["Enter the target renown level."]
         elseif reputationType == "friendship" then
-            levelLabel = "Friendship rank"
-            helpText = "Enter the target friendship/NPC rank."
+            levelLabel = L["Friendship rank"]
+            helpText = L["Enter the target friendship/NPC rank."]
         end
 
         levelEdit:SetLabel(levelLabel)
@@ -257,7 +258,7 @@ function AprRC.ReputationFrame:Show(stepKey)
     local function DetectFaction(useCurrentLevel)
         local factionID = AprRC:ParsePositiveInteger(factionIDEdit:GetText())
         if not factionID or factionID < 1 then
-            APR:PrintError("Faction ID must be a positive integer")
+            APR:PrintError(L["Faction ID must be a positive integer"])
             return
         end
 
@@ -326,7 +327,7 @@ function AprRC.ReputationFrame:Show(stepKey)
     end
 
     local addButton = AceGUI:Create("Button")
-    addButton:SetText(config.createStep and "Add step" or "Add option")
+    addButton:SetText(config.createStep and L["Add step"] or L["Add option"])
     addButton:SetRelativeWidth(0.5)
     addButton:SetCallback("OnClick", function()
         local requirement, errorMessage = self:BuildRequirement(
@@ -346,7 +347,7 @@ function AprRC.ReputationFrame:Show(stepKey)
             currentStep[stepKey] = requirement
         end
 
-        print(string.format("|cff00bfff%s - faction %d, %s %d|r Added", stepKey, requirement.factionID,
+        print(string.format("|cff00bfff%s - " .. L["FIELD_Faction"] .. " %d, %s %d|r " .. L["Added"], stepKey, requirement.factionID,
             requirement.type, requirement.level))
         AceGUI:Release(frame)
         activeFrame = nil
@@ -354,7 +355,7 @@ function AprRC.ReputationFrame:Show(stepKey)
     frame:AddChild(addButton)
 
     local cancelButton = AceGUI:Create("Button")
-    cancelButton:SetText(CANCEL or "Cancel")
+    cancelButton:SetText(CANCEL or L["Cancel"])
     cancelButton:SetRelativeWidth(0.5)
     cancelButton:SetCallback("OnClick", function()
         AceGUI:Release(frame)

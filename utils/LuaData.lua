@@ -1,6 +1,7 @@
+local L = LibStub("AceLocale-3.0"):GetLocale("APR-Recorder")
 -- Data-only Lua literals. No loadstring: route input must never execute code.
 function AprRC:ParseLuaData(text)
-    if type(text) ~= "string" or #text > 1000000 then return nil, "Invalid or oversized input" end
+    if type(text) ~= "string" or #text > 1000000 then return nil, L["Invalid or oversized input"] end
     local pos, count = 1, 0
     local function skip()
         while true do
@@ -10,7 +11,7 @@ function AprRC:ParseLuaData(text)
             local equals = text:match("^%-%-%[(=*)%[", pos)
             if equals then
                 local _, finish = text:find("]" .. equals .. "]", pos + 4 + #equals, true)
-                if not finish then error("Unterminated comment") end
+                if not finish then error(L["Unterminated comment"]) end
                 pos = finish + 1
             else
                 pos = (text:find("\n", pos, true) or #text) + 1
@@ -37,7 +38,7 @@ function AprRC:ParseLuaData(text)
                     local digits = c .. (text:match("^%d?%d?", pos) or "")
                     pos = pos + #digits - 1
                     local byte = tonumber(digits)
-                    if byte > 255 then error("Invalid string escape") end
+                    if byte > 255 then error(L["Invalid string escape"]) end
                     c = string.char(byte)
                 else
                     c = escapes[c] or c
@@ -45,12 +46,12 @@ function AprRC:ParseLuaData(text)
             end
             result[#result + 1] = c
         end
-        error("Unterminated string")
+        error(L["Unterminated string"])
     end
     local value
     value = function(depth)
         count = count + 1
-        if depth > 40 or count > 100000 then error("Data is too deeply nested or too large") end
+        if depth > 40 or count > 100000 then error(L["Data is too deeply nested or too large"]) end
         skip()
         local c = text:sub(pos, pos)
         if c == '"' or c == "'" then return quoted() end
@@ -60,7 +61,7 @@ function AprRC:ParseLuaData(text)
                 local key, entry
                 if take("[") then
                     key = value(depth + 1)
-                    if not take("]") or not take("=") then error("Expected ] =") end
+                    if not take("]") or not take("=") then error(L["Expected ] ="]) end
                     entry = value(depth + 1)
                 else
                     skip()
@@ -75,11 +76,11 @@ function AprRC:ParseLuaData(text)
                         index = index + 1
                     end
                 end
-                if type(key) ~= "string" and type(key) ~= "number" then error("Invalid table key") end
-                if result[key] ~= nil then error("Duplicate table key: " .. tostring(key)) end
+                if type(key) ~= "string" and type(key) ~= "number" then error(L["Invalid table key"]) end
+                if result[key] ~= nil then error(L["Duplicate table key: "] .. tostring(key)) end
                 result[key] = entry
                 if not take(",") and not take(";") then
-                    if not take("}") then error("Expected comma or }") end
+                    if not take("}") then error(L["Expected comma or }"]) end
                     return result
                 end
             end
@@ -92,7 +93,7 @@ function AprRC:ParseLuaData(text)
         if number then
             pos = pos + #number
             local parsed = tonumber(number)
-            if not parsed or parsed == math.huge or parsed == -math.huge then error("Invalid number") end
+            if not parsed or parsed == math.huge or parsed == -math.huge then error(L["Invalid number"]) end
             return parsed
         end
         local identifier = text:match("^([%a_][%w_%.]*)", pos)
@@ -106,7 +107,7 @@ function AprRC:ParseLuaData(text)
                 group = identifier:match("^APR%.([%w_]+)$")
                 if group and take("[") then
                     key = value(depth + 1)
-                    if not take("]") then error("Expected ] after constant key") end
+                    if not take("]") then error(L["Expected ] after constant key"]) end
                 end
             end
             local allowed = { EXPANSIONS = true, CATEGORIES = true, PREFAB_TYPES = true, EVENTS = true,
@@ -114,12 +115,12 @@ function AprRC:ParseLuaData(text)
             local constant = group and allowed[group] and APR[group] and APR[group][key]
             if type(constant) == "string" or type(constant) == "number" then return constant end
         end
-        error("Expected a data value at position " .. pos)
+        error(L["Expected a data value at position "] .. pos)
     end
     local ok, result = pcall(function()
         local parsed = value(0)
         skip()
-        if pos <= #text then error("Unexpected input at position " .. pos) end
+        if pos <= #text then error(L["Unexpected input at position "] .. pos) end
         return parsed
     end)
     if ok then return result end
@@ -137,7 +138,7 @@ function AprRC:SerializeData(value, depth)
     depth = depth or 0
     if type(value) == "string" then return string.format("%q", value) end
     if type(value) ~= "table" then return tostring(value) end
-    if depth > 40 then error("Data is too deeply nested") end
+    if depth > 40 then error(L["Data is too deeply nested"]) end
     local lines, nextIndex = { "{" }, 1
     for _, key in ipairs(self:CustomSortKeys(value)) do
         local prefix

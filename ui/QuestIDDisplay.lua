@@ -55,7 +55,7 @@ function AprRC.questID:AddQuestIDsToTooltip(tooltip, questIDs)
         for i = 1, tooltip:NumLines() do
             local left = _G[tooltipName .. "TextLeft" .. i]
             local text = left and left:GetText()
-            if text and (text:find(L.QUEST_ID, 1, true) or text:find("Quest ID", 1, true)) then
+            if text and (text:find(L.QUEST_ID, 1, true) or text:find(L["Quest ID"], 1, true) or text:find("Quest ID", 1, true)) then
                 return
             end
         end
@@ -76,7 +76,7 @@ function AprRC.questID:EnsureQuestTooltip(owner, questID)
 
     if not GameTooltip:IsShown() or GameTooltip:GetOwner() ~= owner then
         GameTooltip:SetOwner(owner or UIParent, "ANCHOR_CURSOR_RIGHT", 5, 2)
-        GameTooltip:SetText(GetQuestTitle(questID) or _G.QUESTS_LABEL or "Quest")
+        GameTooltip:SetText(GetQuestTitle(questID) or _G.QUESTS_LABEL or L["Quest"])
     end
     self:AddQuestIDsToTooltip(GameTooltip, questID)
 end

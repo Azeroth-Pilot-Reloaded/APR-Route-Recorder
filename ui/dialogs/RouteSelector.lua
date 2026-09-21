@@ -1,10 +1,11 @@
+local L = LibStub("AceLocale-3.0"):GetLocale("APR-Recorder")
 local AceGUI = LibStub("AceGUI-3.0")
 
 AprRC.SelectRoute = AprRC:NewModule('SelectRoute')
 
 function AprRC.SelectRoute:Show()
     local frame = AceGUI:Create("Frame")
-    frame:SetTitle("Select Route")
+    frame:SetTitle(L["Select Route"])
     frame.statustext:GetParent():Hide()
     frame:SetCallback("OnClose", function(widget) AceGUI:Release(widget) end)
     frame:SetWidth(600)
@@ -47,7 +48,7 @@ function AprRC.SelectRoute:Show()
     newRouteBtn:SetWidth(200)
     newRouteBtn:SetCallback("OnClick", function()
         AceGUI:Release(frame)
-        AprRC.questionDialog:CreateEditBoxPopupWithCallback("Route Name", function(text)
+        AprRC.questionDialog:CreateEditBoxPopupWithCallback(L["Route Name"], function(text)
             AprRC:InitRoute(text)
             AprRC.settings.profile.recordBarFrame.isRecording = true
             AprRC.record:UpdateRecordButton()

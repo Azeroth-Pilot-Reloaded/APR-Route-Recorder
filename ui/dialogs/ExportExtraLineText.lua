@@ -7,7 +7,7 @@ AprRC.exportExtraLineText = AprRC:NewModule('ExportExtraLineText')
 
 function AprRC.exportExtraLineText.Show()
     local frame = AceGUI:Create("Frame")
-    frame:SetTitle("Export")
+    frame:SetTitle(L["Export"])
     frame:SetLayout("Flow")
     frame:SetStatusText(L_APR["COPY_HELPER"])
     frame:SetCallback("OnClose", function(widget) AceGUI:Release(widget) end)
@@ -27,7 +27,7 @@ function AprRC.exportExtraLineText.Show()
     scrollContainer:AddChild(editbox)
 
     local btnExportRoute = AceGUI:Create("Button")
-    btnExportRoute:SetText("Export Route")
+    btnExportRoute:SetText(L["Export Route"])
     btnExportRoute:SetWidth(200)
     btnExportRoute:SetCallback("OnClick", function()
         AprRC.export.Show()
@@ -36,7 +36,7 @@ function AprRC.exportExtraLineText.Show()
     frame:AddChild(btnExportRoute)
 
     local btnReset = AceGUI:Create("Button")
-    btnReset:SetText("Reset local Extra line text")
+    btnReset:SetText(L["Reset local Extra line text"])
     btnReset:SetWidth(200)
     btnReset:SetCallback("OnClick", function()
         AprRCData.ExtraLineTexts = {}
@@ -45,7 +45,7 @@ function AprRC.exportExtraLineText.Show()
     frame:AddChild(btnReset)
 
     local btnSave = AceGUI:Create("Button")
-    btnSave:SetText("Save Extra Line Text")
+    btnSave:SetText(L["Save Extra Line Text"])
     btnSave:SetWidth(200)
     btnSave:SetCallback("OnClick", function()
         local editedText = editbox:GetText()
@@ -54,12 +54,12 @@ function AprRC.exportExtraLineText.Show()
 
 
         if not formattedText then
-            APR:PrintError("Failed to save. Incorrect format.")
+            APR:PrintError(L["Failed to save. Incorrect format."])
             return
         end
 
         AprRCData.ExtraLineTexts = newTable
-        AprRC:Debug("Extra Line Text saved successfully.")
+        AprRC:Debug(L["Extra Line Text saved successfully."])
     end)
     frame:AddChild(btnSave)
 
