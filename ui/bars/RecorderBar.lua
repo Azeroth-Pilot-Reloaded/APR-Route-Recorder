@@ -1,177 +1,87 @@
-local _G = _G
 local L = LibStub("AceLocale-3.0"):GetLocale("APR-Recorder")
 local LibWindow = LibStub("LibWindow-1.1")
 
-AprRC.record = AprRC:NewModule('Recorder')
+AprRC.record = AprRC:NewModule("Recorder")
+local Recorder = AprRC.record
 
-local FRAME_WIDTH = 105
-local FRAME_HEIGHT = 35
----------------------------------------------------------------------------------------
---------------------------------- Recorder Frames -------------------------------------
----------------------------------------------------------------------------------------
+-- One persistent launcher. Recording controls live in the route workshop.
+local button = CreateFrame("Button", "RecordBarFrame", UIParent, "BackdropTemplate")
+Recorder.frame = button
+button:SetSize(40, 40)
+button:SetFrameStrata("MEDIUM")
+button:SetClampedToScreen(true)
+button:SetMovable(true)
+button:EnableMouse(true)
+button:RegisterForClicks("LeftButtonUp")
+button:RegisterForDrag("LeftButton")
+button:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8X8", edgeFile = "Interface\\Buttons\\WHITE8X8", edgeSize = 1 })
+button:SetBackdropColor(0.07, 0.055, 0.035, 0.95)
+button:SetBackdropBorderColor(0.72, 0.58, 0.34, 1)
+button:SetHighlightTexture("Interface\\Buttons\\UI-Common-MouseHilight")
+button.icon = button:CreateTexture(nil, "ARTWORK")
+button.icon:SetPoint("TOPLEFT", 5, -5)
+button.icon:SetPoint("BOTTOMRIGHT", -5, 5)
+button.icon:SetTexture("Interface\\AddOns\\APR-Recorder\\assets\\logo")
+button.indicator = button:CreateTexture(nil, "OVERLAY")
+button.indicator:SetSize(8, 8)
+button.indicator:SetPoint("TOPRIGHT", -3, -3)
+button.indicator:SetColorTexture(1, 0.2, 0.2, 1)
 
-local RecordBarFrame = CreateFrame("Frame", "RecordBarFrame", UIParent, "BackdropTemplate")
-RecordBarFrame:SetSize(FRAME_WIDTH, FRAME_HEIGHT)
-RecordBarFrame:SetFrameStrata("MEDIUM")
-RecordBarFrame:SetClampedToScreen(true)
-RecordBarFrame:SetBackdrop(AprRC.Backdrop.defaut)
-RecordBarFrame:SetBackdropColor(unpack(AprRC.Backdrop.defaultBackdrop))
+button:SetScript("OnMouseDown", function(self) self.dragged = false end)
+button:SetScript("OnDragStart", function(self)
+    self.dragged = true
+    self:StartMoving()
+    GameTooltip:Hide()
+end)
+button:SetScript("OnDragStop", function(self)
+    self:StopMovingOrSizing()
+    LibWindow.SavePosition(self)
+end)
+button:SetScript("OnClick", function(self)
+    if self.dragged then self.dragged = false; return end
+    AprRC.routeEditor:Show()
+end)
+button:SetScript("OnEnter", function(self)
+    GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
+    GameTooltip:AddLine(L["Open route workshop"], 1, 0.82, 0.4)
+    GameTooltip:AddLine(L["Drag to move"], 0.8, 0.8, 0.8)
+    GameTooltip:AddLine(L[AprRC.settings.profile.recordBarFrame.isRecording and "Recording" or "Recording stopped"], 1, 1, 1)
+    GameTooltip:Show()
+end)
+button:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
-local function UpdateRecordButton(button)
-    AprRC:ResetRecordingSession()
-    if AprRC.settings.profile.recordBarFrame.isRecording then
-        button.icon:SetTexture("Interface\\AddOns\\APR-Recorder\\assets\\icons\\stop")
-        APR.settings.profile.enableAddon = false
+function Recorder:OnInit()
+    local profile = AprRC.settings.profile
+    profile.recordBarFrame = profile.recordBarFrame or {}
+    profile.recordBarFrame.position = profile.recordBarFrame.position or {}
+    LibWindow.RegisterConfig(button, profile.recordBarFrame.position)
+    button:ClearAllPoints()
+    button:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+    if profile.recordBarFrame.position.point then LibWindow.RestorePosition(button) end
+    self:UpdateRecordButton()
+end
+
+function Recorder:RefreshFrameAnchor()
+    local active = AprRC.settings.profile.recordBarFrame.isRecording
+    if active then button.indicator:Show() else button.indicator:Hide() end
+    if not AprRC.settings.profile.enableAddon or (C_PetBattles and C_PetBattles.IsInBattle()) then
+        button:Hide()
     else
-        button.icon:SetTexture("Interface\\AddOns\\APR-Recorder\\assets\\icons\\rec")
-        APR.settings.profile.enableAddon = true
+        button:Show()
     end
     AprRC.CommandBar:RefreshFrameAnchor()
+end
+
+function Recorder:UpdateRecordButton()
+    AprRC:ResetRecordingSession()
+    APR.settings.profile.enableAddon = not AprRC.settings.profile.recordBarFrame.isRecording
     APR.settings:ToggleAddon()
-    if AprRC.questID then
-        AprRC.questID:RefreshVisibility()
-    end
-end
-
-local function CreateButton(parent, iconPath, message)
-    local btn = CreateFrame("Button", nil, parent)
-    btn:SetSize(24, 24)
-    btn:SetPoint("TOPLEFT", 0, 0)
-    btn.icon = btn:CreateTexture(nil, "BACKGROUND")
-    btn.icon:SetAllPoints(btn)
-    btn.icon:SetTexture(iconPath)
-    btn.icon:SetVertexColor(unpack(AprRC.Color.white))
-    btn:SetScript("OnEnter", function(self)
-        GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
-        GameTooltip:AddLine(message, unpack(AprRC.Color.white))
-        GameTooltip:Show()
-    end)
-    btn:SetScript("OnLeave", function(self) GameTooltip:Hide() end)
-
-    btn:SetHighlightTexture("Interface\\Buttons\\UI-Common-MouseHilight")
-
-    return btn
-end
-
-local recordBtn = CreateButton(RecordBarFrame, "Interface\\AddOns\\APR-Recorder\\assets\\icons\\rec", L["Record/Stop"])
-recordBtn:SetScript("OnClick", function()
-    if not AprRC.settings.profile.recordBarFrame.isRecording then
-        local function start()
-            AprRC.settings.profile.recordBarFrame.isRecording = true
-            UpdateRecordButton(recordBtn)
-        end
-        if not APR:IsTableEmpty(AprRCData.Routes) then
-            if AprRCData.CurrentRoute.name == "" then
-                AprRC.SelectRoute:Show()
-                return
-            end
-            APR.questionDialog:CreateQuestionPopup(
-                L["Continue route %s?"]:format(AprRCData.CurrentRoute.name),
-                L["Continue route %s?"]:format(AprRCData.CurrentRoute.name),
-                function()
-                    start()
-                end,
-                function()
-                    AprRC.SelectRoute:Show()
-                end,
-                YES,
-                NO,
-                false
-            )
-        else
-            AprRC.questionDialog:CreateEditBoxPopupWithCallback(L["Route Name"], function(text)
-                AprRC:InitRoute(text)
-                start()
-            end)
-        end
-    else
-        AprRC.record:StopRecord()
-    end
-end)
-
-local exportBtn = CreateButton(RecordBarFrame, "Interface\\AddOns\\APR-Recorder\\assets\\icons\\Export", AprRC.editorUI.Text("Route workshop"))
-exportBtn:SetScript("OnClick", function()
-    AprRC.command:SlashCmd('export')
-end)
-
-local rotationBtn = CreateButton(RecordBarFrame, "Interface\\AddOns\\APR-Recorder\\assets\\icons\\rotate", L["Rotate"])
-rotationBtn:SetScript("OnClick", function()
-    AprRC.settings.profile.recordBarFrame.rotation = AprRC.settings.profile.recordBarFrame.rotation == "HORIZONTAL" and
-        "VERTICAL" or "HORIZONTAL"
-    AprRC.record:AdjustBarRotation(RecordBarFrame)
-end)
-
-local settingsBtn = CreateButton(RecordBarFrame, "Interface\\AddOns\\APR-Recorder\\assets\\icons\\settings", L["Settings"])
-settingsBtn:SetScript("OnClick", function()
-    AprRC.settings:OpenSettings(AprRC.title)
-end)
-
----------------------------------------------------------------------------------------
------------------------------ Function Recorder Frames --------------------------------
----------------------------------------------------------------------------------------
-
-function AprRC.record:OnInit()
-    AprRC.settings.profile.recordBarFrame = AprRC.settings.profile.recordBarFrame or {}
-    AprRC.settings.profile.recordBarFrame.position =
-        AprRC.settings.profile.recordBarFrame.position or {}
-
-    LibWindow.RegisterConfig(RecordBarFrame, AprRC.settings.profile.recordBarFrame.position)
-    RecordBarFrame.RegisteredForLibWindow = true
-    LibWindow.MakeDraggable(RecordBarFrame)
-    RecordBarFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
-
+    if AprRC.questID then AprRC.questID:RefreshVisibility() end
     self:RefreshFrameAnchor()
 end
 
-function AprRC.record:RefreshFrameAnchor()
-    if not AprRC.settings.profile.enableAddon or C_PetBattles.IsInBattle() then
-        RecordBarFrame:Hide()
-        return
-    end
-
-    RecordBarFrame:EnableMouse(true)
-    self:AdjustBarRotation(RecordBarFrame)
-    UpdateRecordButton(recordBtn)
-
-    if RecordBarFrame.RegisteredForLibWindow
-        and AprRC.settings.profile.recordBarFrame
-        and AprRC.settings.profile.recordBarFrame.position
-        and AprRC.settings.profile.recordBarFrame.position.point then
-        LibWindow.RestorePosition(RecordBarFrame)
-    end
-
-    RecordBarFrame:Show()
-end
-
-function AprRC.record:AdjustBarRotation(bar)
-    local buttons = { recordBtn, exportBtn, rotationBtn, settingsBtn }
-    local spacing = 10
-    local offsetX, offsetY = 5, -5
-    local rotation = AprRC.settings.profile.recordBarFrame.rotation
-    for i, btn in ipairs(buttons) do
-        if rotation == "HORIZONTAL" then
-            btn:SetPoint("TOPLEFT", offsetX, offsetY)
-            offsetX = offsetX + btn:GetWidth() + spacing
-        else -- VERTICAL
-            btn:SetPoint("TOPLEFT", offsetX, offsetY)
-            offsetY = offsetY - btn:GetHeight() - spacing
-        end
-    end
-    if rotation == "HORIZONTAL" then
-        bar:SetHeight(FRAME_HEIGHT)
-        bar:SetWidth(FRAME_WIDTH + (#buttons - 1) * spacing)
-    else
-        bar:SetWidth(FRAME_HEIGHT)
-        bar:SetHeight(FRAME_WIDTH + (#buttons - 1) * spacing)
-    end
-end
-
-function AprRC.record:StopRecord()
+function Recorder:StopRecord()
     AprRC.settings.profile.recordBarFrame.isRecording = false
-    UpdateRecordButton(recordBtn)
+    self:UpdateRecordButton()
     AprRC:UpdateRoute()
-end
-
-function AprRC.record:UpdateRecordButton()
-    UpdateRecordButton(recordBtn)
 end

@@ -40,7 +40,6 @@ function AprRC.settings:InitializeSettings()
         profile = {
             -- frame
             recordBarFrame = {
-                rotation = "HORIZONTAL",
                 position = {},
                 isRecording = false,
             },

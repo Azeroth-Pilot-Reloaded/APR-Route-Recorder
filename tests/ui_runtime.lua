@@ -119,6 +119,7 @@ local noops = {
     "SetMinMaxValues", "SetValueStep", "SetThumbTexture", "LockHighlight", "UnlockHighlight", "SetOwner",
     "AddLine", "StartMoving", "StartSizing", "StopMovingOrSizing", "RegisterForClicks", "SetDisabledTexture",
     "RegisterEvent", "UnregisterEvent", "SetAutoFocus", "SetAlpha", "SetScale", "SetSpacing", "SetIndentedWordWrap",
+    "RegisterForDrag",
 }
 for _, name in ipairs(noops) do Native[name] = function() end end
 function CreateFrame(frameType, name, parent, template)

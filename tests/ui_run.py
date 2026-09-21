@@ -32,6 +32,16 @@ def run():
         load("ui/editor/" + name + ".lua")
     load("ui/dialogs/ExportRoute.lua")
     load("tests/ui_smoke.lua")
+    lua.execute('''
+        local window = LibStub:NewLibrary("LibWindow-1.1", 999)
+        function window.RegisterConfig(frame, config) frame.windowConfig = config end
+        function window.RestorePosition(frame) frame.restored = true end
+        function window.SavePosition(frame) frame.positionSaved = true end
+        APR.settings = { profile = {}, ToggleAddon = function() end }
+        AprRC.CommandBar = { RefreshFrameAnchor = function() end }
+    ''')
+    load("ui/bars/RecorderBar.lua")
+    load("tests/recorder_button_smoke.lua")
 
 
 if __name__ == "__main__":

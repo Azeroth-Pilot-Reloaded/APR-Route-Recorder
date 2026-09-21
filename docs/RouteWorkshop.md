@@ -8,8 +8,8 @@ The reference was [Alenya's Guides Writer](https://www.curseforge.com/wow/addons
 
 | Existing capability | Access after the redesign |
 | --- | --- |
-| Start / stop recording, resume or create routes | Workshop header and existing compact recorder bar |
-| Recorder rotation and saved position | Existing compact recorder bar |
+| Start / stop recording, resume or create routes | Workshop header |
+| Open workshop and move its launcher | Single recorder button; drag to move, position is saved, red indicator while recording |
 | Full route and legacy step-table editing | Lua editor tab |
 | Lua copy/paste, indentation, undo / redo | Lua editor tab; keyboard shortcuts and footer buttons |
 | Route selection, step count, live refresh | Header and Follow recording; refresh pauses during editing or focused input |
@@ -39,4 +39,4 @@ The native stubs do not render WoW textures, fonts, clipping, or protected game 
 4. Switch between visual and Lua editing; test invalid Lua, copy/paste, indentation and Ctrl+Z / Ctrl+Y. Close/reopen and `/reload` with a draft.
 5. Modify a draft while recording changes the source; verify Save refuses to overwrite it and Save a copy preserves both versions.
 6. Open legacy command and extra-line-text dialogs, close them, then reopen the workshop. Check the status bar, Lua key handlers and recorder controls still work.
-7. Check recording of flights, portals and quests in combat with the workshop open, then resume a route with metadata from the compact recorder bar.
+7. Check recording of flights, portals and quests in combat with the workshop open. Drag the recorder launcher, reload, and verify its position and recording indicator.
