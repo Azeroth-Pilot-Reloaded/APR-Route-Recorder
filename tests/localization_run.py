@@ -18,6 +18,9 @@ def run():
         assert strings.keys() == english.keys(), (locale, english.keys() - strings.keys())
         for key, value in strings.items():
             assert value.strip() and "\ufffd" not in value and "ZXQ" not in value, (locale, key)
+            # Lossy shell encodings replace Unicode characters with literal '?'.
+            # Preserve normal question punctuation while rejecting damaged words.
+            assert not re.search(r"\?{2,}|\w\?[\w-]", value), (locale, key, "Damaged Unicode translation")
             assert re.findall(r"%[sd]", value) == re.findall(r"%[sd]", english[key]), (locale, key)
     for folder in ("core", "config", "commands", "recording", "utils", "ui"):
         for path in (ROOT / folder).rglob("*.lua"):

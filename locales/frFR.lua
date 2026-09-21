@@ -835,6 +835,6 @@ L["value does not match the expected format"] = "la valeur ne correspond pas au 
 
 L["Drag to resize columns"] = "Faites glisser pour redimensionner les colonnes"
 
-L["Drag commands between columns to add, remove or reorder them."] = "Glissez les commandes entre les colonnes pour les ajouter, les retirer ou les r?ordonner."
+L["Drag commands between columns to add, remove or reorder them."] = "Glissez les commandes entre les colonnes pour les ajouter, les retirer ou les réordonner."
 
 L["Button size"] = "Taille des boutons"

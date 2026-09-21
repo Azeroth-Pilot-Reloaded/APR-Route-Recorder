@@ -820,8 +820,8 @@ L["unsupported field "] = "不支援的字段 "
 L["unsupported schema "] = "不支援的模式 "
 L["value does not match the expected format"] = "值與預期格式不符"
 
-L["Drag to resize columns"] = "???????"
+L["Drag to resize columns"] = "拖曳以調整欄寬"
 
-L["Drag commands between columns to add, remove or reorder them."] = "?????????????????????"
+L["Drag commands between columns to add, remove or reorder them."] = "在兩欄之間拖曳指令以新增、移除或調整順序。"
 
-L["Button size"] = "????"
+L["Button size"] = "按鈕大小"

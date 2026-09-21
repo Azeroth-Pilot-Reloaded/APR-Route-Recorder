@@ -822,6 +822,6 @@ L["value does not match the expected format"] = "El valor no coincide con el for
 
 L["Drag to resize columns"] = "Arrastra para ajustar el ancho de las columnas"
 
-L["Drag commands between columns to add, remove or reorder them."] = "Arrastra comandos entre las columnas para a?adirlos, quitarlos o reordenarlos."
+L["Drag commands between columns to add, remove or reorder them."] = "Arrastra comandos entre las columnas para añadirlos, quitarlos o reordenarlos."
 
-L["Button size"] = "Tama?o de los botones"
+L["Button size"] = "Tamaño de los botones"

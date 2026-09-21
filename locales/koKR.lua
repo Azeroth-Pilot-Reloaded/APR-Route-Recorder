@@ -820,8 +820,8 @@ L["unsupported field "] = "지원되지 않는 필드 "
 L["unsupported schema "] = "지원되지 않는 스키마 "
 L["value does not match the expected format"] = "값이 예상 형식과 일치하지 않습니다."
 
-L["Drag to resize columns"] = "????? ? ?? ??"
+L["Drag to resize columns"] = "드래그하여 열 너비 조절"
 
-L["Drag commands between columns to add, remove or reorder them."] = "??? ? ??? ????? ????? ????? ??? ?????."
+L["Drag commands between columns to add, remove or reorder them."] = "명령을 열 사이로 드래그하여 추가하거나 제거하거나 순서를 변경하세요."
 
-L["Button size"] = "?? ??"
+L["Button size"] = "버튼 크기"
