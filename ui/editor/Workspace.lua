@@ -83,7 +83,36 @@ end
 
 function Editor:FormContext()
     self.formModes, self.formPages = self.formModes or {}, self.formPages or {}
+    local session, selected, draft, panel = self.session, self.session.selected, self.session.draft, self.routeForm or self.inspector
+    local token = {}
+    self.formToken = token
     return {
+        route = draft,
+        valueAt = function(path)
+            local value = path:match("^step/") and draft.steps[selected] or draft
+            local first = true
+            for key in path:gmatch("[^/]+") do
+                if first then first = false
+                elseif key ~= "variant" then
+                    if type(value) ~= "table" then return end
+                    value = value[tonumber(key) or key]
+                end
+            end
+            return value
+        end,
+        pickerOpened = function(widget)
+            if self.fieldPicker and self.fieldPicker ~= widget then self.fieldPicker:Hide() end
+            self.fieldPicker = widget
+            local release = widget.events.OnRelease
+            widget:SetCallback("OnRelease", function(...)
+                if self.fieldPicker == widget then self.fieldPicker = nil end
+                if release then release(...) end
+            end)
+        end,
+        isCurrent = function()
+            return self.frame and self.session == session and session.selected == selected and session.draft == draft
+                and self.formToken == token and (self.routeForm or self.inspector) == panel
+        end,
         modes = self.formModes, pages = self.formPages,
         changed = function() self:Changed() end,
         redraw = function() self:DrawInspector() end,
@@ -221,6 +250,7 @@ function Editor:SelectTab(tab)
 end
 
 function Editor:DrawTab()
+    if self.fieldPicker then self.fieldPicker:Hide() end
     self:DetachLua()
     AprRC.CommandBarSetting:CancelDrag()
     self.list, self.inspector, self.listPanel, self.routeForm = nil, nil, nil, nil
@@ -310,7 +340,7 @@ function Editor:Refresh(forceFollow)
     if session and not AprRC.CommandBarSetting.dragging and
         not (self.stepsSplit and self.stepsSplit.dragging) and not self.confirm and not self.nameDialog and
         not interacting(self.frame, following and self.luaBox or nil) and
-        not session:IsDirty() and (session:IsStale() or (forceFollow and following)) then
+        not self.fieldPicker and not session:IsDirty() and (session:IsStale() or (forceFollow and following)) then
         local listScroll = self.list and self.list.localstatus.scrollvalue or 0
         local luaScroll = self.luaBox and self.luaBox.scrollFrame:GetVerticalScroll() or 0
         local luaCursor = self.luaBox and self.luaBox.editBox:GetCursorPosition() or 0
@@ -448,6 +478,7 @@ function Editor:Show()
     follow:SetCallback("OnValueChanged", function(_, _, value) self.follow = value; self:Tick(value) end)
     footer:AddChild(follow)
     frame:SetCallback("OnClose", function(widget)
+        if self.fieldPicker then self.fieldPicker:Hide() end
         status.width, status.height = widget.frame:GetWidth(), widget.frame:GetHeight()
         if self.session then self.session:Persist() end
         if self.timer then self:CancelTimer(self.timer); self.timer = nil end

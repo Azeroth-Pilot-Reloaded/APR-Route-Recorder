@@ -37,7 +37,8 @@ GUI:RegisterWidgetType("APRIconButton", function()
         for _, segment in ipairs(self.refreshLines or {}) do
             if name == "refresh" then segment:Show() else segment:Hide() end
         end
-        if name == "refresh" then icon:Hide()
+        if name == "search" then icon:SetTexture("Interface\\Common\\UI-Searchbox-Icon"); icon:Show()
+        elseif name == "refresh" then icon:Hide()
         else icon:SetTexture("Interface\\AddOns\\APR-Recorder\\assets\\ui\\" .. name); icon:Show() end
     end
     function widget:SetText(text) self.tooltip = text end

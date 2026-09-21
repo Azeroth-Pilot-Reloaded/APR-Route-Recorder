@@ -870,3 +870,5 @@ L["Bottom side"] = "En bas"
 
 L["SAVE_OVERRIDE_HELP"] = "Maintenez Maj, Ctrl ou Alt en cliquant sur Sauvegarder pour remplacer la route sauvegardée par le brouillon actuel exact, y compris vos modifications Lua. Les changements automatiques faits en arrière-plan sont écrasés, pas fusionnés. Le contenu sauvegardé est celui de Sauvegarder une copie, mais sous le nom de la route actuelle."
 L["SAVE_CONFLICT_HELP"] = "La route sauvegardée a changé. Sauvegardez une copie, rechargez la route sauvegardée, ou maintenez Maj, Ctrl ou Alt en cliquant sur Sauvegarder pour la remplacer par le brouillon actuel."
+L["PICKER_SELECT"] = "Sélectionner une valeur"
+L["No matching results."] = "Aucun résultat."

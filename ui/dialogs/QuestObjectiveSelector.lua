@@ -4,6 +4,12 @@ local AceGUI = LibStub("AceGUI-3.0")
 
 AprRC.QuestObjectiveSelector = AprRC:NewModule('QuestObjectiveSelector')
 
+local function public(value)
+    if issecretvalue and issecretvalue(value) then return nil end
+    if type(value) == "table" and canaccesstable and not canaccesstable(value) then return nil end
+    return value
+end
+
 
 function AprRC.QuestObjectiveSelector:Show(config)
     local frame = AprRC:CreateWidget("Frame")
@@ -121,19 +127,20 @@ function AprRC.QuestObjectiveSelector:Show(config)
 
     mainGroup:AddChild(scrollFrame)
     BuildQuestList("")
+    return frame
 end
 
 local function GetFormattedQuestObjectives(questID, objectiveIDs)
     local formattedObjectives = {}
-    local objectivesInfo = C_QuestLog.GetQuestObjectives(questID)
+    local objectivesInfo = public(C_QuestLog.GetQuestObjectives(questID))
 
     if objectivesInfo then
         for _, objectiveID in ipairs(objectiveIDs) do
-            local objective = objectivesInfo[objectiveID]
+            local objective = public(objectivesInfo[objectiveID])
             if objective then
                 table.insert(formattedObjectives, {
                     objectiveID = objectiveID,
-                    text = objective.text
+                    text = public(objective.text)
                 })
             end
         end
@@ -144,7 +151,7 @@ end
 
 local function AddQuestsToList(questList, questsTable)
     for questID, objectives in pairs(questsTable) do
-        local title = C_QuestLog.GetTitleForQuestID(questID)
+        local title = public(C_QuestLog.GetTitleForQuestID(questID))
         if title then
             local formattedObjectives = GetFormattedQuestObjectives(questID, objectives)
             table.insert(questList, {
@@ -156,17 +163,17 @@ local function AddQuestsToList(questList, questsTable)
     end
 end
 
-function AprRC.QuestObjectiveSelector:GetQuestList()
+function AprRC.QuestObjectiveSelector:GetQuestList(includeCompleted)
     local questList = {}
 
-    for i = 1, C_QuestLog.GetNumQuestLogEntries() do
-        local info = C_QuestLog.GetInfo(i)
-        if info and not info.isHeader then
-            local questID = info.questID
-            local title = C_QuestLog.GetTitleForQuestID(questID)
-            if title and not C_QuestLog.IsComplete(questID) then
+    for i = 1, public(C_QuestLog.GetNumQuestLogEntries()) or 0 do
+        local info = public(C_QuestLog.GetInfo(i))
+        local questID = info and public(info.questID)
+        if type(questID) == "number" and questID > 0 and not public(info.isHeader) then
+            local title = public(C_QuestLog.GetTitleForQuestID(questID))
+            if title and (includeCompleted or not public(C_QuestLog.IsComplete(questID))) then
                 local objectives = {}
-                local objectivesInfo = C_QuestLog.GetQuestObjectives(questID)
+                local objectivesInfo = public(C_QuestLog.GetQuestObjectives(questID)) or {}
                 for j, objective in ipairs(objectivesInfo) do
                     table.insert(objectives, j)
                 end

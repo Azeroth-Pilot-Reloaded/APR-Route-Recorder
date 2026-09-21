@@ -65,6 +65,8 @@ ui/dialogs/ExportExtraLineText.lua
 ui/editor/Model.lua
 ui/editor/Labels.lua
 ui/editor/Widgets.lua
+ui/editor/SearchSelect.lua
+ui/editor/Pickers.lua
 ui/editor/Forms.lua
 ui/editor/Workspace.lua
 ui/editor/Views.lua

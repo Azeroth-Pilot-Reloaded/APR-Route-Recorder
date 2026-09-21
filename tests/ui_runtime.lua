@@ -153,7 +153,7 @@ local noops = {
     "SetJustifyV", "SetWordWrap", "SetNonSpaceWrap", "SetTextColor", "SetColorTexture", "SetVertexColor",
     "SetTexCoord", "SetBlendMode", "SetDrawLayer", "SetFontObject", "SetNormalFontObject", "SetDisabledFontObject",
     "SetHighlightFontObject", "SetHitRectInsets", "EnableMouseWheel", "SetAutoFocus", "SetMultiLine",
-    "SetMaxLetters", "SetTextInsets", "SetCountInvisibleLetters", "HighlightText", "SetOrientation",
+    "SetMaxLetters", "SetTextInsets", "SetCountInvisibleLetters", "HighlightText", "SetOrientation", "SetAltArrowKeyMode",
     "SetMinMaxValues", "SetValueStep", "SetThumbTexture", "LockHighlight", "UnlockHighlight", "SetOwner",
     "AddLine", "StartMoving", "StartSizing", "StopMovingOrSizing", "RegisterForClicks", "SetDisabledTexture",
     "RegisterEvent", "UnregisterEvent", "SetAutoFocus", "SetAlpha", "SetScale", "SetSpacing", "SetIndentedWordWrap",

@@ -1,7 +1,7 @@
 local E, UI, Settings, Bar = AprRC.routeEditor, AprRC.editorUI, AprRC.CommandBarSetting, AprRC.CommandBar
 local GUI = LibStub("AceGUI-3.0")
 local route = assert(AprRC.editorModel:NewRoute("Workshop controls"))
-route.steps = { { Waypoint = 123, Coord = { x = 12, y = 34 }, Note = "Long note" } }
+route.steps = { { Waypoint = 123, Range = 5, Coord = { x = 12, y = 34 }, Note = "Long note" } }
 E:Show(); E:SelectRoute(route.name); E:SelectTab("steps")
 if E.compact then E:ToggleCompact() end
 assert(E.compactButton.type == "APRIconButton")
@@ -32,7 +32,7 @@ assert(math.abs(E.stepsSplit.ratio - 0.64) < 0.001)
 -- allocate the full content width and put their trash icon underneath.
 local holder = GUI:Create("SimpleGroup")
 holder:SetWidth(420); holder:SetLayout("Flow")
-local value = { Waypoint = 123, Coord = { x = 12, y = 34 }, Note = "Long note" }
+local value = { Waypoint = 123, Range = 5, Coord = { x = 12, y = 34 }, Note = "Long note" }
 UI.Form:Render(holder, "step", value, function(v) value = v end,
     { modes = {}, pages = {}, changed = function() end, redraw = function() end, error = error }, "step", "Step")
 local noteGroup = UI.Group(holder)
@@ -44,11 +44,19 @@ UI.Form:RemoveButton(noteGroup, noteBody, function() end)
 holder:DoLayout()
 local scalar, compound, multiline
 for _, group in ipairs(holder.children) do
+    local body = group.children and group.children[1]
+    local row = body and body.children and body.children[#body.children]
+    if row and row:GetUserData("pickerActions") then
+        assert(group:GetUserData("compound") and #row.children == 2)
+        local _, _, point, offset = row.children[1].frame:GetPoint()
+        assert(point == "TOPRIGHT" and offset == -34, "Picker and Remove must share a right-aligned action row")
+        if body.children[1].type == "MultiLineEditBox" then multiline = row.children[2] end
+    end
     if group.children and group.children[2] and group.children[2].type == "APRIconButton" then
         local body, action = group.children[1], group.children[2]
         local first = body.children[1]
         local _, relative, anchor, _, y = action.frame:GetPoint()
-        if first.type == "EditBox" then
+        if first.type == "EditBox" and not group:GetUserData("compound") then
             scalar = action
             assert(not group:GetUserData("compound") and relative == first.editbox and anchor == "RIGHT" and y == 0,
                 "Trash must be centered on the input, excluding its label")
@@ -64,7 +72,7 @@ for _, group in ipairs(holder.children) do
 end
 assert(scalar and compound and multiline)
 scalar:Fire("OnClick")
-assert(value.Waypoint == nil and value.Coord.x == 12 and value.Note == "Long note")
+assert(value.Range == nil and value.Coord.x == 12 and value.Note == "Long note")
 GUI:Release(holder)
 
 -- Exercise the real recorder path while the workshop remains open.

@@ -5,6 +5,17 @@ local L_APR = LibStub("AceLocale-3.0"):GetLocale("APR")
 
 AprRC.autocomplete = AprRC:NewModule('AutoComplete')
 
+local function public(value)
+    if issecretvalue and issecretvalue(value) then return nil end
+    if type(value) == "table" and canaccesstable and not canaccesstable(value) then return nil end
+    return value
+end
+
+local function addChoice(list, id, name)
+    id, name = public(id), public(name)
+    if type(id) == "number" and id > 0 and type(name) == "string" then list[id] = name end
+end
+
 function AprRC.autocomplete:ShowAutoComplete(title, list, onConfirm, formatItem, width, height, showAllOnEmpty)
     showAllOnEmpty = showAllOnEmpty or false
     local frame = AprRC:CreateWidget("Frame")
@@ -65,14 +76,13 @@ function AprRC.autocomplete:ShowAutoComplete(title, list, onConfirm, formatItem,
         debounceTimer = C_Timer.NewTimer(0.3, function()
             if isClosing then return end
             scrollFrame:ReleaseChildren() -- Clear current list
-            editbox.key = nil
             local matches = {}
             local searchText = AprRC:RemoveContiguousSpaces(strtrim((text or ""):lower()))
             local searchPattern = searchText ~= "" and AprRC:EscapeLuaPattern(searchText) or nil
 
             if searchText ~= "" or showAllOnEmpty then
                 for key, value in pairs(list) do
-                    local candidate = value and value:lower() or ""
+                    local candidate = tostring(key):lower() .. " " .. (value and value:lower() or "")
                     candidate = AprRC:RemoveContiguousSpaces(candidate)
                     if searchText == "" or string.find(candidate, searchPattern) then
                         table.insert(matches, { key = key, value = value })
@@ -92,6 +102,7 @@ function AprRC.autocomplete:ShowAutoComplete(title, list, onConfirm, formatItem,
                         interacLabel:SetFullWidth(true)
                         interacLabel:SetCallback("OnClick", function()
                             editbox:SetText(match.value)
+                            if debounceTimer then debounceTimer:Cancel(); debounceTimer = nil end
                             editbox.key = match.key
                             scrollFrame:ReleaseChildren() -- Clear list after selection
                             scrollFrame.frame:Hide()
@@ -132,6 +143,7 @@ function AprRC.autocomplete:ShowAutoComplete(title, list, onConfirm, formatItem,
     end
 
     editbox:SetCallback("OnTextChanged", function(widget, event, text)
+        widget.key = nil
         UpdateAutoCompleteList(text)
     end)
 
@@ -143,59 +155,28 @@ function AprRC.autocomplete:ShowAutoComplete(title, list, onConfirm, formatItem,
     if showAllOnEmpty then
         UpdateAutoCompleteList("")
     end
-end
-
-function AprRC.autocomplete:ShowLocaleAutoComplete()
-    self:ShowAutoComplete(
-        L["Extra Line Text"],
-        L_APR,
-        function(text, key, frame)
-            if not key then
-                key = AprRC:ExtraLineTextToKey(text)
-                AprRCData.ExtraLineTexts[key] = text
-            end
-            local currentStep = AprRC:GetLastStep()
-
-            local baseName = "ExtraLineText"
-            local index = 2
-            local propertyName = baseName
-
-            if currentStep[baseName] then
-                while currentStep[baseName .. index] do
-                    index = index + 1
-                end
-                propertyName = baseName .. index
-            end
-
-            currentStep[propertyName] = key
-
-            print("|cff00bfffExtraLineTexts|r " .. L["Added"])
-            AceGUI:Release(frame)
-        end
-    )
+    return frame
 end
 
 function AprRC.autocomplete:ShowItemAutoComplete(questID, objectiveID, onConfirm)
     local itemList = {}
     for bag = 0, 4 do
         for slot = 1, C_Container.GetContainerNumSlots(bag) do
-            local itemID = C_Container.GetContainerItemID(bag, slot)
+            local itemID = public(C_Container.GetContainerItemID(bag, slot))
             if itemID then
                 local itemName, _, _, _, _, _, _, _, _, itemIcon = C_Item.GetItemInfo(itemID)
-                if itemName then
-                    itemList[itemID] = itemName
-                end
+                addChoice(itemList, itemID, itemName)
             end
         end
     end
 
-    self:ShowAutoComplete(
+    return self:ShowAutoComplete(
         L["Select Item"],
         itemList,
         onConfirm,
         function(match)
             local itemName, _, _, _, _, _, _, _, _, itemIcon = C_Item.GetItemInfo(match.key)
-            return "|T" .. itemIcon .. ":35:35|t " .. itemName
+            return "|T" .. (public(itemIcon) or 134400) .. ":35:35|t " .. (public(itemName) or match.value)
         end,
         500,
         450,
@@ -205,30 +186,31 @@ end
 
 function AprRC.autocomplete:ShowSpellAutoComplete(questID, objectiveID, onConfirm, includeProfessionSpells)
     local spellList = {}
-    for i = 1, C_SpellBook.GetNumSpellBookSkillLines() do
-        local skillLineInfo = C_SpellBook.GetSpellBookSkillLineInfo(i)
-        local offset, numSlots = skillLineInfo.itemIndexOffset, skillLineInfo.numSpellBookItems
-        for j = offset + 1, offset + numSlots do
+    for i = 1, public(C_SpellBook.GetNumSpellBookSkillLines()) or 0 do
+        local skillLineInfo = public(C_SpellBook.GetSpellBookSkillLineInfo(i))
+        local offset = skillLineInfo and public(skillLineInfo.itemIndexOffset)
+        local numSlots = skillLineInfo and public(skillLineInfo.numSpellBookItems)
+        for j = (offset or 0) + 1, (offset or 0) + (numSlots or 0) do
             local name, subName = C_SpellBook.GetSpellBookItemName(j, Enum.SpellBookSpellBank.Player)
             local spellID = select(2, C_SpellBook.GetSpellBookItemType(j, Enum.SpellBookSpellBank.Player))
-            spellList[spellID] = name
+            addChoice(spellList, spellID, name)
         end
     end
     if includeProfessionSpells then
-        for i, spellID in ipairs(AprRC.professionSpellIDs) do
+        for i, spellID in ipairs(AprRC.professionSpellIDs or {}) do
             local name = C_Spell.GetSpellName(spellID)
-            spellList[spellID] = name
+            addChoice(spellList, spellID, name)
         end
     end
 
-    self:ShowAutoComplete(
+    return self:ShowAutoComplete(
         L["Select Spell"],
         spellList,
         onConfirm,
         function(match)
-            local spellInfo = C_Spell.GetSpellInfo(match.key)
+            local spellInfo = public(C_Spell.GetSpellInfo(match.key))
             if spellInfo then
-                return "|T" .. spellInfo.iconID .. ":35:35|t " .. spellInfo.name
+                return "|T" .. (public(spellInfo.iconID) or 134400) .. ":35:35|t " .. (public(spellInfo.name) or match.value)
             end
         end,
         500,
@@ -242,19 +224,17 @@ function AprRC.autocomplete:ShowAchievementAutoComplete(onConfirm)
     for _, catId in ipairs(GetCategoryList()) do
         for i = 1, GetCategoryNumAchievements(catId) do
             local id, name = GetAchievementInfo(catId, i)
-            if id and name then
-                achievementList[id] = name
-            end
+            addChoice(achievementList, id, name)
         end
     end
 
-    self:ShowAutoComplete(
+    return self:ShowAutoComplete(
         L["Select Achievement"],
         achievementList,
         onConfirm,
         function(match)
             local id, name, _, _, _, _, _, _, _, icon = GetAchievementInfo(match.key)
-            return "|T" .. icon .. ":35:35|t " .. name
+            return "|T" .. (public(icon) or 134400) .. ":35:35|t " .. (public(name) or match.value)
         end,
         500,
         450,
@@ -269,7 +249,7 @@ function AprRC.autocomplete:ShowProfessionAutoComplete()
         spellList[spellID] = name
     end
 
-    self:ShowAutoComplete(
+    return self:ShowAutoComplete(
         L["Select Profession"],
         spellList,
         function(text, key, frame)
@@ -297,23 +277,23 @@ function AprRC.autocomplete:ShowAuraAutoComplete(onConfirm)
     local auraList = {}
     local index = 1
     while true do
-        local aura = C_UnitAuras.GetAuraDataByIndex(unitToken, index)
+        local aura = public(C_UnitAuras.GetAuraDataByIndex(unitToken, index))
         if not aura then
             break
         end
 
-        auraList[aura.spellId] = aura.name
+        addChoice(auraList, aura.spellId, aura.name)
         index = index + 1
     end
 
-    self:ShowAutoComplete(
+    return self:ShowAutoComplete(
         L["Select Aura"],
         auraList,
         onConfirm,
         function(match)
-            local auraInfo = C_UnitAuras.GetPlayerAuraBySpellID(match.key)
+            local auraInfo = public(C_UnitAuras.GetPlayerAuraBySpellID(match.key))
             if auraInfo then
-                return "|T" .. auraInfo.icon .. ":35:35|t " .. auraInfo.name
+                return "|T" .. (public(auraInfo.icon) or 134400) .. ":35:35|t " .. (public(auraInfo.name) or match.value)
             end
         end,
         500,
@@ -322,14 +302,24 @@ function AprRC.autocomplete:ShowAuraAutoComplete(onConfirm)
     )
 end
 
-function AprRC.autocomplete:ShowLocaleAutoComplete()
-    self:ShowAutoComplete(
+function AprRC.autocomplete:ShowLocaleAutoComplete(onConfirm)
+    local texts = {}
+    for key, value in pairs(L_APR) do texts[key] = value end
+    for key, value in pairs(AprRCData.ExtraLineTexts or {}) do texts[key] = value end
+    return self:ShowAutoComplete(
         L["Extra Line Text"],
-        L_APR,
+        texts,
         function(text, key, frame)
             if not key then
+                if strtrim(text) == "" then return end
                 key = AprRC:ExtraLineTextToKey(text)
+                AprRCData.ExtraLineTexts = AprRCData.ExtraLineTexts or {}
                 AprRCData.ExtraLineTexts[key] = text
+            end
+            if onConfirm then
+                onConfirm(key)
+                frame:Hide()
+                return
             end
             local currentStep = AprRC:GetLastStep()
 
@@ -353,7 +343,7 @@ function AprRC.autocomplete:ShowLocaleAutoComplete()
 end
 
 function AprRC.autocomplete:ShowTooltipMessageAutoComplete(onConfirm)
-    self:ShowAutoComplete(
+    return self:ShowAutoComplete(
         L["Tooltip Message"],
         L_APR,
         function(text, key, frame)

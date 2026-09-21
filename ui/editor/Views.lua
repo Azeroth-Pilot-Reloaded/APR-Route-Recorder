@@ -58,11 +58,16 @@ function Editor:DrawSteps()
     for key, definition in pairs(AprRC.options.step) do
         if definition.newStep then entries[key] = UI.Label(key) end
     end
-    local addType = UI.Dropdown(footer, T("Add a step"), entries, self.addType or "Waypoint", function(key) self.addType = key end)
+    local addButton
+    local addType = UI.SearchSelect(footer, T("Add a step"), entries, self.addType or "Waypoint", function(key)
+        self.addType = key
+        if addButton then addButton:SetDisabled(not key) end
+    end)
     addType:SetFullWidth(false)
     addType:SetRelativeWidth(0.72)
-    UI.Button(footer, "Add", function()
-        local key = addType:GetValue() or "Waypoint"
+    addButton = UI.Button(footer, "Add", function()
+        local key = addType:GetValue()
+        if not key then return end
         local definition = AprRC.options.step[key]
         local step = AprRC:CopyData(definition.defaults or {})
         step[key] = UI.Form:Default(definition.schema)
@@ -85,7 +90,9 @@ function Editor:DrawSteps()
         self.page = math.ceil(self.session.selected / PAGE_SIZE)
         self.formModes, self.formPages = {}, {}
         self:DrawTab()
-    end, 100):SetRelativeWidth(0.27)
+    end, 100)
+    addButton:SetRelativeWidth(0.27)
+    addButton:SetDisabled(not addType:GetValue())
     local detail = UI.Body(split)
     if self.compact then
         UI.Button(UI.Toolbar(detail), "Back to steps", function() self:ShowStepPane("list") end, 210)

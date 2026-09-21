@@ -60,6 +60,12 @@ local function keys(data)
 end
 
 function Form:RemoveButton(group, body, callback)
+    local actions = body.children[#body.children]
+    if actions and actions:GetUserData("pickerActions") then
+        group:SetUserData("compound", true)
+        UI.IconButton(actions, "trash", "Remove", callback)
+        return
+    end
     local controls, single = 0, false
     for _, child in ipairs(body.children) do
         if child.type ~= "Label" then
@@ -136,6 +142,7 @@ function Form:Render(parent, schema, value, set, context, path, label)
     path = path or "root"
     local valueKind = kind(schema)
     local function changed(newValue, rebuild)
+        value = newValue
         set(newValue)
         context.changed()
         if rebuild then context.redraw() end
@@ -226,7 +233,8 @@ function Form:Render(parent, schema, value, set, context, path, label)
             end
         end
         if next(entries) then
-            UI.Dropdown(parent, T("Add a field"), entries, nil, function(key)
+            UI.SearchSelect(parent, T("Add a field"), entries, nil, function(key)
+                if not key then return end
                 value[key] = self:Default(fields[key])
                 changed(value, true)
             end)
@@ -248,6 +256,15 @@ function Form:Render(parent, schema, value, set, context, path, label)
             local group = UI.Group(parent, (valueKind == "map" and "#" or T("Entry") .. " ") .. tostring(key))
             group:SetLayout("APRField")
             local body = UI.Group(group)
+            if valueKind == "map" and kind(schema.key) ~= "enum" then
+                local keyPath = schema.key == "id" and (path .. "/questID") or (path .. "/key")
+                UI.Pickers:AddButton(body, schema.key, keyPath, context, function(newKey)
+                    if newKey == key then return end
+                    if value[newKey] ~= nil then context.error(T("This key already exists.")); return end
+                    value[newKey], value[key] = value[key], nil
+                    changed(value, true)
+                end)
+            end
             self:Render(body, valueKind == "steps" and "step" or schema.entry, value[key],
                 function(entry) value[key] = entry; set(value) end, context, path .. "/" .. key, T("Value"))
             self:RemoveButton(group, body, function()
@@ -270,6 +287,10 @@ function Form:Render(parent, schema, value, set, context, path, label)
                 entryKey:SetLabel(T(schema.key == "id" and "Quest ID" or "ID / objective (e.g. 12345-1)"))
                 entryKey:DisableButton(true)
                 parent:AddChild(entryKey)
+                local keyPath = schema.key == "id" and (path .. "/questID") or (path .. "/key")
+                UI.Pickers:AddButton(parent, schema.key, keyPath, context, function(selected)
+                    entryKey:SetText(tostring(selected))
+                end)
                 getKey = function()
                     return schema.key == "id" and tonumber(entryKey:GetText()) or strtrim(entryKey:GetText())
                 end
@@ -319,6 +340,17 @@ function Form:Render(parent, schema, value, set, context, path, label)
                 result = tonumber(input) or input
             end
             changeWithValidation(result)
+        end)
+        UI.Pickers:AddButton(parent, schema, path, context, function(selected)
+            if suffix or valueKind == "strings" then
+                local entries = type(value) == "table" and AprRC:CopyData(value) or
+                    (type(value) == "number" and { value } or {})
+                if not tContains(entries, selected) then entries[#entries + 1] = selected end
+                if valueKind == "idOrIds" and #entries == 1 then entries = entries[1] end
+                changed(entries, true)
+            else
+                changed(selected, true)
+            end
         end)
     end
 end
