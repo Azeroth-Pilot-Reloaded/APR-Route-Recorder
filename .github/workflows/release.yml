@@ -20,7 +20,7 @@ jobs:
           fetch-depth: 0
 
       - name: WoW Packager
-        uses: BigWigsMods/packager@v2.5.1
+        uses: BigWigsMods/packager@v2.6.1
         with:
           args: -p 965240 -a rN4VYvKD -w 26704
 
