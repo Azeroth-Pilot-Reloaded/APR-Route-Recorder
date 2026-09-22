@@ -181,7 +181,7 @@ function Editor:DrawList()
     for position = (self.page - 1) * PAGE_SIZE + 1, math.min(self.page * PAGE_SIZE, #matches) do
         local index = matches[position]
         local step = session.draft.steps[index]
-        local key, detail, category = Model:Summary(step)
+        local key, detail, category, rawDetail = Model:Summary(step)
         local metadata = {}
         if step.Zone then
             local map = C_Map.GetMapInfo and C_Map.GetMapInfo(tonumber(step.Zone) or 0)
@@ -210,7 +210,7 @@ function Editor:DrawList()
         row:SetCallback("OnEnter", function()
             GameTooltip:SetOwner(row.frame, "ANCHOR_RIGHT")
             AprRC:AddTooltipLine(GameTooltip, index .. ". " .. UI.Label(key), 1, 0.82, 0.4)
-            if detail ~= "" then AprRC:AddTooltipLine(GameTooltip, detail, 1, 1, 1, true) end
+            if rawDetail ~= "" then AprRC:AddTooltipLine(GameTooltip, rawDetail, 1, 1, 1, true) end
             AprRC:AddTooltipLine(GameTooltip, table.concat(metadata, "\n"), 0.7, 0.7, 0.7, true)
             GameTooltip:Show()
         end)

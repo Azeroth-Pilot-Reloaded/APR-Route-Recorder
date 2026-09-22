@@ -1,6 +1,7 @@
 -- Editing works on detached drafts. Recording always owns CurrentRoute.
 AprRC.editorModel = {}
 local Model = AprRC.editorModel
+local L_APR = LibStub("AceLocale-3.0"):GetLocale("APR")
 local Session = {}
 Session.__index = Session
 
@@ -219,15 +220,37 @@ function Model:Summary(step)
         local title = C_QuestLog.GetTitleForQuestID and C_QuestLog.GetTitleForQuestID(tonumber(id) or 0)
         titles[#titles + 1] = title and (title .. " (#" .. tostring(id) .. ")") or ("#" .. tostring(id))
     end
-    local note = step.Note or step.ExtraLineText or step.Name
-    if type(note) == "table" then
-        local lines = {}
-        for _, line in ipairs(note) do lines[#lines + 1] = tostring(line) end
-        note = table.concat(lines, " · ")
+    local preview, raw = {}, {}
+    if #titles > 0 then
+        preview[1] = table.concat(titles, ", ")
+        raw[1] = preview[1]
     end
-    local detail = #titles > 0 and table.concat(titles, ", ") or tostring(note or "")
+    local function addText(value)
+        if value == nil then return end
+        local lines = type(value) == "table" and value or { value }
+        for _, line in ipairs(lines) do
+            local text = tostring(line)
+            -- Match APR's lookup order without triggering AceLocale missing-key errors.
+            preview[#preview + 1] = rawget(L_APR, text) or
+                (AprRCData.ExtraLineTexts and rawget(AprRCData.ExtraLineTexts, text)) or text
+            raw[#raw + 1] = text
+        end
+    end
+    addText(step.Note)
+    local extraFields = {}
+    for field in pairs(step) do
+        if type(field) == "string" and field:match("^ExtraLineText%d*$") then
+            extraFields[#extraFields + 1] = field
+        end
+    end
+    table.sort(extraFields)
+    for _, field in ipairs(extraFields) do addText(step[field]) end
+    if #preview == 0 and step.Name then
+        preview[1], raw[1] = tostring(step.Name), tostring(step.Name)
+    end
+    local detail = table.concat(preview, " · ")
     local category = questActions[key] and "quests" or navigationActions[key] and "travel" or "other"
-    return key, detail, category
+    return key, detail, category, table.concat(raw, " · ")
 end
 
 function Model:Filter(steps, query, category, label)
