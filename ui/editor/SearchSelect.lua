@@ -35,6 +35,7 @@ GUI:RegisterWidgetType("APRSearchSelect", function()
     function widget:SetText(text)
         self.settingText = true
         self.editbox:SetText(text or "")
+        self.lastText = self.editbox:GetText()
         self.settingText = nil
     end
     function widget:SetLabel(text) self.label:SetText(text or "") end
@@ -160,8 +161,12 @@ GUI:RegisterWidgetType("APRSearchSelect", function()
     end)
     editbox:SetScript("OnTextChanged", function()
         if widget.settingText then return end
+        local text = editbox:GetText()
+        -- SetText notifications may arrive after Select has committed the value.
+        if text == widget.lastText then return end
+        widget.lastText = text
         widget.value = nil
-        if editbox:HasFocus() then widget:OpenMenu(editbox:GetText()) end
+        if editbox:HasFocus() then widget:OpenMenu(text) end
         widget:Fire("OnValueChanged", nil)
     end)
     editbox:SetScript("OnArrowPressed", function(_, key)
@@ -181,7 +186,7 @@ GUI:RegisterWidgetType("APRSearchSelect", function()
             and not widget.pullout.frame:IsMouseOver() then widget:ClearFocus() end
     end)
     return GUI:RegisterAsWidget(widget)
-end, 1)
+end, 2)
 
 function UI.SearchSelect(parent, label, entries, value, callback)
     local widget = AprRC:CreateWidget("APRSearchSelect")

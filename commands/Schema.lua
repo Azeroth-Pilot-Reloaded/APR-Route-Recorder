@@ -46,6 +46,7 @@ S.buffs = list(object({ spellId = "id", tooltipMessage = "text" }, { "spellId" }
 S.qpart = { kind = "map", key = "id", entry = "ids" }
 S.buttons = { kind = "map", key = "objectiveKey", entry = "id" }
 S.parallel = list(object({ conditions = "conditions", steps = "steps" }, { "conditions", "steps" }))
+S.scenarios = list(object({ scenarioID = "id", index = "id", label = "text", steps = "steps" }, { "scenarioID", "steps" }))
 S.anyOf = list("conditions")
 S.allOf = list("conditions")
 S.note = { kind = "union", choices = { "text", "strings" } }
@@ -71,14 +72,18 @@ local routeConditions = {
     ClassSpec = true, Zones = true,
 }
 
-function options:ValidateValue(schema, value, path, depth)
+function options:ValidateValue(schema, value, path, depth, previous)
+    -- Imported APR definitions can contain legacy or newer fields. Preserve
+    -- unchanged data while still validating every edit made through raw Lua.
+    if previous ~= nil and AprRC:DeepCompare(previous, value) then return true end
     depth = (depth or 0) + 1
     path = path or "value"
     if depth > 40 then return false, path .. ": " .. L["Nesting limit exceeded"] end
     local kind = type(schema) == "table" and schema.kind or schema
     local function fail(message) return false, path .. ": " .. message end
     local function child(childSchema, entry, key)
-        return self:ValidateValue(childSchema, entry, path .. "." .. tostring(key), depth)
+        local old = type(previous) == "table" and previous[key] or nil
+        return self:ValidateValue(childSchema, entry, path .. "." .. tostring(key), depth, old)
     end
     if kind == "union" then
         for _, choice in ipairs(schema.choices) do if child(choice, value, "value") then return true end end
@@ -150,10 +155,14 @@ function options:ValidateValue(schema, value, path, depth)
                     entrySchema = { kind = "enum", group = key == "Race" and "RACES" or "Classes" }
                 end
                 if kind == "step" and key == "_index" then entrySchema = "id" end
+                if kind == "step" and key == "_comment" then entrySchema = "text" end
             end
-            if not entrySchema then return fail(L["unsupported field "] .. tostring(key)) end
-            local ok, reason = child(entrySchema, entry, key)
-            if not ok then return false, reason end
+            if entrySchema then
+                local ok, reason = child(entrySchema, entry, key)
+                if not ok then return false, reason end
+            elseif type(previous) ~= "table" or not AprRC:DeepCompare(previous[key], entry) then
+                return fail(L["unsupported field "] .. tostring(key))
+            end
         end
         if schema == S.reputation and value.type == "standard" and value.level > 8 then return fail(L["standard standing must be 1-8"]) end
         if schema == S.sellItems and not (value.items or value.junk == true) then

@@ -16,30 +16,23 @@ local function addChoice(list, id, name)
     if type(id) == "number" and id > 0 and type(name) == "string" then list[id] = name end
 end
 
-function AprRC.autocomplete:ShowAutoComplete(title, list, onConfirm, formatItem, width, height, showAllOnEmpty)
+function AprRC.autocomplete:ShowAutoComplete(title, list, onConfirm, formatItem, width, height, showAllOnEmpty, recentKind)
     showAllOnEmpty = showAllOnEmpty or false
     local frame = AprRC:CreateWidget("Frame")
     local isClosing = false
-    local activeTimers = {}
     local editbox, scrollFrame
-    local debounceTimer = nil
-    local function trackTimer(timer)
-        if timer then
-            table.insert(activeTimers, timer)
-        end
+    local debounceTimer, renderTimer
+    local generation = 0
+    local function cancelTimers()
+        generation = generation + 1
+        if debounceTimer then debounceTimer:Cancel(); debounceTimer = nil end
+        if renderTimer then renderTimer:Cancel(); renderTimer = nil end
     end
     frame:SetTitle(title)
     frame.statustext:GetParent():Hide()
     frame:SetCallback("OnClose", function(widget)
         isClosing = true
-        if debounceTimer and debounceTimer.Cancel then
-            debounceTimer:Cancel()
-        end
-        for _, t in ipairs(activeTimers) do
-            if t and t.Cancel then
-                t:Cancel()
-            end
-        end
+        cancelTimers()
         editbox:SetCallback("OnTextChanged", nil)
         scrollFrame:ReleaseChildren()
         AceGUI:Release(widget)
@@ -65,44 +58,85 @@ function AprRC.autocomplete:ShowAutoComplete(title, list, onConfirm, formatItem,
     btnConfirm:SetWidth(100)
     btnConfirm:SetDisabled(false)
     btnConfirm:SetCallback("OnClick", function()
-        onConfirm(editbox:GetText(), editbox.key, frame)
+        local text, key = editbox:GetText(), editbox.key
+        local id = recentKind and (tonumber(key) or tonumber(text))
+        local accepted = onConfirm(text, key or (id and tostring(id)), frame)
+        if recentKind and accepted ~= false then AprRC.recentChoices:Remember(recentKind, id) end
         AprRC:NotifyRouteChanged()
     end)
 
     local function UpdateAutoCompleteList(text)
-        if debounceTimer then
-            debounceTimer:Cancel()
-        end
+        cancelTimers()
+        local version = generation
         debounceTimer = C_Timer.NewTimer(0.3, function()
-            if isClosing then return end
+            if isClosing or generation ~= version then return end
+            debounceTimer = nil
             scrollFrame:ReleaseChildren() -- Clear current list
             local matches = {}
+            local recentIDs = {}
             local searchText = AprRC:RemoveContiguousSpaces(strtrim((text or ""):lower()))
             local searchPattern = searchText ~= "" and AprRC:EscapeLuaPattern(searchText) or nil
+            local function matchesSearch(key, value)
+                local candidate = AprRC:RemoveContiguousSpaces(tostring(key):lower() .. " " .. value:lower())
+                return searchText == "" or string.find(candidate, searchPattern)
+            end
 
-            if searchText ~= "" or showAllOnEmpty then
-                for key, value in pairs(list) do
-                    local candidate = tostring(key):lower() .. " " .. (value and value:lower() or "")
-                    candidate = AprRC:RemoveContiguousSpaces(candidate)
-                    if searchText == "" or string.find(candidate, searchPattern) then
-                        table.insert(matches, { key = key, value = value })
+            if recentKind then
+                for _, entry in ipairs(AprRC.recentChoices:Get(recentKind)) do
+                    local name
+                    if recentKind == "item" then
+                        name = public(C_Item.GetItemInfo(entry.id))
+                    else
+                        local info = public(C_Spell.GetSpellInfo(entry.id))
+                        name = info and public(info.name)
+                    end
+                    name = name or list[entry.id] or tostring(entry.id)
+                    recentIDs[entry.id] = true
+                    if matchesSearch(entry.id, name) then
+                        if #matches == 0 then
+                            matches[#matches + 1] = { heading = recentKind == "item"
+                                and L["Recent items"] or L["Recent spells"] }
+                        end
+                        matches[#matches + 1] = { key = entry.id, value = name }
                     end
                 end
             end
 
+            if searchText ~= "" or showAllOnEmpty then
+                local others = {}
+                for key, value in pairs(list) do
+                    if not recentIDs[key] and matchesSearch(key, value or "") then
+                        others[#others + 1] = { key = key, value = value }
+                    end
+                end
+                table.sort(others, function(a, b)
+                    if a.value == b.value then return tostring(a.key) < tostring(b.key) end
+                    return (a.value or ""):lower() < (b.value or ""):lower()
+                end)
+                if recentKind and #others > 0 and #matches > 0 then
+                    matches[#matches + 1] = { heading = L["Other results"] }
+                end
+                for _, match in ipairs(others) do matches[#matches + 1] = match end
+            end
+
             -- Render items in chunks to avoid lag
             local function RenderMatches(startIndex, endIndex)
-                if isClosing then return end
+                if isClosing or generation ~= version then return end
                 for i = startIndex, endIndex do
                     local match = matches[i]
-                    if match then
+                    if match and match.heading then
+                        local heading = AprRC:CreateWidget("Heading")
+                        heading:SetText(match.heading)
+                        heading:SetFullWidth(true)
+                        scrollFrame:AddChild(heading)
+                    elseif match then
                         local interacLabel = AprRC:CreateWidget("InteractiveLabel")
                         interacLabel:SetText(formatItem and formatItem(match) or match.value)
-                        interacLabel:SetColor(255, 255, 255)
+                        interacLabel:SetColor(1, 1, 1)
                         interacLabel:SetFullWidth(true)
                         interacLabel:SetCallback("OnClick", function()
                             editbox:SetText(match.value)
-                            if debounceTimer then debounceTimer:Cancel(); debounceTimer = nil end
+                            cancelTimers()
                             editbox.key = match.key
                             scrollFrame:ReleaseChildren() -- Clear list after selection
                             scrollFrame.frame:Hide()
@@ -122,11 +156,11 @@ function AprRC.autocomplete:ShowAutoComplete(title, list, onConfirm, formatItem,
                     end
                 end
                 if endIndex < #matches then
-                    local timer = C_Timer.NewTimer(0.01, function()
-                        if isClosing then return end
+                    renderTimer = C_Timer.NewTimer(0.01, function()
+                        renderTimer = nil
+                        if isClosing or generation ~= version then return end
                         RenderMatches(endIndex + 1, math.min(endIndex + 10, #matches))
                     end)
-                    trackTimer(timer)
                 end
             end
 
@@ -137,9 +171,7 @@ function AprRC.autocomplete:ShowAutoComplete(title, list, onConfirm, formatItem,
                 scrollFrame.frame:Hide()
             end
 
-            debounceTimer = nil
         end)
-        trackTimer(debounceTimer)
     end
 
     editbox:SetCallback("OnTextChanged", function(widget, event, text)
@@ -150,6 +182,16 @@ function AprRC.autocomplete:ShowAutoComplete(title, list, onConfirm, formatItem,
     frame:AddChild(editbox)
     frame:AddChild(scrollFrame)
     frame:AddChild(btnConfirm)
+    if recentKind then
+        local clear = AprRC:CreateWidget("Button")
+        clear:SetText(L["Clear recent history"])
+        clear:SetWidth(250)
+        clear:SetCallback("OnClick", function()
+            AprRC.recentChoices:Clear(recentKind)
+            UpdateAutoCompleteList(editbox:GetText())
+        end)
+        frame:AddChild(clear)
+    end
 
     -- Initial call to show all items if the text is empty and showAllOnEmpty is true
     if showAllOnEmpty then
@@ -180,7 +222,8 @@ function AprRC.autocomplete:ShowItemAutoComplete(questID, objectiveID, onConfirm
         end,
         500,
         450,
-        true
+        true,
+        "item"
     )
 end
 
@@ -215,7 +258,8 @@ function AprRC.autocomplete:ShowSpellAutoComplete(questID, objectiveID, onConfir
         end,
         500,
         450,
-        true
+        true,
+        "spell"
     )
 end
 

@@ -10,6 +10,7 @@
 ## RequiredDeps: APR
 
 ## SavedVariables: AprRCData, AprRCSettings
+## SavedVariablesPerCharacter: AprRCRecentChoices
 
 ## Category-enUS: Quests
 ## Category-deDE: Quests
@@ -41,7 +42,9 @@ utils/LuaData.lua
 utils/Coordinates.lua
 core/RouteManagement.lua
 core/RouteDefinition.lua
+core/APRIntegration.lua
 data/Spells.lua
+data/RecentChoices.lua
 
 commands/Registry.lua
 commands/Schema.lua

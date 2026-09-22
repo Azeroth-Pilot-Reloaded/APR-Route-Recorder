@@ -58,7 +58,6 @@ function Editor:UpdateStatus()
     self.recordButton:SetDisabled(not session or not AprRC.settings.profile.enableAddon)
     self.saveButton:SetDisabled(not session)
     self.copyButton:SetDisabled(not session)
-    self.exportButton:SetDisabled(not session)
     local rawHistory = session and session.rawHistory
     local rawMode = self.tab == "lua" and rawHistory
     self.undoButton:SetDisabled(not session or (rawMode and session.rawCursor <= 1 or not rawMode and session.cursor <= 1))
@@ -197,20 +196,31 @@ function Editor:Save(overwrite)
     return true
 end
 
-function Editor:Export()
-    if not self.session then return end
-    local route, reason = self.session:Read()
-    if not route then self:Message(reason, true); return end
-    if not APR or not APRData then self:Message(T("APR is not available"), true); return end
-    local name = route.name .. " - Custom"
-    local definition = AprRC:BuildRouteDefinition(route)
-    APRData.CustomRoute = APRData.CustomRoute or {}
-    APR.RouteQuestStepList = APR.RouteQuestStepList or {}
-    APRData.CustomRoute[name] = definition
-    APR.RouteQuestStepList[name] = definition
-    if APR.routeconfig and APR.routeconfig.SendMessage then APR.routeconfig:SendMessage("APR_Custom_Path_Update") end
-    self:Message(T("Route exported to APR") .. ": " .. name)
-    APR:PrintInfo(T("Route exported to APR") .. ": " .. name)
+function Editor:ImportDialog()
+    if self.importDialog then self.importDialog:Show(); return end
+    local dialog = AprRC:CreateWidget("Frame")
+    self.importDialog = dialog
+    dialog:SetTitle(T("Import from APR"))
+    dialog:SetWidth(620)
+    dialog:SetHeight(270)
+    dialog:EnableResize(false)
+    dialog:SetLayout("Flow")
+    UI.LabelWidget(dialog, T("Import an editable copy. Saved routes are automatically available in APR."))
+    local selected
+    local picker = UI.SearchSelect(dialog, T("Select a route"), AprRC:GetImportableAPRRoutes(), nil,
+        function(key) selected = key end)
+    local feedback = UI.LabelWidget(dialog, "")
+    UI.Button(dialog, "Import from APR", function()
+        local route, reason = AprRC:ImportAPRRoute(selected)
+        if not route then feedback:SetText(reason); return end
+        dialog:Hide()
+        self:RefreshRoutes()
+        self:SelectRoute(route.name)
+        self:Message(T("Route imported from APR"))
+    end, 190)
+    UI.Button(dialog, CANCEL, function() dialog:Hide() end)
+    dialog:SetCallback("OnClose", function(widget) self.importDialog = nil; GUI:Release(widget) end)
+    picker:SetFocus()
 end
 
 function Editor:ToggleRecording()
@@ -285,6 +295,11 @@ end
 function Editor:DrawTools()
     local panel = UI.Scroll(self.tabs)
     self.toolsTutorialButton = UI.Button(panel, "TUTORIAL_REPLAY", function() AprRC.TutoFrame:Show() end, 240)
+    UI.Button(panel, "Help (wiki)", function()
+        local locale = LibStub("AceLocale-3.0"):GetLocale("APR")
+        APR.questionDialog:CreateEditBoxPopup(locale["COPY_HELPER"], locale["CLOSE"],
+            "https://github.com/Azeroth-Pilot-Reloaded/azeroth-pilot-reloaded/wiki/APR-Route-Syntax")
+    end, 190)
     AprRC.textStyle:Draw(panel)
     UI.LabelWidget(panel, "|cffedc36a" .. T("Recording tools") .. "|r", true)
     UI.LabelWidget(panel, T("All existing commands, autocomplete dialogs and toolbar settings remain available here."))
@@ -461,7 +476,7 @@ function Editor:Show()
         GameTooltip:Show()
     end)
     self.saveButton:SetCallback("OnLeave", function() GameTooltip:Hide() end)
-    self.exportButton = UI.Button(footer, "Export to APR", function() self:Export() end, 170)
+    self.importButton = UI.Button(footer, "Import from APR", function() self:ImportDialog() end, 170)
     self.copyButton = UI.Button(footer, "Save a copy", function() self:NameDialog(true) end, 195)
     self.undoButton = UI.IconButton(footer, "undo", "Undo", function() self:Undo(-1) end)
     self.redoButton = UI.IconButton(footer, "redo", "Redo", function() self:Undo(1) end)
@@ -493,6 +508,7 @@ function Editor:Show()
         GUI:Release(self.compactButton); self.compactButton = nil
         if self.confirm then self.confirm:Hide() end
         if self.nameDialog then self.nameDialog:Hide() end
+        if self.importDialog then self.importDialog:Hide() end
         widget.frame:SetBackdropColor(0, 0, 0, 1)
         widget.frame:SetBackdropBorderColor(1, 1, 1, 1)
         widget.frame:SetClampedToScreen(wasClamped)

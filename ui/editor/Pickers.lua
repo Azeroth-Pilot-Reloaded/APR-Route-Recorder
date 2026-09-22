@@ -56,10 +56,10 @@ function Pickers:Open(spec, context, accept)
         if current() then accept(value) end
     end
     local function numeric(text, key, frame)
-        if not current() then frame:Hide(); return end
+        if not current() then frame:Hide(); return false end
         local id = tonumber(key) or tonumber(text)
         local valid, reason = R:ValidateValue("id", id)
-        if not valid then context.error(reason); return end
+        if not valid then context.error(reason); return false end
         frame:Hide()
         submit(id)
     end

@@ -1,6 +1,7 @@
 local L = LibStub("AceLocale-3.0"):GetLocale("APR-Recorder")
 function AprRC:ResetData()
     AprRC.settings.profile.recordBarFrame.isRecording = false
+    self.recentChoices:Clear()
     AprRCData = {}
     AprRCData.CurrentRoute = { name = "", steps = {} }
     AprRCData.Routes = {}
@@ -15,9 +16,11 @@ function AprRC:InitRoute(name)
     AprRCData.CurrentRoute = { name = routeName, steps = {} }
     self:ResetRecordingSession()
     tinsert(AprRCData.Routes, AprRCData.CurrentRoute)
+    self:NotifyRouteChanged()
 end
 
-function AprRC:NotifyRouteChanged()
+function AprRC:NotifyRouteChanged(name)
+    self:RequestAPRRouteSync(name)
     if self.routeEditor then self.routeEditor:RequestRefresh() end
 end
 
@@ -88,6 +91,8 @@ function AprRC:IsCurrentStepFarAway(distance)
 end
 
 function AprRC:GetLastStep()
+    -- Legacy handlers mutate the returned step in place, sometimes from a timer.
+    self:RequestAPRRouteSync()
     local step = AprRCData.CurrentRoute.steps[#AprRCData.CurrentRoute.steps]
     if not step then
         step = {}
@@ -173,6 +178,8 @@ function AprRC:UpdateRouteByName(routeName, newRouteData)
     local route, index = self:FindRouteByName(routeName)
     if route and index then
         AprRCData.Routes[index] = newRouteData
+        if AprRCData.CurrentRoute.name == routeName then AprRCData.CurrentRoute = newRouteData end
+        self:NotifyRouteChanged(newRouteData.name)
         return true
     else
         return false

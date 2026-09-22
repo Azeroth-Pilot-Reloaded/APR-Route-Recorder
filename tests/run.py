@@ -8,7 +8,8 @@ ROOT = Path(__file__).resolve().parents[1]
 lua = LuaRuntime(unpack_returned_tuples=True)
 lua.execute((ROOT / "tests/stubs.lua").read_text(encoding="utf-8"))
 lua.execute((ROOT / "locales/enUS.lua").read_text(encoding="utf-8"))
-for name in ("utils/Utils.lua", "utils/LuaData.lua", "utils/Coordinates.lua", "core/RouteManagement.lua", "core/RouteDefinition.lua"):
+lua.execute((ROOT / "data/RecentChoices.lua").read_text(encoding="utf-8"))
+for name in ("utils/Utils.lua", "utils/LuaData.lua", "utils/Coordinates.lua", "core/RouteManagement.lua", "core/RouteDefinition.lua", "core/APRIntegration.lua"):
     lua.execute((ROOT / name).read_text(encoding="utf-8"))
 for name in ("commands/Registry.lua", "commands/Schema.lua"):
     if (ROOT / name).exists():

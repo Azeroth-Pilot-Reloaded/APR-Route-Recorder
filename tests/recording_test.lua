@@ -181,8 +181,11 @@ TestRunTimers()
 local flight = AprRC:GetLastStep()
 assert(flight.NodeID == 200 and flight.Name == "Destination")
 AprRC:NewStep({ Note = "During the flight" })
+AprRC:FlushAPRRouteSync()
 clock = 90
 TestEvent("PLAYER_CONTROL_GAINED")
+assert(AprRC.pendingAPRRoutes and AprRC.pendingAPRRoutes[AprRCData.CurrentRoute.name],
+    "Flight arrival must publish the ETA even when another step was recorded during the flight")
 assert(flight.ETA == 80 and AprRC:GetLastStep().ETA == nil)
 fresh()
 TestEvent("TAXIMAP_OPENED")

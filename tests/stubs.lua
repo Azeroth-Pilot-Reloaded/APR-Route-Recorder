@@ -26,6 +26,7 @@ function tIndexOf(list, value)
     for index, entry in ipairs(list) do if entry == value then return index end end
 end
 strtrim = function(text) return text:match("^%s*(.-)%s*$") end
+time = os.time
 UnitPosition = function() return 100, 200 end
 UnitOnTaxi = function() return false end
 C_Map = { GetBestMapForUnit = function() return 2393 end }

@@ -9,7 +9,10 @@ GUI:RegisterWidgetType("APRIconButton", function()
     frame:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight", "ADD")
     local widget = { type = "APRIconButton", frame = frame, icon = icon }
     function widget:OnAcquire() self:SetWidth(30); self:SetHeight(30); self:SetDisabled(false) end
-    function widget:OnRelease() self.tooltip = nil; GameTooltip:Hide() end
+    function widget:OnRelease()
+        self.tooltip, self.pickerPath, self.pickerKind = nil, nil, nil
+        GameTooltip:Hide()
+    end
     function widget:SetIcon(name)
         if name == "refresh" and not self.refreshLines then
             -- A continuous clockwise arc with an arrowhead tangent to its end.

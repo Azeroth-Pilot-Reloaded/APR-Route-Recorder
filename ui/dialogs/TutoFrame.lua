@@ -11,7 +11,7 @@ local chapters = {
     { "ROUTE", "route", "saveButton" },
     { "LUA", "lua", "luaBox" },
     { "TOOLS", "tools", "toolsTutorialButton" },
-    { "EXPORT", nil, "exportButton" },
+    { "EXPORT", nil, "saveButton" },
 }
 
 local function captureLayers(frame, layers)

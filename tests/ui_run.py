@@ -18,8 +18,9 @@ def run():
     lua.execute('LibStub("AceLocale-3.0"):NewLocale("APR", "enUS", true, true)')
     load("locales/enUS.lua")
     load("locales/frFR.lua")
+    load("data/RecentChoices.lua")
     for path in ("utils/Utils.lua", "utils/LuaData.lua", "utils/Coordinates.lua", "core/RouteManagement.lua",
-                 "core/RouteDefinition.lua", "commands/Registry.lua", "commands/Schema.lua", "recording/Session.lua"):
+                 "core/RouteDefinition.lua", "core/APRIntegration.lua", "commands/Registry.lua", "commands/Schema.lua", "recording/Session.lua"):
         load(path)
     for path in sorted((ROOT / "commands/options").glob("*.lua")):
         load(path)
@@ -60,7 +61,9 @@ def run():
     load("tests/tutorial_smoke.lua")
     load("tests/save_override_smoke.lua")
     load("tests/pickers_smoke.lua")
+    load("tests/recent_choices_smoke.lua")
     load("tests/search_select_smoke.lua")
+    load("tests/apr_import_smoke.lua")
     load("ui/QuestIDDisplay.lua")
     load("tests/quest_id_smoke.lua")
 

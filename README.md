@@ -12,6 +12,8 @@
 
 See the [complete command reference](docs/Commands.md) for every supported route field, input examples and automatic/manual coverage. Use `/aprrc help` for commands, `/aprrc route` for route metadata, and `/aprrc export` for the complete route editor. All registered commands are available in the command-bar settings.
 
+Use **Import from APR** in the workshop to search APR's loaded routes and create an editable copy. All saved recorder routes are automatically published in APR's **Custom** tab at login, while recording, and after saving edits. Unsaved drafts remain in the recorder until **Save**. The manual **Export to APR** button is no longer needed. See [APR integration](docs/RouteWorkshop.md#apr-integration) for persistence and compatibility details.
+
 The [API audit](docs/API-Audit.md) records the verified Retail build, recording limitations and the remaining APR playback issue.
 
 <p style="text-align: center;">&nbsp;</p>

@@ -44,14 +44,19 @@ function AprRC:ReadRouteDefinition(text, name, previous)
             if type(group) == "table" then normalize(group.steps) end
         end
     end
-    local valid, reason = self.options:ValidateValue("steps", result.steps, "steps")
+    local valid, reason = self.options:ValidateValue("steps", result.steps, "steps", nil, previous and previous.steps)
     if not valid then return nil, reason end
     for key, value in pairs(result) do
         if key ~= "steps" and key ~= "name" then
             local definition = self.options.route[key]
-            if not definition then return nil, L["Unsupported route field: "] .. tostring(key) end
-            valid, reason = self.options:ValidateValue(definition.schema, value, key)
-            if not valid then return nil, reason end
+            if definition then
+                valid, reason = self.options:ValidateValue(definition.schema, value, key, nil, previous and previous[key])
+                if not valid then return nil, reason end
+            elseif not previous or not self:DeepCompare(previous[key], value) then
+                return nil, L["Unsupported route field: "] .. tostring(key)
+            end
+            -- Preserve metadata from APR versions newer than the form schema.
+            -- Unknown fields can round-trip unchanged, but cannot be introduced.
         end
     end
     result.name = name

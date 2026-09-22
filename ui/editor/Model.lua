@@ -180,6 +180,7 @@ function Model:NewRoute(name, copy)
     route.name = name
     route.mapID = route.mapID or mapID
     table.insert(AprRCData.Routes, route)
+    AprRC:NotifyRouteChanged(route.name)
     return route
 end
 

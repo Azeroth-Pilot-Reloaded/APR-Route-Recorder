@@ -33,6 +33,7 @@ function AprRC:RecordFlightControl(event)
     elseif active then
         if self:IsRecordingContext(active.context) then
             active.step.ETA = math.max(1, math.floor(GetTime() - active.started))
+            self:NotifyRouteChanged(active.context.route.name)
         end
         active = nil
     end

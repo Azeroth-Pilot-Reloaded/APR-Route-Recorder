@@ -2,6 +2,15 @@ local R = AprRC.options
 local S = R.schemas
 
 R:Register({
+    key = "scenarios",
+    command = "route scenarios",
+    schema = S.scenarios,
+    example = '{ { scenarioID = 2311, index = 1, label = "Lost Miners", steps = { { Note = "Enter the delve" } } } }',
+    scope = "route",
+    icon = "Interface\\Icons\\INV_Misc_Map_01",
+})
+
+R:Register({
     key = "gameVersion",
     command = "route gameversion",
     schema = { kind = "enum", values = { "retail", "forever", "classic" } },
