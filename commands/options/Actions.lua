@@ -389,6 +389,16 @@ R:Register({
 })
 
 R:Register({
+    key = "LootMoney",
+    command = "lootmoney",
+    schema = S.lootMoney,
+    example = "{ copper = 10, includeEquipped = true }",
+    newStep = true,
+    coord = true,
+    icon = "Interface\\Icons\\INV_Misc_Coin_01",
+})
+
+R:Register({
     key = "Grind",
     command = "grind",
     schema = "level",

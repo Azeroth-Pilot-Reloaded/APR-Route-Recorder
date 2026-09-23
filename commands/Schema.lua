@@ -22,6 +22,7 @@ S.item = object({ questID = "id", itemID = "id", itemSpellID = "id" }, { "questI
 S.spell = object({ questID = "id", spellID = "id" }, { "questID", "spellID" })
 S.items = list(object({ questID = "id", itemID = "id", quantity = "id" }, { "itemID", "quantity" }))
 S.lootItems = list(object({ questID = "id", itemID = "id", quantity = "id" }, { "itemID" }))
+S.lootMoney = object({ copper = "id", includeEquipped = "bool", equippedSlots = "ids" }, { "copper" })
 S.itemAction = object({ items = "ids", text = "text" }, { "items" })
 S.sellItems = object({ items = "ids", junk = "bool", npcID = "id", text = "text" })
 S.learnSkill = object({ spellID = "id", spellIDs = "ids", allAvailable = "bool", npcID = "id", text = "text" })

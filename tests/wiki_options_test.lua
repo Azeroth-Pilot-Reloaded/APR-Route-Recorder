@@ -43,6 +43,18 @@ valid("skill", '{ name = "Cuisine", rank = 50 }')
 valid("equippeditem", '{ slot = 16, invert = true }')
 valid("collection", '{ itemID = 5465 }')
 valid("lootitems", '{ { itemID = 5465 } }')
+assert(valid("lootmoney", '{ copper = 10 }').copper == 10)
+assert(valid("lootmoney", '{ copper = 10, includeEquipped = true }').includeEquipped)
+local lootMoney = valid("lootmoney", '{ copper = 10, includeEquipped = false, equippedSlots = { 1, 3, 5, 6, 7, 8, 9, 10, 15 } }')
+assert(lootMoney.includeEquipped == false and lootMoney.equippedSlots[9] == 15)
+valid("lootmoney", '{ copper = 10, includeEquipped = true, equippedSlots = { 16 } }')
+assert(AprRC.editorModel:Summary({ LootMoney = lootMoney }) == "LootMoney")
+for _, input in ipairs({ '{}', '10', '{ copper = 0 }', '{ copper = -1 }', '{ copper = 1.5 }',
+    '{ copper = "10" }', '{ copper = 1e999 }', '{ copper = 10, includeEquipped = 1 }',
+    '{ copper = 10, equippedSlots = 5 }', '{ copper = 10, equippedSlots = { 0 } }',
+    '{ copper = 10, equippedSlots = { 1.5 } }', '{ copper = 10, equippedSlots = { [2] = 5 } }',
+    '{ copper = 10, unknown = true }' }) do invalid("lootmoney", input) end
+invalid("not", '{ LootMoney = { copper = 10 } }')
 valid("sellitems", '{ junk = true, text = "Sell grey items" }')
 valid("learnskill", '{ spellID = 6673 }')
 valid("learnskill", '{ allAvailable = true, npcID = 911 }')
@@ -92,12 +104,12 @@ end
 
 -- Full import/export preserves defaults, false values and nested conditional links.
 local route = {
-    name = "2393-Wiki", gameVersion = "forever", steps = {},
+    name = "2393-Wiki", gameVersion = "forever", steps = { { LootMoney = lootMoney } },
     nextRoute = { "Shared", { route = "Class", conditions = { Class = "MAGE", Hardcore = false } } },
     prefab = { [APR.PREFAB_TYPES.Speedrun] = { index = 10, conditions = { Race = { "Orc", "Troll" } } } },
     parallelSteps = { { conditions = conditions, steps = { { Grind = { level = 4, xp = -700 } } } } },
 }
-for _, key in ipairs({ "ExitTutorial", "LeaveQuest", "DeathSkip", "SellItems", "LearnSkill", "BankDeposit",
+for _, key in ipairs({ "LootMoney", "ExitTutorial", "LeaveQuest", "DeathSkip", "SellItems", "LearnSkill", "BankDeposit",
     "BankWithdraw", "DestroyItems", "TameBeast", "SpellETA", "EmoteETA", "Bloodlust", "MerchantNPC",
     "NoAutoAccept", "NoAutoTurnIn", "ExtraLine", "Gossip", "Hardcore" }) do
     local definition = assert(R.step[key], key)
@@ -120,6 +132,10 @@ AprRCData.CurrentRoute = { name = "2393-Commands", steps = {} }
 AprRC.settings.profile.recordBarFrame.isRecording = true
 assert(R:Apply(R.commands.deathskip, true, AprRCData.CurrentRoute))
 assert(AprRCData.CurrentRoute.steps[1].Hardcore == false)
+assert(R:Dispatch('lootmoney { copper = 10, includeEquipped = false, equippedSlots = { 5, 16 } }'))
+local moneyStep = AprRCData.CurrentRoute.steps[2]
+assert(moneyStep.LootMoney.copper == 10 and moneyStep.LootMoney.includeEquipped == false)
+assert(moneyStep.LootMoney.equippedSlots[2] == 16 and moneyStep.Coord)
 assert(R:Apply(R.commands.hardcore, false, AprRCData.CurrentRoute, AprRCData.CurrentRoute.steps[1]))
 assert(AprRCData.CurrentRoute.steps[1].Hardcore == false)
 AprRCData.CurrentRoute = previous

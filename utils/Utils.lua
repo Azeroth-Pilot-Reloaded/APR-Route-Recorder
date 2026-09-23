@@ -491,7 +491,7 @@ function AprRC:CustomSortKeys(tbl)
         "LeaveQuests", "Treasure", "Scenario", "Achievement", "EnterScenario", "DoScenario", "LeaveScenario",
         "EnterInstance", "LeaveInstance", "LearnProfession",
         "Grind", "Reputation",
-        "DropQuest", "DroppableQuest", "LootItems", "UseItem", "UseSpell",
+        "DropQuest", "DroppableQuest", "LootItems", "LootMoney", "UseItem", "UseSpell",
         "ChromiePick", "SetHS", "GetFP", "UseHS", "UseDalaHS", "UseGarrisonHS", "UseFlightPath", "Name", "NodeID",
         "WarMode", "Coord", "Coords", "Zone", "Zones", "Fillers", "BuyMerchant", "Button", "SpellButton", "ExtraLineText",
         "ExtraLineText2", "ExtraLineText3", "ExtraLineText4", "ExtraLineText5", "ExtraLineText6", "ExtraLineText7",

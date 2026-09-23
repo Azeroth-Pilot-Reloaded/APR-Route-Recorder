@@ -191,7 +191,7 @@ local actionOrder = {
     "UseFlightPath", "GetFP", "SetHS", "UseHS", "UseDalaHS", "UseGarrisonHS",
     "TakePortal", "Treasure", "Achievement", "Scenario", "EnterScenario", "DoScenario",
     "LeaveScenario", "EnterInstance", "LeaveInstance", "UseItem", "UseSpell", "Grind",
-    "Reputation", "BuyMerchant", "LootItems", "LeaveQuests", "Emote", "ChromiePick",
+    "Reputation", "BuyMerchant", "LootItems", "LootMoney", "LeaveQuests", "Emote", "ChromiePick",
     "LearnProfession", "WarMode", "ResetRoute", "VehicleExit", "MountVehicle",
     "ExitTutorial", "LeaveQuest", "DeathSkip", "SellItems", "LearnSkill",
     "BankDeposit", "BankWithdraw", "DestroyItems", "TameBeast",
