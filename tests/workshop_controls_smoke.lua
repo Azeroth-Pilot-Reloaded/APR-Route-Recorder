@@ -32,7 +32,8 @@ assert(math.abs(E.stepsSplit.ratio - 0.64) < 0.001)
 -- allocate the full content width and put their trash icon underneath.
 local holder = GUI:Create("SimpleGroup")
 holder:SetWidth(420); holder:SetLayout("Flow")
-local value = { Waypoint = 123, Range = 5, Coord = { x = 12, y = 34 }, Note = "Long note" }
+local value = { Waypoint = 123, Range = 5, Coord = { x = 12, y = 34 }, Note = "Long note",
+    UseSpell = { questID = 42, spellID = 1 } }
 UI.Form:Render(holder, "step", value, function(v) value = v end,
     { modes = {}, pages = {}, changed = function() end, redraw = function() end, error = error }, "step", "Step")
 local noteGroup = UI.Group(holder)
@@ -47,7 +48,8 @@ for _, group in ipairs(holder.children) do
     local body = group.children and group.children[1]
     local row = body and body.children and body.children[#body.children]
     if row and row:GetUserData("pickerActions") then
-        assert(group:GetUserData("compound") and #row.children == 2)
+        assert(#row.children == 2)
+        assert(group:GetUserData("compound") == not body:GetUserData("singleInput"))
         local _, _, point, offset = row.children[1].frame:GetPoint()
         assert(point == "TOPRIGHT" and offset == -34, "Picker and Remove must share a right-aligned action row")
         if body.children[1].type == "MultiLineEditBox" then multiline = row.children[2] end
@@ -61,7 +63,7 @@ for _, group in ipairs(holder.children) do
             assert(not group:GetUserData("compound") and relative == first.editbox and anchor == "RIGHT" and y == 0,
                 "Trash must be centered on the input, excluding its label")
             assert(body.frame:GetWidth() < group.content:GetWidth())
-        elseif first.type == "InlineGroup" then
+        elseif group:GetUserData("compound") then
             compound = action
             assert(group:GetUserData("compound") and y <= -body.frame:GetHeight())
         elseif first.type == "MultiLineEditBox" then

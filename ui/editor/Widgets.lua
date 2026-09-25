@@ -69,6 +69,68 @@ function UI.IconButton(parent, icon, tooltip, callback)
     return button
 end
 
+-- A scalar input and its actions share one line. Validation only consumes space
+-- when there is an error; multiline values retain the ordinary Flow layout.
+GUI:RegisterLayout("APRInput", function(content, children)
+    if content.aprLayout then return end
+    content.aprLayout = true
+    local control = children[1]
+    local actions = children[#children]
+    if not actions or not actions:GetUserData("pickerActions") then actions = nil end
+    local width, height = content:GetWidth(), 0
+    local actionWidth = actions and #actions.children * 34 or 0
+    if control then
+        control:SetWidth(math.max(1, width - actionWidth))
+        control.frame:ClearAllPoints()
+        control.frame:SetPoint("TOPLEFT", content, "TOPLEFT")
+        control.frame:Show()
+        height = control.frame:GetHeight()
+    end
+    if actions then
+        actions:SetWidth(actionWidth)
+        actions.frame:ClearAllPoints()
+        actions.frame:SetPoint("TOPRIGHT", content, "TOPRIGHT", 0, 15 - (control.alignoffset or height / 2))
+        actions:DoLayout()
+        actions.frame:Show()
+    end
+    for index = 2, #children do
+        local child = children[index]
+        if child ~= actions then
+            if child:GetUserData("validation") and child.label:GetText() == "" then
+                child.frame:Hide()
+            else
+                child:SetWidth(width)
+                child.frame:ClearAllPoints()
+                child.frame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -height)
+                child.frame:Show()
+                height = height + child.frame:GetHeight()
+            end
+        end
+    end
+    content.obj:LayoutFinished(width, height)
+    content.aprLayout = nil
+end)
+
+GUI:RegisterLayout("APRColumns", function(content, children)
+    if content.aprLayout then return end
+    content.aprLayout = true
+    local total, height, left = 0, 0, 0
+    for _, child in ipairs(children) do total = total + (child:GetUserData("weight") or 1) end
+    local available = math.max(1, content:GetWidth() - math.max(0, #children - 1) * 6)
+    for _, child in ipairs(children) do
+        local width = available * (child:GetUserData("weight") or 1) / total
+        child:SetWidth(width)
+        child.frame:ClearAllPoints()
+        child.frame:SetPoint("TOPLEFT", content, "TOPLEFT", left, 0)
+        child:DoLayout()
+        child.frame:Show()
+        height = math.max(height, child.frame:GetHeight())
+        left = left + width + 6
+    end
+    content.obj:LayoutFinished(content:GetWidth(), height)
+    content.aprLayout = nil
+end)
+
 -- The content and trailing action have separate widths; compound entries put
 -- their action below the content, while scalar controls keep it alongside.
 GUI:RegisterLayout("APRField", function(content, children)
@@ -91,7 +153,7 @@ GUI:RegisterLayout("APRField", function(content, children)
         if compound then
             action.frame:SetPoint("TOPRIGHT", content, "TOPRIGHT", 0, -(height + 4))
         else
-            local control = body.children[1]
+            local control = body:GetUserData("alignControl") or body.children[1]
             if control.editbox then
                 -- The widget includes a label above the actual input. Anchor
                 -- to the input itself so the trash stays vertically centered.

@@ -152,9 +152,6 @@ function options:ValidateValue(schema, value, path, depth, previous)
                 if definition and (kind == "step" or definition.condition) then entrySchema = definition.schema end
                 if kind == "routeConditions" and not routeConditions[key] then entrySchema = nil end
                 if kind == "routeConditions" and (key == "Level" or key == "MinLevel" or key == "MaxLevel" or key == "BeLvl") then entrySchema = "positive" end
-                if kind == "routeConditions" and (key == "Race" or key == "Class" or key == "ClassNot") then
-                    entrySchema = { kind = "enum", group = key == "Race" and "RACES" or "Classes" }
-                end
                 if kind == "step" and key == "_index" then entrySchema = "id" end
                 if kind == "step" and key == "_comment" then entrySchema = "text" end
             end

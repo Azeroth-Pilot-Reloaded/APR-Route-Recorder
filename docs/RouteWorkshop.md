@@ -27,6 +27,14 @@ The reference was [Alenya's Guides Writer](https://www.curseforge.com/wow/addons
 
 The visual editor exposes automatically recorded fields as editable properties too. A form edits the selected step; recording commands still edit the last recorded step. These are separate contexts and the Tools tab labels that distinction.
 
+The inspector places single-line values and their search/remove buttons on the
+same row, without repeating the field title in a surrounding frame. Position
+combines **X**, **Y** and **map ID** on one line; its remove button clears both
+coordinates and zone, and Undo restores them together. Class, excluded class,
+race and equipped-slot lists use checkbox dropdowns that stay open while choosing
+multiple values. Existing scalar/list values and class tokens are preserved until
+edited. Route conditions also accept class and race lists, as APR does.
+
 The **Parallel steps** tab selects a parallel group and uses the same step list,
 search, filters, pagination and inspector as **Steps**. Add, duplicate, reorder or
 delete groups from the top toolbar; **Group conditions** edits when that group's

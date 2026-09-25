@@ -59,10 +59,88 @@ local function keys(data)
     return result
 end
 
+-- Recognize finite lists (including scalar-or-list unions) without exposing
+-- serialization choices such as numeric class IDs versus class tokens.
+function Form:MultiChoices(schema, path)
+    local entries, aliases, multiple = {}, {}, false
+    local function collect(current)
+        local valueKind = kind(current)
+        if valueKind == "list" then multiple = true; return collect(current.entry) end
+        if valueKind == "union" then
+            for _, choice in ipairs(current.choices) do if not collect(choice) then return false end end
+            return true
+        end
+        if valueKind ~= "enum" then return false end
+        for key, candidate in pairs(current.values or APR[current.group] or {}) do
+            entries[candidate] = type(key) == "string" and UI.Label(key) or tostring(candidate)
+        end
+        return true
+    end
+    if schema == "ids" and path:match("/equippedSlots$") then
+        local slots = { "HEAD", "NECK", "SHOULDER", "BODY", "CHEST", "WAIST", "LEGS", "FEET", "WRIST", "HAND",
+            "FINGER", "FINGER", "TRINKET", "TRINKET", "CLOAK", "WEAPONMAINHAND", "WEAPONOFFHAND", "RANGED", "TABARD" }
+        for index, slot in ipairs(slots) do
+            entries[index] = index .. " - " .. (_G["INVTYPE_" .. slot] or slot)
+        end
+        return entries, aliases
+    end
+    if not collect(schema) or not multiple then return end
+    if schema == R.schemas.class then
+        for name, id in pairs(APR.Classes or {}) do
+            local token = name:gsub("%s", ""):upper()
+            if entries[token] and entries[id] then
+                aliases[token], entries[token] = id, nil
+                entries[id] = (LOCALIZED_CLASS_NAMES_MALE or {})[token] or UI.Label(name)
+            end
+        end
+    end
+    return entries, aliases
+end
+
+function Form:IsCompact(schema, path)
+    local valueKind = kind(schema)
+    return self:MultiChoices(schema, path) ~= nil or
+        (valueKind ~= "object" and valueKind ~= "map" and valueKind ~= "list" and valueKind ~= "steps" and
+            valueKind ~= "union" and valueKind ~= "step" and valueKind ~= "route" and
+            valueKind ~= "conditions" and valueKind ~= "routeConditions" and valueKind ~= "level")
+end
+
+function Form:Position(parent, value, set, context, path, step)
+    local group = step and UI.Group(parent, UI.Label("Coord")) or parent
+    local body = UI.Group(group)
+    body:SetLayout("APRColumns")
+    local fields = { "x", "y" }
+    if step or value.Zone ~= nil then fields[#fields + 1] = "Zone" end
+    if not step and value.Range ~= nil then fields[#fields + 1] = "Range" end
+    for _, key in ipairs(fields) do
+        local column = UI.Group(body)
+        if key == "Zone" then column:SetUserData("weight", 1.5) end
+        local coord = step and value.Coord or value
+        local current = (key == "x" or key == "y") and (coord or {})[key] or value[key]
+        local fieldPath = path .. ((step and (key == "x" or key == "y")) and "/Coord/" or "/") .. key
+        self:Render(column, key == "Zone" and "id" or key == "Range" and "positive" or "number", current,
+            function(entry)
+                if step and (key == "x" or key == "y") then
+                    value.Coord = value.Coord or {}
+                    value.Coord[key] = entry
+                else value[key] = entry end
+                set(value)
+            end, context, fieldPath, key == "x" and "X" or key == "y" and "Y" or UI.Label(key))
+        if key == "x" then body:SetUserData("alignControl", column.children[1]) end
+    end
+    if step then
+        group:SetLayout("APRField")
+        UI.IconButton(group, "trash", "Remove", function()
+            value.Coord, value.Zone = nil, nil
+            set(value); context.changed(); context.redraw()
+        end)
+    end
+end
+
 function Form:RemoveButton(group, body, callback)
     local actions = body.children[#body.children]
     if actions and actions:GetUserData("pickerActions") then
-        group:SetUserData("compound", true)
+        group:SetUserData("compound", not body:GetUserData("singleInput"))
         UI.IconButton(actions, "trash", "Remove", callback)
         return
     end
@@ -114,9 +192,6 @@ function Form:Fields(schema, value)
             fields[key] = definition.schema
             if valueKind == "routeConditions" then
                 if key == "Level" or key == "MinLevel" or key == "MaxLevel" or key == "BeLvl" then fields[key] = "positive" end
-                if key == "Race" or key == "Class" or key == "ClassNot" then
-                    fields[key] = { kind = "enum", group = key == "Race" and "RACES" or "Classes" }
-                end
             end
         end
     end
@@ -149,14 +224,40 @@ function Form:Render(parent, schema, value, set, context, path, label)
     end
     local function validation()
         local message = UI.LabelWidget(parent, "")
+        message:SetUserData("validation", true)
         local function update(entry)
             local valid, reason = R:ValidateValue(schema, entry, label)
             message:SetText(valid and "" or ("|cffff8b7c" .. tostring(reason) .. "|r"))
+            parent:DoLayout()
         end
-        update(value)
+        if value ~= nil then update(value) end
         return function(entry) changed(entry); update(entry) end
     end
-    if valueKind == "union" then
+    local choices, aliases = self:MultiChoices(schema, path)
+    if choices then
+        local originalList = type(value) == "table"
+        local selected = {}
+        for _, entry in ipairs(originalList and value or { value }) do
+            local canonical = aliases[entry] or entry
+            selected[canonical] = entry
+            if choices[canonical] == nil then choices[canonical] = tostring(entry) end
+        end
+        local widget = UI.Dropdown(parent, label, choices, nil, function() end)
+        widget:SetMultiselect(true)
+        widget:SetUserData("fieldPath", path)
+        for entry in pairs(selected) do widget:SetItemValue(entry, true) end
+        parent:SetLayout("APRInput")
+        parent:SetUserData("singleInput", true)
+        local changeWithValidation = validation()
+        widget:SetCallback("OnValueChanged", function(_, _, entry, checked)
+            if context.isCurrent and not context.isCurrent() then return end
+            selected[entry] = checked and (selected[entry] or entry) or nil
+            local result = {}
+            for _, key in ipairs(keys(selected)) do result[#result + 1] = selected[key] end
+            if not originalList and #result == 1 and R:ValidateValue(schema, result[1]) then result = result[1] end
+            changeWithValidation(result)
+        end)
+    elseif valueKind == "union" then
         local selected = context.modes[path]
         if not selected then
             for index, choice in ipairs(schema.choices) do
@@ -195,6 +296,10 @@ function Form:Render(parent, schema, value, set, context, path, label)
         UI.Dropdown(parent, label, entries, selected, function(index) changed(actual[index]) end)
     elseif valueKind == "object" or valueKind == "step" or valueKind == "route" or valueKind == "conditions" or valueKind == "routeConditions" then
         value = type(value) == "table" and value or {}
+        if valueKind == "object" and schema.fields.x and schema.fields.y then
+            self:Position(parent, value, set, context, path)
+            return
+        end
         local fields = self:Fields(schema, value)
         if valueKind == "route" then
             for key in pairs(context.hiddenFields or {}) do fields[key] = nil end
@@ -216,8 +321,12 @@ function Form:Render(parent, schema, value, set, context, path, label)
             return rank(a) < rank(b)
         end)
         for _, key in ipairs(ordered) do
-            if value[key] ~= nil or required[key] then
-                local group = UI.Group(parent, UI.Label(key))
+            local position = valueKind == "step" and (value.Coord ~= nil or value.Zone ~= nil)
+            if position and key == "Coord" then
+                self:Position(parent, value, set, context, path, true)
+            elseif not (position and key == "Zone") and (value[key] ~= nil or required[key]) then
+                local fieldPath = path .. "/" .. key
+                local group = UI.Group(parent, not self:IsCompact(fields[key], fieldPath) and UI.Label(key) or nil)
                 group:SetLayout("APRField")
                 local body = UI.Group(group)
                 local fieldSchema = fields[key]
@@ -317,11 +426,16 @@ function Form:Render(parent, schema, value, set, context, path, label)
         local multiline = valueKind == "strings" or (valueKind == "text" and
             (path:find("Note", 1, true) or path:find("ExtraLineText", 1, true) or tostring(value):find("\n", 1, true)))
         local widget = AprRC:CreateWidget(multiline and "MultiLineEditBox" or "EditBox")
+        if not multiline and #parent.children == 0 then
+            parent:SetLayout("APRInput")
+            parent:SetUserData("singleInput", true)
+        end
         widget:SetFullWidth(true)
         widget:DisableButton(true)
         if multiline then widget:SetNumLines(4) end
         local suffix = valueKind == "ids" or valueKind == "idOrIds"
-        widget:SetLabel(suffix and T("IDs separated by commas") or valueKind == "strings" and T("One entry per line") or label)
+        widget:SetLabel(valueKind == "strings" and T("One entry per line") or label)
+        widget:SetUserData("fieldPath", path)
         local text = value
         if type(value) == "table" then
             local parts = {}
