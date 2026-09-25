@@ -57,6 +57,17 @@ their coordinates and individual conditions. Undo / redo, drafts, Save and Lua
 editing include both the groups and their steps. Main and parallel step selections
 are separate, and following recording does not move the parallel selection.
 
+Parallel step details and group conditions use the same summary/navigation layout
+as Route: open a complex field to edit it at the inspector's full width, then use
+the back arrow or overview button. Selecting another step or group resets that
+navigation; Undo and Save resolve it against the current draft.
+
+For **Equipped item stat**, **Pass when the stat is unavailable** controls the
+result when APR cannot read the selected stat (for example, an empty equipment
+slot or unavailable item data). Checked makes that condition pass; unchecked makes
+it fail. When APR can read the value, the comparison and threshold still apply.
+The checkbox tooltip explains both cases without adding another form row.
+
 The Commands tab launches recording commands directly from labeled buttons. Search
 matches translated labels and slash command names, including unpinned commands.
 The catalog follows the editor's actions, navigation, display, conditions and route

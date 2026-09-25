@@ -258,6 +258,7 @@ function Editor:SelectTab(tab)
         end
     end
     if self.tab ~= tab and (self.tab == "parallel" or tab == "parallel") then
+        self.parallelFormTrail = nil
         self.query, self.filter, self.page = "", "all", 1
         self.formModes, self.formPages, self.editGroupConditions = {}, {}, nil
     end

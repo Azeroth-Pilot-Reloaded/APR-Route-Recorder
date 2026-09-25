@@ -171,8 +171,8 @@ end
 
 -- Resolve navigation from the current draft on every redraw, including Undo,
 -- reload and Lua imports. No stored setter may point at an obsolete draft.
-function Form:RouteNodes(route, trail, set)
-    local nodes = { { schema = "route", value = route, set = set, path = "route", label = T("Route") } }
+function Form:Nodes(root, trail)
+    local nodes = { root }
     for _, key in ipairs(trail) do
         local parent = nodes[#nodes]
         local schema, value = self:Unified(parent.schema, parent.value)
@@ -386,6 +386,16 @@ function Form:Render(parent, schema, value, set, context, path, label)
         widget:SetFullWidth(true)
         widget:SetLabel(label)
         widget:SetValue(value == true)
+        widget:SetUserData("fieldPath", path)
+        if path:match("/EquippedItemStat/allowMissing$") then
+            widget:SetCallback("OnEnter", function()
+                GameTooltip:SetOwner(widget.frame, "ANCHOR_RIGHT")
+                AprRC:AddTooltipLine(GameTooltip, label, 1, 0.82, 0.4)
+                AprRC:AddTooltipLine(GameTooltip, T("HELP_allowMissing"), 1, 1, 1, true)
+                GameTooltip:Show()
+            end)
+            widget:SetCallback("OnLeave", function() GameTooltip:Hide() end)
+        end
         widget:SetCallback("OnValueChanged", function(_, _, checked) changed(checked) end)
         parent:AddChild(widget)
     elseif valueKind == "enum" or valueKind == "profile" then
