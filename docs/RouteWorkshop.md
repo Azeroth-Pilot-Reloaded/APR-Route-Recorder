@@ -27,6 +27,12 @@ The reference was [Alenya's Guides Writer](https://www.curseforge.com/wow/addons
 
 The visual editor exposes automatically recorded fields as editable properties too. A form edits the selected step; recording commands still edit the last recorded step. These are separate contexts and the Tools tab labels that distinction.
 
+Step rows show class and race condition icons at the top right, including nested
+conditions and conditions inherited from a parallel group. A red cross marks an
+exclusion. Hovering an icon shows its condition paths, preserving the distinction
+between AnyOf, AllOf and Not. Repeated filters share an icon; when space is limited,
+a **+N** counter exposes the remaining filters on hover without increasing row height.
+
 The inspector places single-line values and their search/remove buttons on the
 same row, without repeating the field title in a surrounding frame. Position
 combines **X**, **Y** and **map ID** on one line; its remove button clears both

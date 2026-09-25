@@ -122,6 +122,7 @@ end
 function Native:GetValue() return self.value or 0 end
 function Native:SetTexture(texture) self.texture = texture end
 function Native:GetTexture() return self.texture end
+function Native:SetAtlas(atlas) self.atlas = atlas end
 function Native:SetFontString(font) self.font = font end
 function Native:GetFontString() self.font = self.font or self:CreateFontString(); return self.font end
 function Native:SetHighlightTexture(texture)

@@ -67,6 +67,7 @@ ui/bars/CommandsBarSetting.lua
 ui/dialogs/ExportExtraLineText.lua
 ui/editor/Model.lua
 ui/editor/Labels.lua
+ui/editor/ConditionBadges.lua
 ui/editor/Widgets.lua
 ui/editor/SearchSelect.lua
 ui/editor/Pickers.lua

@@ -282,6 +282,8 @@ function Editor:DrawList()
         local row = AprRC:CreateWidget("APRStepRow")
         row:SetStep(index, UI.Label(key), detail, table.concat(metadata, "  ·  "),
             questIcons[key] or (definition and definition.icon) or questIcons.Step, index == self:SelectedStep(), color)
+        local group = self:StepGroup() and session.draft.parallelSteps[self:StepGroup()]
+        row:SetConditionBadges(UI.ConditionBadges(step, group and group.conditions))
         row:SetCallback("OnClick", function()
             self.parallelFormTrail = nil
             session:SetSelected(index, self:StepGroup())

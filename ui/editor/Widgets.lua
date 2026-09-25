@@ -390,8 +390,88 @@ GUI:RegisterWidgetType("APRStepRow", function()
     meta:SetJustifyH("LEFT")
     meta:SetWordWrap(false)
     frame:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight", "ADD")
-    local widget = { type = "APRStepRow", frame = frame }
-    function widget:OnAcquire() self:SetHeight(72); self:SetFullWidth(true) end
+    local widget = { type = "APRStepRow", frame = frame, badgeFrames = {} }
+    local function badgeFrame(index)
+        if widget.badgeFrames[index] then return widget.badgeFrames[index] end
+        local button = CreateFrame("Button", nil, frame)
+        button:SetSize(22, 22)
+        button.icon = button:CreateTexture(nil, "ARTWORK")
+        button.icon:SetAllPoints()
+        button.text = button:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        button.text:SetPoint("CENTER")
+        button.cross = button:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        button.cross:SetPoint("BOTTOMRIGHT", 2, -2)
+        button.cross:SetText("|cffff5555×|r")
+        button:SetScript("OnClick", function() widget:Fire("OnClick") end)
+        button:SetScript("OnEnter", function()
+            GameTooltip:SetOwner(button, "ANCHOR_RIGHT")
+            if button.badge then
+                UI.BadgeTooltip(button.badge)
+            else
+                for i = button.overflowStart, #widget.conditionBadges do
+                    UI.BadgeTooltip(widget.conditionBadges[i])
+                end
+            end
+            GameTooltip:Show()
+        end)
+        button:SetScript("OnLeave", function() GameTooltip:Hide() end)
+        widget.badgeFrames[index] = button
+        return button
+    end
+    function widget:LayoutBadges(width)
+        local badges = self.conditionBadges or {}
+        local slots = math.max(1, math.min(8, math.floor(((width or frame:GetWidth()) - 170) / 24)))
+        local count = math.min(#badges, slots)
+        local visible = #badges > slots and count - 1 or count
+        for _, button in ipairs(self.badgeFrames) do
+            button:Hide()
+            button.badge, button.overflowStart = nil, nil
+        end
+        for i = 1, count do
+            local button = badgeFrame(i)
+            button:ClearAllPoints()
+            button:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -9 - (count - i) * 24, -8)
+            if i <= visible then
+                local badge = badges[i]
+                button.badge = badge
+                button.icon:SetTexture(nil)
+                button.icon:SetTexCoord(0, 1, 0, 1)
+                if C_Texture and C_Texture.GetAtlasInfo and C_Texture.GetAtlasInfo(badge.atlas) then
+                    button.icon:SetAtlas(badge.atlas)
+                else
+                    button.icon:SetTexture("Interface\\AddOns\\APR-Recorder\\assets\\icons\\" ..
+                        (badge.kind == "class" and "Class" or "race") .. ".blp")
+                end
+                button.icon:Show()
+                button.text:Hide()
+                if badge.excluded then button.cross:Show() else button.cross:Hide() end
+            else
+                button.overflowStart = visible + 1
+                button.icon:Hide()
+                button.cross:Hide()
+                button.text:SetText("+" .. (#badges - visible))
+                button.text:Show()
+            end
+            button:Show()
+        end
+        title:ClearAllPoints()
+        title:SetPoint("TOPLEFT", 71, -10)
+        title:SetPoint("RIGHT", -(9 + (count > 0 and count * 24 + 4 or 0)), 0)
+    end
+    function widget:SetConditionBadges(badges)
+        self.conditionBadges = badges
+        self:LayoutBadges()
+    end
+    function widget:OnWidthSet(width) self:LayoutBadges(width) end
+    function widget:OnAcquire()
+        self:SetHeight(72)
+        self:SetFullWidth(true)
+        self:SetConditionBadges({})
+    end
+    function widget:OnRelease()
+        self:SetConditionBadges({})
+        GameTooltip:Hide()
+    end
     function widget:SetStep(index, heading, description, metadata, texture, selected, color)
         number:SetText(index)
         title:SetText(heading)
@@ -407,4 +487,4 @@ GUI:RegisterWidgetType("APRStepRow", function()
     frame:SetScript("OnEnter", function() widget:Fire("OnEnter") end)
     frame:SetScript("OnLeave", function() GameTooltip:Hide() end)
     return GUI:RegisterAsWidget(widget)
-end, 1)
+end, 2)
