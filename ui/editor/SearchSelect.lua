@@ -40,9 +40,10 @@ GUI:RegisterWidgetType("APRSearchSelect", function()
     end
     function widget:SetLabel(text) self.label:SetText(text or "") end
     function widget:GetValue() return self.value end
+    function widget:SetCommitOnly(enabled) self.commitOnly = enabled end
     function widget:SetValue(value)
-        self.value = self.entries[value] and value or nil
-        self:SetText(self.value and self.entries[self.value] or "")
+        if self.entries[value] ~= nil then self.value = value else self.value = nil end
+        self:SetText(self.entries[self.value] or "")
     end
     function widget:SetList(entries)
         self.entries, self.order = {}, {}
@@ -62,6 +63,7 @@ GUI:RegisterWidgetType("APRSearchSelect", function()
     end
     function widget:ClearFocus()
         self:CloseMenu()
+        if self.commitOnly then self:SetText(self.entries[self.value] or "") end
         if self.editbox:HasFocus() then self.editbox:ClearFocus() end
     end
     function widget:SetFocus() self.editbox:SetFocus() end
@@ -136,6 +138,7 @@ GUI:RegisterWidgetType("APRSearchSelect", function()
     end
     function widget:OnAcquire()
         self.entries, self.order, self.matches = {}, {}, {}
+        self.commitOnly = false
         self.value, self.active, self.open = nil, nil, false
         self:SetText("")
         self:SetLabel("")
@@ -154,7 +157,10 @@ GUI:RegisterWidgetType("APRSearchSelect", function()
         editbox:HighlightText()
     end)
     editbox:SetScript("OnEditFocusLost", function()
-        if not widget.pullout or not widget.pullout.frame:IsMouseOver() then widget:CloseMenu() end
+        if not widget.pullout or not widget.pullout.frame:IsMouseOver() then
+            widget:CloseMenu()
+            if widget.commitOnly then widget:SetText(widget.entries[widget.value] or "") end
+        end
     end)
     editbox:SetScript("OnMouseDown", function()
         if editbox:HasFocus() and not widget.open then widget:OpenMenu("") end
@@ -165,9 +171,11 @@ GUI:RegisterWidgetType("APRSearchSelect", function()
         -- SetText notifications may arrive after Select has committed the value.
         if text == widget.lastText then return end
         widget.lastText = text
-        widget.value = nil
         if editbox:HasFocus() then widget:OpenMenu(text) end
-        widget:Fire("OnValueChanged", nil)
+        if not widget.commitOnly then
+            widget.value = nil
+            widget:Fire("OnValueChanged", nil)
+        end
     end)
     editbox:SetScript("OnArrowPressed", function(_, key)
         if key ~= "UP" and key ~= "DOWN" then return end
@@ -186,7 +194,7 @@ GUI:RegisterWidgetType("APRSearchSelect", function()
             and not widget.pullout.frame:IsMouseOver() then widget:ClearFocus() end
     end)
     return GUI:RegisterAsWidget(widget)
-end, 2)
+end, 3)
 
 function UI.SearchSelect(parent, label, entries, value, callback)
     local widget = AprRC:CreateWidget("APRSearchSelect")

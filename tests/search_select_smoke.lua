@@ -77,6 +77,65 @@ reused:SetFocus()
 assert(#reused.matches == 1 and not reused:GetValue())
 GUI:Release(reused)
 
+-- Only large single-selects become searchable; queries never replace values.
+local parent = AprRC:CreateWidget("SimpleGroup")
+local choices = {}
+for i = 1, 10 do choices[i] = "Choice " .. i end
+assert(UI.Dropdown(parent, "Ten", choices, 1, function() end).type == "Dropdown")
+choices[11] = "Choice 11"
+local committed, changes = 1, 0
+local single = UI.Dropdown(parent, "Eleven", choices, committed, function(value)
+    committed, changes = value, changes + 1
+end)
+assert(single.type == "APRSearchSelect")
+single:SetFocus()
+single.editbox:SetText("Not a valid choice")
+event(single.editbox, "OnEnterPressed")
+single:Select("Not a valid choice")
+assert(committed == 1 and changes == 0 and single:GetValue() == 1)
+event(single.editbox, "OnEscapePressed")
+assert(single.editbox:GetText() == "Choice 1")
+single:SetFocus()
+single.editbox:SetText("Choice 11")
+event(single.editbox, "OnEnterPressed")
+assert(committed == 11 and changes == 1 and single:GetValue() == 11)
+single:SetFocus()
+single.editbox:SetText("Unfinished")
+GUI:ClearFocus()
+assert(single.editbox:GetText() == "Choice 11" and changes == 1)
+local multi = UI.Dropdown(parent, "Multiple", choices, nil, function() end, true)
+multi:SetMultiselect(true)
+assert(multi.type == "Dropdown" and multi:GetMultiselect())
+choices[false] = "Disabled"
+local boolean = UI.Dropdown(parent, "False value", choices, false, function(value) committed = value end)
+assert(boolean:GetValue() == false and boolean.editbox:GetText() == "Disabled")
+boolean:SetFocus()
+boolean.editbox:SetText("Disab")
+event(boolean.editbox, "OnEnterPressed")
+assert(committed == false and boolean:GetValue() == false)
+GUI:Release(parent)
+
+-- Equipment enums keep their numeric slots and string stat tokens on selection.
+local schemas = AprRC.options.schemas
+for _, case in ipairs({ { schemas.equipmentSlot, 16, 17 },
+    { schemas.equipmentStat, "QUALITY", "ITEM_MOD_STRENGTH_SHORT" } }) do
+    parent = AprRC:CreateWidget("SimpleGroup")
+    local saved, notifications = case[2], 0
+    UI.Form:Render(parent, case[1], saved, function(value) saved = value end,
+        { modes = {}, changed = function() notifications = notifications + 1 end, redraw = function() end },
+        "step/EquippedItemStat", "Equipment")
+    local control = parent.children[1]
+    assert(control.type == "APRSearchSelect")
+    control:SetFocus()
+    control.editbox:SetText("No match")
+    assert(saved == case[2] and notifications == 0)
+    for index, entry in ipairs(case[1].values) do
+        if entry.value == case[3] then control:Select(index); break end
+    end
+    assert(saved == case[3] and notifications == 1)
+    GUI:Release(parent)
+end
+
 -- Exercise both real forms: typing must never mutate a route.
 local live = AprRC:CopyData(AprRCData.CurrentRoute)
 E:Show()
@@ -84,6 +143,20 @@ local route = assert(AprRC.editorModel:NewRoute("Search select tests"))
 route.steps = { { Waypoint = 42, Coord = { x = 1, y = 2 }, Range = 5 } }
 local original = AprRC:CopyData(route)
 E:RefreshRoutes(); E:SelectRoute(route.name); E:SelectTab("steps")
+-- A list refreshed after creation must also switch at the threshold.
+local savedRoutes = AprRCData.Routes
+AprRCData.Routes = { route }
+for i = 2, 10 do AprRCData.Routes[i] = { name = "Choice route " .. i } end
+E:RefreshRoutes()
+assert(E.routeDropdown.type == "Dropdown" and E.routeDropdown:GetValue() == route.name)
+AprRCData.Routes[11] = { name = "Choice route 11" }
+E:RefreshRoutes()
+assert(E.routeDropdown.type == "APRSearchSelect" and E.routeDropdown:GetValue() == route.name)
+AprRCData.Routes[11] = nil
+E:RefreshRoutes()
+assert(E.routeDropdown.type == "Dropdown" and E.routeDropdown:GetValue() == route.name)
+AprRCData.Routes = savedRoutes
+E:RefreshRoutes()
 local addStep = field("Add a step")
 local initialType = addStep:GetValue()
 event(addStep.editbox, "OnTextChanged", false)

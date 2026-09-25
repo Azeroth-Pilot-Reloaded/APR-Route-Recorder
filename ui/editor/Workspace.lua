@@ -142,7 +142,25 @@ end
 function Editor:RefreshRoutes()
     local entries = {}
     for _, route in ipairs(AprRCData.Routes) do entries[route.name] = route.name end
-    self.routeDropdown:SetList(entries)
+    local picker = self.routeDropdown
+    local desired = #AprRCData.Routes > 10 and "APRSearchSelect" or "Dropdown"
+    if picker.type ~= desired then
+        local parent, position = picker.parent
+        for index, child in ipairs(parent.children) do
+            if child == picker then position = index; break end
+        end
+        table.remove(parent.children, position)
+        GUI:Release(picker)
+        self.routeDropdown = UI.Dropdown(parent, T("Select a route"), entries, nil,
+            function(name) self:SelectRoute(name) end)
+        table.remove(parent.children) -- Restore the selector's position in the toolbar.
+        table.insert(parent.children, position, self.routeDropdown)
+        self.routeDropdown:SetFullWidth(false)
+        self.routeDropdown:SetRelativeWidth(0.54)
+        parent:DoLayout()
+    else
+        picker:SetList(entries)
+    end
     self.routeCount = #AprRCData.Routes
     if self.session then self.routeDropdown:SetValue(self.session.name) end
 end

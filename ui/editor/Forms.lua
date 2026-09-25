@@ -31,7 +31,14 @@ function UI.Group(parent, title)
     return group
 end
 
-function UI.Dropdown(parent, label, entries, value, callback)
+function UI.Dropdown(parent, label, entries, value, callback, multiple)
+    local count = 0
+    for _ in pairs(entries) do count = count + 1 end
+    if not multiple and count > 10 then
+        local widget = UI.SearchSelect(parent, label, entries, value, callback)
+        widget:SetCommitOnly(true)
+        return widget
+    end
     local widget = AprRC:CreateWidget("Dropdown")
     widget:SetFullWidth(true)
     widget:SetLabel(label)
@@ -258,7 +265,8 @@ function Form:RemoveButton(group, body, callback)
     for _, child in ipairs(body.children) do
         if child.type ~= "Label" then
             controls = controls + 1
-            single = child.type == "EditBox" or child.type == "Dropdown" or child.type == "CheckBox"
+            single = child.type == "EditBox" or child.type == "Dropdown" or child.type == "CheckBox" or
+                child.type == "APRSearchSelect"
         end
     end
     group:SetUserData("compound", controls ~= 1 or not single)
@@ -359,7 +367,7 @@ function Form:Render(parent, schema, value, set, context, path, label)
             selected[canonical] = entry
             if choices[canonical] == nil then choices[canonical] = tostring(entry) end
         end
-        local widget = UI.Dropdown(parent, label, choices, nil, function() end)
+        local widget = UI.Dropdown(parent, label, choices, nil, function() end, true)
         widget:SetMultiselect(true)
         widget:SetUserData("fieldPath", path)
         for entry in pairs(selected) do widget:SetItemValue(entry, true) end
