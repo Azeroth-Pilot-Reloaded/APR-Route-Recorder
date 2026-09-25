@@ -21,7 +21,6 @@ function Editor:SelectedStep()
 end
 
 function Editor:ResetParallelView()
-    self.parallelFormTrail = nil
     self.query, self.filter, self.page = "", "all", 1
     self.formModes, self.formPages, self.editGroupConditions = {}, {}, nil
     self.session:Persist()
@@ -65,7 +64,6 @@ function Editor:DrawParallelSteps()
         if session:MoveGroup(session.parallelGroup, session.parallelGroup + 1) then self:ResetParallelView() end
     end)
     self.groupConditions = UI.Button(toolbar, "Group conditions", function()
-        self.parallelFormTrail = nil
         self.editGroupConditions = true
         self.formModes, self.formPages = {}, {}
         self:DrawInspector()
@@ -224,7 +222,6 @@ function Editor:ShowStepPane(pane)
 end
 
 function Editor:AfterStructureChange()
-    self.parallelFormTrail = nil
     local matches = Model:Filter(self:Steps(), self.query, self.filter, UI.Label)
     for position, index in ipairs(matches) do
         if index == self:SelectedStep() then self.page = math.ceil(position / PAGE_SIZE); break end
@@ -285,7 +282,6 @@ function Editor:DrawList()
         local group = self:StepGroup() and session.draft.parallelSteps[self:StepGroup()]
         row:SetConditionBadges(UI.ConditionBadges(step, group and group.conditions))
         row:SetCallback("OnClick", function()
-            self.parallelFormTrail = nil
             session:SetSelected(index, self:StepGroup())
             self.editGroupConditions = nil
             session:Persist()
@@ -338,15 +334,6 @@ function Editor:DrawFormPage(panel, context, root, trail, overview, description)
     UI.Form:Render(panel, node.schema, node.value, node.set, context, node.path, node.label)
 end
 
-function Editor:ParallelFormTrail(path)
-    if self.parallelFormSession ~= self.session or self.parallelFormPath ~= path then
-        self.parallelFormTrail = nil
-    end
-    self.parallelFormSession, self.parallelFormPath = self.session, path
-    self.parallelFormTrail = self.parallelFormTrail or {}
-    return self.parallelFormTrail
-end
-
 function Editor:DrawInspector()
     AprRC.TutoFrame:ClearPointer()
     local panel = self.routeForm or self.inspector
@@ -373,27 +360,27 @@ function Editor:DrawInspector()
             local groupIndex = self:StepGroup()
             local group = session.draft.parallelSteps[groupIndex]
             local path = "route/parallelSteps/" .. groupIndex .. "/conditions"
-            local trail = self:ParallelFormTrail(path)
+            context.inlineSections = true
             UI.Button(panel, "Back to step", function()
                 self.editGroupConditions = nil
                 self.formModes, self.formPages = {}, {}
                 self:DrawInspector()
             end)
-            self:DrawFormPage(panel, context, { schema = "conditions", value = group.conditions,
-                set = function(value) group.conditions = value end, path = path,
-                label = T("Parallel group") .. " " .. groupIndex .. " · " .. T("Conditions") }, trail, "Group conditions")
+            UI.LabelWidget(panel, gold .. T("Parallel group") .. " " .. groupIndex .. " · " .. T("Conditions") .. "|r", true)
+            UI.Form:Render(panel, "conditions", group.conditions, function(value) group.conditions = value end,
+                context, path, T("Conditions"))
         elseif step then
             local key, detail = Model:Summary(step)
             local title = T("Step") .. " " .. self:SelectedStep() .. " · " .. UI.Label(key)
+            UI.LabelWidget(panel, gold .. title .. "|r", true)
+            if detail ~= "" then UI.LabelWidget(panel, detail) end
             if self:StepGroup() then
                 local steps, index = self:Steps(), self:SelectedStep()
                 local path = "route/parallelSteps/" .. self:StepGroup() .. "/steps/" .. index
-                self:DrawFormPage(panel, context, { schema = "step", value = step,
-                    set = function(value) steps[index] = value end, path = path, label = title },
-                    self:ParallelFormTrail(path), "Step overview", detail)
+                context.inlineSections = true
+                UI.Form:Render(panel, "step", step, function(value) steps[index] = value end,
+                    context, path, T("Step"))
             else
-                UI.LabelWidget(panel, gold .. title .. "|r", true)
-                if detail ~= "" then UI.LabelWidget(panel, detail) end
                 UI.Form:Render(panel, "step", step, function(value) self:Steps()[self:SelectedStep()] = value end,
                     context, "step", T("Step"))
             end

@@ -169,6 +169,28 @@ function Form:NavigationRow(parent, schema, value, context, key, label, remove)
     if remove then UI.IconButton(group, "trash", "Remove", remove) end
 end
 
+-- Each outer condition has a card. Nested groups use dividers within that card,
+-- keeping their fields open without accumulating framed/action-column padding.
+function Form:InlineSection(parent, context, label, path, remove)
+    local nested = context.sectionLabels ~= nil
+    local section = UI.Group(parent, not nested and "" or nil)
+    section:SetUserData("sectionPath", path)
+    if nested then UI.LabelWidget(section, "", true) end
+    local header = UI.Group(section)
+    header:SetLayout("APRField")
+    local heading = UI.Group(header)
+    local labels = {}
+    for _, entry in ipairs(context.sectionLabels or {}) do labels[#labels + 1] = entry end
+    labels[#labels + 1] = label
+    UI.LabelWidget(heading, "|cffffd36a" .. table.concat(labels, " > ") .. "|r")
+    if remove then UI.IconButton(header, "trash", "Remove", remove) end
+    local body = UI.Group(section)
+    local childContext = {}
+    for key, entry in pairs(context) do childContext[key] = entry end
+    childContext.sectionLabels = labels
+    return body, childContext
+end
+
 -- Resolve navigation from the current draft on every redraw, including Undo,
 -- reload and Lua imports. No stored setter may point at an obsolete draft.
 function Form:Nodes(root, trail)
@@ -442,7 +464,12 @@ function Form:Render(parent, schema, value, set, context, path, label)
                 local fieldPath = path .. "/" .. key
                 local fieldSchema = fields[key]
                 local function remove() value[key] = nil; changed(value, true) end
-                if context.navigate and not self:IsCompact(fieldSchema, fieldPath) then
+                if context.inlineSections and not self:IsCompact(fieldSchema, fieldPath) then
+                    local body, childContext = self:InlineSection(parent, context, UI.Label(key), fieldPath,
+                        not required[key] and remove)
+                    self:Render(body, fieldSchema, value[key], function(entry) value[key] = entry; set(value) end,
+                        childContext, fieldPath, UI.Label(key))
+                elseif context.navigate and not self:IsCompact(fieldSchema, fieldPath) then
                     self:NavigationRow(parent, fieldSchema, value[key], context, key, UI.Label(key), not required[key] and remove)
                 else
                     local group = UI.Group(parent, not self:IsCompact(fieldSchema, fieldPath) and UI.Label(key) or nil)
@@ -487,13 +514,20 @@ function Form:Render(parent, schema, value, set, context, path, label)
                 if valueKind == "map" then value[key] = nil else table.remove(value, key) end
                 changed(value, true)
             end
-            if context.navigate and not self:IsCompact(entrySchema, path .. "/" .. key) then
+            local inline = context.inlineSections and not self:IsCompact(entrySchema, path .. "/" .. key)
+            if not inline and context.navigate and not self:IsCompact(entrySchema, path .. "/" .. key) then
                 self:NavigationRow(parent, entrySchema, value[key], context, key,
                     self:EntryLabel(entrySchema, value[key], key), remove)
             else
-                local group = UI.Group(parent, (valueKind == "map" and "#" or T("Entry") .. " ") .. tostring(key))
-                group:SetLayout("APRField")
-                local body = UI.Group(group)
+                local group, body, childContext
+                if inline then
+                    body, childContext = self:InlineSection(parent, context,
+                        self:EntryLabel(entrySchema, value[key], key), path .. "/" .. key, remove)
+                else
+                    group = UI.Group(parent, (valueKind == "map" and "#" or T("Entry") .. " ") .. tostring(key))
+                    group:SetLayout("APRField")
+                    body, childContext = UI.Group(group), context
+                end
                 if valueKind == "map" and kind(schema.key) ~= "enum" then
                     local keyPath = schema.key == "id" and (path .. "/questID") or (path .. "/key")
                     UI.Pickers:AddButton(body, schema.key, keyPath, context, function(newKey)
@@ -504,8 +538,8 @@ function Form:Render(parent, schema, value, set, context, path, label)
                     end)
                 end
                 self:Render(body, valueKind == "steps" and "step" or schema.entry, value[key],
-                    function(entry) value[key] = entry; set(value) end, context, path .. "/" .. key, T("Value"))
-                self:RemoveButton(group, body, remove)
+                    function(entry) value[key] = entry; set(value) end, childContext, path .. "/" .. key, T("Value"))
+                if not inline then self:RemoveButton(group, body, remove) end
             end
         end
         if valueKind == "map" then

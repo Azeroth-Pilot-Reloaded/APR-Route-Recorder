@@ -63,10 +63,12 @@ their coordinates and individual conditions. Undo / redo, drafts, Save and Lua
 editing include both the groups and their steps. Main and parallel step selections
 are separate, and following recording does not move the parallel selection.
 
-Parallel step details and group conditions use the same summary/navigation layout
-as Route: open a complex field to edit it at the inspector's full width, then use
-the back arrow or overview button. Selecting another step or group resets that
-navigation; Undo and Save resolve it against the current draft.
+Parallel step details and group conditions display their fields directly in open
+cards, one per outer condition block. Dividers and headings distinguish nested
+conditions within each card without accumulating borders or indentation;
+remove actions sit on the right of each heading. Values, selectors and
+checkboxes can be edited immediately, using the same controls as ordinary steps.
+Undo and Save continue to operate on the complete draft.
 
 For **Equipped item stat**, **Pass when the stat is unavailable** controls the
 result when APR cannot read the selected stat (for example, an empty equipment
