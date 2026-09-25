@@ -29,6 +29,9 @@ function Model:Open(route)
         session.base = saved.base
         session.raw = saved.raw
         session.selected = saved.selected or 1
+        session.parallelGroup = saved.parallelGroup or 1
+        session.parallelSelected = saved.parallelSelected or 1
+        session:ClampSelection()
         session.history, session.cursor = {}, 0
         session:Snapshot()
     end
@@ -43,6 +46,7 @@ function Session:Reload(route)
     self.base = Model:RouteText(self.draft)
     self.raw = nil
     self.selected = math.max(1, math.min(self.selected, #route.steps))
+    self:ClampSelection()
     self.history, self.cursor = {}, 0
     self:Snapshot()
     return true
@@ -63,6 +67,7 @@ function Session:Persist()
         AprRCData.EditorDrafts[self.name] = {
             draft = AprRC:CopyData(self.draft), base = self.base,
             raw = self.raw, selected = self.selected,
+            parallelGroup = self.parallelGroup, parallelSelected = self.parallelSelected,
         }
     else
         AprRCData.EditorDrafts[self.name] = nil
@@ -71,7 +76,8 @@ end
 
 function Session:Snapshot()
     self.rawHistory = nil
-    local snapshot = { draft = AprRC:CopyData(self.draft), selected = self.selected }
+    local snapshot = { draft = AprRC:CopyData(self.draft), selected = self.selected,
+        parallelGroup = self.parallelGroup, parallelSelected = self.parallelSelected }
     if self.history[self.cursor] and AprRC:DeepCompare(self.history[self.cursor].draft, snapshot.draft) then
         self:Persist()
         return
@@ -89,6 +95,9 @@ function Session:Undo(delta)
     self.cursor = index
     self.draft = AprRC:CopyData(self.history[index].draft)
     self.selected = self.history[index].selected
+    self.parallelGroup = self.history[index].parallelGroup
+    self.parallelSelected = self.history[index].parallelSelected
+    self:ClampSelection()
     self.raw = nil
     self:Persist()
     return true
@@ -104,18 +113,68 @@ function Session:ApplyRaw()
     if not route then return false, reason end
     self.draft, self.raw = route, nil
     self.selected = math.max(1, math.min(self.selected, #route.steps))
+    self:ClampSelection()
     self:Snapshot()
     return true
 end
 
-function Session:Reindex()
-    for index, step in ipairs(self.draft.steps) do
+function Session:GetSteps(group)
+    if not group then return self.draft.steps end
+    local parallel = (self.draft.parallelSteps or {})[group]
+    return parallel and parallel.steps or {}
+end
+
+function Session:GetSelected(group)
+    return group and self.parallelSelected or self.selected
+end
+
+function Session:SetSelected(index, group)
+    if group then self.parallelSelected = index else self.selected = index end
+end
+
+function Session:ClampSelection()
+    self.parallelGroup = math.max(1, math.min(self.parallelGroup or 1, #(self.draft.parallelSteps or {})))
+    self.parallelSelected = math.max(1, math.min(self.parallelSelected or 1, #self:GetSteps(self.parallelGroup)))
+end
+
+function Session:InsertGroup(copy)
+    self.draft.parallelSteps = self.draft.parallelSteps or {}
+    local groups = self.draft.parallelSteps
+    local index = copy and math.min(self.parallelGroup + 1, #groups + 1) or #groups + 1
+    table.insert(groups, index, copy and AprRC:CopyData(copy) or { conditions = {}, steps = {} })
+    self.parallelGroup, self.parallelSelected = index, 1
+    self:Snapshot()
+end
+
+function Session:MoveGroup(index, destination)
+    local groups = self.draft.parallelSteps or {}
+    if not groups[index] or not groups[destination] then return false end
+    table.insert(groups, destination, table.remove(groups, index))
+    self.parallelGroup = destination
+    self:Snapshot()
+    return true
+end
+
+function Session:DeleteGroup(index)
+    local groups = self.draft.parallelSteps or {}
+    if not groups[index] then return false end
+    table.remove(groups, index)
+    if #groups == 0 then self.draft.parallelSteps = nil end
+    self.parallelGroup, self.parallelSelected = index, 1
+    self:ClampSelection()
+    self:Snapshot()
+    return true
+end
+
+function Session:Reindex(group)
+    for index, step in ipairs(self:GetSteps(group)) do
         if step._index then step._index = index end
     end
 end
 
-function Session:Insert(step, after)
-    local steps = self.draft.steps
+function Session:Insert(step, after, group)
+    if not step or (group and not (self.draft.parallelSteps or {})[group]) then return false end
+    local steps = self:GetSteps(group)
     local index = math.min((after or #steps) + 1, #steps + 1)
     if steps[#steps] and steps[#steps].RouteCompleted then
         if step.RouteCompleted then return false end
@@ -124,28 +183,29 @@ function Session:Insert(step, after)
         index = #steps + 1
     end
     table.insert(steps, index, AprRC:CopyData(step))
-    self.selected = index
-    self:Reindex()
+    self:SetSelected(index, group)
+    self:Reindex(group)
     self:Snapshot()
     return true
 end
 
-function Session:Move(index, destination)
-    local steps = self.draft.steps
+function Session:Move(index, destination, group)
+    local steps = self:GetSteps(group)
     if not steps[index] or not steps[destination] then return false end
     if steps[index].RouteCompleted or steps[destination].RouteCompleted then return false end
     table.insert(steps, destination, table.remove(steps, index))
-    self.selected = destination
-    self:Reindex()
+    self:SetSelected(destination, group)
+    self:Reindex(group)
     self:Snapshot()
     return true
 end
 
-function Session:Delete(index)
-    if not self.draft.steps[index] then return false end
-    table.remove(self.draft.steps, index)
-    self.selected = math.max(1, math.min(index, #self.draft.steps))
-    self:Reindex()
+function Session:Delete(index, group)
+    local steps = self:GetSteps(group)
+    if not steps[index] then return false end
+    table.remove(steps, index)
+    self:SetSelected(math.max(1, math.min(index, #steps)), group)
+    self:Reindex(group)
     self:Snapshot()
     return true
 end

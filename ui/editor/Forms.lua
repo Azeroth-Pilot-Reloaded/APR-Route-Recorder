@@ -196,6 +196,9 @@ function Form:Render(parent, schema, value, set, context, path, label)
     elseif valueKind == "object" or valueKind == "step" or valueKind == "route" or valueKind == "conditions" or valueKind == "routeConditions" then
         value = type(value) == "table" and value or {}
         local fields = self:Fields(schema, value)
+        if valueKind == "route" then
+            for key in pairs(context.hiddenFields or {}) do fields[key] = nil end
+        end
         local required = {}
         if valueKind == "object" then
             for _, key in ipairs(schema.required or {}) do required[key] = true end

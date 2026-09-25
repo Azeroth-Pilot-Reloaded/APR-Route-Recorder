@@ -21,10 +21,19 @@ The reference was [Alenya's Guides Writer](https://www.curseforge.com/wow/addons
 | Quest, achievement and text autocomplete; reputation and objective dialogs | Existing commands and Tools → Actions |
 | Coordinate frame | Tools → Coordinates; `/aprrc coordframe` |
 | All automatic recording hooks | Unchanged recording modules |
-| Route metadata, conditions, parallel steps and numbered helper texts | Route / Steps forms and full Lua editor |
+| Route metadata, conditions and numbered helper texts | Route / Steps forms and full Lua editor |
+| Parallel groups, their conditions and steps | Parallel steps tab; full Lua editor |
 | Settings, profiles, quest ID display, addon toggle and reset | Tools → Settings, `/aprrc settings`, existing settings button and minimap right-click |
 
 The visual editor exposes automatically recorded fields as editable properties too. A form edits the selected step; recording commands still edit the last recorded step. These are separate contexts and the Tools tab labels that distinction.
+
+The **Parallel steps** tab selects a parallel group and uses the same step list,
+search, filters, pagination and inspector as **Steps**. Add, duplicate, reorder or
+delete groups from the top toolbar; **Group conditions** edits when that group's
+steps apply. Within a group, add, duplicate, move, delete and edit steps, including
+their coordinates and individual conditions. Undo / redo, drafts, Save and Lua
+editing include both the groups and their steps. Main and parallel step selections
+are separate, and following recording does not move the parallel selection.
 
 The Commands tab launches recording commands directly from labeled buttons. Search
 matches translated labels and slash command names, including unpinned commands.
@@ -36,7 +45,7 @@ lists. Drag its header to move it. An empty favorites list stays empty until cha
 or reset; saved custom commands and their order are preserved.
 
 Use **Compact mode** in the workshop header to halve its current width (1120 to
-560 pixels by default). The Steps tab then shows one pane at a time: select a step
+560 pixels by default). The Steps and Parallel steps tabs then show one pane at a time: select a step
 to open the inspector, or use **Back to steps** to return to the list. **Full width**
 restores the previous editing width. Recording controls, Commands and other tabs
 remain accessible in both modes. Width, height and compact mode are saved across
@@ -87,5 +96,6 @@ The native stubs do not render WoW textures, fonts, clipping, or protected game 
 6. Open legacy command and extra-line-text dialogs, close them, then reopen the workshop. Check the status bar, Lua key handlers and recorder controls still work.
 7. Check recording of flights, portals and quests in combat with the workshop open. Drag the recorder launcher, reload, and verify its position and recording indicator.
 8. Cast a spell and consume the last copy of a usable quest item, then check their recent sections in the Use, Button and Trigger selectors. Confirm a choice, reopen, search by name and ID, then clear the history. Reload and switch characters to check persistence and isolation.
+9. In Parallel steps, add a group, set its conditions and edit its steps. Duplicate, reorder and delete groups and steps; undo and redo, then Save. Check full and compact layouts and confirm APR receives the group conditions and step order.
 
 `python tests/apr_compatibility_run.py [path/to/azeroth-pilot-reloaded]` additionally exercises real APR definitions and its registration/loading API from a neighboring checkout, including the Midnight Speedrun route and delve scenarios. Coordinate conversion is stubbed; playback still requires the in-game checks above.

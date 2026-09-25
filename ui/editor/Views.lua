@@ -7,7 +7,82 @@ local PAGE_SIZE = 40
 UI.PageSize = PAGE_SIZE
 local gold, muted = "|cffedc36a", "|cffb3a58b"
 
-function Editor:DrawSteps()
+-- Both tabs use the same list, forms and actions; only the collection changes.
+function Editor:StepGroup()
+    return self.tab == "parallel" and self.session.parallelGroup or nil
+end
+
+function Editor:Steps()
+    return self.session:GetSteps(self:StepGroup())
+end
+
+function Editor:SelectedStep()
+    return self.session:GetSelected(self:StepGroup())
+end
+
+function Editor:ResetParallelView()
+    self.query, self.filter, self.page = "", "all", 1
+    self.formModes, self.formPages, self.editGroupConditions = {}, {}, nil
+    self.session:Persist()
+    self:DrawTab()
+end
+
+function Editor:DrawParallelSteps()
+    self.session:ClampSelection()
+    local session = self.session
+    local groups = session.draft.parallelSteps or {}
+    local group = groups[session.parallelGroup]
+    local body = UI.Body(self.tabs)
+    local toolbar = UI.Toolbar(body)
+    local entries = {}
+    for index in ipairs(groups) do entries[index] = T("Parallel group") .. " " .. index end
+    self.parallelPicker = UI.Dropdown(toolbar, UI.Label("parallelSteps"), entries,
+        group and session.parallelGroup or nil, function(index)
+            session.parallelGroup, session.parallelSelected = index, 1
+            self:ResetParallelView()
+        end)
+    self.parallelPicker:SetFullWidth(false)
+    self.parallelPicker:SetWidth(210)
+    self.addGroup = UI.Button(toolbar, "Add group", function()
+        session:InsertGroup(); self:ResetParallelView()
+    end)
+    self.duplicateGroup = UI.IconButton(toolbar, "duplicate", "Duplicate group", function()
+        if group then session:InsertGroup(group); self:ResetParallelView() end
+    end)
+    self.deleteGroup = UI.IconButton(toolbar, "trash", "Delete group", function()
+        local index = session.parallelGroup
+        self:Confirm(T("Delete this parallel group and all its steps? You can undo this change."), function()
+            if self.session == session and (session.draft.parallelSteps or {})[index] == group then
+                session:DeleteGroup(index); self:ResetParallelView()
+            end
+        end)
+    end)
+    self.groupUp = UI.IconButton(toolbar, "up", "Move group up", function()
+        if session:MoveGroup(session.parallelGroup, session.parallelGroup - 1) then self:ResetParallelView() end
+    end)
+    self.groupDown = UI.IconButton(toolbar, "down", "Move group down", function()
+        if session:MoveGroup(session.parallelGroup, session.parallelGroup + 1) then self:ResetParallelView() end
+    end)
+    self.groupConditions = UI.Button(toolbar, "Group conditions", function()
+        self.editGroupConditions = true
+        self.formModes, self.formPages = {}, {}
+        self:DrawInspector()
+        self.inspector:SetScroll(0)
+        self:ShowStepPane("inspector")
+    end, 190)
+    self.duplicateGroup:SetDisabled(not group)
+    self.deleteGroup:SetDisabled(not group)
+    self.groupUp:SetDisabled(not group or session.parallelGroup == 1)
+    self.groupDown:SetDisabled(not group or session.parallelGroup == #groups)
+    self.groupConditions:SetDisabled(not group)
+    if group then
+        self:DrawSteps(body)
+    else
+        UI.LabelWidget(UI.Scroll(body), T("No parallel groups yet. Add a group, then configure its conditions and steps."))
+    end
+end
+
+function Editor:DrawSteps(parent)
     local split = AprRC:CreateWidget("APRSplitGroup")
     split:SetLayout("APRSplit")
     split:SetUserData("body", true)
@@ -15,12 +90,13 @@ function Editor:DrawSteps()
     split:SetCallback("OnRatioChanged", function(_, _, ratio)
         AprRC.settings.profile.editorFrame.stepPaneRatio = ratio
     end)
-    self.tabs:AddChild(split)
+    local container = parent or self.tabs
+    container:AddChild(split)
     self.stepsSplit = split
     split.content.aprCompactPane = self.compact and (self.compactPane or "list") or nil
     self.listPanel = UI.Body(split)
     local heading = UI.Toolbar(self.listPanel)
-    if self.compact then
+    if self.compact and not self:StepGroup() then
         UI.Button(heading, "Show inspector", function() self:ShowStepPane("inspector") end, 210)
     end
     local search = AprRC:CreateWidget("EditBox")
@@ -48,8 +124,9 @@ function Editor:DrawSteps()
         self.page = self.page + 1; self:DrawList(); self.list:SetScroll(0)
     end)
     UI.Button(footer, "Jump to latest", function()
-        self.query, self.filter, self.page = "", "all", math.max(1, math.ceil(#self.session.draft.steps / PAGE_SIZE))
-        self.session.selected = math.max(1, #self.session.draft.steps)
+        self.editGroupConditions = nil
+        self.query, self.filter, self.page = "", "all", math.max(1, math.ceil(#self:Steps() / PAGE_SIZE))
+        self.session:SetSelected(math.max(1, #self:Steps()), self:StepGroup())
         self:DrawTab()
         self.list:SetScroll(1000)
     end, 155)
@@ -74,20 +151,21 @@ function Editor:DrawSteps()
         if key == "Waypoint" then
             -- APR uses a quest ID to identify waypoints; prefer this draft's context.
             step.Waypoint = 1
-            for index = self.session.selected, 1, -1 do
-                local previous = self.session.draft.steps[index] or {}
+            for index = self:SelectedStep(), 1, -1 do
+                local previous = self:Steps()[index] or {}
                 local quest = previous.PickUp and previous.PickUp[1] or previous.Waypoint or
                     (previous.Qpart and next(previous.Qpart))
                 if type(quest) == "number" and quest > 0 then step.Waypoint = quest; break end
             end
         end
         if AprRC.options.step[key].coord then AprRC:SetStepCoord(step, key == "Waypoint" and 5 or 15) end
-        if not self.session:Insert(step, self.session.selected) then
+        if not self.session:Insert(step, self:SelectedStep(), self:StepGroup()) then
             self:Message(T("A route can only have one completion step, at the end."), true)
             return
         end
+        self.editGroupConditions = nil
         self.query, self.filter = "", "all"
-        self.page = math.ceil(self.session.selected / PAGE_SIZE)
+        self.page = math.ceil(self:SelectedStep() / PAGE_SIZE)
         self.formModes, self.formPages = {}, {}
         self:DrawTab()
     end, 100)
@@ -103,30 +181,31 @@ function Editor:DrawSteps()
     self.moveDown = UI.IconButton(actions, "down", "Move down", function() self:Move(1) end)
     self.duplicate = UI.IconButton(actions, "duplicate", "Duplicate", function()
         local session = self.session
-        if session:Insert(session.draft.steps[session.selected], session.selected) then self:AfterStructureChange() end
+        if session:Insert(self:Steps()[self:SelectedStep()], self:SelectedStep(), self:StepGroup()) then self:AfterStructureChange() end
     end)
     self.delete = UI.IconButton(actions, "trash", "Delete", function()
-        local session, index = self.session, self.session.selected
-        local step = session.draft.steps[index]
+        local session, index, groupIndex = self.session, self:SelectedStep(), self:StepGroup()
+        local step = self:Steps()[index]
         self:Confirm(T("Delete the selected step? You can undo this change."), function()
-            if self.session == session and session.draft.steps[index] == step then
-                session:Delete(index); self:AfterStructureChange()
+            if self.session == session and session:GetSteps(groupIndex)[index] == step then
+                session:Delete(index, groupIndex); self:AfterStructureChange()
             end
         end)
     end)
     self.positionButton = UI.Button(actions, "Player position", function()
-        local step = self.session.draft.steps[self.session.selected]
+        local step = self:Steps()[self:SelectedStep()]
         local coord, zone = AprRC:GetPlayerCoord()
         if not coord then self:Message(T("Unable to read player coordinates."), true); return end
         step.Coord, step.Zone = coord, zone
         self:Changed(); self:DrawInspector()
     end, 175)
     local moveTo = AprRC:CreateWidget("EditBox")
+    self.moveTo = moveTo
     moveTo:SetLabel(T("Move to step"))
     moveTo:SetWidth(125)
     moveTo:SetCallback("OnEnterPressed", function(_, _, text)
         local index = tonumber(text)
-        if index and index % 1 == 0 and self.session:Move(self.session.selected, index) then self:AfterStructureChange() end
+        if index and index % 1 == 0 and self.session:Move(self:SelectedStep(), index, self:StepGroup()) then self:AfterStructureChange() end
     end)
     actions:AddChild(moveTo)
     self:DrawList()
@@ -136,26 +215,26 @@ end
 function Editor:ShowStepPane(pane)
     self.compactPane = pane
     GUI:ClearFocus()
-    if self.stepsSplit and self.tab == "steps" then
+    if self.stepsSplit and (self.tab == "steps" or self.tab == "parallel") then
         self.stepsSplit.content.aprCompactPane = self.compact and pane or nil
         self.stepsSplit:DoLayout()
     end
 end
 
 function Editor:AfterStructureChange()
-    local matches = Model:Filter(self.session.draft.steps, self.query, self.filter, UI.Label)
+    local matches = Model:Filter(self:Steps(), self.query, self.filter, UI.Label)
     for position, index in ipairs(matches) do
-        if index == self.session.selected then self.page = math.ceil(position / PAGE_SIZE); break end
+        if index == self:SelectedStep() then self.page = math.ceil(position / PAGE_SIZE); break end
     end
-    self.formModes, self.formPages = {}, {}
+    self.formModes, self.formPages, self.editGroupConditions = {}, {}, nil
     self:DrawList()
     self:DrawInspector()
     self:UpdateStatus()
 end
 
 function Editor:Move(delta)
-    local index = self.session.selected
-    if self.session:Move(index, index + delta) then self:AfterStructureChange() end
+    local index = self:SelectedStep()
+    if self.session:Move(index, index + delta, self:StepGroup()) then self:AfterStructureChange() end
 end
 
 local questIcons = {
@@ -168,19 +247,20 @@ function Editor:DrawList()
     local oldScroll = self.list.localstatus.scrollvalue or 0
     self.list:ReleaseChildren()
     local session = self.session
-    local matches = Model:Filter(session.draft.steps, self.query, self.filter, UI.Label)
+    local matches = Model:Filter(self:Steps(), self.query, self.filter, UI.Label)
     local pages = math.max(1, math.ceil(#matches / PAGE_SIZE))
     self.page = math.max(1, math.min(self.page or 1, pages))
     self.pageLabel:SetText(muted .. #matches .. " " .. T("Steps") .. "  ·  " .. self.page .. " / " .. pages .. "|r")
     self.previousButton:SetDisabled(self.page <= 1)
     self.nextButton:SetDisabled(self.page >= pages)
     if #matches == 0 then
-        UI.LabelWidget(self.list, T(#session.draft.steps == 0 and
-            "No steps yet. Record in game, or choose a step type below." or "No matching steps."))
+        local empty = self:StepGroup() and "No parallel steps yet. Choose a step type below." or
+            "No steps yet. Record in game, or choose a step type below."
+        UI.LabelWidget(self.list, T(#self:Steps() == 0 and empty or "No matching steps."))
     end
     for position = (self.page - 1) * PAGE_SIZE + 1, math.min(self.page * PAGE_SIZE, #matches) do
         local index = matches[position]
-        local step = session.draft.steps[index]
+        local step = self:Steps()[index]
         local key, detail, category, rawDetail = Model:Summary(step)
         local metadata = {}
         if step.Zone then
@@ -198,9 +278,10 @@ function Editor:DrawList()
         local definition = AprRC.options.step[key]
         local row = AprRC:CreateWidget("APRStepRow")
         row:SetStep(index, UI.Label(key), detail, table.concat(metadata, "  ·  "),
-            questIcons[key] or (definition and definition.icon) or questIcons.Step, index == session.selected, color)
+            questIcons[key] or (definition and definition.icon) or questIcons.Step, index == self:SelectedStep(), color)
         row:SetCallback("OnClick", function()
-            session.selected = index
+            session:SetSelected(index, self:StepGroup())
+            self.editGroupConditions = nil
             session:Persist()
             self.formModes, self.formPages = {}, {}
             self:DrawList(); self:DrawInspector()
@@ -234,19 +315,31 @@ function Editor:DrawInspector()
         UI.Form:Render(panel, "route", session.draft, function(value) session.draft = value end,
             context, "route", T("Route"))
     else
-        local step = session.draft.steps[session.selected]
-        self.moveUp:SetDisabled(not step or session.selected == 1 or step.RouteCompleted)
-        self.moveDown:SetDisabled(not step or session.selected == #session.draft.steps or step.RouteCompleted or
-            (session.draft.steps[session.selected + 1] or {}).RouteCompleted)
+        local step = not self.editGroupConditions and self:Steps()[self:SelectedStep()]
+        self.moveUp:SetDisabled(not step or self:SelectedStep() == 1 or step.RouteCompleted)
+        self.moveDown:SetDisabled(not step or self:SelectedStep() == #self:Steps() or step.RouteCompleted or
+            (self:Steps()[self:SelectedStep() + 1] or {}).RouteCompleted)
         self.duplicate:SetDisabled(not step or step.RouteCompleted)
         self.delete:SetDisabled(not step)
         self.positionButton:SetDisabled(not step)
-        if step then
+        self.moveTo:SetDisabled(not step)
+        if self.editGroupConditions and self:StepGroup() then
+            local groupIndex = self:StepGroup()
+            local group = session.draft.parallelSteps[groupIndex]
+            UI.LabelWidget(panel, gold .. T("Parallel group") .. " " .. groupIndex .. " · " .. T("Conditions") .. "|r", true)
+            UI.Button(panel, "Back to step", function()
+                self.editGroupConditions = nil
+                self.formModes, self.formPages = {}, {}
+                self:DrawInspector()
+            end)
+            UI.Form:Render(panel, "conditions", group.conditions, function(value) group.conditions = value end,
+                context, "route/parallelSteps/" .. groupIndex .. "/conditions", T("Conditions"))
+        elseif step then
             local key, detail = Model:Summary(step)
-            UI.LabelWidget(panel, gold .. T("Step") .. " " .. session.selected .. " · " .. UI.Label(key) .. "|r", true)
+            UI.LabelWidget(panel, gold .. T("Step") .. " " .. self:SelectedStep() .. " · " .. UI.Label(key) .. "|r", true)
             if detail ~= "" then UI.LabelWidget(panel, detail) end
-            UI.Form:Render(panel, "step", step, function(value) session.draft.steps[session.selected] = value end,
-                context, "step", T("Step"))
+            UI.Form:Render(panel, "step", step, function(value) self:Steps()[self:SelectedStep()] = value end,
+                context, self:StepGroup() and ("route/parallelSteps/" .. self:StepGroup() .. "/steps/" .. self:SelectedStep()) or "step", T("Step"))
         else
             UI.LabelWidget(panel, T("Select a step to edit it."))
         end

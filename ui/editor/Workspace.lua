@@ -83,10 +83,12 @@ end
 function Editor:FormContext()
     self.formModes, self.formPages = self.formModes or {}, self.formPages or {}
     local session, selected, draft, panel = self.session, self.session.selected, self.session.draft, self.routeForm or self.inspector
+    local parallelGroup, parallelSelected = session.parallelGroup, session.parallelSelected
     local token = {}
     self.formToken = token
     return {
         route = draft,
+        hiddenFields = self.routeForm and { parallelSteps = true } or nil,
         valueAt = function(path)
             local value = path:match("^step/") and draft.steps[selected] or draft
             local first = true
@@ -110,6 +112,7 @@ function Editor:FormContext()
         end,
         isCurrent = function()
             return self.frame and self.session == session and session.selected == selected and session.draft == draft
+                and session.parallelGroup == parallelGroup and session.parallelSelected == parallelSelected
                 and self.formToken == token and (self.routeForm or self.inspector) == panel
         end,
         modes = self.formModes, pages = self.formPages,
@@ -127,6 +130,7 @@ function Editor:SelectRoute(name)
     self.session = sessions[name]
     if not self.session:IsDirty() and self.session:IsStale() then self.session:Reload() end
     self.notice, self.query, self.filter, self.page = nil, "", "all", 1
+    self.editGroupConditions = nil
     self.formModes, self.formPages = {}, {}
     self.routeDropdown:SetValue(name)
     if self.session.raw then self.tab = "lua" end
@@ -252,6 +256,10 @@ function Editor:SelectTab(tab)
             self.session.rawHistory = nil
         end
     end
+    if self.tab ~= tab and (self.tab == "parallel" or tab == "parallel") then
+        self.query, self.filter, self.page = "", "all", 1
+        self.formModes, self.formPages, self.editGroupConditions = {}, {}, nil
+    end
     self.tab = tab
     self.selectingTab = true
     self.tabs:SelectTab(tab)
@@ -278,6 +286,8 @@ function Editor:DrawTab()
         UI.Button(empty, "New route", function() self:NameDialog() end)
     elseif self.tab == "steps" then
         self:DrawSteps()
+    elseif self.tab == "parallel" then
+        self:DrawParallelSteps()
     elseif self.tab == "route" then
         self.routeForm = UI.Scroll(self.tabs)
         self:DrawInspector()
@@ -287,7 +297,7 @@ function Editor:DrawTab()
     self.tabs:DoLayout()
     self.frame:DoLayout()
     self:UpdateStatus()
-    if self.session and self.follow and not self.session:IsDirty() and
+    if self.tab ~= "parallel" and self.session and self.follow and not self.session:IsDirty() and
         self.session.selected == #self.session.draft.steps then self:ScrollToLatest() end
     AprRC.TutoFrame:RefreshPointer()
 end
@@ -331,6 +341,7 @@ function Editor:RequestRefresh()
 end
 
 function Editor:ScrollToLatest()
+    if self.tab == "parallel" then return end
     if self.list then self.list:SetScroll(1000) end
     local box = self.luaBox
     if not box then return end
@@ -365,14 +376,14 @@ function Editor:Refresh(forceFollow)
         local luaFocus = self.luaBox and self.luaBox.editBox:HasFocus()
         session:Reload()
         session.rawHistory = nil
-        if following then
+        if following and self.tab ~= "parallel" then
             session.selected = math.max(1, #session.draft.steps)
             self.query, self.filter = "", "all"
             self.page = math.max(1, math.ceil(#session.draft.steps / UI.PageSize))
             self.formModes, self.formPages = {}, {}
         end
         self:DrawTab()
-        if not following and self.list then self.list:SetScroll(listScroll) end
+        if (not following or self.tab == "parallel") and self.list then self.list:SetScroll(listScroll) end
         if self.luaBox then
             if luaFocus then self.luaBox.editBox:SetFocus() end
             if following then self:ScrollToLatest()
@@ -463,7 +474,8 @@ function Editor:Show()
     self.tabs:SetLayout("APRFill")
     self.tabs:SetAutoAdjustHeight(false)
     self.tabs:SetUserData("body", true)
-    self.tabs:SetTabs({ { value = "steps", text = T("Steps") }, { value = "route", text = T("Route") },
+    self.tabs:SetTabs({ { value = "steps", text = T("Steps") },
+        { value = "parallel", text = UI.Label("parallelSteps") }, { value = "route", text = T("Route") },
         { value = "lua", text = T("Lua editor") }, { value = "commands", text = T("Commands") },
         { value = "tools", text = T("Tools") } })
     self.tabs:SetCallback("OnGroupSelected", function(_, _, tab) if not self.selectingTab then self:SelectTab(tab) end end)
