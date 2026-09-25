@@ -29,14 +29,124 @@ S.learnSkill = object({ spellID = "id", spellIDs = "ids", allAvailable = "bool",
 S.tameBeast = object({ npcID = "id", spellID = "id", text = "text" }, { "npcID" })
 S.spellETA = object({ spellID = "id", itemID = "id", seconds = "positive" }, { "seconds" })
 S.operator = { kind = "enum", values = { "<", "<=", ">", ">=", "==", "~=" } }
+-- Labels are localized by the client; only the numeric value is stored in routes.
+S.equipmentSlot = { kind = "enum", values = {
+    { value = 1, label = INVTYPE_HEAD or "Head" },
+    { value = 2, label = INVTYPE_NECK or "Neck" },
+    { value = 3, label = INVTYPE_SHOULDER or "Shoulder" },
+    { value = 4, label = INVTYPE_BODY or "Shirt" },
+    { value = 5, label = INVTYPE_CHEST or "Chest" },
+    { value = 6, label = INVTYPE_WAIST or "Waist" },
+    { value = 7, label = INVTYPE_LEGS or "Legs" },
+    { value = 8, label = INVTYPE_FEET or "Feet" },
+    { value = 9, label = INVTYPE_WRIST or "Wrist" },
+    { value = 10, label = INVTYPE_HAND or "Hands" },
+    { value = 11, label = (INVTYPE_FINGER or "Finger") .. " 1" },
+    { value = 12, label = (INVTYPE_FINGER or "Finger") .. " 2" },
+    { value = 13, label = (INVTYPE_TRINKET or "Trinket") .. " 1" },
+    { value = 14, label = (INVTYPE_TRINKET or "Trinket") .. " 2" },
+    { value = 15, label = INVTYPE_CLOAK or "Back" },
+    { value = 16, label = INVTYPE_WEAPONMAINHAND or "Main Hand" },
+    { value = 17, label = INVTYPE_WEAPONOFFHAND or "Off Hand" },
+    { value = 18, label = INVTYPE_RANGED or "Ranged" },
+    { value = 19, label = INVTYPE_TABARD or "Tabard" },
+} }
+
+S.equipmentStat = { kind = "enum", values = {
+    { value = "QUALITY", label = ITEM_QUALITY or QUALITY or "Item quality" },
+    { value = "LEVEL", label = STAT_AVERAGE_ITEM_LEVEL or "Item level" },
+} }
+-- Keep common stats available across clients, with readable fallbacks when a
+-- particular expansion does not define their localized global strings.
+local itemStats = {
+    ITEM_MOD_DAMAGE_PER_SECOND_SHORT = "Damage per second",
+    ITEM_MOD_STRENGTH_SHORT = "Strength",
+    ITEM_MOD_AGILITY_SHORT = "Agility",
+    ITEM_MOD_STAMINA_SHORT = "Stamina",
+    ITEM_MOD_INTELLECT_SHORT = "Intellect",
+    ITEM_MOD_SPIRIT_SHORT = "Spirit",
+    ITEM_MOD_HEALTH_SHORT = "Health",
+    ITEM_MOD_MANA_SHORT = "Mana",
+    ITEM_MOD_CRIT_RATING_SHORT = "Critical strike",
+    ITEM_MOD_HASTE_RATING_SHORT = "Haste",
+    ITEM_MOD_MASTERY_RATING_SHORT = "Mastery",
+    ITEM_MOD_VERSATILITY = "Versatility",
+    ITEM_MOD_LIFESTEAL_SHORT = "Leech",
+    ITEM_MOD_SPEED_SHORT = "Speed",
+    ITEM_MOD_AVOIDANCE_SHORT = "Avoidance",
+    ITEM_MOD_ATTACK_POWER_SHORT = "Attack power",
+    ITEM_MOD_RANGED_ATTACK_POWER_SHORT = "Ranged attack power",
+    ITEM_MOD_FERAL_ATTACK_POWER_SHORT = "Feral attack power",
+    ITEM_MOD_SPELL_POWER_SHORT = "Spell power",
+    ITEM_MOD_SPELL_DAMAGE_DONE_SHORT = "Spell damage",
+    ITEM_MOD_SPELL_HEALING_DONE_SHORT = "Spell healing",
+    ITEM_MOD_SPELL_DAMAGE_DONE = "Spell damage",
+    ITEM_MOD_SPELL_HEALING_DONE = "Spell healing",
+    ITEM_MOD_SPELL_POWER = "Spell power",
+    ITEM_MOD_SPELL_PENETRATION_SHORT = "Spell penetration",
+    ITEM_MOD_HEALTH_REGEN_SHORT = "Health regeneration",
+    ITEM_MOD_POWER_REGEN0_SHORT = "Mana regeneration",
+    ITEM_MOD_HIT_RATING_SHORT = "Hit rating",
+    ITEM_MOD_HIT_MELEE_RATING_SHORT = "Melee hit rating",
+    ITEM_MOD_HIT_RANGED_RATING_SHORT = "Ranged hit rating",
+    ITEM_MOD_HIT_SPELL_RATING_SHORT = "Spell hit rating",
+    ITEM_MOD_CRIT_MELEE_RATING_SHORT = "Melee critical strike",
+    ITEM_MOD_CRIT_RANGED_RATING_SHORT = "Ranged critical strike",
+    ITEM_MOD_CRIT_SPELL_RATING_SHORT = "Spell critical strike",
+    ITEM_MOD_HASTE_MELEE_RATING_SHORT = "Melee haste",
+    ITEM_MOD_HASTE_RANGED_RATING_SHORT = "Ranged haste",
+    ITEM_MOD_HASTE_SPELL_RATING_SHORT = "Spell haste",
+    ITEM_MOD_EXPERTISE_RATING_SHORT = "Expertise",
+    ITEM_MOD_ARMOR_PENETRATION_RATING_SHORT = "Armor penetration",
+    ITEM_MOD_DEFENSE_SKILL_RATING_SHORT = "Defense rating",
+    ITEM_MOD_DODGE_RATING_SHORT = "Dodge",
+    ITEM_MOD_PARRY_RATING_SHORT = "Parry",
+    ITEM_MOD_BLOCK_RATING_SHORT = "Block rating",
+    ITEM_MOD_BLOCK_VALUE_SHORT = "Block value",
+    ITEM_MOD_RESILIENCE_RATING_SHORT = "Resilience",
+    ITEM_MOD_PVP_POWER_SHORT = "PvP power",
+    RESISTANCE0_NAME = "Armor",
+    RESISTANCE1_NAME = "Holy resistance",
+    RESISTANCE2_NAME = "Fire resistance",
+    RESISTANCE3_NAME = "Nature resistance",
+    RESISTANCE4_NAME = "Frost resistance",
+    RESISTANCE5_NAME = "Shadow resistance",
+    RESISTANCE6_NAME = "Arcane resistance",
+}
+-- Include additional client stat and socket tokens, even when the character's
+-- currently equipped items do not have them.
+for token, label in pairs(_G) do
+    if type(token) == "string" and type(label) == "string" and
+        (token:match("^ITEM_MOD_.+_SHORT$") or token:match("^EMPTY_SOCKET_.+$")) then
+        itemStats[token] = label
+    end
+end
+local statTokens = {}
+for token in pairs(itemStats) do statTokens[#statTokens + 1] = token end
+table.sort(statTokens)
+for _, token in ipairs(statTokens) do
+    -- The Classic globals without _SHORT are tooltip templates, not labels.
+    local labelToken = token == "ITEM_MOD_SPELL_DAMAGE_DONE" and "ITEM_MOD_SPELL_DAMAGE_DONE_SHORT" or
+        token == "ITEM_MOD_SPELL_HEALING_DONE" and "ITEM_MOD_SPELL_HEALING_DONE_SHORT" or
+        token == "ITEM_MOD_SPELL_POWER" and "ITEM_MOD_SPELL_POWER_SHORT" or token
+    local label = _G[labelToken] or itemStats[token]
+    if labelToken ~= token then label = label .. " (Classic)" end
+    S.equipmentStat.values[#S.equipmentStat.values + 1] = { value = token, label = label }
+end
+
+function options:EnumValue(candidate)
+    if type(candidate) == "table" then return candidate.value end
+    return candidate
+end
+
 S.money = object({ operator = S.operator, copper = "nonnegative" }, { "copper" })
 S.itemCount = object({ itemID = "id", itemIDs = "ids", operator = S.operator, count = "nonnegative",
     includeBank = "bool", includeUsableToys = "bool" }, { "count" })
-S.equippedItemStat = object({ slot = "id", stat = "text", operator = S.operator, value = "number",
+S.equippedItemStat = object({ slot = S.equipmentSlot, stat = S.equipmentStat, operator = S.operator, value = "number",
     precision = "nonnegative", allowMissing = "bool" }, { "slot", "stat", "value" })
 S.skill = object({ skill = { kind = "union", choices = { "id", "text" } }, skillID = "id", name = "text",
     rank = "nonnegative", operator = S.operator, maximum = "bool" })
-S.equippedItem = object({ slot = "id", itemID = "id", invert = "bool" }, { "slot" })
+S.equippedItem = object({ slot = S.equipmentSlot, itemID = "id", invert = "bool" }, { "slot" })
 S.collection = object({ itemID = "id", quantity = "id" }, { "itemID" })
 S.absoluteXP = object({ level = "id", xp = "integer" }, { "level", "xp" })
 S.level = { kind = "union", choices = { "positive", "profile", S.absoluteXP } }
@@ -112,7 +222,7 @@ function options:ValidateValue(schema, value, path, depth, previous)
         end
     elseif kind == "enum" then
         local values = schema.values or APR[schema.group] or {}
-        for _, candidate in pairs(values) do if candidate == value then return true end end
+        for _, candidate in pairs(values) do if self:EnumValue(candidate) == value then return true end end
         return fail(L["unknown enum value"])
     elseif kind == "idOrIds" and type(value) == "number" then
         return child("id", value, "id")

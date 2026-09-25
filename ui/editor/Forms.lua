@@ -49,6 +49,10 @@ function UI.Dropdown(parent, label, entries, value, callback)
 end
 
 local function kind(schema) return type(schema) == "table" and schema.kind or schema end
+local function enumLabel(key, candidate)
+    if type(candidate) == "table" then return candidate.label end
+    return type(key) == "string" and UI.Label(key) or tostring(candidate)
+end
 local function keys(data)
     local result = {}
     for key in pairs(data or {}) do result[#result + 1] = key end
@@ -96,16 +100,12 @@ function Form:MultiChoices(schema, path, single)
         end
         if valueKind ~= "enum" then return false end
         for key, candidate in pairs(current.values or APR[current.group] or {}) do
-            entries[candidate] = type(key) == "string" and UI.Label(key) or tostring(candidate)
+            entries[R:EnumValue(candidate)] = enumLabel(key, candidate)
         end
         return true
     end
     if schema == "ids" and path:match("/equippedSlots$") then
-        local slots = { "HEAD", "NECK", "SHOULDER", "BODY", "CHEST", "WAIST", "LEGS", "FEET", "WRIST", "HAND",
-            "FINGER", "FINGER", "TRINKET", "TRINKET", "CLOAK", "WEAPONMAINHAND", "WEAPONOFFHAND", "RANGED", "TABARD" }
-        for index, slot in ipairs(slots) do
-            entries[index] = index .. " - " .. (_G["INVTYPE_" .. slot] or slot)
-        end
+        collect(R.schemas.equipmentSlot)
         return entries, aliases
     end
     if not collect(schema) or (not multiple and not single) then return end
@@ -280,7 +280,7 @@ function Form:Default(schema)
     if valueKind == "enum" then
         local values = schema.values or APR[schema.group] or {}
         local first = keys(values)[1]
-        return first and values[first]
+        if first ~= nil then return R:EnumValue(values[first]) end
     end
     if valueKind == "object" then
         local result = {}
@@ -425,9 +425,9 @@ function Form:Render(parent, schema, value, set, context, path, label)
         local entries, actual, selected = {}, {}, nil
         for index, key in ipairs(keys(values)) do
             local candidate = valueKind == "profile" and key or values[key]
-            actual[index] = candidate
-            entries[index] = type(key) == "string" and UI.Label(key) or tostring(candidate)
-            if candidate == value then selected = index end
+            actual[index] = R:EnumValue(candidate)
+            entries[index] = enumLabel(key, candidate)
+            if actual[index] == value then selected = index end
         end
         UI.Dropdown(parent, label, entries, selected, function(index) changed(actual[index]) end)
     elseif valueKind == "object" or valueKind == "step" or valueKind == "route" or valueKind == "conditions" or valueKind == "routeConditions" then
