@@ -310,10 +310,33 @@ function Editor:DrawInspector()
     local session = self.session
     local context = self:FormContext()
     if self.routeForm then
-        UI.LabelWidget(panel, gold .. T("Route") .. "|r", true)
-        UI.LabelWidget(panel, muted .. session.name .. "|r")
-        UI.Form:Render(panel, "route", session.draft, function(value) session.draft = value end,
-            context, "route", T("Route"))
+        self.routeFormTrail = self.routeFormTrail or {}
+        local nodes = UI.Form:RouteNodes(session.draft, self.routeFormTrail, function(value) session.draft = value end)
+        local node = nodes[#nodes]
+        local function navigate()
+            GUI:ClearFocus()
+            if self.fieldPicker then self.fieldPicker:Hide() end
+            self:DrawInspector()
+            panel:SetScroll(0)
+        end
+        context.navigate = function(key)
+            self.routeFormTrail[#self.routeFormTrail + 1] = key
+            navigate()
+        end
+        if #nodes > 1 then
+            local toolbar = UI.Group(panel)
+            UI.Button(toolbar, "Route overview", function() self.routeFormTrail = {}; navigate() end, 190)
+            UI.IconButton(toolbar, "previous", "Previous", function()
+                table.remove(self.routeFormTrail); navigate()
+            end)
+            local breadcrumbs = {}
+            for index = math.max(1, #nodes - 3), #nodes do breadcrumbs[#breadcrumbs + 1] = nodes[index].label end
+            UI.LabelWidget(panel, muted .. table.concat(breadcrumbs, " > ") .. "|r")
+        else
+            UI.LabelWidget(panel, muted .. session.name .. "|r")
+        end
+        UI.LabelWidget(panel, gold .. node.label .. "|r", true)
+        UI.Form:Render(panel, node.schema, node.value, node.set, context, node.path, node.label)
     else
         local step = not self.editGroupConditions and self:Steps()[self:SelectedStep()]
         self.moveUp:SetDisabled(not step or self:SelectedStep() == 1 or step.RouteCompleted)

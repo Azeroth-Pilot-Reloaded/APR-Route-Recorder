@@ -35,6 +35,20 @@ race and equipped-slot lists use checkbox dropdowns that stay open while choosin
 multiple values. Existing scalar/list values and class tokens are preserved until
 edited. Route conditions also accept class and race lists, as APR does.
 
+The **Route** tab shows compact metadata and clickable summaries for conditions,
+next routes, presets and scenarios. Open a summary to edit that block at full
+width. The breadcrumb, back arrow and **Route overview** button replace nested
+frames, including deeply nested **AnyOf**, **AllOf** and **Not** conditions; their
+logical structure is preserved.
+
+Equivalent data formats share one form: text/list fields use one entry per line,
+class/race selections write lists, and next routes always show a route name and
+conditions. Numeric presets use the same index/conditions form as conditional
+presets. XP consumables use one dropdown containing **Disabled** and the available
+profiles. Opening these forms preserves legacy values; editing writes the unified
+representation. Level requirements retain meaningful choices (number, profile,
+level + XP), without numbered format labels.
+
 The **Parallel steps** tab selects a parallel group and uses the same step list,
 search, filters, pagination and inspector as **Steps**. Add, duplicate, reorder or
 delete groups from the top toolbar; **Group conditions** edits when that group's

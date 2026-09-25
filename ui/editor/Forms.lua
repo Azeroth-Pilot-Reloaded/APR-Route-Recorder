@@ -59,9 +59,33 @@ local function keys(data)
     return result
 end
 
+-- Pick one editing representation. Opening a form never rewrites stored data;
+-- an edit writes the displayed list/object through the original setter.
+function Form:Unified(schema, value)
+    if schema == "level" then schema = R.schemas.level end
+    if kind(schema) ~= "union" then return schema, value end
+    local scalar, objectSchema, strings
+    for _, choice in ipairs(schema.choices) do
+        if kind(choice) == "strings" then strings = choice end
+        if kind(choice) == "object" then objectSchema = choice end
+        if choice == "text" or choice == "id" then scalar = choice end
+    end
+    if scalar == "text" and strings then
+        return strings, type(value) == "table" and value or (value ~= nil and { value } or {})
+    end
+    local field = objectSchema and (scalar == "text" and "route" or scalar == "id" and "index")
+    if field and objectSchema.fields[field] then
+        if type(value) == "table" then return objectSchema, value end
+        local object = self:Default(objectSchema)
+        if value ~= nil then object[field] = value end
+        return objectSchema, object
+    end
+    return schema, value
+end
+
 -- Recognize finite lists (including scalar-or-list unions) without exposing
 -- serialization choices such as numeric class IDs versus class tokens.
-function Form:MultiChoices(schema, path)
+function Form:MultiChoices(schema, path, single)
     local entries, aliases, multiple = {}, {}, false
     local function collect(current)
         local valueKind = kind(current)
@@ -84,8 +108,8 @@ function Form:MultiChoices(schema, path)
         end
         return entries, aliases
     end
-    if not collect(schema) or not multiple then return end
-    if schema == R.schemas.class then
+    if not collect(schema) or (not multiple and not single) then return end
+    if schema == R.schemas.class or schema == R.schemas.classValue then
         for name, id in pairs(APR.Classes or {}) do
             local token = name:gsub("%s", ""):upper()
             if entries[token] and entries[id] then
@@ -98,11 +122,75 @@ function Form:MultiChoices(schema, path)
 end
 
 function Form:IsCompact(schema, path)
+    schema = self:Unified(schema)
     local valueKind = kind(schema)
+    if schema == R.schemas.xp or (valueKind == "union" and self:MultiChoices(schema, path, true)) then return true end
+    if valueKind == "union" and schema.choices[1] == "id" and schema.choices[2] == "text" then return true end
     return self:MultiChoices(schema, path) ~= nil or
         (valueKind ~= "object" and valueKind ~= "map" and valueKind ~= "list" and valueKind ~= "steps" and
             valueKind ~= "union" and valueKind ~= "step" and valueKind ~= "route" and
             valueKind ~= "conditions" and valueKind ~= "routeConditions" and valueKind ~= "level")
+end
+
+function Form:EntryLabel(schema, value, key)
+    local view, data = self:Unified(schema, value)
+    if kind(view) == "conditions" then return T("Condition group") .. " " .. tostring(key) end
+    if type(data) == "table" then
+        if data.route and data.route ~= "" then return data.route end
+        if data.label and data.label ~= "" then return data.label end
+    end
+    return type(key) == "number" and (T("Entry") .. " " .. key) or UI.Label(key)
+end
+
+function Form:Summary(schema, value)
+    schema, value = self:Unified(schema, value)
+    if type(value) ~= "table" then return tostring(value) end
+    local valueKind = kind(schema)
+    if valueKind == "list" or valueKind == "steps" or valueKind == "map" then
+        return #keys(value) .. " " .. T("Entries")
+    end
+    if value.route then return self:Summary("conditions", value.conditions or {}) end
+    local labels = {}
+    for _, key in ipairs(keys(value)) do
+        if #labels == 3 then labels[#labels + 1] = "..."; break end
+        labels[#labels + 1] = UI.Label(key)
+    end
+    return #labels > 0 and table.concat(labels, ", ") or T("No conditions")
+end
+
+function Form:NavigationRow(parent, schema, value, context, key, label, remove)
+    local group = UI.Group(parent)
+    group:SetLayout("APRField")
+    local body = UI.Group(group)
+    local button = UI.Button(body, label .. " · " .. self:Summary(schema, value), function() context.navigate(key) end)
+    button:SetFullWidth(true)
+    button:SetHeight(30)
+    button:SetUserData("navigateKey", key)
+    if remove then UI.IconButton(group, "trash", "Remove", remove) end
+end
+
+-- Resolve navigation from the current draft on every redraw, including Undo,
+-- reload and Lua imports. No stored setter may point at an obsolete draft.
+function Form:RouteNodes(route, trail, set)
+    local nodes = { { schema = "route", value = route, set = set, path = "route", label = T("Route") } }
+    for _, key in ipairs(trail) do
+        local parent = nodes[#nodes]
+        local schema, value = self:Unified(parent.schema, parent.value)
+        local valueKind, childSchema = kind(schema)
+        if type(value) ~= "table" or value[key] == nil then break end
+        if valueKind == "list" or valueKind == "map" then childSchema = schema.entry
+        elseif valueKind == "steps" then childSchema = "step"
+        elseif valueKind == "object" or valueKind == "conditions" or valueKind == "routeConditions" or
+            valueKind == "route" or valueKind == "step" then childSchema = self:Fields(schema, value)[key] end
+        if not childSchema then break end
+        local collection = valueKind == "list" or valueKind == "map" or valueKind == "steps"
+        nodes[#nodes + 1] = { schema = childSchema, value = value[key],
+            set = function(entry) value[key] = entry; parent.set(value) end,
+            path = parent.path .. "/" .. key,
+            label = collection and self:EntryLabel(childSchema, value[key], key) or UI.Label(key) }
+    end
+    for index = #trail, #nodes, -1 do trail[index] = nil end
+    return nodes
 end
 
 function Form:Position(parent, value, set, context, path, step)
@@ -157,6 +245,13 @@ end
 
 function Form:Default(schema)
     if schema == "level" then schema = R.schemas.level end
+    local unified, default = self:Unified(schema)
+    if unified ~= schema then return default end
+    local choices = self:MultiChoices(schema, "root")
+    if choices then
+        local first = keys(choices)[1]
+        return first ~= nil and { first } or {}
+    end
     local valueKind = kind(schema)
     if valueKind == "bool" then return true end
     if valueKind == "union" then return self:Default(schema.choices[1]) end
@@ -213,7 +308,7 @@ end
 -- A schema-driven form edits values, never Lua source. Structural changes rebuild
 -- the form; typing only updates the detached draft and leaves keyboard focus alone.
 function Form:Render(parent, schema, value, set, context, path, label)
-    if schema == "level" then schema = R.schemas.level end
+    schema, value = self:Unified(schema, value)
     path = path or "root"
     local valueKind = kind(schema)
     local function changed(newValue, rebuild)
@@ -254,9 +349,18 @@ function Form:Render(parent, schema, value, set, context, path, label)
             selected[entry] = checked and (selected[entry] or entry) or nil
             local result = {}
             for _, key in ipairs(keys(selected)) do result[#result + 1] = selected[key] end
-            if not originalList and #result == 1 and R:ValidateValue(schema, result[1]) then result = result[1] end
             changeWithValidation(result)
         end)
+    elseif schema == R.schemas.xp then
+        local entries = { [false] = T("Disabled") }
+        for name in pairs(APR.LevelRequirementProfiles or {}) do entries[name] = name end
+        UI.Dropdown(parent, label, entries, value, function(entry) changed(entry) end)
+    elseif valueKind == "union" and self:MultiChoices(schema, path, true) then
+        local entries, aliases = self:MultiChoices(schema, path, true)
+        UI.Dropdown(parent, label, entries, aliases[value] or value, function(entry) changed(entry) end)
+    elseif valueKind == "union" and schema.choices[1] == "id" and schema.choices[2] == "text" then
+        self:Render(parent, "text", tostring(value or ""), function(entry) set(tonumber(entry) or entry) end,
+            context, path, label)
     elseif valueKind == "union" then
         local selected = context.modes[path]
         if not selected then
@@ -270,9 +374,9 @@ function Form:Render(parent, schema, value, set, context, path, label)
             local names = { text = "Text", strings = "List", list = "List", enum = "Choice", profile = "Level profile",
                 positive = "Number", id = "Number", object = "Fields" }
             if choice == R.schemas.absoluteXP then names.object = "Level + XP" end
-            entries[index] = T(names[kind(choice)] or "Value") .. " " .. index
+            entries[index] = T(names[kind(choice)] or "Value")
         end
-        UI.Dropdown(parent, label .. " — " .. T("Format"), entries, selected, function(index)
+        UI.Dropdown(parent, T("Requirement type"), entries, selected, function(index)
             context.modes[path] = index
             changed(self:Default(schema.choices[index]), true)
         end)
@@ -326,14 +430,17 @@ function Form:Render(parent, schema, value, set, context, path, label)
                 self:Position(parent, value, set, context, path, true)
             elseif not (position and key == "Zone") and (value[key] ~= nil or required[key]) then
                 local fieldPath = path .. "/" .. key
-                local group = UI.Group(parent, not self:IsCompact(fields[key], fieldPath) and UI.Label(key) or nil)
-                group:SetLayout("APRField")
-                local body = UI.Group(group)
                 local fieldSchema = fields[key]
-                self:Render(body, fieldSchema, value[key], function(entry) value[key] = entry; set(value) end,
-                    context, path .. "/" .. key, UI.Label(key))
-                if not required[key] then
-                    self:RemoveButton(group, body, function() value[key] = nil; changed(value, true) end)
+                local function remove() value[key] = nil; changed(value, true) end
+                if context.navigate and not self:IsCompact(fieldSchema, fieldPath) then
+                    self:NavigationRow(parent, fieldSchema, value[key], context, key, UI.Label(key), not required[key] and remove)
+                else
+                    local group = UI.Group(parent, not self:IsCompact(fieldSchema, fieldPath) and UI.Label(key) or nil)
+                    group:SetLayout("APRField")
+                    local body = UI.Group(group)
+                    self:Render(body, fieldSchema, value[key], function(entry) value[key] = entry; set(value) end,
+                        context, fieldPath, UI.Label(key))
+                    if not required[key] then self:RemoveButton(group, body, remove) end
                 end
             end
         end
@@ -365,24 +472,31 @@ function Form:Render(parent, schema, value, set, context, path, label)
         end
         for position = (page - 1) * 10 + 1, math.min(page * 10, #entries) do
             local key = entries[position]
-            local group = UI.Group(parent, (valueKind == "map" and "#" or T("Entry") .. " ") .. tostring(key))
-            group:SetLayout("APRField")
-            local body = UI.Group(group)
-            if valueKind == "map" and kind(schema.key) ~= "enum" then
-                local keyPath = schema.key == "id" and (path .. "/questID") or (path .. "/key")
-                UI.Pickers:AddButton(body, schema.key, keyPath, context, function(newKey)
-                    if newKey == key then return end
-                    if value[newKey] ~= nil then context.error(T("This key already exists.")); return end
-                    value[newKey], value[key] = value[key], nil
-                    changed(value, true)
-                end)
-            end
-            self:Render(body, valueKind == "steps" and "step" or schema.entry, value[key],
-                function(entry) value[key] = entry; set(value) end, context, path .. "/" .. key, T("Value"))
-            self:RemoveButton(group, body, function()
+            local entrySchema = valueKind == "steps" and "step" or schema.entry
+            local function remove()
                 if valueKind == "map" then value[key] = nil else table.remove(value, key) end
                 changed(value, true)
-            end)
+            end
+            if context.navigate and not self:IsCompact(entrySchema, path .. "/" .. key) then
+                self:NavigationRow(parent, entrySchema, value[key], context, key,
+                    self:EntryLabel(entrySchema, value[key], key), remove)
+            else
+                local group = UI.Group(parent, (valueKind == "map" and "#" or T("Entry") .. " ") .. tostring(key))
+                group:SetLayout("APRField")
+                local body = UI.Group(group)
+                if valueKind == "map" and kind(schema.key) ~= "enum" then
+                    local keyPath = schema.key == "id" and (path .. "/questID") or (path .. "/key")
+                    UI.Pickers:AddButton(body, schema.key, keyPath, context, function(newKey)
+                        if newKey == key then return end
+                        if value[newKey] ~= nil then context.error(T("This key already exists.")); return end
+                        value[newKey], value[key] = value[key], nil
+                        changed(value, true)
+                    end)
+                end
+                self:Render(body, valueKind == "steps" and "step" or schema.entry, value[key],
+                    function(entry) value[key] = entry; set(value) end, context, path .. "/" .. key, T("Value"))
+                self:RemoveButton(group, body, remove)
+            end
         end
         if valueKind == "map" then
             local getKey
@@ -391,7 +505,7 @@ function Form:Render(parent, schema, value, set, context, path, label)
                 for name, entry in pairs(schema.key.values or APR[schema.key.group] or {}) do
                     choices[entry] = UI.Label(name)
                 end
-                UI.Dropdown(parent, T("Choice"), choices, nil, function(entry) selected = entry end)
+                UI.Dropdown(parent, label, choices, nil, function(entry) selected = entry end)
                 getKey = function() return selected end
             else
                 local entryKey = AprRC:CreateWidget("EditBox")
@@ -432,9 +546,9 @@ function Form:Render(parent, schema, value, set, context, path, label)
         end
         widget:SetFullWidth(true)
         widget:DisableButton(true)
-        if multiline then widget:SetNumLines(4) end
+        if multiline then widget:SetNumLines(valueKind == "strings" and 2 or 4) end
         local suffix = valueKind == "ids" or valueKind == "idOrIds"
-        widget:SetLabel(valueKind == "strings" and T("One entry per line") or label)
+        widget:SetLabel(label)
         widget:SetUserData("fieldPath", path)
         local text = value
         if type(value) == "table" then
@@ -452,7 +566,6 @@ function Form:Render(parent, schema, value, set, context, path, label)
                 for entry in input:gmatch(valueKind == "strings" and "[^\r\n]+" or "[^,]+") do
                     result[#result + 1] = suffix and (tonumber(strtrim(entry)) or strtrim(entry)) or entry
                 end
-                if valueKind == "idOrIds" and #result == 1 then result = result[1] end
             elseif valueKind ~= "text" and valueKind ~= "objectiveKey" then
                 result = tonumber(input) or input
             end
@@ -463,7 +576,6 @@ function Form:Render(parent, schema, value, set, context, path, label)
                 local entries = type(value) == "table" and AprRC:CopyData(value) or
                     (type(value) == "number" and { value } or {})
                 if not tContains(entries, selected) then entries[#entries + 1] = selected end
-                if valueKind == "idOrIds" and #entries == 1 then entries = entries[1] end
                 changed(entries, true)
             else
                 changed(selected, true)

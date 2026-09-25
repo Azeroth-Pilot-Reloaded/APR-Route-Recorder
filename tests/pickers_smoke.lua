@@ -94,15 +94,15 @@ assert(E.session.draft.steps[1].Qpart[42][2] == 2, "Objectives must use their in
 selectFirst(clickPath("step/SpellButton/42-1"))
 assert(E.session.draft.steps[1].SpellButton["42-1"] == 601)
 
-frame = clickPath("step/Note/variant")
+frame = clickPath("step/Note")
 input(frame, "TEST_TRANSLATION_KEY"); selectFirst(frame)
-assert(E.session.draft.steps[1].Note == "TEST_TRANSLATION_KEY")
+assert(E.session.draft.steps[1].Note[1] == "Original" and E.session.draft.steps[1].Note[2] == "TEST_TRANSLATION_KEY")
 frame = clickPath("step/ExtraLineText")
 input(frame, "CUSTOM_KEY"); selectFirst(frame)
 assert(E.session.draft.steps[1].ExtraLineText == "CUSTOM_KEY")
-frame = clickPath("step/Note/variant")
+frame = clickPath("step/Note")
 input(frame, "New localized instruction"); confirm(frame)
-local generated = E.session.draft.steps[1].Note
+local generated = E.session.draft.steps[1].Note[3]
 assert(AprRCData.ExtraLineTexts[generated] == "New localized instruction")
 
 -- Clear a selected key immediately when typing, even before the debounce fires.

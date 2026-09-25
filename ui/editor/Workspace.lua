@@ -131,6 +131,7 @@ function Editor:SelectRoute(name)
     if not self.session:IsDirty() and self.session:IsStale() then self.session:Reload() end
     self.notice, self.query, self.filter, self.page = nil, "", "all", 1
     self.editGroupConditions = nil
+    self.routeFormTrail = {}
     self.formModes, self.formPages = {}, {}
     self.routeDropdown:SetValue(name)
     if self.session.raw then self.tab = "lua" end
