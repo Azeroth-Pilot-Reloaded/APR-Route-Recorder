@@ -291,11 +291,8 @@ function Editor:DrawList()
             if self.compact then self:ShowStepPane("inspector") end
         end)
         row:SetCallback("OnEnter", function()
-            GameTooltip:SetOwner(row.frame, "ANCHOR_RIGHT")
-            AprRC:AddTooltipLine(GameTooltip, index .. ". " .. UI.Label(key), 1, 0.82, 0.4)
-            if rawDetail ~= "" then AprRC:AddTooltipLine(GameTooltip, rawDetail, 1, 1, 1, true) end
-            AprRC:AddTooltipLine(GameTooltip, table.concat(metadata, "\n"), 0.7, 0.7, 0.7, true)
-            GameTooltip:Show()
+            UI.ShowStepTooltip(row, index .. ". " .. UI.Label(key), rawDetail, table.concat(metadata, "\n"),
+                step, group and group.conditions)
         end)
         self.list:AddChild(row)
     end

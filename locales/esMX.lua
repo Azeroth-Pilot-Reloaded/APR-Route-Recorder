@@ -1,5 +1,6 @@
 local L = LibStub("AceLocale-3.0"):NewLocale("APR-Recorder", "esMX")
 if not L then return end
+L["Ctrl: condition details"] = "Ctrl: detalles de las condiciones"
 
 -- Route deletion
 L["Delete route"] = "Eliminar ruta"

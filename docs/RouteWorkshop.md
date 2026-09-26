@@ -45,6 +45,11 @@ exclusion. Hovering an icon shows its condition paths, preserving the distinctio
 between AnyOf, AllOf and Not. Repeated filters share an icon; when space is limited,
 a **+N** counter exposes the remaining filters on hover without increasing row height.
 
+Hold **Ctrl** over a step to expand its tooltip with all condition values. The
+details update immediately on press and release, preserving nested AnyOf, AllOf
+and Not branches and separating inherited parallel-group conditions. Sections use
+Diogenator's cyan headings, blue labels, white values and thin blue-gray divider.
+
 The inspector places single-line values and their search/remove buttons on the
 same row, without repeating the field title in a surrounding frame. Position
 combines **X**, **Y** and **map ID** on one line; its remove button clears both

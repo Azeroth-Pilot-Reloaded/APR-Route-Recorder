@@ -484,6 +484,7 @@ GUI:RegisterWidgetType("APRStepRow", function()
     end
     function widget:OnRelease()
         self:SetConditionBadges({})
+        UI.HideStepTooltip(self)
         GameTooltip:Hide()
     end
     function widget:SetStep(index, heading, description, metadata, texture, selected, color)
@@ -500,6 +501,7 @@ GUI:RegisterWidgetType("APRStepRow", function()
     end
     frame:SetScript("OnClick", function() widget:Fire("OnClick") end)
     frame:SetScript("OnEnter", function() widget:Fire("OnEnter") end)
-    frame:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    frame:SetScript("OnLeave", function() UI.HideStepTooltip(widget); GameTooltip:Hide() end)
+    frame:SetScript("OnHide", function() UI.HideStepTooltip(widget) end)
     return GUI:RegisterAsWidget(widget)
-end, 3)
+end, 4)

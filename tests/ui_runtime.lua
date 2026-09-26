@@ -168,7 +168,22 @@ function Native:AddLine(text)
     region:SetText(text)
 end
 function Native:NumLines() return self.numLines or 0 end
-function Native:ClearLines() self.numLines = 0; event(self, "OnTooltipCleared") end
+function Native:AddDoubleLine(left, right, ...)
+    self:AddLine(left)
+    local name = self.name .. "TextRight" .. self.numLines
+    local region = _G[name] or self:CreateFontString(name)
+    region:SetText(right)
+    region.tooltipColors = { ... }
+end
+function Native:SetOwner(owner) self.owner = owner end
+function Native:IsOwned(owner) return self.owner == owner end
+function Native:ClearLines()
+    for index = 1, self:NumLines() do
+        local right = _G[self.name .. "TextRight" .. index]
+        if right then right:SetText("") end
+    end
+    self.numLines = 0; event(self, "OnTooltipCleared")
+end
 function hooksecurefunc(target, method, callback)
     if type(target) == "string" then target, method, callback = _G, target, method end
     local original = target[method]

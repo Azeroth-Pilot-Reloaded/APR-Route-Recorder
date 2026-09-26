@@ -72,6 +72,7 @@ ui/editor/Widgets.lua
 ui/editor/SearchSelect.lua
 ui/editor/Pickers.lua
 ui/editor/Forms.lua
+ui/editor/StepTooltip.lua
 ui/editor/Workspace.lua
 ui/editor/Views.lua
 ui/dialogs/ExportRoute.lua

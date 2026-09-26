@@ -1,5 +1,6 @@
 local L = LibStub("AceLocale-3.0"):NewLocale("APR-Recorder", "koKR")
 if not L then return end
+L["Ctrl: condition details"] = "Ctrl: 조건 세부 정보"
 
 -- Route deletion
 L["Delete route"] = "경로 삭제"

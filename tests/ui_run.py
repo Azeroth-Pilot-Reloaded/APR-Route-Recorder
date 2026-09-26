@@ -33,7 +33,7 @@ def run():
     load("ui/dialogs/TutoFrame.lua")
     load("ui/dialogs/Autocomplete.lua")
     load("ui/dialogs/QuestObjectiveSelector.lua")
-    for name in ("Model", "Labels", "ConditionBadges", "Widgets", "SearchSelect", "Pickers", "Forms", "Workspace", "Views"):
+    for name in ("Model", "Labels", "ConditionBadges", "Widgets", "SearchSelect", "Pickers", "Forms", "StepTooltip", "Workspace", "Views"):
         load("ui/editor/" + name + ".lua")
     load("ui/dialogs/ExportRoute.lua")
     lua.execute('''
@@ -70,6 +70,7 @@ def run():
     load("tests/parallel_form_smoke.lua")
     load("tests/condition_badges_smoke.lua")
     load("tests/route_details_smoke.lua")
+    load("tests/step_tooltip_smoke.lua")
     load("ui/QuestIDDisplay.lua")
     load("tests/quest_id_smoke.lua")
 

@@ -34,6 +34,11 @@ local function identity(kind, value)
     return raceAtlases[race] or race, info and info.raceName or UI.Label(value)
 end
 
+function UI.ConditionIdentityText(field, value)
+    local _, label = identity(field == "Race" and "race" or "class", value)
+    return label
+end
+
 -- Badges indicate the presence of filters, not a flattened interpretation of
 -- AnyOf/AllOf. Tooltips retain each filter's location and any negation.
 function UI.ConditionBadges(step, groupConditions)
