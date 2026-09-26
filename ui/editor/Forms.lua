@@ -152,6 +152,12 @@ end
 function Form:Summary(schema, value)
     schema, value = self:Unified(schema, value)
     if type(value) ~= "table" then return tostring(value) end
+    for _, key in ipairs({ "Money", "LootMoney", "DestroyItems", "LearnSkill", "Skill", "ItemCount", "Collection", "EquippedItem" }) do
+        if R.step[key].schema == schema then
+            local detail = AprRC.editorModel:FieldSummary(key, value)
+            if detail and detail ~= "" then return detail end
+        end
+    end
     local valueKind = kind(schema)
     if valueKind == "list" or valueKind == "steps" or valueKind == "map" then
         return #keys(value) .. " " .. T("Entries")
@@ -174,6 +180,73 @@ function Form:NavigationRow(parent, schema, value, context, key, label, remove)
     button:SetHeight(30)
     button:SetUserData("navigateKey", key)
     if remove then UI.IconButton(group, "trash", "Remove", remove) end
+end
+
+function Form:Money(parent, value, set, context, path, schema)
+    local model = AprRC.editorModel
+    local parts = { model:MoneyParts(value) }
+    local units = { "Gold", "Silver", "Copper" }
+    local names = { GOLD or "Gold", SILVER or "Silver", COPPER or "Copper" }
+    local columns = UI.Group(parent)
+    columns:SetLayout("APRColumns")
+    local message = UI.LabelWidget(parent, "")
+    message:SetUserData("validation", true)
+    local valid, reason = R:ValidateValue(schema, value)
+    if not valid then message:SetText("|cffff8b7c" .. tostring(reason) .. "|r") end
+    for index, unit in ipairs(units) do
+        local column = UI.Group(columns)
+        local edit = AprRC:CreateWidget("EditBox")
+        edit:SetFullWidth(true)
+        edit:DisableButton(true)
+        edit:SetLabel(names[index] .. " " .. model:CoinIcon(unit))
+        edit:SetText(tostring(parts[index]))
+        edit:SetUserData("fieldPath", path .. "/" .. unit:lower())
+        column:AddChild(edit)
+        edit:SetCallback("OnTextChanged", function(_, _, input)
+            if context.isCurrent and not context.isCurrent() then return end
+            parts[index] = input == "" and 0 or tonumber(input) or input
+            local total, invalid = 0, false
+            for i, part in ipairs(parts) do
+                if type(part) ~= "number" or part < 0 or part % 1 ~= 0 then invalid = true
+                else total = total + part * ({ 10000, 100, 1 })[i] end
+            end
+            -- Keep an invalid draft unsavable, without replacing the focused input.
+            if invalid then total = table.concat(parts, " / ") end
+            set(total)
+            context.changed()
+            local ok, errorMessage = R:ValidateValue(schema, total)
+            message:SetText(ok and "" or ("|cffff8b7c" .. tostring(errorMessage) .. "|r"))
+            parent:DoLayout()
+        end)
+    end
+end
+
+-- Recording commands use the same denomination fields as the route inspector.
+function UI.MoneyDialog(definition, current, submit)
+    local frame = AprRC:CreateWidget("Frame")
+    frame:SetTitle(UI.Label(definition.key))
+    frame:SetWidth(550)
+    frame:SetHeight(430)
+    frame:SetLayout("APRWorkspace")
+    local panel = UI.Scroll(frame)
+    local value = AprRC:CopyData(current or R:Parse(definition, definition.example))
+    local alive = true
+    local context = { modes = {}, pages = {}, changed = function() end,
+        isCurrent = function() return alive end }
+    context.redraw = function()
+        panel:ReleaseChildren()
+        Form:Render(panel, definition.schema, value, function(entry) value = entry end,
+            context, "command/" .. definition.key, UI.Label(definition.key))
+        panel:DoLayout()
+    end
+    context.redraw()
+    local footer = UI.Toolbar(frame, true)
+    UI.Button(footer, "Apply", function()
+        if submit(AprRC:SerializeData(value)) then frame:Hide() end
+    end)
+    UI.Button(footer, CANCEL, function() frame:Hide() end)
+    frame:SetCallback("OnClose", function(widget) alive = false; GUI:Release(widget) end)
+    return frame
 end
 
 -- Each outer condition has a card. Nested groups use dividers within that card,
@@ -340,6 +413,10 @@ end
 function Form:Render(parent, schema, value, set, context, path, label)
     schema, value = self:Unified(schema, value)
     path = path or "root"
+    if path:match("/copper$") then
+        self:Money(parent, value, set, context, path, schema)
+        return
+    end
     local valueKind = kind(schema)
     local function changed(newValue, rebuild)
         value = newValue

@@ -5,6 +5,14 @@ local Model = AprRC.editorModel
 local Editor = AprRC:NewModule("RouteEditor", "AceTimer-3.0")
 AprRC.routeEditor = Editor
 local sessions = {}
+local itemEvents = CreateFrame("Frame")
+itemEvents:RegisterEvent("GET_ITEM_INFO_RECEIVED")
+itemEvents:SetScript("OnEvent", function(_, _, id, success)
+    if Model.pendingItemNames and Model.pendingItemNames[id] then
+        Model.pendingItemNames[id] = nil
+        if success then Editor.descriptionsDirty = true end
+    end
+end)
 
 function UI.Body(parent, layout)
     local group = AprRC:CreateWidget("SimpleGroup")
@@ -58,6 +66,7 @@ function Editor:UpdateStatus()
     self.recordButton:SetDisabled(not session or not AprRC.settings.profile.enableAddon)
     self.saveButton:SetDisabled(not session)
     self.copyButton:SetDisabled(not session)
+    self.deleteRouteButton:SetDisabled(not session)
     local rawHistory = session and session.rawHistory
     local rawMode = self.tab == "lua" and rawHistory
     self.undoButton:SetDisabled(not session or (rawMode and session.rawCursor <= 1 or not rawMode and session.cursor <= 1))
@@ -78,6 +87,10 @@ function Editor:Changed()
     self:UpdateStatus()
     -- Only rebuild the list; keep the inspector and its keyboard focus intact.
     self:DrawList()
+    if self.stepDescription then
+        local _, detail = Model:Summary(self:Steps()[self:SelectedStep()])
+        self.stepDescription:SetText(detail)
+    end
 end
 
 function Editor:FormContext()
@@ -246,6 +259,22 @@ function Editor:ImportDialog()
     picker:SetFocus()
 end
 
+function Editor:DeleteRoute()
+    local session = self.session
+    if not session then return end
+    self:Confirm(string.format(T("Delete route %s, its draft and its recorder copy in APR? This cannot be undone."), session.name), function()
+        if self.session ~= session then return end
+        if self.fieldPicker then self.fieldPicker:Hide() end
+        if not AprRC:DeleteRouteByName(session.name) then return end
+        sessions[session.name] = nil
+        self.session, self.formToken = nil, nil
+        self:RefreshRoutes()
+        local nextRoute = AprRCData.Routes[1]
+        if nextRoute then self:SelectRoute(nextRoute.name)
+        else self.routeDropdown:SetValue(nil); self:SelectTab("steps"); self:UpdateStatus() end
+    end)
+end
+
 function Editor:ToggleRecording()
     if AprRC.settings.profile.recordBarFrame.isRecording then
         AprRC.record:StopRecord()
@@ -291,7 +320,7 @@ function Editor:DrawTab()
     AprRC.TutoFrame:ClearPointer()
     self:DetachLua()
     AprRC.CommandBarSetting:CancelDrag()
-    self.list, self.inspector, self.listPanel, self.routeForm = nil, nil, nil, nil
+    self.list, self.inspector, self.listPanel, self.routeForm, self.stepDescription = nil, nil, nil, nil, nil
     self.stepsSplit = nil
     self.tabs:ReleaseChildren()
     if self.tab == "tools" then
@@ -379,6 +408,11 @@ end
 
 function Editor:Refresh(forceFollow)
     if not self.frame then return end
+    if self.descriptionsDirty and not self.confirm and not self.fieldPicker and not interacting(self.frame) then
+        self.descriptionsDirty = nil
+        self:DrawList()
+        if self.session then self:DrawInspector() end
+    end
     if self.routeCount ~= #AprRCData.Routes then
         self:RefreshRoutes()
         if not self.session and AprRCData.Routes[1] then self:SelectRoute(AprRCData.Routes[1].name) end
@@ -509,6 +543,7 @@ function Editor:Show()
     self.saveButton:SetCallback("OnLeave", function() GameTooltip:Hide() end)
     self.importButton = UI.Button(footer, "Import from APR", function() self:ImportDialog() end, 170)
     self.copyButton = UI.Button(footer, "Save a copy", function() self:NameDialog(true) end, 195)
+    self.deleteRouteButton = UI.IconButton(footer, "trash", "Delete route", function() self:DeleteRoute() end)
     self.undoButton = UI.IconButton(footer, "undo", "Undo", function() self:Undo(-1) end)
     self.redoButton = UI.IconButton(footer, "redo", "Redo", function() self:Undo(1) end)
     self.reloadButton = UI.IconButton(footer, "refresh", "Reload saved route", function()

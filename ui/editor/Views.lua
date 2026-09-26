@@ -336,6 +336,7 @@ end
 
 function Editor:DrawInspector()
     AprRC.TutoFrame:ClearPointer()
+    self.stepDescription = nil
     local panel = self.routeForm or self.inspector
     if not panel then return end
     local oldScroll = panel.localstatus.scrollvalue or 0
@@ -373,7 +374,7 @@ function Editor:DrawInspector()
             local key, detail = Model:Summary(step)
             local title = T("Step") .. " " .. self:SelectedStep() .. " · " .. UI.Label(key)
             UI.LabelWidget(panel, gold .. title .. "|r", true)
-            if detail ~= "" then UI.LabelWidget(panel, detail) end
+            if detail ~= "" then self.stepDescription = UI.LabelWidget(panel, detail) end
             if self:StepGroup() then
                 local steps, index = self:Steps(), self:SelectedStep()
                 local path = "route/parallelSteps/" .. self:StepGroup() .. "/steps/" .. index

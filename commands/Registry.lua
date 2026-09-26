@@ -163,6 +163,10 @@ function options:PrintHelp(scope)
 end
 
 function options:ShowInput(definition, target, route, submit)
+    if definition.schema == self.schemas.money or definition.schema == self.schemas.lootMoney then
+        local current = target and not definition.newStep and target[definition.key]
+        return AprRC.editorUI.MoneyDialog(definition, current, submit)
+    end
     local gui = LibStub("AceGUI-3.0")
     local frame = AprRC:CreateWidget("Frame")
     frame:SetTitle(AprRC.editorUI.Label(definition.key))

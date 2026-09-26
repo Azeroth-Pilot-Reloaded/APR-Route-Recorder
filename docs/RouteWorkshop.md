@@ -27,6 +27,18 @@ The reference was [Alenya's Guides Writer](https://www.curseforge.com/wow/addons
 
 The visual editor exposes automatically recorded fields as editable properties too. A form edits the selected step; recording commands still edit the last recorded step. These are separate contexts and the Tools tab labels that distinction.
 
+The **Delete route** trash button in the workshop footer asks for confirmation,
+including the selected route's name. Confirming removes the saved route, its
+draft and the recorder's published APR copy. Deleting the route being recorded
+also stops recording. Route deletion cannot be undone; cancel leaves it intact.
+
+Money and LootMoney use three editable **gold**, **silver** and **copper** fields
+with coin icons, including nested conditions and recording command dialogs.
+Values are stored as copper (`gold * 10000 + silver * 100 + copper`).
+Step subtitles show coin amounts, item names and icons for item actions and
+conditions, and skill names and icons. Item lists wrap to remain visible; names
+not yet cached by the game initially show their ID and refresh when available.
+
 Step rows show class and race condition icons at the top right, including nested
 conditions and conditions inherited from a parallel group. A red cross marks an
 exclusion. Hovering an icon shows its condition paths, preserving the distinction

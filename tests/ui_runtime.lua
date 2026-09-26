@@ -178,6 +178,20 @@ function hooksecurefunc(target, method, callback)
         return unpack(result)
     end
 end
+local eventFrames = {}
+function Native:RegisterEvent(name)
+    eventFrames[self] = eventFrames[self] or {}
+    eventFrames[self][name] = true
+end
+function Native:UnregisterEvent(name)
+    if eventFrames[self] then eventFrames[self][name] = nil end
+end
+function TestEvent(name, ...)
+    for frame, events in pairs(eventFrames) do
+        if events[name] then event(frame, "OnEvent", name, ...) end
+    end
+end
+
 function CreateFrame(frameType, name, parent, template)
     local frame = setmetatable({ frameType = frameType, name = name, parent = parent, scripts = {}, points = {},
         children = {}, shown = true }, { __index = Native })

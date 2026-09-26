@@ -69,6 +69,7 @@ def run():
     load("tests/route_form_smoke.lua")
     load("tests/parallel_form_smoke.lua")
     load("tests/condition_badges_smoke.lua")
+    load("tests/route_details_smoke.lua")
     load("ui/QuestIDDisplay.lua")
     load("tests/quest_id_smoke.lua")
 
