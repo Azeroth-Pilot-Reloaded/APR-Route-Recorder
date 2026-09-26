@@ -3,8 +3,9 @@ if not L then return end
 L["Ctrl: condition details"] = "Ctrl : détails des conditions"
 
 -- Route deletion
-L["Delete route"] = "Supprimer le parcours"
-L["Delete route %s, its draft and its recorder copy in APR? This cannot be undone."] = "Supprimer le parcours %s, son brouillon et sa copie du recorder dans APR ? Cette action est irréversible."
+L["Delete route"] = "Supprimer la route"
+L["Delete route %s, its draft and its recorder copy in APR? This cannot be undone."] =
+"Supprimer la route %s, son brouillon et sa copie du recorder dans APR ? Cette action est irréversible."
 
 -- Author: Neogeekmo
 --@localization(locale="frFR", format="lua_additive_table", handle-unlocalized="ignore")@
@@ -299,11 +300,13 @@ L["Add a step"] = "Ajouter une étape"
 L["Add entry"] = "Ajouter une entrée"
 L["Add option"] = "Ajouter une option"
 L["Add step"] = "Ajouter une étape"
-L["Add the last step (RouteCompleted) of the route so it can be marked as completed"] = "Ajoutez la dernière étape (RouteCompleted) de l'itinéraire afin qu'elle puisse être marquée comme terminée"
+L["Add the last step (RouteCompleted) of the route so it can be marked as completed"] =
+"Ajoutez la dernière étape (RouteCompleted) de l'itinéraire afin qu'elle puisse être marquée comme terminée"
 L["Add to bar"] = "Ajouter à la barre"
 L["Added"] = "Ajouté"
 L["All commands"] = "Toutes les commandes"
-L["All existing commands, autocomplete dialogs and toolbar settings remain available here."] = "Toutes les commandes, les fenêtres d’autocomplétion et les réglages de barre restent accessibles ici."
+L["All existing commands, autocomplete dialogs and toolbar settings remain available here."] =
+"Toutes les commandes, les fenêtres d’autocomplétion et les réglages de barre restent accessibles ici."
 L["All steps"] = "Toutes les étapes"
 L["Already present on this step"] = "Déjà présent sur cette étape"
 L["Apply"] = "Appliquer"
@@ -314,13 +317,17 @@ L["Button Type"] = "Type de bouton"
 L["Buttons per row"] = "Boutons par ligne"
 L["Cancel"] = "Annuler"
 L["Choice"] = "Choix"
-L["Choose favorite commands below. Changes are saved immediately."] = "Choisissez vos commandes favorites ci-dessous. Les changements sont enregistrés immédiatement."
+L["Choose favorite commands below. Changes are saved immediately."] =
+"Choisissez vos commandes favorites ci-dessous. Les changements sont enregistrés immédiatement."
 L["Clear the Saved Variables"] = "Effacer les variables enregistrées"
 L["Click on an objective to add it as a filler"] = "Cliquez sur un objectif pour l'ajouter comme remplissage"
 L["Click on an objective to create a Qpartpart "] = "Cliquez sur un objectif pour créer un Qpartpart "
-L["Click on an objective to select the quest for the UseItem step"] = "Cliquez sur un objectif pour sélectionner la quête de l'étape UseItem"
-L["Click on an objective to select the quest for the UseSpell step"] = "Cliquez sur un objectif pour sélectionner la quête de l'étape UseSpell"
-L["Click or Drag commands to manage the bar. Right-click to remove."] = "Cliquez ou faites glisser les commandes pour gérer la barre. Cliquez avec le bouton droit pour supprimer."
+L["Click on an objective to select the quest for the UseItem step"] =
+"Cliquez sur un objectif pour sélectionner la quête de l'étape UseItem"
+L["Click on an objective to select the quest for the UseSpell step"] =
+"Cliquez sur un objectif pour sélectionner la quête de l'étape UseSpell"
+L["Click or Drag commands to manage the bar. Right-click to remove."] =
+"Cliquez ou faites glisser les commandes pour gérer la barre. Cliquez avec le bouton droit pour supprimer."
 L["Command Bar Settings"] = "Paramètres de la barre de commandes"
 L["Command bar"] = "Barre de commandes"
 L["Command bar reset to defaults"] = "Barre de commandes réinitialisée"
@@ -336,8 +343,10 @@ L["Continue route %s?"] = "Continuer l'itinéraire %s ?"
 L["Coord Frame"] = "Cadre de coordonnées"
 L["Coordinate X,Y"] = "Coordonnée X,Y"
 L["Coordinates"] = "Coordonnées"
-L["Create a route, then record your journey or add steps manually."] = "Créez une route, puis enregistrez votre parcours ou ajoutez des étapes."
-L["Ctrl+A then Ctrl+C to copy. Ctrl+Z / Ctrl+Y to undo / redo."] = "Ctrl+A puis Ctrl+C pour copier. Ctrl+Z / Ctrl+Y pour annuler / rétablir."
+L["Create a route, then record your journey or add steps manually."] =
+"Créez une route, puis enregistrez votre parcours ou ajoutez des étapes."
+L["Ctrl+A then Ctrl+C to copy. Ctrl+Z / Ctrl+Y to undo / redo."] =
+"Ctrl+A puis Ctrl+C pour copier. Ctrl+Z / Ctrl+Y pour annuler / rétablir."
 L["Current step"] = "Étape actuelle"
 L["Current: "] = "Actuel: "
 L["Data is too deeply nested"] = "Les données sont trop profondément imbriquées"
@@ -349,7 +358,8 @@ L["Detect type / current level"] = "Détecter le type/niveau actuel"
 L["Discard this draft and reload the saved route?"] = "Abandonner ce brouillon et recharger la route enregistrée ?"
 L["Display"] = "Afficher"
 L["Done DB (QuestID) - Also add Done QuestID"] = "Done DB (QuestID) - Ajoutez également Done QuestID"
-L["Drafts are kept when closing this window, switching routes or reloading the UI."] = "Les brouillons sont conservés à la fermeture, au changement de route et au rechargement de l’interface."
+L["Drafts are kept when closing this window, switching routes or reloading the UI."] =
+"Les brouillons sont conservés à la fermeture, au changement de route et au rechargement de l’interface."
 L["Drag the header to move the bar."] = "Faire glisser l'en-tête pour déplacer la barre."
 L["Drag to move"] = "Faire glisser pour déplacer"
 L["DropQuest must match DroppableQuest.Qid"] = "DropQuest doit correspondre à DroppableQuest.Qid"
@@ -363,7 +373,8 @@ L["Enable the addon in Settings to record."] = "Activez l’addon dans les régl
 L["Enabled"] = "Activé"
 L["Enter a faction ID manually"] = "Entrez manuellement un identifiant de faction"
 L["Enter a route name."] = "Saisissez un nom de route."
-L["Enter a value, then apply it to the recorded route."] = "Saisissez une valeur, puis appliquez-la à l'itinéraire enregistré."
+L["Enter a value, then apply it to the recorded route."] =
+"Saisissez une valeur, puis appliquez-la à l'itinéraire enregistré."
 L["Enter text"] = "Saisir du texte"
 L["Enter the target friendship/NPC rank."] = "Entrez le classement amitié/NPC cible."
 L["Enter the target renown level."] = "Entrez le niveau de renommée cible."
@@ -597,8 +608,10 @@ L["Favorites"] = "Favoris"
 L["Fields"] = "Propriétés"
 L["Fillers quest list"] = "Liste des quêtes des remplisseurs"
 L["Filter Commands"] = "Commandes de filtre"
-L["Finish editing the Lua table before opening the visual editor."] = "Corrigez la table Lua avant d’ouvrir l’éditeur visuel."
-L["Follow pauses while you edit. Save or reload to resume."] = "Le suivi se met en pause pendant l’édition. Enregistrez ou rechargez pour le reprendre."
+L["Finish editing the Lua table before opening the visual editor."] =
+"Corrigez la table Lua avant d’ouvrir l’éditeur visuel."
+L["Follow pauses while you edit. Save or reload to resume."] =
+"Le suivi se met en pause pendant l’édition. Enregistrez ou rechargez pour le reprendre."
 L["Follow recording"] = "Suivre la capture"
 L["Format"] = "Format"
 L["Friendship / NPC"] = "Amitié / NPC"
@@ -627,9 +640,11 @@ L["Invalid table key"] = "Clé de table invalide"
 L["Invalid target selection for DenyNPC"] = "Sélection de cible non valide pour DenyNPC"
 L["Invalid target selection for NpcDismount"] = "Sélection de cible non valide pour NpcDismount"
 L["Is One Of Quests Completed (QuestID number)"] = "L'une des quêtes est-elle terminée (numéro QuestID)"
-L["Is One Of Quests Completed On Account (QuestID number)"] = "Est-ce l'une des quêtes terminées sur le compte (numéro QuestID)"
+L["Is One Of Quests Completed On Account (QuestID number)"] =
+"Est-ce l'une des quêtes terminées sur le compte (numéro QuestID)"
 L["Is One Of Quests Uncompleted (QuestID number)"] = "L'une des quêtes est-elle inachevée (numéro QuestID)"
-L["Is One Of Quests Uncompleted On Account (QuestID number)"] = "L'une des quêtes n'est-elle pas terminée sur le compte (numéro QuestID)"
+L["Is One Of Quests Uncompleted On Account (QuestID number)"] =
+"L'une des quêtes n'est-elle pas terminée sur le compte (numéro QuestID)"
 L["Is Quest Completed On Account (QuestID number)"] = "La quête est-elle terminée sur le compte (numéro QuestID)"
 L["Is Quest Uncompleted On Account (QuestID number)"] = "La quête n'est-elle pas terminée sur le compte (numéro QuestID)"
 L["Is Quests Completed (QuestID number)"] = "Les quêtes sont-elles terminées (numéro QuestID)"
@@ -659,10 +674,13 @@ L["New route"] = "Nouvelle route"
 L["New step"] = "Nouvelle étape"
 L["New world quest, do you want to add it?"] = "Nouvelle quête mondiale, souhaitez-vous l'ajouter ?"
 L["Next"] = "Suivant"
-L["No Qpart or Filler quests available on your last step"] = "Aucune quête Qpart ou Filler disponible lors de votre dernière étape"
+L["No Qpart or Filler quests available on your last step"] =
+"Aucune quête Qpart ou Filler disponible lors de votre dernière étape"
 L["No active scenario found"] = "Aucun scénario actif trouvé"
-L["No favorites yet. Add commands from the list below."] = "Aucun favori. Ajoutez des commandes depuis la liste ci-dessous."
-L["No map is available here. Use a name beginning with a map ID, e.g. 84-My route."] = "Carte indisponible ici. Commencez le nom par un ID de carte, ex. 84-Ma route."
+L["No favorites yet. Add commands from the list below."] =
+"Aucun favori. Ajoutez des commandes depuis la liste ci-dessous."
+L["No map is available here. Use a name beginning with a map ID, e.g. 84-My route."] =
+"Carte indisponible ici. Commencez le nom par un ID de carte, ex. 84-Ma route."
 L["No matching commands."] = "Aucune commande correspondante."
 L["No matching steps."] = "Aucune étape correspondante."
 L["No quests available to bind UseItem"] = "Aucune quête disponible pour lier UseItem"
@@ -670,7 +688,8 @@ L["No quests available to bind UseSpell"] = "Aucune quête disponible pour lier 
 L["No routes available"] = "Aucun itinéraire disponible"
 L["No routes available for the name: "] = "Aucun itinéraire disponible pour le nom : "
 L["No scenario criteria available"] = "Aucun critère de scénario disponible"
-L["No steps yet. Record in game, or choose a step type below."] = "Aucune étape. Lancez la capture en jeu ou choisissez un type d’étape ci-dessous."
+L["No steps yet. Record in game, or choose a step type below."] =
+"Aucune étape. Lancez la capture en jeu ou choisissez un type d’étape ci-dessous."
 L["No target selected to add DenyNPC"] = "Aucune cible sélectionnée pour ajouter DenyNPC"
 L["No target selected to add NpcDismount"] = "Aucune cible sélectionnée pour ajouter NpcDismount"
 L["Number"] = "Nombre"
@@ -685,7 +704,8 @@ L["Previous"] = "Précédent"
 L["QUEST_ID"] = "QuestID"
 L["QUEST_IDS"] = "QuestIDs"
 L["QUEST_ID_ALWAYS_VISIBLE"] = "Afficher hors enregistrement"
-L["QUEST_ID_ALWAYS_VISIBLE_DESC"] = "Si désactivé, les QuestIDs ne sont affichés que pendant l'enregistrement d'une route."
+L["QUEST_ID_ALWAYS_VISIBLE_DESC"] =
+"Si désactivé, les QuestIDs ne sont affichés que pendant l'enregistrement d'une route."
 L["QUEST_ID_ENABLE"] = "Activer l'affichage des QuestIDs"
 L["QUEST_ID_ENABLE_DESC"] = "Interrupteur global pour les QuestIDs dans l'interface et les infobulles de quête."
 L["QUEST_ID_INVENTORY"] = "Objets de quête dans les sacs"
@@ -761,7 +781,8 @@ L["Show steps"] = "Afficher les étapes"
 L["SkipForReputation step option"] = "Option étape SkipForReputation"
 L["Spell"] = "Épeler"
 L["Standard reputation"] = "Réputation standard"
-L["Standard reputation standing must be between 1 and 8"] = "Le niveau de réputation standard doit être compris entre 1 et 8"
+L["Standard reputation standing must be between 1 and 8"] =
+"Le niveau de réputation standard doit être compris entre 1 et 8"
 L["Standing (1-8)"] = "Debout (1-8)"
 L["Start recording a route first"] = "Commencez par enregistrer un itinéraire"
 L["Start recording to run commands."] = "Lancez l'enregistrement pour utiliser les commandes."
@@ -775,18 +796,25 @@ L["Text"] = "Texte"
 L["Text Trigger for Qpart Part"] = "Déclencheur de texte pour la pièce Qpart"
 L["Text Trigger for Scenario"] = "Déclencheur de texte pour le scénario"
 L["The addon is disabled"] = "L'addon est désactivé"
-L["The current step is shown only after the selected reputation level is reached."] = "L'étape en cours s'affiche uniquement une fois que le niveau de réputation sélectionné est atteint."
-L["The current step is skipped once the selected reputation level is reached."] = "L'étape en cours est ignorée une fois que le niveau de réputation sélectionné est atteint."
+L["The current step is shown only after the selected reputation level is reached."] =
+"L'étape en cours s'affiche uniquement une fois que le niveau de réputation sélectionné est atteint."
+L["The current step is skipped once the selected reputation level is reached."] =
+"L'étape en cours est ignorée une fois que le niveau de réputation sélectionné est atteint."
 L["The edited step was removed; reopen the command"] = "L'étape modifiée a été supprimée ; rouvrir la commande"
-L["The route waits until the selected reputation level is reached."] = "La route attend que le niveau de réputation sélectionné soit atteint."
-L["The saved route changed. Save a copy to keep your edits, or reload the saved route."] = "La route a changé pendant l’édition. Enregistrez une copie pour conserver vos modifications, ou rechargez la route."
+L["The route waits until the selected reputation level is reached."] =
+"La route attend que le niveau de réputation sélectionné soit atteint."
+L["The saved route changed. Save a copy to keep your edits, or reload the saved route."] =
+"La route a changé pendant l’édition. Enregistrez une copie pour conserver vos modifications, ou rechargez la route."
 L["The saved route no longer exists."] = "La route enregistrée n'existe plus."
 L["The selected route changed; reopen the command"] = "L'itinéraire sélectionné a changé ; rouvrir la commande"
-L["These tools apply to the last recorded step. Use Steps to edit a selected step."] = "Ces outils agissent sur la dernière étape capturée. Utilisez Étapes pour modifier une étape sélectionnée."
-L["This item has no available use spell. Supply a verified itemSpellID with /aprrc useitem."] = "Cet objet n'a aucun sort d'utilisation disponible. Fournissez un itemSpellID vérifié avec /aprrc useitem."
+L["These tools apply to the last recorded step. Use Steps to edit a selected step."] =
+"Ces outils agissent sur la dernière étape capturée. Utilisez Étapes pour modifier une étape sélectionnée."
+L["This item has no available use spell. Supply a verified itemSpellID with /aprrc useitem."] =
+"Cet objet n'a aucun sort d'utilisation disponible. Fournissez un itemSpellID vérifié avec /aprrc useitem."
 L["This key already exists."] = "Cet identifiant existe déjà."
 L["This name already exists."] = "Ce nom existe déjà."
-L["This objective is already present in the fillers for this quest."] = "Cet objectif est déjà présent dans les fillers de cette quête."
+L["This objective is already present in the fillers for this quest."] =
+"Cet objectif est déjà présent dans les fillers de cette quête."
 L["To export data"] = "Pour exporter des données"
 L["Tools"] = "Outils"
 L["Tooltip Message"] = "Message d'info-bulle"
@@ -806,7 +834,8 @@ L["Use Spell quest list"] = "Utiliser la liste de quêtes de sorts"
 L["Value"] = "Valeur"
 L["Vertical"] = "Verticale"
 L["Waypoint DB (QuestID) - Also add Waypoint QuestID"] = "Waypoint DB (QuestID) - Ajoutez également le Waypoint QuestID"
-L["You can add more commands in the Commands Settings panel"] = "Vous pouvez ajouter plus de commandes dans le panneau Paramètres des commandes"
+L["You can add more commands in the Commands Settings panel"] =
+"Vous pouvez ajouter plus de commandes dans le panneau Paramètres des commandes"
 L["You current route is empty"] = "Votre itinéraire actuel est vide"
 L["You're not recording a route"] = "Vous n'enregistrez pas d'itinéraire"
 L["Your route starts here."] = "Votre route commence ici."
@@ -814,7 +843,8 @@ L["a scenario, step or criterion ID is required"] = "un identifiant de scénario
 L["allAvailable requires npcID"] = "allAvailable nécessite npcID"
 L["expected a finite number"] = "attendu un nombre fini"
 L["expected a list"] = "j'attendais une liste"
-L["expected a string key such as \"12345-1\" or \"12345\""] = "attendu une clé de chaîne telle que \"12345-1\" ou \"12345\""
+L["expected a string key such as \"12345-1\" or \"12345\""] =
+"attendu une clé de chaîne telle que \"12345-1\" ou \"12345\""
 L["expected a table"] = "je m'attendais à une table"
 L["expected an integer"] = "attendu un entier"
 L["expected consecutive list indices"] = "indices de liste consécutifs attendus"
@@ -832,7 +862,8 @@ L["spellID or itemID is required"] = "spellID ou itemID est requis"
 L["spellID, spellIDs or allAvailable = true is required"] = "spellID, spellIDs ou allAvailable = true est requis"
 L["standard standing must be 1-8"] = "le niveau standard doit être compris entre 1 et 8"
 L["step %s is not a table"] = "l'étape %s n'est pas une table"
-L["unexpected entry '%s' (only step tables allowed)"] = "entrée inattendue '%s' (seules les tables d'étapes sont autorisées)"
+L["unexpected entry '%s' (only step tables allowed)"] =
+"entrée inattendue '%s' (seules les tables d'étapes sont autorisées)"
 L["unknown APR level profile"] = "profil de niveau APR inconnu"
 L["unknown enum value"] = "valeur d'énumération inconnue"
 L["unsupported field "] = "champ non pris en charge "
@@ -840,29 +871,19 @@ L["unsupported schema "] = "schéma non pris en charge "
 L["value does not match the expected format"] = "la valeur ne correspond pas au format attendu"
 
 L["Drag to resize columns"] = "Faites glisser pour redimensionner les colonnes"
-
-L["Drag commands between columns to add, remove or reorder them."] = "Glissez les commandes entre les colonnes pour les ajouter, les retirer ou les réordonner."
+L["Drag commands between columns to add, remove or reorder them."] =
+"Glissez les commandes entre les colonnes pour les ajouter, les retirer ou les réordonner."
 
 L["Button size"] = "Taille des boutons"
-
 L["Show icon background"] = "Afficher le fond des icônes"
-
 L["Icon background color"] = "Couleur du fond des icônes"
-
 L["Text appearance"] = "Apparence du texte"
-
 L["Font"] = "Police"
-
 L["Font style"] = "Style de police"
-
 L["Default font"] = "Police par défaut"
-
 L["No outline"] = "Sans contour"
-
 L["Outline"] = "Contour"
-
 L["Thick outline"] = "Contour épais"
-
 L["Monochrome"] = "Monochrome"
 
 L["Monochrome outline"] = "Monochrome avec contour"
@@ -882,30 +903,43 @@ L["TUTORIAL_SKIP"] = "Passer"
 L["TUTORIAL_FINISH"] = "Terminer"
 L["TUTORIAL_PROGRESS"] = "Chapitre %d sur %d · À retrouver dans Outils ou /aprrc tutorial"
 L["TUTORIAL_WELCOME_TITLE"] = "Une base pour construire votre route"
-L["TUTORIAL_WELCOME_BODY"] = "APR Recorder vous aide à créer des routes pour Azeroth Pilot Reloaded : enregistrez votre parcours, modifiez les étapes (steps), puis sauvegardez et testez dans APR.\n\nCe n'est pas un outil magique : tout n'est pas automatique. Certaines actions doivent être ajoutées à la main. Il faudra parfois réorganiser des steps, fusionner leur contenu ou les séparer en plusieurs étapes. Relisez et testez toujours un enregistrement.\n\nCommencez la visite pour découvrir les commandes de l'atelier grâce aux bulles, ou passez le tutoriel pour explorer librement. Vous pourrez le relancer depuis Outils. La visite ne lance aucun enregistrement et ne modifie pas votre route."
+L["TUTORIAL_WELCOME_BODY"] =
+"APR Recorder vous aide à créer des routes pour Azeroth Pilot Reloaded : enregistrez votre parcours, modifiez les étapes (steps), puis sauvegardez et testez dans APR.\n\nCe n'est pas un outil magique : tout n'est pas automatique. Certaines actions doivent être ajoutées à la main. Il faudra parfois réorganiser des steps, fusionner leur contenu ou les séparer en plusieurs étapes. Relisez et testez toujours un enregistrement.\n\nCommencez la visite pour découvrir les commandes de l'atelier grâce aux bulles, ou passez le tutoriel pour explorer librement. Vous pourrez le relancer depuis Outils. La visite ne lance aucun enregistrement et ne modifie pas votre route."
 L["TUTORIAL_RECORD_TITLE"] = "Créer une route et enregistrer"
-L["TUTORIAL_RECORD_BODY"] = "Créez une route avec Nouvelle route, ou sélectionnez-en une existante au-dessus, puis utilisez ce bouton pour lancer ou arrêter l'enregistrement.\n\nLes événements pris en charge capturent quêtes, objectifs, vols et certaines interactions. Vérifiez le statut : consulter une autre route ne change pas la route enregistrée."
+L["TUTORIAL_RECORD_BODY"] =
+"Créez une route avec Nouvelle route, ou sélectionnez-en une existante au-dessus, puis utilisez ce bouton pour lancer ou arrêter l'enregistrement.\n\nLes événements pris en charge capturent quêtes, objectifs, vols et certaines interactions. Vérifiez le statut : consulter une autre route ne change pas la route enregistrée."
 L["TUTORIAL_STEPS_TITLE"] = "Retrouver et modifier les steps"
-L["TUTORIAL_STEPS_BODY"] = "Recherchez, filtrez et sélectionnez un step dans cette liste pour le modifier. Ajouter insère une étape du type choisi.\n\nLe suivi de l'enregistrement et l'accès à la dernière étape permettent de voir les nouvelles captures. Le suivi se met en pause si le brouillon est modifié. Le mode compact permet de basculer entre liste et inspecteur."
+L["TUTORIAL_STEPS_BODY"] =
+"Recherchez, filtrez et sélectionnez un step dans cette liste pour le modifier. Ajouter insère une étape du type choisi.\n\nLe suivi de l'enregistrement et l'accès à la dernière étape permettent de voir les nouvelles captures. Le suivi se met en pause si le brouillon est modifié. Le mode compact permet de basculer entre liste et inspecteur."
 L["TUTORIAL_REWORK_TITLE"] = "Réorganiser, fusionner et séparer à la main"
-L["TUTORIAL_REWORK_BODY"] = "Déplacez les steps avec les flèches ou Déplacer à l'étape. Dupliquer et Supprimer permettent de restructurer la route.\n\nPour fusionner : recopiez les champs utiles dans un step, vérifiez-les, puis supprimez le step superflu. Pour séparer : dupliquez un step et ne gardez dans chaque copie que les champs appropriés. Ces retouches sont manuelles. Sauvegardez une copie avant les gros changements."
+L["TUTORIAL_REWORK_BODY"] =
+"Déplacez les steps avec les flèches ou Déplacer à l'étape. Dupliquer et Supprimer permettent de restructurer la route.\n\nPour fusionner : recopiez les champs utiles dans un step, vérifiez-les, puis supprimez le step superflu. Pour séparer : dupliquez un step et ne gardez dans chaque copie que les champs appropriés. Ces retouches sont manuelles. Sauvegardez une copie avant les gros changements."
 L["TUTORIAL_FIELDS_TITLE"] = "Décrire ce que le joueur doit faire"
-L["TUTORIAL_FIELDS_BODY"] = "Modifiez ici le step sélectionné : objectifs, coordonnées, actions, consignes et conditions. Ajoutez ou retirez des champs selon vos besoins.\n\nLa loupe ouvre le sélecteur associé aux IDs ou aux clés de traduction, y compris pour Note. Les listes ajoutent la valeur choisie. Les listes de textes utilisent une entrée par ligne. Créez une route et ajoutez un step pour essayer."
+L["TUTORIAL_FIELDS_BODY"] =
+"Modifiez ici le step sélectionné : objectifs, coordonnées, actions, consignes et conditions. Ajoutez ou retirez des champs selon vos besoins.\n\nLa loupe ouvre le sélecteur associé aux IDs ou aux clés de traduction, y compris pour Note. Les listes ajoutent la valeur choisie. Les listes de textes utilisent une entrée par ligne. Créez une route et ajoutez un step pour essayer."
 L["TUTORIAL_COMMANDS_TITLE"] = "Utiliser le catalogue des commandes"
-L["TUTORIAL_COMMANDS_BODY"] = "Recherchez ou filtrez les commandes disponibles et marquez vos favoris. Certaines ouvrent une fenêtre de saisie ou de sélection.\n\nElles agissent sur la route enregistrée, généralement son dernier step, pas sur le step sélectionné dans le brouillon. Utilisez l'inspecteur pour les étapes antérieures. /aprrc help affiche la liste des commandes."
+L["TUTORIAL_COMMANDS_BODY"] =
+"Recherchez ou filtrez les commandes disponibles et marquez vos favoris. Certaines ouvrent une fenêtre de saisie ou de sélection.\n\nElles agissent sur la route enregistrée, généralement son dernier step, pas sur le step sélectionné dans le brouillon. Utilisez l'inspecteur pour les étapes antérieures. /aprrc help affiche la liste des commandes."
 L["TUTORIAL_BAR_TITLE"] = "Personnaliser la barre de commandes"
-L["TUTORIAL_BAR_BODY"] = "Glissez les commandes entre les colonnes du catalogue et de la barre pour ajouter, retirer ou réordonner les raccourcis.\n\nLes paramètres règlent visibilité, orientation, taille, fonds et ancrage à l'atelier. La barre apparaît pendant l'enregistrement. Glissez une icône pour la déplacer ; des flèches de pagination apparaissent au besoin. Réinitialiser restaure les valeurs par défaut."
+L["TUTORIAL_BAR_BODY"] =
+"Glissez les commandes entre les colonnes du catalogue et de la barre pour ajouter, retirer ou réordonner les raccourcis.\n\nLes paramètres règlent visibilité, orientation, taille, fonds et ancrage à l'atelier. La barre apparaît pendant l'enregistrement. Glissez une icône pour la déplacer ; des flèches de pagination apparaissent au besoin. Réinitialiser restaure les valeurs par défaut."
 L["TUTORIAL_ROUTE_TITLE"] = "Configurer la route et préserver vos modifications"
-L["TUTORIAL_ROUTE_BODY"] = "Sauvegarder applique le brouillon. Sauvegarder une copie le conserve dans une autre route ; Recharger l'abandonne. Annuler et Rétablir corrigent vos modifications. Les brouillons survivent à la fermeture de l'atelier.\n\nSi l'enregistrement a modifié la route en arrière-plan, maintenez Maj, Ctrl ou Alt en cliquant sur Sauvegarder pour la remplacer par ce brouillon exact, sans fusionner les changements automatiques. C'est le contenu d'une copie, sous le nom actuel."
+L["TUTORIAL_ROUTE_BODY"] =
+"Sauvegarder applique le brouillon. Sauvegarder une copie le conserve dans une autre route ; Recharger l'abandonne. Annuler et Rétablir corrigent vos modifications. Les brouillons survivent à la fermeture de l'atelier.\n\nSi l'enregistrement a modifié la route en arrière-plan, maintenez Maj, Ctrl ou Alt en cliquant sur Sauvegarder pour la remplacer par ce brouillon exact, sans fusionner les changements automatiques. C'est le contenu d'une copie, sous le nom actuel."
 L["TUTORIAL_LUA_TITLE"] = "Modifier ou copier les données Lua"
-L["TUTORIAL_LUA_BODY"] = "L'éditeur Lua permet les modifications avancées ou le collage de données compatibles. Ctrl+A / Ctrl+C copie le contenu ; Ctrl+Z / Ctrl+Y annule ou rétablit.\n\nCorrigez un Lua invalide avant de revenir à l'éditeur visuel. L'onglet Route permet de définir les informations du parcours et ses conditions. L'onglet Étapes parallèles permet de gérer les groupes parallèles, leurs conditions et leurs étapes. Sauvegardez une copie avant les modifications importantes."
+L["TUTORIAL_LUA_BODY"] =
+"L'éditeur Lua permet les modifications avancées ou le collage de données compatibles. Ctrl+A / Ctrl+C copie le contenu ; Ctrl+Z / Ctrl+Y annule ou rétablit.\n\nCorrigez un Lua invalide avant de revenir à l'éditeur visuel. L'onglet Route permet de définir les informations du parcours et ses conditions. L'onglet Étapes parallèles permet de gérer les groupes parallèles, leurs conditions et leurs étapes. Sauvegardez une copie avant les modifications importantes."
 L["TUTORIAL_TOOLS_TITLE"] = "Coordonnées, identifiants et autres outils"
-L["TUTORIAL_TOOLS_BODY"] = "Ce bouton relance la visite. Outils donne aussi accès aux coordonnées, à l'export des textes supplémentaires, aux commandes et aux paramètres.\n\nLes paramètres règlent les QuestID, les polices, l'icône de minicarte, le marquage des quêtes de campagne et les profils. Un clic gauche sur la minicarte ouvre l'atelier ; un clic droit active ou désactive l'addon."
+L["TUTORIAL_TOOLS_BODY"] =
+"Ce bouton relance la visite. Outils donne aussi accès aux coordonnées, à l'export des textes supplémentaires, aux commandes et aux paramètres.\n\nLes paramètres règlent les QuestID, les polices, l'icône de minicarte, le marquage des quêtes de campagne et les profils. Un clic gauche sur la minicarte ouvre l'atelier ; un clic droit active ou désactive l'addon."
 L["TUTORIAL_EXPORT_TITLE"] = "Sauvegarder, importer et tester dans APR"
-L["TUTORIAL_EXPORT_BODY"] = "Les routes sauvegardées sont synchronisées automatiquement avec APR, y compris pendant l'enregistrement. Les modifications du brouillon sont publiées lorsque vous cliquez sur Sauvegarder. Sélectionnez la copie dans l'onglet Personnalisé d'APR et testez ses étapes, objectifs, coordonnées et conditions.\n\nUtilisez Importer depuis APR pour créer une copie modifiable d'une route APR. La route d'origine reste inchangée. La recherche accepte le nom ou l'identifiant de la route."
+L["TUTORIAL_EXPORT_BODY"] =
+"Les routes sauvegardées sont synchronisées automatiquement avec APR, y compris pendant l'enregistrement. Les modifications du brouillon sont publiées lorsque vous cliquez sur Sauvegarder. Sélectionnez la copie dans l'onglet Personnalisé d'APR et testez ses étapes, objectifs, coordonnées et conditions.\n\nUtilisez Importer depuis APR pour créer une copie modifiable d'une route APR. La route d'origine reste inchangée. La recherche accepte le nom ou l'identifiant de la route."
 
-L["SAVE_OVERRIDE_HELP"] = "Maintenez Maj, Ctrl ou Alt en cliquant sur Sauvegarder pour remplacer la route sauvegardée par le brouillon actuel exact, y compris vos modifications Lua. Les changements automatiques faits en arrière-plan sont écrasés, pas fusionnés. Le contenu sauvegardé est celui de Sauvegarder une copie, mais sous le nom de la route actuelle."
-L["SAVE_CONFLICT_HELP"] = "La route sauvegardée a changé. Sauvegardez une copie, rechargez la route sauvegardée, ou maintenez Maj, Ctrl ou Alt en cliquant sur Sauvegarder pour la remplacer par le brouillon actuel."
+L["SAVE_OVERRIDE_HELP"] =
+"Maintenez Maj, Ctrl ou Alt en cliquant sur Sauvegarder pour remplacer la route sauvegardée par le brouillon actuel exact, y compris vos modifications Lua. Les changements automatiques faits en arrière-plan sont écrasés, pas fusionnés. Le contenu sauvegardé est celui de Sauvegarder une copie, mais sous le nom de la route actuelle."
+L["SAVE_CONFLICT_HELP"] =
+"La route sauvegardée a changé. Sauvegardez une copie, rechargez la route sauvegardée, ou maintenez Maj, Ctrl ou Alt en cliquant sur Sauvegarder pour la remplacer par le brouillon actuel."
 
 L["TUTORIAL_START"] = "Commencer la visite"
 
@@ -918,7 +952,8 @@ L["Clear recent history"] = "Vider l’historique"
 
 L["Import from APR"] = "Importer depuis APR"
 L["Help (wiki)"] = "Aide (wiki)"
-L["Import an editable copy. Saved routes are automatically available in APR."] = "Importez une copie modifiable. Les routes sauvegardées sont automatiquement disponibles dans APR."
+L["Import an editable copy. Saved routes are automatically available in APR."] =
+"Importez une copie modifiable. Les routes sauvegardées sont automatiquement disponibles dans APR."
 L["APR route is not available."] = "Cette route APR est indisponible."
 L["Route imported from APR"] = "Route importée depuis APR"
 
@@ -931,8 +966,10 @@ L["Move group up"] = "Monter le groupe"
 L["Move group down"] = "Descendre le groupe"
 L["Group conditions"] = "Conditions du groupe"
 L["Back to step"] = "Retour à l’étape"
-L["Delete this parallel group and all its steps? You can undo this change."] = "Supprimer ce groupe parallèle et toutes ses étapes ? Vous pourrez annuler cette modification."
-L["No parallel groups yet. Add a group, then configure its conditions and steps."] = "Aucun groupe parallèle. Ajoutez un groupe, puis configurez ses conditions et ses étapes."
+L["Delete this parallel group and all its steps? You can undo this change."] =
+"Supprimer ce groupe parallèle et toutes ses étapes ? Vous pourrez annuler cette modification."
+L["No parallel groups yet. Add a group, then configure its conditions and steps."] =
+"Aucun groupe parallèle. Ajoutez un groupe, puis configurez ses conditions et ses étapes."
 L["No parallel steps yet. Choose a step type below."] = "Aucune étape parallèle. Choisissez un type d’étape ci-dessous."
 
 -- Route form navigation
@@ -945,4 +982,5 @@ L["Route overview"] = "Vue du parcours"
 
 -- Parallel condition navigation and field help
 L["Step overview"] = "Vue de l’étape"
-L["HELP_allowMissing"] = "Coché : cette condition est satisfaite si APR ne peut pas lire la statistique de l’objet équipé (emplacement vide ou donnée indisponible). Décoché : elle échoue dans ce cas. Si la valeur est disponible, la comparaison et le seuil restent appliqués."
+L["HELP_allowMissing"] =
+"Coché : cette condition est satisfaite si APR ne peut pas lire la statistique de l’objet équipé (emplacement vide ou donnée indisponible). Décoché : elle échoue dans ce cas. Si la valeur est disponible, la comparaison et le seuil restent appliqués."
