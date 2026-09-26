@@ -1,6 +1,10 @@
 local L = LibStub("AceLocale-3.0"):NewLocale("APR-Recorder", "esMX")
 if not L then return end
 
+-- Route deletion
+L["Delete route"] = "Eliminar ruta"
+L["Delete route %s, its draft and its recorder copy in APR? This cannot be undone."] = "¿Eliminar la ruta %s, su borrador y su copia del grabador en APR? Esta acción no se puede deshacer."
+
 --@localization(locale="esMX", format="lua_additive_table", handle-unlocalized="ignore")@
 
 

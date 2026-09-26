@@ -1,6 +1,10 @@
 local L = LibStub("AceLocale-3.0"):NewLocale("APR-Recorder", "koKR")
 if not L then return end
 
+-- Route deletion
+L["Delete route"] = "경로 삭제"
+L["Delete route %s, its draft and its recorder copy in APR? This cannot be undone."] = "%s 경로, 초안 및 APR의 기록기 사본을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다."
+
 --@localization(locale="koKR", format="lua_additive_table", handle-unlocalized="ignore")@
 
 

@@ -21,7 +21,7 @@ function AprRC:BuildRouteDefinition(route)
     return result
 end
 
-function AprRC:ReadRouteDefinition(text, name, previous)
+function AprRC:ReadRouteDefinition(text, name, previous, validationBaseline)
     local parsed, errorMessage = self:ParseLuaData(text)
     if type(parsed) ~= "table" then return nil, errorMessage or L["Expected a route table"] end
     local result
@@ -44,15 +44,16 @@ function AprRC:ReadRouteDefinition(text, name, previous)
             if type(group) == "table" then normalize(group.steps) end
         end
     end
-    local valid, reason = self.options:ValidateValue("steps", result.steps, "steps", nil, previous and previous.steps)
+    local baseline = validationBaseline or previous
+    local valid, reason = self.options:ValidateValue("steps", result.steps, "steps", nil, baseline and baseline.steps)
     if not valid then return nil, reason end
     for key, value in pairs(result) do
         if key ~= "steps" and key ~= "name" then
             local definition = self.options.route[key]
             if definition then
-                valid, reason = self.options:ValidateValue(definition.schema, value, key, nil, previous and previous[key])
+                valid, reason = self.options:ValidateValue(definition.schema, value, key, nil, baseline and baseline[key])
                 if not valid then return nil, reason end
-            elseif not previous or not self:DeepCompare(previous[key], value) then
+            elseif not baseline or not self:DeepCompare(baseline[key], value) then
                 return nil, L["Unsupported route field: "] .. tostring(key)
             end
             -- Preserve metadata from APR versions newer than the form schema.

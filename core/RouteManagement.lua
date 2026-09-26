@@ -186,6 +186,25 @@ function AprRC:UpdateRouteByName(routeName, newRouteData)
     end
 end
 
+-- Called only after the workshop's explicit confirmation.
+function AprRC:DeleteRouteByName(routeName)
+    local route, index = self:FindRouteByName(routeName)
+    if not route then return false end
+    if AprRCData.CurrentRoute.name == routeName then
+        if self.settings.profile.recordBarFrame.isRecording then self.record:StopRecord() end
+        AprRCData.CurrentRoute = { name = "", steps = {} }
+        self:ResetRecordingSession()
+        self:ResetTaxiLookup()
+    end
+    table.remove(AprRCData.Routes, index)
+    if AprRCData.EditorDrafts then AprRCData.EditorDrafts[routeName] = nil end
+    if AprRCData.QuestLookup then AprRCData.QuestLookup[routeName] = nil end
+    if self.pendingAPRRoutes then self.pendingAPRRoutes[routeName] = nil end
+    self:RemoveRecorderRouteFromAPR(routeName)
+    if self.routeEditor then self.routeEditor:RequestRefresh() end
+    return true
+end
+
 local function getRouteKey(routeName)
     if routeName and routeName ~= "" then
         return routeName

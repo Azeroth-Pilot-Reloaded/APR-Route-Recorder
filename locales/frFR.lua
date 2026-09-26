@@ -1,6 +1,10 @@
 local L = LibStub("AceLocale-3.0"):NewLocale("APR-Recorder", "frFR")
 if not L then return end
 
+-- Route deletion
+L["Delete route"] = "Supprimer le parcours"
+L["Delete route %s, its draft and its recorder copy in APR? This cannot be undone."] = "Supprimer le parcours %s, son brouillon et sa copie du recorder dans APR ? Cette action est irréversible."
+
 -- Author: Neogeekmo
 --@localization(locale="frFR", format="lua_additive_table", handle-unlocalized="ignore")@
 

@@ -1,6 +1,18 @@
 -- Saved routes are published automatically; editor drafts never enter this bridge.
 local L = LibStub("AceLocale-3.0"):GetLocale("APR-Recorder")
 
+function AprRC:RemoveRecorderRouteFromAPR(name)
+    local key = AprRCData.APRRouteKeys and AprRCData.APRRouteKeys[name]
+    if not key then return end
+    if APRData and APRData.CustomRoute then APRData.CustomRoute[key] = nil end
+    if APR and APR.RouteQuestStepList then APR.RouteQuestStepList[key] = nil end
+    AprRCData.APRRouteKeys[name] = nil
+    if APR and APR.InvalidateEffectiveRouteStepsCache then APR:InvalidateEffectiveRouteStepsCache(key) end
+    if APR and APR.routeconfig and APR.routeconfig.SendMessage then
+        APR.routeconfig:SendMessage("APR_Custom_Path_Update")
+    end
+end
+
 function AprRC:GetAPRRouteKey(route)
     AprRCData.APRRouteKeys = AprRCData.APRRouteKeys or {}
     local keys = AprRCData.APRRouteKeys
