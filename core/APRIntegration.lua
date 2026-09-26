@@ -68,6 +68,10 @@ end
 function AprRC:RequestAPRRouteSync(name)
     name = name or (AprRCData and AprRCData.CurrentRoute and AprRCData.CurrentRoute.name)
     if not name or name == "" then return end
+    -- Also covers legacy handlers that edit the table returned by GetLastStep.
+    -- Keep revisions out of SavedVariables and exported route definitions.
+    self.routeRevisions = self.routeRevisions or {}
+    self.routeRevisions[name] = (self.routeRevisions[name] or 0) + 1
     if not self.pendingAPRRoutes then
         self.pendingAPRRoutes = {}
         C_Timer.After(0, function() self:FlushAPRRouteSync() end)

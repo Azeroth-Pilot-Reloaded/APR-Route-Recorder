@@ -245,6 +245,7 @@ local questIcons = {
 function Editor:DrawList()
     if not self.list then return end
     local oldScroll = self.list.localstatus.scrollvalue or 0
+    self.list:PauseLayout()
     self.list:ReleaseChildren()
     local session = self.session
     local matches = Model:Filter(self:Steps(), self.query, self.filter, UI.Label)
@@ -296,6 +297,7 @@ function Editor:DrawList()
         end)
         self.list:AddChild(row)
     end
+    self.list:ResumeLayout()
     self.list:DoLayout()
     self.list:SetScroll(oldScroll)
 end

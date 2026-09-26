@@ -422,7 +422,7 @@ function Editor:Refresh(forceFollow)
     if session and not AprRC.CommandBarSetting.dragging and
         not (self.stepsSplit and self.stepsSplit.dragging) and not self.confirm and not self.nameDialog and
         not interacting(self.frame, following and self.luaBox or nil) and
-        not self.fieldPicker and not session:IsDirty() and (session:IsStale() or (forceFollow and following)) then
+        not self.fieldPicker and not session:IsDirty() and (session:IsStale(true) or (forceFollow and following)) then
         local listScroll = self.list and self.list.localstatus.scrollvalue or 0
         local luaScroll = self.luaBox and self.luaBox.scrollFrame:GetVerticalScroll() or 0
         local luaCursor = self.luaBox and self.luaBox.editBox:GetCursorPosition() or 0

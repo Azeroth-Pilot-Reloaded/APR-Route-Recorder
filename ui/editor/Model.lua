@@ -27,6 +27,7 @@ function Model:Open(route)
     if saved then
         session.draft = AprRC:CopyData(saved.draft)
         session.base = saved.base
+        session.source = nil -- The persisted baseline may predate the live source.
         session.raw = saved.raw
         session.selected = saved.selected or 1
         session.parallelGroup = saved.parallelGroup or 1
@@ -44,6 +45,7 @@ function Session:Reload(route)
     self.draft = AprRC:BuildRouteDefinition(route)
     self.draft.name = route.name
     self.base = Model:RouteText(self.draft)
+    self:RememberSource(route)
     self.raw = nil
     self.selected = math.max(1, math.min(self.selected, #route.steps))
     self:ClampSelection()
@@ -53,12 +55,28 @@ function Session:Reload(route)
 end
 
 function Session:IsDirty()
-    return self.raw ~= nil or Model:RouteText(self.draft) ~= self.base
+    -- Visual mutations end in Snapshot(); raw edits are tracked separately.
+    return self.raw ~= nil or self.dirty == true
 end
 
-function Session:IsStale()
+function Session:RememberSource(source)
+    self.source = source
+    self.sourceSteps = source and source.steps
+    self.sourceCount = self.sourceSteps and #self.sourceSteps
+    self.sourceRevision = AprRC.routeRevisions and AprRC.routeRevisions[self.name] or 0
+end
+
+function Session:IsStale(refreshOnly)
     local source = Model:Source(self.name)
-    return not source or Model:RouteText(AprRC:BuildRouteDefinition(source)) ~= self.base
+    if not source then return true end
+    local revision = AprRC.routeRevisions and AprRC.routeRevisions[self.name] or 0
+    -- Polling must stay cheap for an unchanged route. Explicit save/reopen
+    -- checks still compare all data, including unannounced external edits.
+    if refreshOnly and source == self.source and source.steps == self.sourceSteps and
+        #source.steps == self.sourceCount and revision == self.sourceRevision then return false end
+    local stale = Model:RouteText(AprRC:BuildRouteDefinition(source)) ~= self.base
+    if not stale then self:RememberSource(source) end
+    return stale
 end
 
 function Session:Persist()
@@ -76,8 +94,9 @@ end
 
 function Session:Snapshot()
     self.rawHistory = nil
+    self.dirty = Model:RouteText(self.draft) ~= self.base
     local snapshot = { draft = AprRC:CopyData(self.draft), selected = self.selected,
-        parallelGroup = self.parallelGroup, parallelSelected = self.parallelSelected }
+        parallelGroup = self.parallelGroup, parallelSelected = self.parallelSelected, dirty = self.dirty }
     if self.history[self.cursor] and AprRC:DeepCompare(self.history[self.cursor].draft, snapshot.draft) then
         self:Persist()
         return
@@ -94,6 +113,7 @@ function Session:Undo(delta)
     if index < 1 or index > #self.history then return false end
     self.cursor = index
     self.draft = AprRC:CopyData(self.history[index].draft)
+    self.dirty = self.history[index].dirty
     self.selected = self.history[index].selected
     self.parallelGroup = self.history[index].parallelGroup
     self.parallelSelected = self.history[index].parallelSelected
@@ -382,11 +402,16 @@ local questActions = { PickUp = true, Qpart = true, QpartPart = true, Done = tru
 local navigationActions = { Waypoint = true, UseFlightPath = true, GetFP = true, SetHS = true,
     UseHS = true, UseDalaHS = true, UseGarrisonHS = true, TakePortal = true }
 
-function Model:Summary(step)
+function Model:StepKind(step)
     local key = "Step"
     for _, candidate in ipairs(actionOrder) do
         if step[candidate] then key = candidate; break end
     end
+    return key, questActions[key] and "quests" or navigationActions[key] and "travel" or "other"
+end
+
+function Model:Summary(step)
+    local key, category = self:StepKind(step)
     local ids = {}
     if questActions[key] and type(step[key]) == "table" then
         for index, value in pairs(step[key]) do
@@ -439,7 +464,6 @@ function Model:Summary(step)
         preview[1], raw[1] = tostring(step.Name), tostring(step.Name)
     end
     local detail = table.concat(preview, " · ")
-    local category = questActions[key] and "quests" or navigationActions[key] and "travel" or "other"
     return key, detail, category, table.concat(raw, " · ")
 end
 
@@ -447,12 +471,17 @@ function Model:Filter(steps, query, category, label)
     local matches = {}
     query = strtrim(query or ""):lower()
     for index, step in ipairs(steps) do
-        local key, detail, kind = self:Summary(step)
-        local haystack = (index .. " " .. key .. " " .. (label and label(key) or "") .. " " .. detail .. " " ..
-            AprRC:SerializeData(step)):lower()
-        if (not category or category == "all" or category == kind) and
-            (query == "" or haystack:find(query, 1, true)) then
-            matches[#matches + 1] = index
+        local _, kind
+        if category and category ~= "all" then _, kind = self:StepKind(step) end
+        if not category or category == "all" or category == kind then
+            if query == "" then
+                matches[#matches + 1] = index
+            else
+                local key, detail = self:Summary(step)
+                local haystack = (index .. " " .. key .. " " .. (label and label(key) or "") .. " " .. detail .. " " ..
+                    AprRC:SerializeData(step)):lower()
+                if haystack:find(query, 1, true) then matches[#matches + 1] = index end
+            end
         end
     end
     return matches
