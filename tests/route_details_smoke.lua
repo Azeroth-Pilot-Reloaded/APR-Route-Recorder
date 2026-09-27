@@ -66,6 +66,7 @@ local examples = {
     { "ItemCount", { itemIDs = { 12, 34 }, count = 3 }, "Item 12", "Item 34", ">= 3" },
     { "Collection", { itemID = 12, quantity = 4 }, "Item 12", "4" },
     { "EquippedItem", { slot = 16, itemID = 12 }, "Item 12", "|T12345:" },
+    { "EquippedItem", { { slot = 16, itemID = 12 }, { slot = 17, itemID = 34, invert = true } }, "Item 12", "Item 34" },
     { "Skill", { skill = "cooking", rank = 50 }, "Spell 2550", "|T54321:", ">= 50" },
     { "Skill", { skillID = 185, rank = 50 }, "Spell 2550" },
     { "LearnSkill", { spellIDs = { 100, 6673 } }, "Spell 100", "Spell 6673" },

@@ -45,11 +45,11 @@ for _, key in ipairs({ "AnyOf", "EquippedItemStat", "ItemCount", "Not" }) do
     assert(card.type == "InlineGroup", "Each condition block needs its own visible card")
 end
 assert(not session:IsDirty())
-local path = "route/parallelSteps/1/steps/1/AnyOf/1/AnyOf/1/EquippedItemStat/"
+local path = "route/parallelSteps/1/steps/1/AnyOf/1/AnyOf/1/EquippedItemStat/1/"
 -- Sibling and nested conditions are all available immediately, as in the report.
-assert(field("route/parallelSteps/1/steps/1/EquippedItemStat/value"))
+assert(field("route/parallelSteps/1/steps/1/EquippedItemStat/1/value"))
 assert(field("route/parallelSteps/1/steps/1/ItemCount/count"))
-assert(field("route/parallelSteps/1/steps/1/Not/EquippedItem/itemID"))
+assert(field("route/parallelSteps/1/steps/1/Not/EquippedItem/1/itemID"))
 local allow = field(path .. "allowMissing")
 local captured, previousLine = {}, AprRC.AddTooltipLine
 AprRC.AddTooltipLine = function(_, _, text) captured[#captured + 1] = text end
@@ -58,7 +58,7 @@ AprRC.AddTooltipLine = previousLine
 assert(captured[1] == UI.Label("allowMissing") and captured[2] == UI.Text("HELP_allowMissing"))
 allow:Fire("OnLeave")
 allow:Fire("OnValueChanged", false)
-assert(session.draft.parallelSteps[1].steps[1].AnyOf[1].AnyOf[1].EquippedItemStat.allowMissing == false)
+assert(session.draft.parallelSteps[1].steps[1].AnyOf[1].AnyOf[1].EquippedItemStat[1].allowMissing == false)
 assert(route.parallelSteps[1].steps[1].AnyOf[1].AnyOf[1].EquippedItemStat.allowMissing == true)
 E:Undo(-1)
 assert(field(path .. "allowMissing"):GetValue() == true)
@@ -68,11 +68,11 @@ assert(E:Save()); flat()
 
 -- Switching between the group condition and step must open independent roots.
 E.groupConditions:Fire("OnClick"); flat()
-local groupPath = "route/parallelSteps/1/conditions/AllOf/1/EquippedItemStat/value"
+local groupPath = "route/parallelSteps/1/conditions/AllOf/1/EquippedItemStat/1/value"
 local value = field(groupPath)
 value:SetText("6"); value:Fire("OnTextChanged", "6")
-assert(session.draft.parallelSteps[1].conditions.AllOf[1].EquippedItemStat.value == 6)
-assert(session.draft.parallelSteps[1].steps[1].AnyOf[1].AnyOf[1].EquippedItemStat.value == 7)
+assert(session.draft.parallelSteps[1].conditions.AllOf[1].EquippedItemStat[1].value == 6)
+assert(session.draft.parallelSteps[1].steps[1].AnyOf[1].AnyOf[1].EquippedItemStat[1].value == 7)
 button("Back to step"):Fire("OnClick")
 assert(field(path .. "allowMissing"))
 E.list.children[2]:Fire("OnClick")

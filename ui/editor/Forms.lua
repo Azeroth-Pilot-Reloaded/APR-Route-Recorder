@@ -74,6 +74,9 @@ end
 -- an edit writes the displayed list/object through the original setter.
 function Form:Unified(schema, value)
     if schema == "level" then schema = R.schemas.level end
+    if schema == R.schemas.equippedItem or schema == R.schemas.equippedItemStat then
+        return schema.choices[1], type(value) == "table" and (value.slot and { value } or value) or {}
+    end
     if kind(schema) ~= "union" then return schema, value end
     local scalar, objectSchema, strings
     for _, choice in ipairs(schema.choices) do
@@ -153,7 +156,7 @@ function Form:Summary(schema, value)
     schema, value = self:Unified(schema, value)
     if type(value) ~= "table" then return tostring(value) end
     for _, key in ipairs({ "Money", "LootMoney", "DestroyItems", "LearnSkill", "Skill", "ItemCount", "Collection", "EquippedItem" }) do
-        if R.step[key].schema == schema then
+        if self:Unified(R.step[key].schema) == schema then
             local detail = AprRC.editorModel:FieldSummary(key, value)
             if detail and detail ~= "" then return detail end
         end
@@ -494,7 +497,7 @@ function Form:Render(parent, schema, value, set, context, path, label)
         widget:SetLabel(label)
         widget:SetValue(value == true)
         widget:SetUserData("fieldPath", path)
-        if path:match("/EquippedItemStat/allowMissing$") then
+        if path:find("/EquippedItemStat/", 1, true) and path:match("/allowMissing$") then
             widget:SetCallback("OnEnter", function()
                 GameTooltip:SetOwner(widget.frame, "ANCHOR_RIGHT")
                 AprRC:AddTooltipLine(GameTooltip, label, 1, 0.82, 0.4)

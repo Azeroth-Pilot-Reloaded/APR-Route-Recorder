@@ -23,7 +23,7 @@ R:Register({
     key = "EquippedItemStat",
     command = "equippeditemstat",
     schema = S.equippedItemStat,
-    example = "{ slot = 16, stat = \"ITEM_MOD_DAMAGE_PER_SECOND_SHORT\", operator = \"<\", value = 3.5 }",
+    example = "{ { slot = 16, stat = \"QUALITY\", operator = \"<\", value = 7 }, { slot = 16, stat = \"ITEM_MOD_DAMAGE_PER_SECOND_SHORT\", operator = \"<\", value = 3.5 } }",
     condition = true,
     icon = "Interface\\Icons\\INV_Sword_04",
 })
@@ -68,7 +68,7 @@ R:Register({
     key = "EquippedItem",
     command = "equippeditem",
     schema = S.equippedItem,
-    example = "{ slot = 16, itemID = 2493 }",
+    example = "{ { slot = 16, itemID = 2493 }, { slot = 17, invert = true } }",
     condition = true,
     icon = "Interface\\Icons\\INV_Sword_04",
 })

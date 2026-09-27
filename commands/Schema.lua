@@ -142,11 +142,13 @@ end
 S.money = object({ operator = S.operator, copper = "nonnegative" }, { "copper" })
 S.itemCount = object({ itemID = "id", itemIDs = "ids", operator = S.operator, count = "nonnegative",
     includeBank = "bool", includeUsableToys = "bool" }, { "count" })
-S.equippedItemStat = object({ slot = S.equipmentSlot, stat = S.equipmentStat, operator = S.operator, value = "number",
+S.equippedItemStatEntry = object({ slot = S.equipmentSlot, stat = S.equipmentStat, operator = S.operator, value = "number",
     precision = "nonnegative", allowMissing = "bool" }, { "slot", "stat", "value" })
+S.equippedItemStat = { kind = "union", choices = { list(S.equippedItemStatEntry), S.equippedItemStatEntry } }
 S.skill = object({ skill = { kind = "union", choices = { "id", "text" } }, skillID = "id", name = "text",
     rank = "nonnegative", operator = S.operator, maximum = "bool" })
-S.equippedItem = object({ slot = S.equipmentSlot, itemID = "id", invert = "bool" }, { "slot" })
+S.equippedItemEntry = object({ slot = S.equipmentSlot, itemID = "id", invert = "bool" }, { "slot" })
+S.equippedItem = { kind = "union", choices = { list(S.equippedItemEntry), S.equippedItemEntry } }
 S.collection = object({ itemID = "id", quantity = "id" }, { "itemID" })
 S.absoluteXP = object({ level = "id", xp = "integer" }, { "level", "xp" })
 S.level = { kind = "union", choices = { "positive", "profile", S.absoluteXP } }

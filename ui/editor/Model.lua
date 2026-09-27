@@ -356,6 +356,11 @@ function Model:FieldSummary(key, value)
         return items(value.itemIDs or (value.itemID and { value.itemID })) .. " " .. (value.operator or ">=") .. " " .. tostring(value.count or 0)
     elseif key == "Collection" then return self:ItemText(value.itemID) .. " × " .. tostring(value.quantity or 1)
     elseif key == "EquippedItem" then
+        if value[1] then
+            local result = {}
+            for _, entry in ipairs(value) do result[#result + 1] = self:FieldSummary(key, entry) end
+            return table.concat(result, ", ")
+        end
         local text = value.itemID and self:ItemText(value.itemID) or ""
         return (value.invert and "≠ " or "") .. text
     elseif key == "Skill" then return self:SkillText(value) .. " " .. (value.operator or ">=") .. " " .. tostring(value.rank or 1)
