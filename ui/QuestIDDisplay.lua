@@ -10,6 +10,8 @@ local questObjectives = {}
 local specialItemQuests = {}
 local detailLines = setmetatable({}, { __mode = "k" })
 local hookedDetails = setmetatable({}, { __mode = "k" })
+local npcTitles = setmetatable({}, { __mode = "k" })
+local hookedNPCMixins = {}
 local ExtractQuestIDsFromTooltipData
 
 -- Never inspect, convert, compare or index secret game values. On older
@@ -347,8 +349,90 @@ function AprRC.questID:RefreshQuestLogDetails()
     line:Show()
 end
 
+function AprRC.questID:UpdateNPCQuestTitle(button, questID)
+    if not UsableFrame(button) then return end
+    local text = Text(button:GetText())
+    if not text then return end
+    local previous = npcTitles[button]
+    -- Restore only our own decoration; pooled buttons can already show another quest.
+    if previous and text == previous.decorated then
+        text = previous.original
+    end
+    questID = QuestID(questID)
+    local decorated = questID and ("|cff" .. QUEST_ID_COLOR .. "[" .. questID .. "]|r " .. text)
+    npcTitles[button] = { original = text, decorated = decorated, questID = questID }
+    button:SetText(self:IsEnabled("npc") and decorated or text)
+    -- Preserve wrapped titles and the clickable area, including long localized names.
+    local icon = Public(button.Icon)
+    if UsableFrame(icon) and button.GetTextHeight then
+        local textHeight, iconHeight = Public(button:GetTextHeight()), Public(icon:GetHeight())
+        if type(textHeight) == "number" and type(iconHeight) == "number" then
+            button:SetHeight(math.max(textHeight + 2, iconHeight))
+        end
+    end
+end
+
+function AprRC.questID:RefreshNPCQuestGreeting()
+    local greeting = _G.QuestFrameGreetingPanel
+    if not UsableFrame(greeting) then return end
+    local pool = Public(greeting.titleButtonPool)
+    if not pool or not pool.EnumerateActive then return end
+    for button in pool:EnumerateActive() do
+        if UsableFrame(button) then
+            local index = QuestID(button:GetID())
+            local questID
+            if index then
+                if Public(button.isActive) == 1 and _G.GetActiveQuestID then
+                    questID = GetActiveQuestID(index)
+                elseif Public(button.isActive) == 0 and _G.GetAvailableQuestInfo then
+                    questID = select(5, GetAvailableQuestInfo(index))
+                end
+            end
+            self:UpdateNPCQuestTitle(button, questID)
+        end
+    end
+end
+
+function AprRC.questID:InstallNPCQuestHooks()
+    -- Mainline Setup calls these shared methods even for existing pooled buttons.
+    -- Hooking an inherited title mixin alone misses methods copied before login.
+    for _, name in ipairs({ "GossipSharedAvailableQuestButtonMixin", "GossipSharedActiveQuestButtonMixin" }) do
+        local mixin = _G[name]
+        if mixin and mixin.Setup and not hookedNPCMixins[mixin] then
+            hooksecurefunc(mixin, "Setup", function(button, info)
+                info = Public(info)
+                self:UpdateNPCQuestTitle(button, info and info.questID)
+            end)
+            hookedNPCMixins[mixin] = true
+        end
+    end
+    if _G.QuestFrameGreetingPanel_OnShow and not self.npcGreetingHooked then
+        hooksecurefunc("QuestFrameGreetingPanel_OnShow", function()
+            self:RefreshNPCQuestGreeting()
+        end)
+        self.npcGreetingHooked = true
+    end
+end
+
 function AprRC.questID:RefreshVisibility()
     self:RefreshQuestLogDetails()
+    for button, title in pairs(npcTitles) do
+        if UsableFrame(button) then
+            local text = Text(button:GetText())
+            if text and (text == title.original or text == title.decorated) then
+                self:UpdateNPCQuestTitle(button, title.questID)
+            end
+        end
+    end
+    -- A visibility toggle can change line wrapping; recalculate scroll extents too.
+    local gossip = _G.GossipFrame
+    if UsableFrame(gossip) and Public(gossip:IsShown()) then
+        local greeting = Public(gossip.GreetingPanel)
+        local scrollBox = greeting and Public(greeting.ScrollBox)
+        if UsableFrame(scrollBox) and scrollBox.FullUpdate then
+            scrollBox:FullUpdate()
+        end
+    end
 end
 
 function AprRC.questID:HookObjectiveTrackers()
@@ -373,6 +457,7 @@ end
 function AprRC.questID:InstallHooks()
     self:HookObjectiveTrackers()
     self:InstallQuestLogDetailHook()
+    self:InstallNPCQuestHooks()
 
     if _G.TaskPOI_OnEnter and not self.taskPOIHooked then
         hooksecurefunc("TaskPOI_OnEnter", function(pin)

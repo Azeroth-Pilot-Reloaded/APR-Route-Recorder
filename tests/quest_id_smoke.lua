@@ -1,6 +1,6 @@
 local Q = AprRC.questID
 local options = { enabled = true, alwaysVisible = true, map = true, minimap = true,
-    questLog = true, objectiveTracker = true, inventory = true }
+    questLog = true, objectiveTracker = true, inventory = true, npc = true }
 AprRC.settings.profile.questIDDisplay = options
 AprRC.settings.profile.enableAddon = true
 
@@ -161,10 +161,92 @@ details:Hide(); details:Show()
 assert(line:IsShown())
 assert(#elements == 3 and forbiddenReads == 0, "Restricted values must be skipped before inspection")
 
+-- NPC hooks must work with methods copied into frames before addon initialization.
+local function npcButton()
+    local button = CreateFrame("Button")
+    function button:SetID(id) self.id = id end
+    function button:GetID() return self.id end
+    return button
+end
+local function setup(button, info)
+    button:SetID(info.questID)
+    button:SetText(info.title)
+end
+GossipSharedAvailableQuestButtonMixin = { Setup = setup }
+GossipSharedActiveQuestButtonMixin = { Setup = setup }
+local available, active = npcButton(), npcButton()
+function available:Setup(info) GossipSharedAvailableQuestButtonMixin.Setup(self, info) end
+function active:Setup(info) GossipSharedActiveQuestButtonMixin.Setup(self, info) end
+available.Icon = available:CreateTexture()
+available.Icon:SetHeight(16)
+available:SetWidth(110)
+available.GetTextHeight = available.GetStringHeight
+
+local greetingAvailable, greetingActive = npcButton(), npcButton()
+greetingAvailable:SetID(1); greetingAvailable.isActive = 0
+greetingActive:SetID(1); greetingActive.isActive = 1
+local greetingButtons = { [greetingAvailable] = true, [greetingActive] = true }
+QuestFrameGreetingPanel = CreateFrame("Frame")
+QuestFrameGreetingPanel.titleButtonPool = { EnumerateActive = function() return pairs(greetingButtons) end }
+GetActiveQuestID = function(index) assert(index == 1); return 84 end
+GetAvailableQuestInfo = function(index) assert(index == 1); return false, 1, false, false, 42 end
+QuestFrameGreetingPanel_OnShow = function()
+    greetingAvailable:SetText("Available quest")
+    greetingActive:SetText("Active quest")
+end
+Q:InstallHooks(); Q:InstallHooks()
+local formattedTitle = "|cff808080A long trivial quest title|r"
+available:Setup({ questID = 42, title = formattedTitle })
+active:Setup({ questID = 84, title = "Active quest" })
+assert(available:GetText() == "|cff33ccff[42]|r " .. formattedTitle)
+assert(available:GetHeight() == available:GetTextHeight() + 2, "Wrapped rows must fit the title")
+assert(active:GetText() == "|cff33ccff[84]|r Active quest")
+assert(available:GetID() == 42 and active:GetID() == 84, "Click targets must remain unchanged")
+QuestFrameGreetingPanel_OnShow()
+assert(greetingAvailable:GetText() == "|cff33ccff[42]|r Available quest")
+assert(greetingActive:GetText() == "|cff33ccff[84]|r Active quest")
+assert(greetingAvailable:GetID() == 1 and greetingActive:GetID() == 1)
+Q:RefreshVisibility(); Q:RefreshVisibility()
+assert(available:GetText() == "|cff33ccff[42]|r " .. formattedTitle, "No duplicate prefix")
+options.npc = false
+Q:RefreshVisibility()
+assert(available:GetText() == formattedTitle and greetingActive:GetText() == "Active quest")
+options.npc = true
+options.alwaysVisible = false
+AprRC.settings.profile.recordBarFrame.isRecording = false
+Q:RefreshVisibility()
+assert(available:GetText() == formattedTitle)
+AprRC.settings.profile.recordBarFrame.isRecording = true
+Q:RefreshVisibility()
+assert(available:GetText():find("[42]", 1, true))
+options.enabled = false
+Q:RefreshVisibility()
+assert(available:GetText() == formattedTitle)
+options.enabled = true
+AprRC.settings.profile.enableAddon = false
+Q:RefreshVisibility()
+assert(available:GetText() == formattedTitle)
+AprRC.settings.profile.enableAddon = true
+Q:RefreshVisibility()
+assert(available:GetText():find("[42]", 1, true))
+available:Setup({ questID = 84, title = "Another NPC quest" })
+assert(available:GetText() == "|cff33ccff[84]|r Another NPC quest")
+available:SetText("Unrelated pooled row")
+Q:RefreshVisibility()
+assert(available:GetText() == "Unrelated pooled row")
+available:Setup({ questID = secret, title = "Restricted quest" })
+assert(available:GetText() == "Restricted quest")
+Q:UpdateNPCQuestTitle(secret, 42)
+Q:UpdateNPCQuestTitle(inaccessible, 42)
+available:SetText("hidden text")
+Q:UpdateNPCQuestTitle(available, 42)
+assert(available:GetText() == "hidden text")
+assert(forbiddenReads == 0)
+
 -- Compatibility with clients without the secret-value APIs.
 issecretvalue, canaccesstable = nil, nil
 clear()
 Q:AddQuestIDsToTooltip(tooltip, 42)
 assert(lastIDs == "42")
 assert(#UIErrors == 0, table.concat(UIErrors, "\n"))
-print("Quest IDs: secret values/tables, forbidden tooltips, public-data display and Blizzard layout isolation passed.")
+print("Quest IDs: restricted data, tooltips, NPC rows, visibility, pooling and Blizzard layout isolation passed.")

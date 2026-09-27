@@ -78,6 +78,7 @@ function AprRC.settings:InitializeSettings()
                 questLog = true,
                 objectiveTracker = true,
                 inventory = true,
+                npc = true,
             },
             debug = false,
             enableAddon = true,
@@ -273,6 +274,18 @@ function AprRC.settings:createBlizzOptions()
                         name = L.QUEST_ID_INVENTORY,
                         get = function() return self.profile.questIDDisplay.inventory end,
                         set = function(_, value) self.profile.questIDDisplay.inventory = value end,
+                        disabled = function() return not self.profile.questIDDisplay.enabled end,
+                    },
+                    npc = {
+                        order = 8,
+                        type = "toggle",
+                        name = L.QUEST_ID_NPC,
+                        desc = L.QUEST_ID_NPC_DESC,
+                        get = function() return self.profile.questIDDisplay.npc end,
+                        set = function(_, value)
+                            self.profile.questIDDisplay.npc = value
+                            AprRC.questID:RefreshVisibility()
+                        end,
                         disabled = function() return not self.profile.questIDDisplay.enabled end,
                     },
                 },
