@@ -31,6 +31,7 @@ assert(not R:ValidateValue("level", { level = 3, xp = 0 / 0 }))
 
 for _, operator in ipairs({ "<", "<=", ">", ">=", "==", "~=" }) do
     valid("money", '{ copper = 0, operator = "' .. operator .. '" }')
+    valid("vendormoney", '{ copper = 0, operator = "' .. operator .. '" }')
     valid("itemcount", '{ itemID = 6948, count = 0, operator = "' .. operator .. '" }')
     valid("equippeditemstat", '{ slot = 16, stat = "QUALITY", value = 0, operator = "' .. operator .. '" }')
     valid("skill", '{ skillID = 185, rank = 0, operator = "' .. operator .. '" }')
@@ -55,6 +56,15 @@ for _, input in ipairs({ '{}', '10', '{ copper = 0 }', '{ copper = -1 }', '{ cop
     '{ copper = 10, equippedSlots = { 1.5 } }', '{ copper = 10, equippedSlots = { [2] = 5 } }',
     '{ copper = 10, unknown = true }' }) do invalid("lootmoney", input) end
 invalid("not", '{ LootMoney = { copper = 10 } }')
+local vendorMoney = valid("vendormoney", '{ copper = 102, includeEquipped = false, equippedSlots = { 16 } }')
+assert(vendorMoney.copper == 102 and vendorMoney.equippedSlots[1] == 16 and vendorMoney.includeEquipped == false)
+valid("vendormoney", '{ copper = 102, includeEquipped = true }')
+valid("not", '{ AnyOf = { { VendorMoney = { copper = 102, equippedSlots = { 16 } } } } }')
+for _, input in ipairs({ '{}', '{ copper = -1 }', '{ copper = 1.5 }', '{ copper = 102, operator = "=" }',
+    '{ copper = 102, equippedSlots = { 20 } }', '{ copper = 102, equippedSlots = {} }',
+    '{ copper = 102, includeEquipped = 1 }', '{ copper = 102, unknown = true }' }) do
+    invalid("vendormoney", input)
+end
 valid("sellitems", '{ junk = true, text = "Sell grey items" }')
 valid("learnskill", '{ spellID = 6673 }')
 valid("learnskill", '{ allAvailable = true, npcID = 911 }')
@@ -95,7 +105,7 @@ assert(not R:ValidateValue("routeConditions", conditions))
 local recursive = {}
 recursive.Not = recursive
 assert(not R:ValidateValue("conditions", recursive), "Missing nesting limit")
-for _, key in ipairs({ "Money", "ItemCount", "EquippedItemStat", "Hardcore", "AllOf", "Not", "Skill", "EquippedItem", "Collection" }) do
+for _, key in ipairs({ "Money", "VendorMoney", "ItemCount", "EquippedItemStat", "Hardcore", "AllOf", "Not", "Skill", "EquippedItem", "Collection" }) do
     local definition = R.step[key]
     local value = assert(definition).example
     local parsed = R:Parse(definition, value)
@@ -109,7 +119,7 @@ local route = {
     prefab = { [APR.PREFAB_TYPES.Speedrun] = { index = 10, conditions = { Race = { "Orc", "Troll" } } } },
     parallelSteps = { { conditions = conditions, steps = { { Grind = { level = 4, xp = -700 } } } } },
 }
-for _, key in ipairs({ "LootMoney", "ExitTutorial", "LeaveQuest", "DeathSkip", "SellItems", "LearnSkill", "BankDeposit",
+for _, key in ipairs({ "LootMoney", "VendorMoney", "ExitTutorial", "LeaveQuest", "DeathSkip", "SellItems", "LearnSkill", "BankDeposit",
     "BankWithdraw", "DestroyItems", "TameBeast", "SpellETA", "EmoteETA", "Bloodlust", "MerchantNPC",
     "NoAutoAccept", "NoAutoTurnIn", "ExtraLine", "Gossip", "Hardcore" }) do
     local definition = assert(R.step[key], key)
@@ -136,6 +146,9 @@ assert(R:Dispatch('lootmoney { copper = 10, includeEquipped = false, equippedSlo
 local moneyStep = AprRCData.CurrentRoute.steps[2]
 assert(moneyStep.LootMoney.copper == 10 and moneyStep.LootMoney.includeEquipped == false)
 assert(moneyStep.LootMoney.equippedSlots[2] == 16 and moneyStep.Coord)
+assert(R:Dispatch('vendormoney { copper = 102, equippedSlots = { 16 } }'))
+assert(#AprRCData.CurrentRoute.steps == 2 and moneyStep.VendorMoney.copper == 102)
+assert(moneyStep.VendorMoney.equippedSlots[1] == 16)
 assert(R:Apply(R.commands.hardcore, false, AprRCData.CurrentRoute, AprRCData.CurrentRoute.steps[1]))
 assert(AprRCData.CurrentRoute.steps[1].Hardcore == false)
 AprRCData.CurrentRoute = previous

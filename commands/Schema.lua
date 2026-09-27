@@ -140,6 +140,8 @@ function options:EnumValue(candidate)
 end
 
 S.money = object({ operator = S.operator, copper = "nonnegative" }, { "copper" })
+S.vendorMoney = object({ operator = S.operator, copper = "nonnegative", includeEquipped = "bool",
+    equippedSlots = list(S.equipmentSlot) }, { "copper" })
 S.itemCount = object({ itemID = "id", itemIDs = "ids", operator = S.operator, count = "nonnegative",
     includeBank = "bool", includeUsableToys = "bool" }, { "count" })
 S.equippedItemStatEntry = object({ slot = S.equipmentSlot, stat = S.equipmentStat, operator = S.operator, value = "number",

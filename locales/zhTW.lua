@@ -1,5 +1,6 @@
 local L = LibStub("AceLocale-3.0"):NewLocale("APR-Recorder", "zhTW")
 if not L then return end
+L["FIELD_VendorMoney"] = "含售價的金錢條件"
 L["Ctrl: condition details"] = "Ctrl：條件詳情"
 
 -- Route deletion

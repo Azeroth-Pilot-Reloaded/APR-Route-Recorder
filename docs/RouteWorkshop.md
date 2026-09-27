@@ -32,9 +32,15 @@ including the selected route's name. Confirming removes the saved route, its
 draft and the recorder's published APR copy. Deleting the route being recorded
 also stops recording. Route deletion cannot be undone; cancel leaves it intact.
 
-Money and LootMoney use three editable **gold**, **silver** and **copper** fields
+Money, VendorMoney and LootMoney use three editable **gold**, **silver** and **copper** fields
 with coin icons, including nested conditions and recording command dialogs.
 Values are stored as copper (`gold * 10000 + silver * 100 + copper`).
+VendorMoney filters a step using current cash plus the vendor value of bag items
+and optionally equipped gear. Select equipment slots or enable `includeEquipped`
+for all equipment; the comparison defaults to `>=`. For example,
+`/aprrc vendormoney { copper = 102, equippedSlots = { 16 } }` requires at least
+102 copper including the main-hand weapon. This condition also works in nested
+and parallel step conditions. It estimates resale value and does not sell items.
 Step subtitles show coin amounts, item names and icons for item actions and
 conditions, and skill names and icons. Item lists wrap to remain visible; names
 not yet cached by the game initially show their ID and refresh when available.

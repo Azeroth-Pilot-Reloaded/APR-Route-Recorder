@@ -1,5 +1,6 @@
 local L = LibStub("AceLocale-3.0"):NewLocale("APR-Recorder", "enUS", true)
 if not L then return end
+L["FIELD_VendorMoney"] = "Money including vendor value condition"
 L["Ctrl: condition details"] = "Ctrl: condition details"
 
 -- Route deletion

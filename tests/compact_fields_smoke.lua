@@ -25,7 +25,8 @@ end
 local route = assert(AprRC.editorModel:NewRoute("Compact fields"))
 route.steps = { { PickUp = { 42 }, Coord = { x = -4251.46, y = -607.35 }, Zone = 1411,
     Range = 10, Class = "MAGE", ClassNot = { 13 }, Race = { "Orc", "Troll" },
-    LootMoney = { copper = 10, equippedSlots = { 1, 3, 5, 6, 7, 8, 9, 10, 15 } } } }
+    LootMoney = { copper = 10, equippedSlots = { 1, 3, 5, 6, 7, 8, 9, 10, 15 } },
+    VendorMoney = { copper = 102, equippedSlots = { 16 }, includeEquipped = false } } }
 route.parallelSteps = { { conditions = { Class = { "MAGE" }, Race = "Orc" },
     steps = { { Coord = { x = 1, y = 2 }, Zone = 84, Note = "Parallel" } } } }
 route.conditions = { Class = 8 }
@@ -76,6 +77,13 @@ assert(#session.draft.steps[1].Race == 1 and session.draft.steps[1].Race[1] == "
 toggle(slots, 2, true); toggle(slots, 1, false)
 assert(tContains(session.draft.steps[1].LootMoney.equippedSlots, 2))
 assert(not tContains(session.draft.steps[1].LootMoney.equippedSlots, 1))
+local vendorSlots = field("step/VendorMoney/equippedSlots")
+assert(vendorSlots:GetMultiselect() and vendorSlots.list[16])
+toggle(vendorSlots, 17, true)
+enter(field("step/VendorMoney/copper/copper"), "3")
+assert(session.draft.steps[1].VendorMoney.copper == 103)
+assert(tContains(session.draft.steps[1].VendorMoney.equippedSlots, 17))
+assert(route.steps[1].VendorMoney.copper == 102 and #route.steps[1].VendorMoney.equippedSlots == 1)
 toggle(classes, "EVOKER", false)
 assert(not AprRC.options:ValidateValue(AprRC.options.schemas.class, session.draft.steps[1].Class))
 assert(classes.parent.frame:GetHeight() > classes.frame:GetHeight(), "An empty selection must display its validation error")

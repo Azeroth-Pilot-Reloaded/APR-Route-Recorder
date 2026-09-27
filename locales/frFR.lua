@@ -1,5 +1,7 @@
 local L = LibStub("AceLocale-3.0"):NewLocale("APR-Recorder", "frFR")
 if not L then return end
+
+L["FIELD_VendorMoney"] = "Condition d'argent après revente"
 L["Ctrl: condition details"] = "Ctrl : détails des conditions"
 
 -- Route deletion
@@ -712,7 +714,8 @@ L["QUEST_ID_INVENTORY"] = "Objets de quête dans les sacs"
 L["QUEST_ID_MAP"] = "Carte du monde"
 L["QUEST_ID_MINIMAP"] = "Minicarte"
 L["QUEST_ID_NPC"] = "Fenêtre des PNJ"
-L["QUEST_ID_NPC_DESC"] = "Afficher le QuestID directement sur chaque ligne de quête disponible ou en cours dans la fenêtre du PNJ."
+L["QUEST_ID_NPC_DESC"] =
+"Afficher le QuestID directement sur chaque ligne de quête disponible ou en cours dans la fenêtre du PNJ."
 L["QUEST_ID_OBJECTIVE_TRACKER"] = "Liste d'objectifs"
 L["QUEST_ID_QUEST_LOG"] = "Journal de quêtes"
 L["QUEST_ID_SETTINGS"] = "Affichage des QuestIDs"
@@ -836,7 +839,8 @@ L["Use Spell quest list"] = "Utiliser la liste de quêtes de sorts"
 L["Value"] = "Valeur"
 L["Vertical"] = "Verticale"
 L["WORLD_MAP_COORDINATES"] = "Coordonnées monde sur la carte"
-L["WORLD_MAP_COORDINATES_DESC"] = "Afficher les coordonnées monde du curseur au-dessus des coordonnées de carte, dans l’ordre X/Y des routes APR."
+L["WORLD_MAP_COORDINATES_DESC"] =
+"Afficher les coordonnées monde du curseur au-dessus des coordonnées de carte, dans l’ordre X/Y des routes APR."
 L["WORLD_MAP_CURSOR_WORLD"] = "Curseur (monde) : %.1f, %.1f"
 L["Waypoint DB (QuestID) - Also add Waypoint QuestID"] = "Waypoint DB (QuestID) - Ajoutez également le Waypoint QuestID"
 L["You can add more commands in the Commands Settings panel"] =

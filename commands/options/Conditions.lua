@@ -2,6 +2,15 @@ local R = AprRC.options
 local S = R.schemas
 
 R:Register({
+    key = "VendorMoney",
+    command = "vendormoney",
+    schema = S.vendorMoney,
+    example = "{ copper = 102, equippedSlots = { 16 } }",
+    condition = true,
+    icon = "Interface\\Icons\\INV_Misc_Coin_01",
+})
+
+R:Register({
     key = "Money",
     command = "money",
     schema = S.money,

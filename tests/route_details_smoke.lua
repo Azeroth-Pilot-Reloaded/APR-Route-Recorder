@@ -60,6 +60,7 @@ assert(field("step/LootMoney/copper/silver"):GetText() == "4")
 assert(field("step/LootMoney/copper/copper"):GetText() == "4")
 
 local examples = {
+    { "VendorMoney", { copper = 102, equippedSlots = { 16 } }, ">= 0|TInterface", "1|TInterface", "2|TInterface" },
     { "DestroyItems", { items = { 12, 34 } }, "Item 12", "Item 34", "|T12345:" },
     { "BankDeposit", { items = { 12, 34 } }, "Item 12", "Item 34" },
     { "BankWithdraw", { items = { 12, 34 } }, "Item 12", "Item 34" },
@@ -92,7 +93,7 @@ assert(row.frame:GetHeight() > 72, "Long descriptions must wrap instead of hidin
 LibStub("AceGUI-3.0"):Release(row)
 
 -- Toolbar/slash-command dialogs must expose the same fields and stored copper.
-for _, key in ipairs({ "Money", "LootMoney" }) do
+for _, key in ipairs({ "Money", "LootMoney", "VendorMoney" }) do
     local applied
     local definition = AprRC.options.step[key]
     local dialog = AprRC.options:ShowInput(definition, { Money = { copper = 12345 } }, route, function(text)
@@ -102,7 +103,8 @@ for _, key in ipairs({ "Money", "LootMoney" }) do
     local edit = assert(find(dialog, function(w) return w:GetUserData("fieldPath") == "command/" .. key .. "/copper/gold" end))
     edit:SetText("9"); edit:Fire("OnTextChanged", "9")
     assert(find(dialog, function(w) return w.type == "Button" and w.text:GetText() == UI.Text("Apply") end)):Fire("OnClick")
-    assert(applied.copper == (key == "Money" and 92345 or 90010))
+    assert(applied.copper == (key == "Money" and 92345 or key == "VendorMoney" and 90102 or 90010))
+    if key == "VendorMoney" then assert(applied.equippedSlots[1] == 16) end
 end
 
 -- Delayed item data refreshes names without discarding the current draft.

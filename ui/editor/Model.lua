@@ -350,7 +350,7 @@ function Model:FieldSummary(key, value)
         return table.concat(result, ", ")
     end
     if key == "LootMoney" then return self:MoneyText(value.copper)
-    elseif key == "Money" then return (value.operator or ">=") .. " " .. self:MoneyText(value.copper)
+    elseif key == "Money" or key == "VendorMoney" then return (value.operator or ">=") .. " " .. self:MoneyText(value.copper)
     elseif key == "DestroyItems" or key == "BankDeposit" or key == "BankWithdraw" then return items(value.items)
     elseif key == "ItemCount" then
         return items(value.itemIDs or (value.itemID and { value.itemID })) .. " " .. (value.operator or ">=") .. " " .. tostring(value.count or 0)
@@ -385,7 +385,7 @@ end
 
 function Model:ConditionSummary(conditions)
     local result = {}
-    for _, key in ipairs({ "Money", "ItemCount", "Skill", "Collection", "EquippedItem", "AllOf", "AnyOf", "Not" }) do
+    for _, key in ipairs({ "Money", "VendorMoney", "ItemCount", "Skill", "Collection", "EquippedItem", "AllOf", "AnyOf", "Not" }) do
         local detail = self:FieldSummary(key, conditions[key])
         if detail and detail ~= "" then
             result[#result + 1] = (key == "Not" or key == "AllOf" or key == "AnyOf") and detail or

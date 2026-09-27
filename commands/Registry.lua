@@ -163,7 +163,8 @@ function options:PrintHelp(scope)
 end
 
 function options:ShowInput(definition, target, route, submit)
-    if definition.schema == self.schemas.money or definition.schema == self.schemas.lootMoney then
+    if definition.schema == self.schemas.money or definition.schema == self.schemas.lootMoney
+        or definition.schema == self.schemas.vendorMoney then
         local current = target and not definition.newStep and target[definition.key]
         return AprRC.editorUI.MoneyDialog(definition, current, submit)
     end
