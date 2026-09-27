@@ -59,6 +59,7 @@ recording/Treasure.lua
 recording/Flight.lua
 recording/DroppedQuest.lua
 ui/QuestIDDisplay.lua
+ui/WorldMapCoordinates.lua
 
 ui/dialogs/TutoFrame.lua
 ui/dialogs/Autocomplete.lua

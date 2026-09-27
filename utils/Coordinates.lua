@@ -3,6 +3,21 @@ local function usable(value)
         and value == value and math.abs(value) ~= math.huge
 end
 
+function AprRC:GetWorldCoordFromMapPosition(mapID, x, y)
+    if not usable(mapID) or mapID <= 0 or not usable(x) or not usable(y)
+        or x < 0 or x > 1 or y < 0 or y > 1 then return end
+    local ok, coord = pcall(function()
+        local _, world = C_Map.GetWorldPosFromMapPos(mapID, CreateVector2D(x, y))
+        if (issecretvalue and issecretvalue(world)) or not world
+            or (canaccesstable and type(world) == "table" and not canaccesstable(world)) then return end
+        local worldX, worldY = world:GetXY()
+        if not usable(worldX) or not usable(worldY) then return end
+        -- Match Coord.x / Coord.y in APR routes, rather than map percentages.
+        return { x = tonumber(string.format("%.1f", worldY)), y = tonumber(string.format("%.1f", worldX)) }
+    end)
+    if ok then return coord end
+end
+
 function AprRC:GetPlayerCoord()
     local ok, coord, zone = pcall(function()
         local mapID = C_Map.GetBestMapForUnit("player")

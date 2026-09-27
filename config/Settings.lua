@@ -65,6 +65,7 @@ function AprRC.settings:InitializeSettings()
                 scale = 1,
             },
             coordinateShow = false,
+            worldMapCoordinates = true,
             textAppearance = { font = "DEFAULT", flags = "NONE" },
             --debug
             minimap = { minimapPos = 285 },
@@ -188,6 +189,19 @@ function AprRC.settings:createBlizzOptions()
                 name = L["Miscellaneous"],
                 inline = true,
                 args = {
+                    worldMapCoordinates = {
+                        order = 4.2,
+                        type = "toggle",
+                        name = L.WORLD_MAP_COORDINATES,
+                        desc = L.WORLD_MAP_COORDINATES_DESC,
+                        width = "full",
+                        get = GetProfileOption,
+                        set = function(info, value)
+                            SetProfileOption(info, value)
+                            AprRC.worldMapCoordinates:RefreshVisibility()
+                        end,
+                        disabled = function() return not self.profile.enableAddon end,
+                    },
                     enableCampaignQuestsFlag = {
                         order = 4.1,
                         type = "toggle",
@@ -383,6 +397,7 @@ function AprRC.settings:CreateMiniMapButton()
 end
 
 function AprRC.settings:ToggleAddon()
+    AprRC.worldMapCoordinates:RefreshVisibility()
     AprRC.record:RefreshFrameAnchor()
     AprRC.coordinate:RefreshFrameAnchor()
     if AprRC.questID then

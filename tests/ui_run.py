@@ -74,6 +74,8 @@ def run():
     load("tests/step_tooltip_smoke.lua")
     load("ui/QuestIDDisplay.lua")
     load("tests/quest_id_smoke.lua")
+    load("ui/WorldMapCoordinates.lua")
+    load("tests/world_map_coordinates_smoke.lua")
 
 
 if __name__ == "__main__":
