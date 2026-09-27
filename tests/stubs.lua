@@ -10,7 +10,7 @@ APR = { LevelRequirementProfiles = { MidnightDelves = {} },
     EXPANSIONS = { Midnight = "Midnight", Custom = "Custom" },
     CATEGORIES = { Leveling = "Leveling", Miscellaneous = "Miscellaneous" },
     PREFAB_TYPES = { Speedrun = "speedrun" } }
-APR.Classes = { Evoker = 13, Mage = 8 }
+APR.Classes = { Evoker = 13, Mage = 8, Warlock = 9 }
 APR.Specs = { ["Mage - Frost"] = 64 }
 APR.RACES = { Orc = "Orc", Troll = "Troll" }
 APR.EVENTS = { Remix = "Remix" }

@@ -7,6 +7,7 @@ Session.__index = Session
 
 function Model:RouteText(route)
     local data = AprRC:CopyData(route)
+    AprRC:NormalizeRouteClasses(data)
     data.name = nil
     return AprRC:SerializeData(data)
 end
@@ -83,7 +84,9 @@ function Session:Persist()
     AprRCData.EditorDrafts = AprRCData.EditorDrafts or {}
     if self:IsDirty() then
         AprRCData.EditorDrafts[self.name] = {
-            draft = AprRC:CopyData(self.draft), base = self.base,
+            -- History snapshots are detached and immutable. Reuse the current one
+            -- while typing Lua instead of copying thousands of steps per keystroke.
+            draft = self.history[self.cursor].draft, base = self.base,
             raw = self.raw, selected = self.selected,
             parallelGroup = self.parallelGroup, parallelSelected = self.parallelSelected,
         }

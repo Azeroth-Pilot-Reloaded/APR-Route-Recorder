@@ -85,7 +85,53 @@ E:Tick()
 assert(#E.session.draft.steps == 5001)
 
 E:SelectTab("lua")
+local labelWrites = 0
+local summaryText, recordingText = E.summary.SetText, E.recordStatus.SetText
+E.summary.SetText = function(self, ...) labelWrites = labelWrites + 1; return summaryText(self, ...) end
+E.recordStatus.SetText = function(self, ...) labelWrites = labelWrites + 1; return recordingText(self, ...) end
 idle()
+E.summary.SetText, E.recordStatus.SetText = summaryText, recordingText
+assert(labelWrites == 0, "Idle Lua refresh must not relayout unchanged labels")
+local baseline = E.luaBox:GetText()
+local text = baseline .. "\n-- "
+local statusUpdates, status = 0, E.UpdateStatus
+E.UpdateStatus = function(self, ...) statusUpdates = statusUpdates + 1; return status(self, ...) end
+reset()
+for index = 1, 60 do
+    text = text .. "x"
+    E.luaBox:SetText(text)
+    E.luaBox:Fire("OnTextChanged", text)
+end
+assert(copies == 0 and serializations == 0 and summaries == 0,
+    "Typing Lua must not copy, serialize or summarize the route, even on the first edit")
+assert(statusUpdates == 1, "Typing must not relayout unchanged toolbar labels on every keystroke")
+assert(#E.session.rawHistory == 50 and E.session.rawCursor == 50)
+assert(AprRCData.EditorDrafts[route.name].raw == text, "Latest raw text must persist immediately")
+local savedDraft = AprRCData.EditorDrafts[route.name].draft
+assert(savedDraft ~= E.session.draft, "Persisted visual data must remain detached")
+E.session.draft.steps[1].Note = "Uncommitted mutation"
+assert(savedDraft.steps[1].Note ~= "Uncommitted mutation")
+E.session.draft.steps[1].Note = nil
+E:Undo(-1)
+assert(E.session.raw == text:sub(1, -2))
+E:Undo(1)
+assert(E.session.raw == text)
+E:Undo(-1)
+E.luaBox:SetText(baseline .. "\n-- branch")
+E.luaBox:Fire("OnTextChanged", E.luaBox:GetText())
+assert(E.session.rawCursor == #E.session.rawHistory, "New edits discard redo")
+assert(copies == 0 and serializations == 0, "Lua undo and redo must also avoid route copies")
+E.UpdateStatus = status
+-- Enter only scans/indents the current line; pasted multiline text stays exact.
+E.luaBox:SetText("{\n    Note = 1,")
+E.luaBox:Fire("OnTextChanged", E.luaBox:GetText())
+E.luaBox.editBox:SetCursorPosition(#E.luaBox:GetText())
+E.luaBox.editBox:Insert("\n")
+E.luaBox:Fire("OnTextChanged", E.luaBox:GetText())
+assert(E.session.raw == "{\n    Note = 1,\n    ")
+E.luaBox.editBox:Insert("Another line\n")
+E.luaBox:Fire("OnTextChanged", E.luaBox:GetText())
+assert(E.session.raw == "{\n    Note = 1,\n    Another line\n", "Paste must not add indentation")
 E.luaBox:SetText("{ steps = { -- unfinished")
 E.luaBox:Fire("OnTextChanged", E.luaBox:GetText())
 assert(E.session:IsDirty())

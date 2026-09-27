@@ -1,4 +1,48 @@
 local L = LibStub("AceLocale-3.0"):GetLocale("APR-Recorder")
+
+-- Accept older numeric class filters, but expose and save APR's textual tokens.
+-- Only visit condition fields: quest IDs, class specs and other numbers stay intact.
+function AprRC:NormalizeRouteClasses(route)
+    local tokens = {}
+    for name, id in pairs(APR.Classes or {}) do tokens[id] = name:gsub("%s", ""):upper() end
+    local function class(value)
+        if type(value) ~= "table" then return tokens[value] or value end
+        for index, entry in ipairs(value) do value[index] = tokens[entry] or entry end
+        return value
+    end
+    local function conditions(value)
+        if type(value) ~= "table" then return end
+        if value.Class ~= nil then value.Class = class(value.Class) end
+        if value.ClassNot ~= nil then value.ClassNot = class(value.ClassNot) end
+        for _, key in ipairs({ "AnyOf", "AllOf" }) do
+            if type(value[key]) == "table" then
+                for _, group in ipairs(value[key]) do conditions(group) end
+            end
+        end
+        conditions(value.Not)
+    end
+    local function steps(value)
+        if type(value) == "table" then
+            for _, step in ipairs(value) do conditions(step) end
+        end
+    end
+    conditions(route.conditions)
+    steps(route.steps)
+    for _, group in ipairs(type(route.parallelSteps) == "table" and route.parallelSteps or {}) do
+        if type(group) == "table" then
+            conditions(group.conditions)
+            steps(group.steps)
+        end
+    end
+    for _, target in ipairs(type(route.nextRoute) == "table" and route.nextRoute or {}) do
+        if type(target) == "table" then conditions(target.conditions) end
+    end
+    for _, target in pairs(type(route.prefab) == "table" and route.prefab or {}) do
+        if type(target) == "table" then conditions(target.conditions) end
+    end
+    return route
+end
+
 -- The recorder name is a storage key; everything else belongs to APR's route definition.
 function AprRC:BuildRouteDefinition(route)
     local result = {}
@@ -18,7 +62,7 @@ function AprRC:BuildRouteDefinition(route)
     end
     normalize(result.steps)
     for _, group in ipairs(result.parallelSteps or {}) do normalize(group.steps or {}) end
-    return result
+    return self:NormalizeRouteClasses(result)
 end
 
 function AprRC:ReadRouteDefinition(text, name, previous, validationBaseline)
@@ -61,5 +105,5 @@ function AprRC:ReadRouteDefinition(text, name, previous, validationBaseline)
         end
     end
     result.name = name
-    return result
+    return self:NormalizeRouteClasses(result)
 end

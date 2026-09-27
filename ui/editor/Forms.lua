@@ -120,8 +120,8 @@ function Form:MultiChoices(schema, path, single)
         for name, id in pairs(APR.Classes or {}) do
             local token = name:gsub("%s", ""):upper()
             if entries[token] and entries[id] then
-                aliases[token], entries[token] = id, nil
-                entries[id] = (LOCALIZED_CLASS_NAMES_MALE or {})[token] or UI.Label(name)
+                aliases[id], entries[id] = token, nil
+                entries[token] = (LOCALIZED_CLASS_NAMES_MALE or {})[token] or UI.Label(name)
             end
         end
     end
@@ -441,7 +441,7 @@ function Form:Render(parent, schema, value, set, context, path, label)
         local selected = {}
         for _, entry in ipairs(originalList and value or { value }) do
             local canonical = aliases[entry] or entry
-            selected[canonical] = entry
+            selected[canonical] = canonical
             if choices[canonical] == nil then choices[canonical] = tostring(entry) end
         end
         local widget = UI.Dropdown(parent, label, choices, nil, function() end, true)

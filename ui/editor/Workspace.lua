@@ -57,6 +57,11 @@ function Editor:Confirm(text, callback)
     dialog:SetCallback("OnClose", function(widget) self.confirm = nil; GUI:Release(widget) end)
 end
 
+local function SetStatusLabel(widget, text)
+    -- AceGUI labels recalculate their anchors/layout even when the text is unchanged.
+    if widget.label:GetText() ~= text then widget:SetText(text) end
+end
+
 function Editor:UpdateStatus()
     if not self.frame then return end
     local session = self.session
@@ -73,8 +78,8 @@ function Editor:UpdateStatus()
     self.redoButton:SetDisabled(not session or (rawMode and session.rawCursor >= #rawHistory or not rawMode and session.cursor >= #session.history))
     local state = active and "|cffff7777● " .. T("Recording") .. "|r" or "|cffb3a58b" .. T("Recording stopped") .. "|r"
     if active then state = state .. "  ·  " .. AprRCData.CurrentRoute.name end
-    self.recordStatus:SetText(state)
-    self.summary:SetText(session and ("|cffedc36a" .. tostring(#session.draft.steps) .. " " .. T("Steps") .. "|r  ·  " ..
+    SetStatusLabel(self.recordStatus, state)
+    SetStatusLabel(self.summary, session and ("|cffedc36a" .. tostring(#session.draft.steps) .. " " .. T("Steps") .. "|r  ·  " ..
         (dirty and "|cffffcf66" .. T("Unsaved draft") or "|cff82d9a0" .. T("Saved")) .. "|r") or "")
     self.frame:SetStatusText(self.notice or (dirty and T("Follow pauses while you edit. Save or reload to resume.") or
         T("Drafts are kept when closing this window, switching routes or reloading the UI.")))

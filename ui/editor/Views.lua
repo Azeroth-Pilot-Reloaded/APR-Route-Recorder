@@ -423,11 +423,14 @@ function Editor:DrawLua()
     edit:SetCallback("OnTextChanged", function(_, _, value)
         if self.settingLua or indenting then return end
         local box = edit.editBox
-        value = box:GetText() or value or ""
-        if #value > self.luaPreviousLength then
-            local before = value:sub(1, box:GetCursorPosition())
-            if before:sub(-1) == "\n" then
-                local line = before:sub(1, -2):match("([^\n]*)$") or ""
+        value = value or box:GetText() or ""
+        if #value == self.luaPreviousLength + 1 then
+            local cursor = box:GetCursorPosition()
+            if value:sub(cursor, cursor) == "\n" then
+                -- Inspect only the preceding line, not the entire route prefix.
+                local start = cursor - 1
+                while start > 0 and value:sub(start, start) ~= "\n" do start = start - 1 end
+                local line = value:sub(start + 1, cursor - 1)
                 local indent = line:match("^([ \t]+)")
                 if indent then
                     indenting = true; box:Insert(indent); indenting = false
@@ -436,6 +439,9 @@ function Editor:DrawLua()
             end
         end
         self.luaPreviousLength = #value
+        local wasDirty, hadNotice = session:IsDirty(), self.notice ~= nil
+        local couldUndo = session.rawCursor > 1
+        local couldRedo = session.rawCursor < #session.rawHistory
         session.raw = value
         local history = session.rawHistory
         if history[session.rawCursor].text ~= value then
@@ -446,7 +452,8 @@ function Editor:DrawLua()
         end
         session:Persist()
         self.notice = nil
-        self:UpdateStatus()
+        if not wasDirty or hadNotice or couldUndo ~= (session.rawCursor > 1) or
+            couldRedo ~= (session.rawCursor < #history) then self:UpdateStatus() end
     end)
     self.luaKeyDown = edit.editBox:GetScript("OnKeyDown")
     edit.editBox:SetScript("OnKeyDown", function(box, key, ...)

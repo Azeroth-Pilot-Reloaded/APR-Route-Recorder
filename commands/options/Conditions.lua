@@ -145,7 +145,7 @@ R:Register({
     key = "ClassNot",
     command = "classnot",
     schema = S.class,
-    example = "APR.Classes.Evoker",
+    example = "\"EVOKER\"",
     condition = true,
     icon = "Interface\\Icons\\INV_Sword_04",
 })

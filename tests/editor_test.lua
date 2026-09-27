@@ -1,4 +1,30 @@
 local Model = AprRC.editorModel
+-- Normalize all class condition locations, preserving numeric IDs in other fields.
+local numericClasses = {
+    name = "2393-Class tokens", conditions = { Class = 9, ClassSpec = 266 },
+    steps = { { PickUp = { 9 }, Class = { 9, "MAGE" }, ClassNot = 13,
+        AnyOf = { { Class = 8 }, { Not = { ClassNot = { 9 } } } } } },
+    parallelSteps = { { conditions = { Class = 9 }, steps = { { Note = "Test", ClassNot = { 9 } } } } },
+    nextRoute = { { route = "Next", conditions = { AllOf = { { Class = 9 } } } } },
+    prefab = { [APR.PREFAB_TYPES.Speedrun] = { index = 9, conditions = { ClassNot = 9 } } },
+}
+local text = Model:RouteText(numericClasses)
+local normalized = assert(AprRC:ReadRouteDefinition(text, numericClasses.name))
+assert(normalized.conditions.Class == "WARLOCK" and normalized.conditions.ClassSpec == 266)
+assert(normalized.steps[1].Class[1] == "WARLOCK" and normalized.steps[1].Class[2] == "MAGE")
+assert(normalized.steps[1].ClassNot == "EVOKER" and normalized.steps[1].PickUp[1] == 9)
+assert(normalized.steps[1].AnyOf[1].Class == "MAGE")
+assert(normalized.steps[1].AnyOf[2].Not.ClassNot[1] == "WARLOCK")
+assert(normalized.parallelSteps[1].conditions.Class == "WARLOCK")
+assert(normalized.parallelSteps[1].steps[1].ClassNot[1] == "WARLOCK")
+assert(normalized.nextRoute[1].conditions.AllOf[1].Class == "WARLOCK")
+assert(normalized.prefab[APR.PREFAB_TYPES.Speedrun].conditions.ClassNot == "WARLOCK")
+assert(normalized.prefab[APR.PREFAB_TYPES.Speedrun].index == 9)
+assert(numericClasses.conditions.Class == 9 and numericClasses.steps[1].Class[1] == 9,
+    "Displaying Lua must not mutate the saved route")
+local imported = assert(AprRC:ReadRouteDefinition(AprRC:SerializeData(numericClasses), numericClasses.name))
+assert(imported.steps[1].Class[1] == "WARLOCK", "Legacy numeric imports must normalize on save")
+assert(AprRC:BuildRouteDefinition(numericClasses).conditions.Class == "WARLOCK")
 local originalData = AprRCData
 local route = {
     name = "2393-Editor", label = "Editor test", expansion = "Midnight", mapID = 2393,
