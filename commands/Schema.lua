@@ -14,48 +14,64 @@ S.questMap = object({ questID = "id", mapID = "id" }, { "questID", "mapID" })
 S.treasure = object({ questID = "id", itemID = "id" }, { "questID" })
 S.drop = object({ Qid = "id", MobId = "id", Text = "text" }, { "Qid", "MobId", "Text" })
 S.group = object({ questID = "id", Number = "id" }, { "questID", "Number" })
-S.achievement = object({ achievementID = "id", criteriaID = "id", criteriaIndex = "id",
-    quantity = "positive", requiredQuantity = "positive" }, { "achievementID" })
-S.scenario = object({ scenarioID = "id", stepID = "id", criteriaID = "id", criteriaIndex = "id",
-    questID = "id" }, {})
+S.achievement = object({
+    achievementID = "id",
+    criteriaID = "id",
+    criteriaIndex = "id",
+    quantity = "positive",
+    requiredQuantity = "positive"
+}, { "achievementID" })
+S.scenario = object({
+    scenarioID = "id",
+    stepID = "id",
+    criteriaID = "id",
+    criteriaIndex = "id",
+    questID = "id"
+}, {})
 S.item = object({ questID = "id", itemID = "id", itemSpellID = "id" }, { "questID", "itemID", "itemSpellID" })
 S.spell = object({ questID = "id", spellID = "id" }, { "questID", "spellID" })
 S.items = list(object({ questID = "id", itemID = "id", quantity = "id" }, { "itemID", "quantity" }))
 S.lootItems = list(object({ questID = "id", itemID = "id", quantity = "id" }, { "itemID" }))
 S.lootMoney = object({ copper = "id", includeEquipped = "bool", equippedSlots = "ids" }, { "copper" })
 S.itemAction = object({ items = "ids", text = "text" }, { "items" })
-S.sellItems = object({ items = "ids", junk = "bool", npcID = "id", text = "text" })
+S.sellItems = object({ questID = "id", items = "ids", junk = "bool", npcID = "id", text = "text" })
 S.learnSkill = object({ spellID = "id", spellIDs = "ids", allAvailable = "bool", npcID = "id", text = "text" })
-S.tameBeast = object({ npcID = "id", spellID = "id", text = "text" }, { "npcID" })
+S.tameBeast = object({ questID = "id", npcID = "id", spellID = "id", text = "text" }, { "npcID" })
 S.spellETA = object({ spellID = "id", itemID = "id", seconds = "positive" }, { "seconds" })
 S.operator = { kind = "enum", values = { "<", "<=", ">", ">=", "==", "~=" } }
 -- Labels are localized by the client; only the numeric value is stored in routes.
-S.equipmentSlot = { kind = "enum", values = {
-    { value = 1, label = INVTYPE_HEAD or "Head" },
-    { value = 2, label = INVTYPE_NECK or "Neck" },
-    { value = 3, label = INVTYPE_SHOULDER or "Shoulder" },
-    { value = 4, label = INVTYPE_BODY or "Shirt" },
-    { value = 5, label = INVTYPE_CHEST or "Chest" },
-    { value = 6, label = INVTYPE_WAIST or "Waist" },
-    { value = 7, label = INVTYPE_LEGS or "Legs" },
-    { value = 8, label = INVTYPE_FEET or "Feet" },
-    { value = 9, label = INVTYPE_WRIST or "Wrist" },
-    { value = 10, label = INVTYPE_HAND or "Hands" },
-    { value = 11, label = (INVTYPE_FINGER or "Finger") .. " 1" },
-    { value = 12, label = (INVTYPE_FINGER or "Finger") .. " 2" },
-    { value = 13, label = (INVTYPE_TRINKET or "Trinket") .. " 1" },
-    { value = 14, label = (INVTYPE_TRINKET or "Trinket") .. " 2" },
-    { value = 15, label = INVTYPE_CLOAK or "Back" },
-    { value = 16, label = INVTYPE_WEAPONMAINHAND or "Main Hand" },
-    { value = 17, label = INVTYPE_WEAPONOFFHAND or "Off Hand" },
-    { value = 18, label = INVTYPE_RANGED or "Ranged" },
-    { value = 19, label = INVTYPE_TABARD or "Tabard" },
-} }
+S.equipmentSlot = {
+    kind = "enum",
+    values = {
+        { value = 1,  label = INVTYPE_HEAD or "Head" },
+        { value = 2,  label = INVTYPE_NECK or "Neck" },
+        { value = 3,  label = INVTYPE_SHOULDER or "Shoulder" },
+        { value = 4,  label = INVTYPE_BODY or "Shirt" },
+        { value = 5,  label = INVTYPE_CHEST or "Chest" },
+        { value = 6,  label = INVTYPE_WAIST or "Waist" },
+        { value = 7,  label = INVTYPE_LEGS or "Legs" },
+        { value = 8,  label = INVTYPE_FEET or "Feet" },
+        { value = 9,  label = INVTYPE_WRIST or "Wrist" },
+        { value = 10, label = INVTYPE_HAND or "Hands" },
+        { value = 11, label = (INVTYPE_FINGER or "Finger") .. " 1" },
+        { value = 12, label = (INVTYPE_FINGER or "Finger") .. " 2" },
+        { value = 13, label = (INVTYPE_TRINKET or "Trinket") .. " 1" },
+        { value = 14, label = (INVTYPE_TRINKET or "Trinket") .. " 2" },
+        { value = 15, label = INVTYPE_CLOAK or "Back" },
+        { value = 16, label = INVTYPE_WEAPONMAINHAND or "Main Hand" },
+        { value = 17, label = INVTYPE_WEAPONOFFHAND or "Off Hand" },
+        { value = 18, label = INVTYPE_RANGED or "Ranged" },
+        { value = 19, label = INVTYPE_TABARD or "Tabard" },
+    }
+}
 
-S.equipmentStat = { kind = "enum", values = {
-    { value = "QUALITY", label = ITEM_QUALITY or QUALITY or "Item quality" },
-    { value = "LEVEL", label = STAT_AVERAGE_ITEM_LEVEL or "Item level" },
-} }
+S.equipmentStat = {
+    kind = "enum",
+    values = {
+        { value = "QUALITY", label = ITEM_QUALITY or QUALITY or "Item quality" },
+        { value = "LEVEL",   label = STAT_AVERAGE_ITEM_LEVEL or "Item level" },
+    }
+}
 -- Keep common stats available across clients, with readable fallbacks when a
 -- particular expansion does not define their localized global strings.
 local itemStats = {
@@ -140,22 +156,48 @@ function options:EnumValue(candidate)
 end
 
 S.money = object({ operator = S.operator, copper = "nonnegative" }, { "copper" })
-S.vendorMoney = object({ operator = S.operator, copper = "nonnegative", includeEquipped = "bool",
-    equippedSlots = list(S.equipmentSlot) }, { "copper" })
-S.itemCount = object({ itemID = "id", itemIDs = "ids", operator = S.operator, count = "nonnegative",
-    includeBank = "bool", includeUsableToys = "bool" }, { "count" })
-S.equippedItemStatEntry = object({ slot = S.equipmentSlot, stat = S.equipmentStat, operator = S.operator, value = "number",
-    precision = "nonnegative", allowMissing = "bool" }, { "slot", "stat", "value" })
+S.vendorMoney = object({
+    operator = S.operator,
+    copper = "nonnegative",
+    includeEquipped = "bool",
+    equippedSlots = list(S.equipmentSlot)
+}, { "copper" })
+S.itemCount = object({
+    itemID = "id",
+    itemIDs = "ids",
+    operator = S.operator,
+    count = "nonnegative",
+    includeBank = "bool",
+    includeUsableToys = "bool"
+}, { "count" })
+S.equippedItemStatEntry = object(
+{
+    slot = S.equipmentSlot,
+    stat = S.equipmentStat,
+    operator = S.operator,
+    value = "number",
+    precision = "nonnegative",
+    allowMissing = "bool"
+}, { "slot", "stat", "value" })
 S.equippedItemStat = { kind = "union", choices = { list(S.equippedItemStatEntry), S.equippedItemStatEntry } }
-S.skill = object({ skill = { kind = "union", choices = { "id", "text" } }, skillID = "id", name = "text",
-    rank = "nonnegative", operator = S.operator, maximum = "bool" })
+S.skill = object({
+    skill = { kind = "union", choices = { "id", "text" } },
+    skillID = "id",
+    name = "text",
+    rank = "nonnegative",
+    operator = S.operator,
+    maximum = "bool"
+})
 S.equippedItemEntry = object({ slot = S.equipmentSlot, itemID = "id", invert = "bool" }, { "slot" })
 S.equippedItem = { kind = "union", choices = { list(S.equippedItemEntry), S.equippedItemEntry } }
 S.collection = object({ itemID = "id", quantity = "id" }, { "itemID" })
 S.absoluteXP = object({ level = "id", xp = "integer" }, { "level", "xp" })
 S.level = { kind = "union", choices = { "positive", "profile", S.absoluteXP } }
-S.reputation = object({ factionID = "id", type = { kind = "enum", values = { "standard", "renown", "friendship" } },
-    level = "id" }, { "factionID", "level" })
+S.reputation = object({
+    factionID = "id",
+    type = { kind = "enum", values = { "standard", "renown", "friendship" } },
+    level = "id"
+}, { "factionID", "level" })
 S.emote = object({ npcID = "nonnegative", emote = "text" }, { "npcID", "emote" })
 S.buffs = list(object({ spellId = "id", tooltipMessage = "text" }, { "spellId" }))
 S.qpart = { kind = "map", key = "id", entry = "ids" }
@@ -167,24 +209,56 @@ S.allOf = list("conditions")
 S.note = { kind = "union", choices = { "text", "strings" } }
 S.xp = { kind = "union", choices = { "profile", { kind = "enum", values = { false } } } }
 S.routeLinks = { kind = "union", choices = { "text", "strings" } }
-S.nextRoutes = list({ kind = "union", choices = { "text",
-    object({ route = "text", conditions = "conditions" }, { "route", "conditions" }) } })
-S.prefab = { kind = "map", key = { kind = "enum", group = "PREFAB_TYPES" },
-    entry = { kind = "union", choices = { "id",
-        object({ index = "id", conditions = "conditions" }, { "index", "conditions" }) } } }
-S.classValue = { kind = "union", choices = { { kind = "enum", group = "Classes" },
-    { kind = "enum", values = { "WARRIOR", "PALADIN", "HUNTER", "ROGUE", "PRIEST", "DEATHKNIGHT",
-        "SHAMAN", "MAGE", "WARLOCK", "MONK", "DRUID", "DEMONHUNTER", "EVOKER" } } } }
+S.nextRoutes = list({
+    kind = "union",
+    choices = { "text",
+        object({ route = "text", conditions = "conditions" }, { "route", "conditions" }) }
+})
+S.prefab = {
+    kind = "map",
+    key = { kind = "enum", group = "PREFAB_TYPES" },
+    entry = {
+        kind = "union",
+        choices = { "id",
+            object({ index = "id", conditions = "conditions" }, { "index", "conditions" }) }
+    }
+}
+S.classValue = {
+    kind = "union",
+    choices = { { kind = "enum", group = "Classes" },
+        {
+            kind = "enum",
+            values = { "WARRIOR", "PALADIN", "HUNTER", "ROGUE", "PRIEST", "DEATHKNIGHT",
+                "SHAMAN", "MAGE", "WARLOCK", "MONK", "DRUID", "DEMONHUNTER", "EVOKER" }
+        } }
+}
 S.class = { kind = "union", choices = { S.classValue, list(S.classValue) } }
-S.race = { kind = "union", choices = { { kind = "enum", group = "RACES" },
-    list({ kind = "enum", group = "RACES" }) } }
+S.race = {
+    kind = "union",
+    choices = { { kind = "enum", group = "RACES" },
+        list({ kind = "enum", group = "RACES" }) }
+}
 
 local routeConditions = {
-    InterfaceVersion = true, DontHaveSpell = true, IsQuestReadyForTurnIn = true,
-    HasAchievement = true, DontHaveAchievement = true, Faction = true, Race = true,
-    Class = true, ClassNot = true, Event = true, AlliedRace = true, IsQuestCompleted = true,
-    IsQuestUncompleted = true, Level = true, MinLevel = true, MaxLevel = true, BeLvl = true,
-    ClassSpec = true, Zones = true,
+    InterfaceVersion = true,
+    DontHaveSpell = true,
+    IsQuestReadyForTurnIn = true,
+    HasAchievement = true,
+    DontHaveAchievement = true,
+    Faction = true,
+    Race = true,
+    Class = true,
+    ClassNot = true,
+    Event = true,
+    AlliedRace = true,
+    IsQuestCompleted = true,
+    IsQuestUncompleted = true,
+    Level = true,
+    MinLevel = true,
+    MaxLevel = true,
+    BeLvl = true,
+    ClassSpec = true,
+    Zones = true,
 }
 
 function options:ValidateValue(schema, value, path, depth, previous)
@@ -206,9 +280,11 @@ function options:ValidateValue(schema, value, path, depth, previous)
     elseif kind == "bool" then
         if type(value) ~= "boolean" then return fail(L["expected true or false"]) end
     elseif kind == "number" or kind == "positive" or kind == "id" or kind == "nonnegative" or kind == "integer" then
-        if type(value) ~= "number" or value ~= value or math.abs(value) == math.huge then return fail(L["expected a finite number"]) end
+        if type(value) ~= "number" or value ~= value or math.abs(value) == math.huge then return fail(L
+            ["expected a finite number"]) end
         if (kind == "positive" or kind == "id") and value <= 0 then return fail(L["must be greater than zero"]) end
-        if (kind == "id" or kind == "nonnegative" or kind == "integer") and value % 1 ~= 0 then return fail(L["expected an integer"]) end
+        if (kind == "id" or kind == "nonnegative" or kind == "integer") and value % 1 ~= 0 then return fail(L
+            ["expected an integer"]) end
         if kind == "nonnegative" and value < 0 then return fail(L["must be zero or greater"]) end
     elseif kind == "text" then
         if type(value) ~= "string" or strtrim(value) == "" then return fail(L["expected nonempty text"]) end
@@ -217,7 +293,8 @@ function options:ValidateValue(schema, value, path, depth, previous)
             return fail(L["expected a string key such as \"12345-1\" or \"12345\""])
         end
         local quest, objective = value:match("^(%d+)%-?(%d*)$")
-        if tonumber(quest) < 1 or (objective ~= "" and tonumber(objective) < 1) then return fail(L["IDs must be positive"]) end
+        if tonumber(quest) < 1 or (objective ~= "" and tonumber(objective) < 1) then return fail(L
+            ["IDs must be positive"]) end
     elseif kind == "level" then
         return child(S.level, value, "level")
     elseif kind == "profile" then
@@ -239,12 +316,15 @@ function options:ValidateValue(schema, value, path, depth, previous)
         end
         for index = 1, size do
             if value[index] == nil then return fail(L["list indices must be consecutive"]) end
-            local entrySchema = kind == "list" and schema.entry or kind == "strings" and "text" or kind == "steps" and "step" or "id"
+            local entrySchema = kind == "list" and schema.entry or kind == "strings" and "text" or
+            kind == "steps" and "step" or "id"
             local ok, reason = child(entrySchema, value[index], index)
             if not ok then return false, reason end
-            if kind == "steps" and value[index].RouteCompleted and index ~= size then return fail(L["RouteCompleted must be last"]) end
+            if kind == "steps" and value[index].RouteCompleted and index ~= size then return fail(L
+                ["RouteCompleted must be last"]) end
         end
-        if size == 0 and kind ~= "steps" and schema ~= S.anyOf and schema ~= S.allOf then return fail(L["list must not be empty"]) end
+        if size == 0 and kind ~= "steps" and schema ~= S.anyOf and schema ~= S.allOf then return fail(L
+            ["list must not be empty"]) end
     elseif kind == "object" or kind == "map" or kind == "conditions" or kind == "routeConditions" or kind == "step" then
         if type(value) ~= "table" then return fail(L["expected a table"]) end
         if kind == "object" then
@@ -252,7 +332,8 @@ function options:ValidateValue(schema, value, path, depth, previous)
         end
         for key, entry in pairs(value) do
             local entrySchema
-            if kind == "object" then entrySchema = schema.fields[key]
+            if kind == "object" then
+                entrySchema = schema.fields[key]
             elseif kind == "map" then
                 local ok, reason = child(schema.key, key, "key")
                 if not ok then return false, reason end
@@ -265,7 +346,8 @@ function options:ValidateValue(schema, value, path, depth, previous)
                 end
                 if definition and (kind == "step" or definition.condition) then entrySchema = definition.schema end
                 if kind == "routeConditions" and not routeConditions[key] then entrySchema = nil end
-                if kind == "routeConditions" and (key == "Level" or key == "MinLevel" or key == "MaxLevel" or key == "BeLvl") then entrySchema = "positive" end
+                if kind == "routeConditions" and (key == "Level" or key == "MinLevel" or key == "MaxLevel" or key == "BeLvl") then entrySchema =
+                    "positive" end
                 if kind == "step" and key == "_index" then entrySchema = "id" end
                 if kind == "step" and key == "_comment" then entrySchema = "text" end
             end
@@ -276,7 +358,8 @@ function options:ValidateValue(schema, value, path, depth, previous)
                 return fail(L["unsupported field "] .. tostring(key))
             end
         end
-        if schema == S.reputation and value.type == "standard" and value.level > 8 then return fail(L["standard standing must be 1-8"]) end
+        if schema == S.reputation and value.type == "standard" and value.level > 8 then return fail(L
+            ["standard standing must be 1-8"]) end
         if schema == S.sellItems and not (value.items or value.junk == true) then
             return fail(L["items or junk = true is required"])
         end
@@ -286,9 +369,12 @@ function options:ValidateValue(schema, value, path, depth, previous)
             end
             if value.allAvailable and not value.npcID then return fail(L["allAvailable requires npcID"]) end
         end
-        if schema == S.spellETA and not (value.spellID or value.itemID) then return fail(L["spellID or itemID is required"]) end
-        if schema == S.itemCount and not (value.itemID or value.itemIDs) then return fail(L["itemID or itemIDs is required"]) end
-        if schema == S.skill and not (value.skill or value.skillID or value.name) then return fail(L["skill, skillID or name is required"]) end
+        if schema == S.spellETA and not (value.spellID or value.itemID) then return fail(L
+            ["spellID or itemID is required"]) end
+        if schema == S.itemCount and not (value.itemID or value.itemIDs) then return fail(L
+            ["itemID or itemIDs is required"]) end
+        if schema == S.skill and not (value.skill or value.skillID or value.name) then return fail(L
+            ["skill, skillID or name is required"]) end
         if schema == S.scenario and not (value.criteriaID or value.criteriaIndex or value.stepID or value.scenarioID) then
             return fail(L["a scenario, step or criterion ID is required"])
         end
