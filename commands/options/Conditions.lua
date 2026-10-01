@@ -74,6 +74,15 @@ R:Register({
 })
 
 R:Register({
+    key = "SkipForPrimaryProfessions",
+    command = "skipforprimaryprofessions",
+    schema = "id",
+    example = "2",
+    condition = true,
+    icon = "Interface\\Icons\\INV_Misc_Book_09",
+})
+
+R:Register({
     key = "EquippedItem",
     command = "equippeditem",
     schema = S.equippedItem,

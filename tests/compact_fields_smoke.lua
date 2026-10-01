@@ -24,15 +24,22 @@ local function toggle(widget, key, checked)
 end
 local route = assert(AprRC.editorModel:NewRoute("Compact fields"))
 route.steps = { { PickUp = { 42 }, Coord = { x = -4251.46, y = -607.35 }, Zone = 1411,
-    Range = 10, Class = "MAGE", ClassNot = { 13 }, Race = { "Orc", "Troll" },
+    Range = 10, Class = "MAGE", ClassNot = { 13 }, Race = { "Orc", "Troll" }, SkipForPrimaryProfessions = 2,
     LootMoney = { copper = 10, equippedSlots = { 1, 3, 5, 6, 7, 8, 9, 10, 15 } },
     VendorMoney = { copper = 102, equippedSlots = { 16 }, includeEquipped = false } } }
-route.parallelSteps = { { conditions = { Class = { "MAGE" }, Race = "Orc" },
+route.parallelSteps = { { conditions = { Class = { "MAGE" }, Race = "Orc", SkipForPrimaryProfessions = 2 },
     steps = { { Coord = { x = 1, y = 2 }, Zone = 84, Note = "Parallel" } } } }
 route.conditions = { Class = 8 }
 E:Show(); E:SelectRoute(route.name); E:SelectTab("steps")
 local session = E.session
 local initial = AprRC:CopyData(session.draft)
+
+local professions = field("step/SkipForPrimaryProfessions")
+enter(professions, "1")
+assert(session.draft.steps[1].SkipForPrimaryProfessions == 1 and route.steps[1].SkipForPrimaryProfessions == 2)
+enter(professions, "0")
+assert(not AprRC.options:ValidateValue("step", session.draft.steps[1]))
+enter(professions, "2")
 
 -- Each scalar has one label, no extra titled frame, and actions alongside it.
 local quest = field("step/PickUp")
@@ -97,6 +104,8 @@ assert(find(E.routeForm, function(w) return w:GetUserData("navigateKey") == "con
 toggle(field("route/conditions/Class"), "EVOKER", true)
 assert(#session.draft.conditions.Class == 2)
 E:SelectTab("parallel"); E.groupConditions:Fire("OnClick")
+enter(field("route/parallelSteps/1/conditions/SkipForPrimaryProfessions"), "1")
+assert(session.draft.parallelSteps[1].conditions.SkipForPrimaryProfessions == 1)
 toggle(field("route/parallelSteps/1/conditions/Race"), "Troll", true)
 assert(#session.draft.parallelSteps[1].conditions.Race == 2)
 assert(E:Save())

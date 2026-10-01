@@ -939,3 +939,4 @@ L["Route overview"] = "Route overview"
 -- Parallel condition navigation and field help
 L["Step overview"] = "Step overview"
 L["HELP_allowMissing"] = "Checked: this condition passes if APR cannot read the equipped item stat (empty slot or unavailable data). Unchecked: it fails in that case. If the value is available, the comparison and threshold still apply."
+L["FIELD_SkipForPrimaryProfessions"] = "依主要專業數量跳過"

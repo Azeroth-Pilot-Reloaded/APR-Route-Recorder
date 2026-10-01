@@ -112,6 +112,7 @@ The [API audit](docs/API-Audit.md) records the verified Retail build, recording 
 <li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc race&nbsp;</strong></em>- Add Race step option.</span></li>
 <li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc range&nbsp;</strong></em>- Add Range step option.</span></li>
 <li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc skipforreputation</strong>&nbsp;</em>- Add a SkipForReputation step option.</span></li>
+<li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc skipforprimaryprofessions 2</strong>&nbsp;</em>- Skip the current step when at least two primary professions are learned; secondary professions are excluded.</span></li>
 <li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc spelltrigger&nbsp;</strong></em>- Add SpellTrigger step option.</span></li>
 <li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc text, txt</strong>&nbsp;</em>- Add ExtraLineText step option.</span></li>
 <li><span style="font-family: arial; font-size: 14px;"><em><strong>/aprrc vehicle&nbsp;</strong></em>- Add VehicleExit step option.</span></li>

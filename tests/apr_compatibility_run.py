@@ -31,13 +31,15 @@ APR.RouteQuestStepList = {}
 APRData = { CustomRoute = {} }
 APR.worldCoordinateConverter = { ConvertMapCoordinate = function() return { x = 1, y = 2 } end }
 ''')
-for name in ("Routes/Midnight/Midnight-Speedrun-alt.lua", "Routes/Midnight/Midnight-Eversong-Woods.lua", "Routes/delves.lua"):
+for name in ("Routes/Midnight/Midnight-Speedrun-alt.lua", "Routes/Midnight/Midnight-Eversong-Woods.lua", "Routes/delves.lua",
+             "Routes/Forever/Forever_Horde_Troll_Orc.lua"):
     load(APR_ROOT / name)
 lua.execute('''
 local entries = AprRC:GetImportableAPRRoutes()
 local count = 0
 for key in pairs(entries) do
     local source = AprRC:CopyData(APR.RouteQuestStepList[key])
+    local expected = AprRC:NormalizeRouteClasses(AprRC:CopyData(source))
     local route = assert(AprRC:ImportAPRRoute(key))
     local session = AprRC.editorModel:Open(route)
     session.raw = session.raw or AprRC.editorModel:RouteText(session.draft)
@@ -51,9 +53,12 @@ for key in pairs(entries) do
     assert(AprRC:DeepCompare(source, APR.RouteQuestStepList[key]), "Import mutated its source")
     local saved = APRData.CustomRoute[AprRCData.APRRouteKeys[route.name]]
     assert(#saved.steps == #(source.steps or {}))
-    assert(AprRC:DeepCompare(saved.scenarios, source.scenarios))
+    for index, step in ipairs(source.steps or {}) do
+        assert(saved.steps[index].SkipForPrimaryProfessions == step.SkipForPrimaryProfessions)
+    end
+    assert(AprRC:DeepCompare(saved.scenarios, expected.scenarios))
     assert(saved.mapID == source.mapID)
-    assert(AprRC:DeepCompare(saved.nextRoute, source.nextRoute))
+    assert(AprRC:DeepCompare(saved.nextRoute, expected.nextRoute))
     count = count + 1
 end
 APR.RouteQuestStepList = {}

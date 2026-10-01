@@ -496,7 +496,7 @@ function AprRC:CustomSortKeys(tbl)
         "WarMode", "Coord", "Coords", "Zone", "Zones", "Fillers", "BuyMerchant", "Button", "SpellButton", "ExtraLineText",
         "ExtraLineText2", "ExtraLineText3", "ExtraLineText4", "ExtraLineText5", "ExtraLineText6", "ExtraLineText7",
         "GossipOptionIDs", "Range", "NoArrow", "DenyNPC", "NpcDismount", "skipForLvl", "IsAdventureMap",
-        "ZoneStepTrigger", "Buffs", "ReputationLevel", "SkipForReputation",
+        "ZoneStepTrigger", "Buffs", "ReputationLevel", "SkipForReputation", "SkipForPrimaryProfessions",
     }
 
     local function customSort(a, b)

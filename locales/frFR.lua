@@ -993,3 +993,4 @@ L["Route overview"] = "Vue du parcours"
 L["Step overview"] = "Vue de l’étape"
 L["HELP_allowMissing"] =
 "Coché : cette condition est satisfaite si APR ne peut pas lire la statistique de l’objet équipé (emplacement vide ou donnée indisponible). Décoché : elle échoue dans ce cas. Si la valeur est disponible, la comparaison et le seuil restent appliqués."
+L["FIELD_SkipForPrimaryProfessions"] = "Ignorer selon le nombre de métiers principaux"

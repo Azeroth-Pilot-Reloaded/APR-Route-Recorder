@@ -39,6 +39,15 @@ end
 valid("itemcount", '{ itemIDs = { 6948, 4371 }, count = 2, includeBank = true, includeUsableToys = true }')
 valid("equippeditemstat", '{ slot = 16, stat = "LEVEL", value = 3.5, precision = 1, allowMissing = true }')
 assert(valid("hardcore", "false") == false)
+for _, count in ipairs({ 1, 2, 3 }) do
+    assert(valid("skipforprimaryprofessions", tostring(count)) == count)
+end
+for _, input in ipairs({ "0", "-1", "1.5", "true", '"2"', "{}", "{ 2 }", "nil" }) do
+    invalid("skipforprimaryprofessions", input)
+end
+valid("not", '{ SkipForPrimaryProfessions = 2 }')
+valid("anyof", '{ { SkipForPrimaryProfessions = 1 }, { HasSpell = 7411 } }')
+assert(R:ValidateValue("step", { LearnSkill = { spellID = 7411 }, SkipForPrimaryProfessions = 2 }))
 valid("skill", '{ skill = 185, maximum = true, rank = 75 }')
 valid("skill", '{ name = "Cuisine", rank = 50 }')
 valid("equippeditem", '{ slot = 16, invert = true }')
@@ -105,7 +114,7 @@ assert(not R:ValidateValue("routeConditions", conditions))
 local recursive = {}
 recursive.Not = recursive
 assert(not R:ValidateValue("conditions", recursive), "Missing nesting limit")
-for _, key in ipairs({ "Money", "VendorMoney", "ItemCount", "EquippedItemStat", "Hardcore", "AllOf", "Not", "Skill", "EquippedItem", "Collection" }) do
+for _, key in ipairs({ "Money", "VendorMoney", "ItemCount", "EquippedItemStat", "Hardcore", "AllOf", "Not", "Skill", "EquippedItem", "Collection", "SkipForPrimaryProfessions" }) do
     local definition = R.step[key]
     local value = assert(definition).example
     local parsed = R:Parse(definition, value)
@@ -114,7 +123,8 @@ end
 
 -- Full import/export preserves defaults, false values and nested conditional links.
 local route = {
-    name = "2393-Wiki", gameVersion = "forever", steps = { { LootMoney = lootMoney } },
+    name = "2393-Wiki", gameVersion = "forever", steps = { { LootMoney = lootMoney },
+        { LearnSkill = { spellID = 7411 }, MinLevel = 5, SkipForPrimaryProfessions = 2 } },
     nextRoute = { "Shared", { route = "Class", conditions = { Class = "MAGE", Hardcore = false } } },
     prefab = { [APR.PREFAB_TYPES.Speedrun] = { index = 10, conditions = { Race = { "Orc", "Troll" } } } },
     parallelSteps = { { conditions = conditions, steps = { { Grind = { level = 4, xp = -700 } } } } },
@@ -131,6 +141,7 @@ local exported = AprRC:BuildRouteDefinition(route)
 local imported, reason = AprRC:ReadRouteDefinition(AprRC:SerializeData(exported), route.name)
 assert(imported, reason)
 assert(AprRC:DeepCompare(exported, AprRC:BuildRouteDefinition(imported)))
+assert(imported.steps[2].SkipForPrimaryProfessions == 2)
 assert(imported.steps[#imported.steps].Hardcore == false)
 assert(imported.nextRoute[2].conditions.Hardcore == false)
 assert(valid("route nextroute", "First, Second")[2] == "Second")
@@ -149,6 +160,8 @@ assert(moneyStep.LootMoney.equippedSlots[2] == 16 and moneyStep.Coord)
 assert(R:Dispatch('vendormoney { copper = 102, equippedSlots = { 16 } }'))
 assert(#AprRCData.CurrentRoute.steps == 2 and moneyStep.VendorMoney.copper == 102)
 assert(moneyStep.VendorMoney.equippedSlots[1] == 16)
+assert(R:Dispatch('skipforprimaryprofessions 2'))
+assert(#AprRCData.CurrentRoute.steps == 2 and moneyStep.SkipForPrimaryProfessions == 2)
 assert(R:Apply(R.commands.hardcore, false, AprRCData.CurrentRoute, AprRCData.CurrentRoute.steps[1]))
 assert(AprRCData.CurrentRoute.steps[1].Hardcore == false)
 AprRCData.CurrentRoute = previous
