@@ -33,7 +33,7 @@ R:Register({
     key = "SellItems",
     command = "sellitems",
     schema = S.sellItems,
-    example = "{ questID = 12345, items = { 7073, 7074 }, npcID = 54 }",
+    example = "{ questID = 12345, junk = true, equippedSlots = { 16 }, npcID = 54 }",
     newStep = true,
     coord = true,
     icon = "Interface\\Icons\\INV_Misc_Coin_01",

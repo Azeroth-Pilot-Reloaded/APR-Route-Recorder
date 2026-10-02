@@ -26,17 +26,33 @@ for path in (ROOT / "commands/options").glob("*.lua"):
     load(path)
 load(ROOT / "ui/editor/Model.lua")
 load(APR_ROOT / "APR-Core/utils/RouteUtils.lua")
+lua.execute('function APR:NewModule() return {} end')
+load(APR_ROOT / "APR-Core/features/navigation/WorldCoordinateConverter.lua")
 lua.execute('''
 APR.RouteQuestStepList = {}
 APRData = { CustomRoute = {} }
-APR.worldCoordinateConverter = { ConvertMapCoordinate = function() return { x = 1, y = 2 } end }
+APR.worldCoordinateConverter.ConvertMapCoordinate = function() return { x = 1, y = 2 } end
 ''')
-for name in ("Routes/Midnight/Midnight-Speedrun-alt.lua", "Routes/Midnight/Midnight-Eversong-Woods.lua", "Routes/delves.lua",
-             "Routes/Forever/Forever_Horde_Troll_Orc.lua"):
+for name in ("Routes/Midnight/Midnight-Speedrun-alt.lua", "Routes/Midnight/Midnight-Eversong-Woods.lua", "Routes/delves.lua"):
     load(APR_ROOT / name)
+for path in sorted((APR_ROOT / "Routes/Forever").glob("*.lua")):
+    load(path)
 lua.execute('''
 local entries = AprRC:GetImportableAPRRoutes()
 local count = 0
+local function SameStepData(a, b)
+    if type(a) ~= type(b) then return false end
+    -- Indexes are regenerated; Lua 5.1's tostring rounds the final coordinate digits.
+    if type(a) == "number" then return math.abs(a - b) <= 0.00000001 end
+    if type(a) ~= "table" then return a == b end
+    for key, value in pairs(a) do
+        if key ~= "_index" and not SameStepData(value, b[key]) then return false end
+    end
+    for key in pairs(b) do
+        if key ~= "_index" and a[key] == nil then return false end
+    end
+    return true
+end
 for key in pairs(entries) do
     local source = AprRC:CopyData(APR.RouteQuestStepList[key])
     local expected = AprRC:NormalizeRouteClasses(AprRC:CopyData(source))
@@ -53,6 +69,8 @@ for key in pairs(entries) do
     assert(AprRC:DeepCompare(source, APR.RouteQuestStepList[key]), "Import mutated its source")
     local saved = APRData.CustomRoute[AprRCData.APRRouteKeys[route.name]]
     assert(#saved.steps == #(source.steps or {}))
+    assert(SameStepData(saved.steps or {}, expected.steps or {}), "Editor changed step data for " .. key)
+    assert(SameStepData(saved.parallelSteps or {}, expected.parallelSteps or {}), "Editor changed parallel steps for " .. key)
     for index, step in ipairs(source.steps or {}) do
         assert(saved.steps[index].SkipForPrimaryProfessions == step.SkipForPrimaryProfessions)
     end

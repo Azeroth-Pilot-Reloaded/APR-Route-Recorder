@@ -99,6 +99,15 @@ slot or unavailable item data). Checked makes that condition pass; unchecked mak
 it fail. When APR can read the value, the comparison and threshold still apply.
 The checkbox tooltip explains both cases without adding another form row.
 
+**Sell items** supports gray items, selected item IDs and equipped slots together.
+For example, `/aprrc sellitems { junk = true, equippedSlots = { 16 } }` adds a sale
+of gray items and the weapon currently in the main hand. The slot picker uses
+equipment names and saves their numbers (16 for main hand, 18 for ranged).
+During APR playback, the player first moves the selected equipped item into
+their bags; APR then sells that item at the merchant. Add a **Vendor money**
+condition with the same slots when the sale should only appear if it can fund
+the following purchase.
+
 The Commands tab launches recording commands directly from labeled buttons. Search
 matches translated labels and slash command names, including unpinned commands.
 The catalog follows the editor's actions, navigation, display, conditions and route

@@ -34,7 +34,6 @@ S.items = list(object({ questID = "id", itemID = "id", quantity = "id" }, { "ite
 S.lootItems = list(object({ questID = "id", itemID = "id", quantity = "id" }, { "itemID" }))
 S.lootMoney = object({ copper = "id", includeEquipped = "bool", equippedSlots = "ids" }, { "copper" })
 S.itemAction = object({ items = "ids", text = "text" }, { "items" })
-S.sellItems = object({ questID = "id", items = "ids", junk = "bool", npcID = "id", text = "text" })
 S.learnSkill = object({ spellID = "id", spellIDs = "ids", allAvailable = "bool", npcID = "id", text = "text" })
 S.tameBeast = object({ questID = "id", npcID = "id", spellID = "id", text = "text" }, { "npcID" })
 S.spellETA = object({ spellID = "id", itemID = "id", seconds = "positive" }, { "seconds" })
@@ -64,6 +63,9 @@ S.equipmentSlot = {
         { value = 19, label = INVTYPE_TABARD or "Tabard" },
     }
 }
+
+S.sellItems = object({ questID = "id", items = "ids", junk = "bool", npcID = "id", text = "text",
+    equippedSlots = list(S.equipmentSlot) })
 
 S.equipmentStat = {
     kind = "enum",
@@ -360,8 +362,8 @@ function options:ValidateValue(schema, value, path, depth, previous)
         end
         if schema == S.reputation and value.type == "standard" and value.level > 8 then return fail(L
             ["standard standing must be 1-8"]) end
-        if schema == S.sellItems and not (value.items or value.junk == true) then
-            return fail(L["items or junk = true is required"])
+        if schema == S.sellItems and not (value.items or value.equippedSlots or value.junk == true) then
+            return fail(L["items, equippedSlots or junk = true is required"])
         end
         if schema == S.learnSkill then
             if not (value.spellID or value.spellIDs or value.allAvailable == true) then

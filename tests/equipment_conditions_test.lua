@@ -20,3 +20,13 @@ for _, key in ipairs({ "EquippedItem", "EquippedItemStat" }) do
     local imported = assert(AprRC:ReadRouteDefinition(AprRC:SerializeData(exported), route.name))
     assert(AprRC:DeepCompare(exported, AprRC:BuildRouteDefinition(imported)))
 end
+
+for _, sale in ipairs({ { equippedSlots = { 16 } }, { junk = true, equippedSlots = { 16, 18 }, questID = 42 },
+    { items = { 36 }, equippedSlots = { 16 }, npcID = 54 } }) do
+    local parsed = assert(R:Parse(R.step.SellItems, AprRC:SerializeData(sale)))
+    assert(AprRC:DeepCompare(parsed, sale))
+    local route = { name = "Equipped sales", steps = { { SellItems = sale } } }
+    local exported = AprRC:BuildRouteDefinition(route)
+    local imported = assert(AprRC:ReadRouteDefinition(AprRC:SerializeData(exported), route.name))
+    assert(AprRC:DeepCompare(exported, AprRC:BuildRouteDefinition(imported)), "Sale slots must survive export/import")
+end

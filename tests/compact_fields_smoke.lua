@@ -26,7 +26,8 @@ local route = assert(AprRC.editorModel:NewRoute("Compact fields"))
 route.steps = { { PickUp = { 42 }, Coord = { x = -4251.46, y = -607.35 }, Zone = 1411,
     Range = 10, Class = "MAGE", ClassNot = { 13 }, Race = { "Orc", "Troll" }, SkipForPrimaryProfessions = 2,
     LootMoney = { copper = 10, equippedSlots = { 1, 3, 5, 6, 7, 8, 9, 10, 15 } },
-    VendorMoney = { copper = 102, equippedSlots = { 16 }, includeEquipped = false } } }
+    VendorMoney = { copper = 102, equippedSlots = { 16 }, includeEquipped = false },
+    SellItems = { junk = true, equippedSlots = { 16 } } } }
 route.parallelSteps = { { conditions = { Class = { "MAGE" }, Race = "Orc", SkipForPrimaryProfessions = 2 },
     steps = { { Coord = { x = 1, y = 2 }, Zone = 84, Note = "Parallel" } } } }
 route.conditions = { Class = 8 }
@@ -91,6 +92,12 @@ enter(field("step/VendorMoney/copper/copper"), "3")
 assert(session.draft.steps[1].VendorMoney.copper == 103)
 assert(tContains(session.draft.steps[1].VendorMoney.equippedSlots, 17))
 assert(route.steps[1].VendorMoney.copper == 102 and #route.steps[1].VendorMoney.equippedSlots == 1)
+
+local saleSlots = field("step/SellItems/equippedSlots")
+assert(saleSlots:GetMultiselect() and saleSlots.list[16] and saleSlots.list[18])
+toggle(saleSlots, 18, true); toggle(saleSlots, 16, false)
+assert(AprRC:DeepCompare(session.draft.steps[1].SellItems.equippedSlots, { 18 }))
+assert(AprRC:DeepCompare(route.steps[1].SellItems.equippedSlots, { 16 }), "Sale slot selection must edit only the draft")
 toggle(classes, "EVOKER", false)
 assert(not AprRC.options:ValidateValue(AprRC.options.schemas.class, session.draft.steps[1].Class))
 assert(classes.parent.frame:GetHeight() > classes.frame:GetHeight(), "An empty selection must display its validation error")

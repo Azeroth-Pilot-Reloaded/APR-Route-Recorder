@@ -75,6 +75,12 @@ for _, input in ipairs({ '{}', '{ copper = -1 }', '{ copper = 1.5 }', '{ copper 
     invalid("vendormoney", input)
 end
 valid("sellitems", '{ junk = true, text = "Sell grey items" }')
+valid("sellitems", '{ equippedSlots = { 16 } }')
+valid("sellitems", '{ junk = true, equippedSlots = { 16, 18 }, questID = 42 }')
+valid("sellitems", '{ items = { 36 }, equippedSlots = { 16 }, npcID = 54 }')
+for _, slots in ipairs({ '{}', '16', '{ 0 }', '{ 20 }', '{ 16.5 }', '{ true }', '{ "16" }', '{ [2] = 16 }' }) do
+    invalid("sellitems", '{ junk = true, equippedSlots = ' .. slots .. ' }')
+end
 valid("learnskill", '{ spellID = 6673 }')
 valid("learnskill", '{ allAvailable = true, npcID = 911 }')
 valid("spelleta", '{ itemID = 6948, seconds = 30 }')
@@ -82,6 +88,7 @@ for _, command in ipairs({ "bankdeposit", "bankwithdraw", "destroyitems" }) do
     valid(command, '{ items = { 4371 }, text = "Handle these items" }')
     invalid(command, '{ items = { 4371 }, quantity = 1 }')
     invalid(command, '{ items = {} }')
+    invalid(command, '{ items = { 36 }, equippedSlots = { 16 } }')
 end
 for _, case in ipairs({
     { "money", '{ copper = -1 }' }, { "money", '{ copper = 10, operator = "=" }' },

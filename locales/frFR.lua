@@ -860,7 +860,7 @@ L["expected consecutive list indices"] = "indices de liste consécutifs attendus
 L["expected nonempty text"] = "texte non vide attendu"
 L["expected true or false"] = "true ou false attendu"
 L["itemID or itemIDs is required"] = "itemID ou itemIDs est requis"
-L["items or junk = true is required"] = "articles ou indésirables = true est requis"
+L["items, equippedSlots or junk = true is required"] = "items, equippedSlots ou junk = true est requis"
 L["list indices must be consecutive"] = "les indices de liste doivent être consécutifs"
 L["list must not be empty"] = "la liste ne doit pas être vide"
 L["must be greater than zero"] = "doit être supérieur à zéro"
