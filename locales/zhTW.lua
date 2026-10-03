@@ -1,5 +1,8 @@
 local L = LibStub("AceLocale-3.0"):NewLocale("APR-Recorder", "zhTW")
 if not L then return end
+L["Search Lua"] = "搜尋 Lua"
+L["No matches"] = "沒有符合的結果"
+L["Ctrl+F to search. Enter / Shift+Enter: next / previous. Esc: close."] = "Ctrl+F：搜尋。Enter / Shift+Enter：下一個 / 上一個。Esc：關閉。"
 L["FIELD_manual"] = "手動表情"
 L["Follow APR"] = "跟隨 APR"
 L["Follow APR's current step when the same route is open. Pauses while editing."] = "開啟相同路線時跟隨 APR 的目前步驟。編輯時暫停。"

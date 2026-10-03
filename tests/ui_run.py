@@ -66,6 +66,7 @@ def run():
     load("tests/search_select_smoke.lua")
     load("tests/apr_import_smoke.lua")
     load("tests/apr_follow_smoke.lua")
+    load("tests/lua_search_smoke.lua")
     load("tests/parallel_editor_smoke.lua")
     load("tests/compact_fields_smoke.lua")
     load("tests/route_form_smoke.lua")

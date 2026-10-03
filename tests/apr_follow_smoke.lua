@@ -60,6 +60,28 @@ E.session:Reload(); E:Tick()
 assert(E.tab == "parallel" and E.session.parallelSelected == 1)
 
 E:SelectTab("lua")
+APRData[APR.PlayerID][key] = 4
+E.luaBox.editBox:SetFocus()
+E:Tick(); TestRunTimers()
+local range = E.luaStepPositions.steps[41]
+assert(E.tab == "lua" and E.luaBox.editBox:GetCursorPosition() == range.start)
+assert(E.luaBox.scrollFrame:GetVerticalScroll() > 0 and not E.session:IsDirty())
+local selectedLua = assert(AprRC:ParseLuaData(E.luaBox:GetText():sub(range.start + 1, range.finish)))
+assert(selectedLua.Note == "Main 41")
+APRData[APR.PlayerID][key] = 5
+E:Tick(); TestRunTimers()
+range = E.luaStepPositions.parallelSteps[1][41]
+assert(E.tab == "lua" and E.luaBox.editBox:GetCursorPosition() == range.start)
+assert(E.session.parallelSelected == 41 and not E.session:IsDirty())
+local luaText, historyCount = E.luaBox:GetText(), #E.session.rawHistory
+E:OpenLuaFind()
+APRData[APR.PlayerID][key] = 1
+local searchCursor = E.luaBox.editBox:GetCursorPosition()
+E:Tick(); TestRunTimers()
+assert(E.luaBox.editBox:GetCursorPosition() == searchCursor, "Searching must pause playback following")
+E:CloseLuaFind(); E:Tick(); TestRunTimers()
+assert(E.luaBox.editBox:GetCursorPosition() == E.luaStepPositions.steps[1].start)
+assert(E.luaBox:GetText() == luaText and #E.session.rawHistory == historyCount and not E.session:IsDirty())
 local raw = "{ steps = { -- unfinished"
 E.luaBox:SetText(raw); E.luaBox:Fire("OnTextChanged", raw)
 APRData[APR.PlayerID][key] = 4

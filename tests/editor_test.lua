@@ -29,6 +29,28 @@ assert(numericClasses.conditions.Class == 9 and numericClasses.steps[1].Class[1]
 local imported = assert(AprRC:ReadRouteDefinition(AprRC:SerializeData(numericClasses), numericClasses.name))
 assert(imported.steps[1].Class[1] == "WARLOCK", "Legacy numeric imports must normalize on save")
 assert(AprRC:BuildRouteDefinition(numericClasses).conditions.Class == "WARLOCK")
+-- Byte ranges identify actual blocks, including duplicate parallel indexes and
+-- quoted newlines/braces/UTF-8 that cannot be located by searching for _index.
+local positioned = { name = "84-Lua ranges", nextRoute = { "Next" }, prefab = { speedrun = 10 },
+    steps = { { Note = 'Été: { _index = 1 }\nquoted "text"', _index = 1 } },
+    parallelSteps = { { conditions = { ItemCount = { count = 1, itemID = 5387 } },
+        steps = { { Note = "Duplicate", _index = 1 } } },
+        { conditions = {}, steps = { { Note = "Duplicate", _index = 1 } } } } }
+local positionedText, ranges = Model:RouteText(positioned, true)
+assert(positionedText == Model:RouteText(positioned), "Collecting positions must preserve formatting")
+for index, step in ipairs(positioned.steps) do
+    local range = ranges.steps[index]
+    local decoded = assert(AprRC:ParseLuaData(positionedText:sub(range.start + 1, range.finish)))
+    assert(AprRC:DeepCompare(decoded, step))
+end
+for groupIndex, group in ipairs(positioned.parallelSteps) do
+    for index, step in ipairs(group.steps) do
+        local range = ranges.parallelSteps[groupIndex][index]
+        local decoded = assert(AprRC:ParseLuaData(positionedText:sub(range.start + 1, range.finish)))
+        assert(AprRC:DeepCompare(decoded, step))
+    end
+end
+assert(ranges.parallelSteps[1][1].start ~= ranges.parallelSteps[2][1].start)
 local originalData = AprRCData
 local route = {
     name = "2393-Editor", label = "Editor test", expansion = "Midnight", mapID = 2393,

@@ -5,11 +5,21 @@ local L_APR = LibStub("AceLocale-3.0"):GetLocale("APR")
 local Session = {}
 Session.__index = Session
 
-function Model:RouteText(route)
+function Model:RouteText(route, withPositions)
     local data = AprRC:CopyData(route)
     AprRC:NormalizeRouteClasses(data)
     data.name = nil
-    return AprRC:SerializeData(data)
+    local locations = withPositions and {}
+    local text = AprRC:SerializeData(data, 0, nil, locations)
+    if not locations then return text end
+    local positions = { steps = {}, parallelSteps = {} }
+    for index, step in ipairs(data.steps or {}) do positions.steps[index] = locations[step] end
+    for groupIndex, group in ipairs(data.parallelSteps or {}) do
+        local steps = {}
+        positions.parallelSteps[groupIndex] = steps
+        for index, step in ipairs(group.steps or {}) do steps[index] = locations[step] end
+    end
+    return text, positions
 end
 
 function Model:Source(name)

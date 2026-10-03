@@ -133,9 +133,17 @@ step when the same route is open in the recorder. Matching uses the exact route
 key or that route's published recorder copy, rather than its display label.
 Main and inserted parallel steps select the appropriate tab, group and page.
 The preference is saved across reopening and UI reloads. Following pauses for
-unsaved drafts and focused editing controls; other tabs stay open. When both
+unsaved drafts and focused editing controls. In the Lua editor, the cursor and
+viewport follow the actual main or parallel step without changing the text or
+undo history. Other tabs stay open. When both
 follow options are enabled for the same route, APR playback takes precedence
 over following the latest recording.
+
+In the Lua editor, **Ctrl+F** opens a literal, case-insensitive text search with
+highlighted matches and a match counter. **Enter** finds the next match,
+**Shift+Enter** the previous one; both wrap at the ends. Use the arrow buttons
+or **Esc** to close the search. Search also works on incomplete Lua drafts and
+pauses APR following until closed.
 
 The recorder remains the source of its saved routes. Every saved route is automatically copied to `APRData.CustomRoute` and APR's live catalog on startup, creation, import, recording changes and editor saves. Updates are coalesced until the next frame and unchanged definitions are not republished. Pending changes are flushed on logout. Opening the workshop is not required. Drafts are published only after **Save**.
 

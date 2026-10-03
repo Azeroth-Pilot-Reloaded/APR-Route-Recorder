@@ -1,5 +1,8 @@
 local L = LibStub("AceLocale-3.0"):NewLocale("APR-Recorder", "koKR")
 if not L then return end
+L["Search Lua"] = "Lua 검색"
+L["No matches"] = "검색 결과 없음"
+L["Ctrl+F to search. Enter / Shift+Enter: next / previous. Esc: close."] = "Ctrl+F: 검색. Enter / Shift+Enter: 다음 / 이전. Esc: 닫기."
 L["FIELD_manual"] = "수동 감정 표현"
 L["Follow APR"] = "APR 따라가기"
 L["Follow APR's current step when the same route is open. Pauses while editing."] = "같은 경로가 열려 있으면 APR의 현재 단계를 따라갑니다. 편집 중에는 일시 중지됩니다."

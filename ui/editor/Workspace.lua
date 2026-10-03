@@ -427,10 +427,11 @@ function Editor:Refresh(forceFollow)
     if AprRC.settings.profile.followAPR and session then
         aprIndex, aprGroup = AprRC:GetAPRPlaybackSelection(session.name)
     end
+    if not aprIndex then self.luaAPRPosition = nil end
     local following = not aprIndex and self.follow and session and session.name == AprRCData.CurrentRoute.name
     if session and not AprRC.CommandBarSetting.dragging and
         not (self.stepsSplit and self.stepsSplit.dragging) and not self.confirm and not self.nameDialog and
-        not interacting(self.frame, following and self.luaBox or nil) and
+        not self.luaFindBar and not interacting(self.frame, (following or aprIndex) and self.luaBox or nil) and
         not self.fieldPicker and not session:IsDirty() and (session:IsStale(true) or (forceFollow and following)) then
         local listScroll = self.list and self.list.localstatus.scrollvalue or 0
         local luaScroll = self.luaBox and self.luaBox.scrollFrame:GetVerticalScroll() or 0
@@ -461,10 +462,17 @@ end
 
 function Editor:FollowAPRStep(index, group)
     local session = self.session
-    if self.tab ~= "steps" and self.tab ~= "parallel" then return end
-    if session:IsDirty() or self.confirm or self.nameDialog or self.fieldPicker or
-        AprRC.CommandBarSetting.dragging or (self.stepsSplit and self.stepsSplit.dragging) or interacting(self.frame) then return end
+    if self.tab ~= "steps" and self.tab ~= "parallel" and self.tab ~= "lua" then return end
+    if session:IsDirty() or self.confirm or self.nameDialog or self.fieldPicker or self.luaFindBar or
+        AprRC.CommandBarSetting.dragging or (self.stepsSplit and self.stepsSplit.dragging) or
+        interacting(self.frame, self.tab == "lua" and self.luaBox or nil) then return end
     if not session:GetSteps(group)[index] then return end
+    if self.tab == "lua" then
+        session:SetSelected(index, group)
+        if group then session.parallelGroup = group end
+        self:FollowLuaAPRStep(index, group)
+        return
+    end
     local tab = group and "parallel" or "steps"
     local page = math.ceil(index / UI.PageSize)
     if self.tab == tab and session:GetSelected(group) == index and (not group or session.parallelGroup == group) and

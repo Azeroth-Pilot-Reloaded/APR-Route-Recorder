@@ -395,6 +395,12 @@ end
 
 function Editor:DetachLua()
     self.luaScrollToken = nil
+    self.luaStepPositions, self.luaAPRPosition = nil, nil
+    if self.luaFindInput then
+        self.luaFindInput.editbox:SetScript("OnEscapePressed", self.luaFindEscape)
+    end
+    self.luaFindBar, self.luaFindInput, self.luaFindStatus = nil, nil, nil
+    self.luaFindPrevious, self.luaFindNext, self.luaFindResults, self.luaFindIndex = nil, nil, nil, nil
     if self.luaBox then
         self.luaBox.editBox:SetScript("OnKeyDown", self.luaKeyDown)
         self.luaBox:SetCallback("OnTextChanged", nil)
@@ -405,7 +411,8 @@ end
 
 function Editor:DrawLua()
     local container = UI.Body(self.tabs)
-    UI.LabelWidget(container, T("Ctrl+A then Ctrl+C to copy. Ctrl+Z / Ctrl+Y to undo / redo."))
+    UI.LabelWidget(container, T("Ctrl+A then Ctrl+C to copy. Ctrl+Z / Ctrl+Y to undo / redo.") .. " " ..
+        T("Ctrl+F to search. Enter / Shift+Enter: next / previous. Esc: close."))
     local edit = AprRC:CreateWidget("MultiLineEditBox")
     edit:SetLabel("")
     edit:DisableButton(true)
@@ -413,7 +420,8 @@ function Editor:DrawLua()
     container:AddChild(edit)
     self.luaBox, AprRC.export.editbox = edit, edit
     local session = self.session
-    local text = session.raw or Model:RouteText(session.draft)
+    local text = session.raw
+    if not text then text, self.luaStepPositions = Model:RouteText(session.draft, true) end
     edit:SetText(text)
     if not session.rawHistory then
         session.rawHistory, session.rawCursor = { { text = text, cursor = 0 } }, 1
@@ -452,17 +460,133 @@ function Editor:DrawLua()
         end
         session:Persist()
         self.notice = nil
+        if self.luaFindBar then self:FindLua(0, true) end
         if not wasDirty or hadNotice or couldUndo ~= (session.rawCursor > 1) or
             couldRedo ~= (session.rawCursor < #history) then self:UpdateStatus() end
     end)
     self.luaKeyDown = edit.editBox:GetScript("OnKeyDown")
     edit.editBox:SetScript("OnKeyDown", function(box, key, ...)
         if IsControlKeyDown() or (IsMetaKeyDown and IsMetaKeyDown()) then
+            if key == "F" then self:OpenLuaFind(); return end
             if key == "Z" then self:Undo(IsShiftKeyDown() and 1 or -1); return end
             if key == "Y" then self:Undo(1); return end
         end
         if self.luaKeyDown then self.luaKeyDown(box, key, ...) end
     end)
+end
+
+function Editor:FollowLuaAPRStep(index, group)
+    local positions = self.luaStepPositions
+    local steps = positions and (group and positions.parallelSteps[group] or positions.steps)
+    local range = steps and steps[index]
+    if not range then return end
+    local previous = self.luaAPRPosition
+    if previous and previous.positions == positions and previous.index == index and previous.group == group then return end
+    self.luaAPRPosition = { positions = positions, index = index, group = group }
+    local widget, session, token = self.luaBox, self.session, {}
+    self.luaScrollToken = token
+    local function scroll()
+        -- AceGUI's OnCursorChanged scrolls the target line into view.
+        widget.editBox:SetCursorPosition(range.start)
+    end
+    scroll()
+    C_Timer.After(0, function()
+        if self.luaScrollToken ~= token or self.luaBox ~= widget or self.session ~= session or
+            session:IsDirty() or self.luaFindBar or not AprRC.settings.profile.followAPR then return end
+        local currentIndex, currentGroup = AprRC:GetAPRPlaybackSelection(session.name)
+        if currentIndex == index and currentGroup == group then scroll() end
+    end)
+end
+
+function Editor:OpenLuaFind()
+    if not self.luaBox then return end
+    if self.luaFindInput then self.luaFindInput:SetFocus(); self.luaFindInput:HighlightText(); return end
+    self.luaScrollToken, self.luaAPRPosition = nil, nil
+    self.luaFindAnchor = self.luaBox.editBox:GetCursorPosition()
+    local parent = self.luaBox.parent
+    local bar = UI.Toolbar(parent)
+    self.luaFindBar = bar
+    table.remove(parent.children)
+    table.insert(parent.children, 2, bar)
+    local input = AprRC:CreateWidget("EditBox")
+    self.luaFindInput = input
+    input:SetLabel(T("Search Lua"))
+    input:DisableButton(true)
+    input:SetRelativeWidth(0.55)
+    input:SetText(self.luaFindQuery or "")
+    input:SetCallback("OnTextChanged", function(_, _, value)
+        self.luaFindQuery = value
+        self:FindLua(0, true)
+    end)
+    input:SetCallback("OnEnterPressed", function()
+        self:FindLua(IsShiftKeyDown() and -1 or 1)
+        return true
+    end)
+    self.luaFindEscape = input.editbox:GetScript("OnEscapePressed")
+    input.editbox:SetScript("OnEscapePressed", function() self:CloseLuaFind() end)
+    bar:AddChild(input)
+    self.luaFindPrevious = UI.IconButton(bar, "previous", "Previous", function() self:FindLua(-1) end)
+    self.luaFindNext = UI.IconButton(bar, "next", "Next", function() self:FindLua(1) end)
+    UI.Button(bar, CLOSE, function() self:CloseLuaFind() end, 80)
+    self.luaFindStatus = UI.LabelWidget(bar, "")
+    parent:DoLayout(); self.frame:DoLayout()
+    GUI:ClearFocus(); input:SetFocus(); input:HighlightText()
+    self:FindLua(0, true)
+end
+
+function Editor:CloseLuaFind()
+    local bar, input = self.luaFindBar, self.luaFindInput
+    if not bar then return end
+    input.editbox:SetScript("OnEscapePressed", self.luaFindEscape)
+    input.editbox:ClearFocus()
+    local parent = bar.parent
+    for index, child in ipairs(parent.children) do
+        if child == bar then table.remove(parent.children, index); break end
+    end
+    self.luaFindBar, self.luaFindInput, self.luaFindStatus = nil, nil, nil
+    self.luaFindPrevious, self.luaFindNext, self.luaFindResults, self.luaFindIndex = nil, nil, nil, nil
+    GUI:Release(bar)
+    parent:DoLayout(); self.frame:DoLayout()
+    self.luaBox:SetFocus()
+end
+
+function Editor:FindLua(direction, reset)
+    if not self.luaFindBar then return end
+    local results = self.luaFindResults
+    if reset or not results then
+        results = {}
+        local query = (self.luaFindQuery or ""):lower()
+        local text, start = self.luaBox:GetText():lower(), 1
+        if query ~= "" then
+            while true do
+                local first, last = text:find(query, start, true)
+                if not first then break end
+                results[#results + 1] = { start = first - 1, finish = last }
+                start = last + 1
+            end
+        end
+        self.luaFindResults, self.luaFindIndex = results, nil
+    end
+    local count = #results
+    self.luaFindPrevious:SetDisabled(count == 0)
+    self.luaFindNext:SetDisabled(count == 0)
+    if count == 0 then
+        self.luaFindStatus:SetText((self.luaFindQuery or "") == "" and "" or T("No matches"))
+        self.luaBox:HighlightText(0, 0)
+        return
+    end
+    local index = self.luaFindIndex
+    if not index then
+        index = 1
+        for position, range in ipairs(results) do
+            if range.start >= self.luaFindAnchor then index = position; break end
+        end
+    else index = (index - 1 + direction) % count + 1 end
+    self.luaFindIndex = index
+    local range = results[index]
+    self.luaBox.editBox:SetCursorPosition(range.finish)
+    self.luaBox:HighlightText(range.start, range.finish)
+    self.luaFindStatus:SetText(index .. " / " .. count)
 end
 
 function Editor:Undo(delta)
@@ -478,6 +602,7 @@ function Editor:Undo(delta)
         self.luaBox.editBox:SetCursorPosition(math.min(snapshot.cursor, #snapshot.text))
         self.luaPreviousLength = #snapshot.text
         self.settingLua = false
+        if self.luaFindBar then self:FindLua(0, true) end
         session:Persist()
         self:UpdateStatus()
     elseif session:Undo(delta) then

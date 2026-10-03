@@ -1,5 +1,8 @@
 local L = LibStub("AceLocale-3.0"):NewLocale("APR-Recorder", "enUS", true)
 if not L then return end
+L["Search Lua"] = "Search Lua"
+L["No matches"] = "No matches"
+L["Ctrl+F to search. Enter / Shift+Enter: next / previous. Esc: close."] = "Ctrl+F to search. Enter / Shift+Enter: next / previous. Esc: close."
 L["FIELD_manual"] = "Manual emote"
 L["Follow APR"] = "Follow APR"
 L["Follow APR's current step when the same route is open. Pauses while editing."] = "Follow APR's current step when the same route is open. Pauses while editing."

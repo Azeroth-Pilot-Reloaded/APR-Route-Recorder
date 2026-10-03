@@ -74,7 +74,11 @@ function Native:GetStringWidth() return #self:GetText():gsub("|c%x%x%x%x%x%x%x%x
 Native.GetTextWidth = Native.GetStringWidth
 function Native:GetStringHeight() return math.max(14, math.ceil(self:GetStringWidth() / math.max(1, self:GetWidth())) * 14) end
 function Native:GetNumLetters() return #self:GetText() end
-function Native:SetCursorPosition(cursor) self.cursor = cursor end
+function Native:SetCursorPosition(cursor)
+    self.cursor = cursor
+    local _, lines = self:GetText():sub(1, cursor):gsub("\n", "")
+    event(self, "OnCursorChanged", 0, -lines * 14, 0, 14)
+end
 function Native:GetCursorPosition() return self.cursor or 0 end
 function Native:Insert(text)
     local cursor = self:GetCursorPosition()
@@ -161,6 +165,7 @@ local noops = {
     "RegisterForDrag", "SetDesaturated",
 }
 for _, name in ipairs(noops) do Native[name] = function() end end
+function Native:HighlightText(first, last) self.selection = { first or 0, last or #self:GetText() } end
 function Native:SetColorTexture(...) self.rgba = { ... } end
 function Native:AddLine(text)
     self.numLines = (self.numLines or 0) + 1

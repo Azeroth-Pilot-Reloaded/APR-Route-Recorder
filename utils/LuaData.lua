@@ -137,13 +137,15 @@ end
 -- Route containers, steps and condition blocks keep one field per line.
 -- Nested field values and nextRoute stay inline.
 -- Pass "steps" for a legacy step-only route, or "inline" for a compact value.
-function AprRC:SerializeData(value, depth, layout)
+-- Optional positions map step tables to zero-based byte ranges in the output.
+function AprRC:SerializeData(value, depth, layout, positions, offset)
     depth = depth or 0
     if type(value) == "string" then return string.format("%q", value) end
     if type(value) ~= "table" then return tostring(value) end
     if depth > 40 then error(L["Data is too deeply nested"]) end
     local inline = layout == "inline"
     local lines, nextIndex = {}, 1
+    local length = 2 -- Opening brace and newline (or space for inline tables).
     for _, key in ipairs(self:CustomSortKeys(value)) do
         local prefix
         if key == nextIndex then
@@ -165,8 +167,15 @@ function AprRC:SerializeData(value, depth, layout)
         elseif key == "nextRoute" then
             childLayout = "inline"
         end
-        local entry = prefix .. self:SerializeData(value[key], depth + 1, childLayout)
-        lines[#lines + 1] = inline and entry or (string.rep("    ", depth + 1) .. entry .. ",")
+        local indent = inline and "" or string.rep("    ", depth + 1)
+        local start = positions and ((offset or 0) + length + #indent + #prefix)
+        local serialized = self:SerializeData(value[key], depth + 1, childLayout, positions, start)
+        if positions and layout == "steps" and type(key) == "number" and type(value[key]) == "table" then
+            positions[value[key]] = { start = start, finish = start + #serialized }
+        end
+        local entry = prefix .. serialized
+        lines[#lines + 1] = inline and entry or (indent .. entry .. ",")
+        if positions then length = length + #indent + #entry + 2 end
     end
     if inline then
         return #lines == 0 and "{}" or ("{ " .. table.concat(lines, ", ") .. " }")
