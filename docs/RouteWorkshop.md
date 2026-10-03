@@ -141,8 +141,8 @@ over following the latest recording.
 
 In the Lua editor, **Ctrl+F** opens a literal, case-insensitive text search with
 highlighted matches and a match counter. **Enter** finds the next match,
-**Shift+Enter** the previous one; both wrap at the ends. Use the arrow buttons
-or **Esc** to close the search. Search also works on incomplete Lua drafts and
+**Shift+Enter** the previous one; both wrap at the ends. The arrow buttons also
+navigate matches; **Esc** closes the search. Search also works on incomplete Lua drafts and
 pauses APR following until closed.
 
 The recorder remains the source of its saved routes. Every saved route is automatically copied to `APRData.CustomRoute` and APR's live catalog on startup, creation, import, recording changes and editor saves. Updates are coalesced until the next frame and unchanged definitions are not republished. Pending changes are flushed on logout. Opening the workshop is not required. Drafts are published only after **Save**.

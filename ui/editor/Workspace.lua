@@ -321,6 +321,7 @@ function Editor:SelectTab(tab)
 end
 
 function Editor:DrawTab()
+    local reopenFind = self.tab == "lua" and self.luaFindBar ~= nil
     if self.fieldPicker then self.fieldPicker:Hide() end
     AprRC.TutoFrame:ClearPointer()
     self:DetachLua()
@@ -349,8 +350,9 @@ function Editor:DrawTab()
     end
     self.tabs:DoLayout()
     self.frame:DoLayout()
+    if reopenFind and self.luaBox then self:OpenLuaFind() end
     self:UpdateStatus()
-    if self.tab ~= "parallel" and self.session and self.follow and not self.session:IsDirty() and
+    if self.tab ~= "parallel" and not self.luaFindBar and self.session and self.follow and not self.session:IsDirty() and
         self.session.selected == #self.session.draft.steps then self:ScrollToLatest() end
     AprRC.TutoFrame:RefreshPointer()
 end
@@ -394,7 +396,7 @@ function Editor:RequestRefresh()
 end
 
 function Editor:ScrollToLatest()
-    if self.tab == "parallel" then return end
+    if self.tab == "parallel" or self.luaFindBar then return end
     if self.list then self.list:SetScroll(1000) end
     local box = self.luaBox
     if not box then return end

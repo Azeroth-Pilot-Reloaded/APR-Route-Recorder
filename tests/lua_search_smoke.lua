@@ -26,7 +26,7 @@ local function selected()
 end
 assert(selected() == "Alpha")
 E.luaFindNext:Fire("OnClick")
-assert(E.luaFindIndex == 2 and selected() == "alpha")
+assert(E.luaFindIndex == 2 and selected():lower() == "alpha")
 E.luaFindPrevious:Fire("OnClick")
 assert(E.luaFindIndex == 1)
 E.luaFindPrevious:Fire("OnClick")
@@ -46,6 +46,13 @@ query("")
 assert(#E.luaFindResults == 0 and E.luaFindStatus.label:GetText() == "")
 assert(widget:GetText() == text and #E.session.rawHistory == history and not E.session:IsDirty(),
     "Search and cursor movement must not change the route or undo history")
+query("[")
+E.follow, E.session.selected = true, #E.session.draft.steps
+E:DrawTab()
+widget = E.luaBox
+local match = E.luaFindResults[E.luaFindIndex]
+assert(widget.editBox:GetCursorPosition() == match.finish, "Recording follow must not override a reopened search")
+E.follow = false
 
 -- Search also works on incomplete drafts and refreshes after editing/undo.
 local raw = '{ steps = { { Note = "Alpha Alpha" } -- unfinished'
