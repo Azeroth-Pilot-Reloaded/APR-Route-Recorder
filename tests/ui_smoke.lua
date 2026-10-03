@@ -59,6 +59,9 @@ assert(E.session.draft.label == "Edited display name")
 E:SelectTab("lua")
 healthy()
 local box = E.luaBox
+assert(box:GetText():find('            PickUp = { 42 },\n', 1, true), "Lua frame must show compact step fields")
+assert(box:GetText():find('            Qpart = { [42] = { 1, 2 } },\n', 1, true))
+assert(box:GetText():find('            Coord = { x = 100, y = -200 },\n', 1, true))
 local originalScript = E.luaKeyDown
 enter(box, "{ steps = {")
 E:SelectTab("steps")

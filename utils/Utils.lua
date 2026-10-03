@@ -275,7 +275,7 @@ function AprRC:TableToString(tbl)
         self:NormalizeStepOptionFields(step)
         step._index = i
     end
-    return self:SerializeData(copy)
+    return self:SerializeData(copy, 0, "steps")
 end
 
 function AprRC:StringToTable(str)
@@ -533,6 +533,13 @@ function AprRC:CustomSortKeys(tbl)
         table.insert(keys, k)
     end
     table.sort(keys, customSort)
+
+    -- Keep prefab metadata immediately above the parallel step groups.
+    local prefabIndex, parallelIndex = tIndexOf(keys, "prefab"), tIndexOf(keys, "parallelSteps")
+    if prefabIndex and parallelIndex and prefabIndex > parallelIndex then
+        table.remove(keys, prefabIndex)
+        table.insert(keys, parallelIndex, "prefab")
+    end
 
     return keys
 end

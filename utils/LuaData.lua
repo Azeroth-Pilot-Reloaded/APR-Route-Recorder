@@ -134,12 +134,16 @@ function AprRC:CopyData(value)
     return copy
 end
 
-function AprRC:SerializeData(value, depth)
+-- Route containers, steps and condition blocks keep one field per line.
+-- Nested field values and nextRoute stay inline.
+-- Pass "steps" for a legacy step-only route, or "inline" for a compact value.
+function AprRC:SerializeData(value, depth, layout)
     depth = depth or 0
     if type(value) == "string" then return string.format("%q", value) end
     if type(value) ~= "table" then return tostring(value) end
     if depth > 40 then error(L["Data is too deeply nested"]) end
-    local lines, nextIndex = { "{" }, 1
+    local inline = layout == "inline"
+    local lines, nextIndex = {}, 1
     for _, key in ipairs(self:CustomSortKeys(value)) do
         local prefix
         if key == nextIndex then
@@ -147,10 +151,26 @@ function AprRC:SerializeData(value, depth)
         elseif type(key) == "string" and key:match("^[%a_][%w_]*$") then
             prefix = key .. " = "
         else
-            prefix = "[" .. self:SerializeData(key, depth + 1) .. "] = "
+            prefix = "[" .. self:SerializeData(key, depth + 1, "inline") .. "] = "
         end
-        lines[#lines + 1] = string.rep("    ", depth + 1) .. prefix .. self:SerializeData(value[key], depth + 1) .. ","
+        local childLayout
+        if inline or layout == "fields" then
+            childLayout = "inline"
+        elseif layout == "steps" and type(key) == "number" then
+            childLayout = "fields"
+        elseif key == "steps" then
+            childLayout = "steps"
+        elseif key == "conditions" then
+            childLayout = "fields"
+        elseif key == "nextRoute" then
+            childLayout = "inline"
+        end
+        local entry = prefix .. self:SerializeData(value[key], depth + 1, childLayout)
+        lines[#lines + 1] = inline and entry or (string.rep("    ", depth + 1) .. entry .. ",")
     end
-    lines[#lines + 1] = string.rep("    ", depth) .. "}"
-    return table.concat(lines, "\n")
+    if inline then
+        return #lines == 0 and "{}" or ("{ " .. table.concat(lines, ", ") .. " }")
+    end
+    return "{\n" .. (#lines > 0 and (table.concat(lines, "\n") .. "\n") or "") ..
+        string.rep("    ", depth) .. "}"
 end
