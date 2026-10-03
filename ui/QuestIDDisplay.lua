@@ -11,6 +11,7 @@ local specialItemQuests = {}
 local detailLines = setmetatable({}, { __mode = "k" })
 local hookedDetails = setmetatable({}, { __mode = "k" })
 local npcTitles = setmetatable({}, { __mode = "k" })
+local hookedNPCGreetings = setmetatable({}, { __mode = "k" })
 local hookedNPCMixins = {}
 local ExtractQuestIDsFromTooltipData
 
@@ -405,6 +406,13 @@ function AprRC.questID:InstallNPCQuestHooks()
             end)
             hookedNPCMixins[mixin] = true
         end
+    end
+    -- XML binds the original OnShow function before we hook its global name.
+    -- Hook the panel too so the first opening refreshes the populated buttons.
+    local greeting = _G.QuestFrameGreetingPanel
+    if UsableFrame(greeting) and not hookedNPCGreetings[greeting] then
+        greeting:HookScript("OnShow", function() self:RefreshNPCQuestGreeting() end)
+        hookedNPCGreetings[greeting] = true
     end
     if _G.QuestFrameGreetingPanel_OnShow and not self.npcGreetingHooked then
         hooksecurefunc("QuestFrameGreetingPanel_OnShow", function()

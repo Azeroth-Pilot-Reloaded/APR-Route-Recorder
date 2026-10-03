@@ -194,6 +194,10 @@ QuestFrameGreetingPanel_OnShow = function()
     greetingAvailable:SetText("Available quest")
     greetingActive:SetText("Active quest")
 end
+-- XML stores the original function before the addon hooks its global name.
+-- Opening the panel must work through that cached callback as well.
+QuestFrameGreetingPanel:SetScript("OnShow", QuestFrameGreetingPanel_OnShow)
+QuestFrameGreetingPanel:Hide()
 Q:InstallHooks(); Q:InstallHooks()
 local formattedTitle = "|cff808080A long trivial quest title|r"
 available:Setup({ questID = 42, title = formattedTitle })
@@ -202,6 +206,12 @@ assert(available:GetText() == "|cff33ccff[42]|r " .. formattedTitle)
 assert(available:GetHeight() == available:GetTextHeight() + 2, "Wrapped rows must fit the title")
 assert(active:GetText() == "|cff33ccff[84]|r Active quest")
 assert(available:GetID() == 42 and active:GetID() == 84, "Click targets must remain unchanged")
+QuestFrameGreetingPanel:Show()
+assert(greetingAvailable:GetText() == "|cff33ccff[42]|r Available quest", "Initial NPC greeting must show IDs")
+assert(greetingActive:GetText() == "|cff33ccff[84]|r Active quest")
+QuestFrameGreetingPanel:Hide(); QuestFrameGreetingPanel:Show()
+assert(greetingAvailable:GetText() == "|cff33ccff[42]|r Available quest", "Reopening must restore IDs")
+-- Quest-log updates still call the global function directly.
 QuestFrameGreetingPanel_OnShow()
 assert(greetingAvailable:GetText() == "|cff33ccff[42]|r Available quest")
 assert(greetingActive:GetText() == "|cff33ccff[84]|r Active quest")
