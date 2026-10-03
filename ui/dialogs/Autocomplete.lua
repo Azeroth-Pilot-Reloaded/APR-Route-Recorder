@@ -301,7 +301,7 @@ function AprRC.autocomplete:ShowProfessionAutoComplete()
                 LearnProfession = tonumber(key, 10)
             }
             AprRC:SetStepCoord(step)
-            AprRC:NewStep(step)
+            AprRC:NewStep(step, true)
             print("|cff00bfff Learn Profession |r " .. L["Added"])
         end,
         function(match)

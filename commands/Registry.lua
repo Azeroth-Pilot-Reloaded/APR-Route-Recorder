@@ -76,7 +76,7 @@ function options:Apply(definition, value, route, target)
         end
         if definition.newStep and definition.coord then AprRC:SetStepCoord(step) end
         if definition.newStep or not target then
-            AprRC:NewStep(step)
+            AprRC:NewStep(step, true)
         else
             local found
             for _, candidate in ipairs(route.steps) do if candidate == target then found = true end end

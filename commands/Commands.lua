@@ -236,7 +236,7 @@ function AprRC.command:SlashCmd(input)
             }
             AprRC:SetStepCoord(step, 5)
             AprRC:ApplyCampaignQuestFlag(step, step.Waypoint)
-            AprRC:NewStep(step)
+            AprRC:NewStep(step, true)
             print("|cff00bfffWaypoint|r " .. L["Added"])
             return
         elseif inputText == "waypointdb" then
@@ -281,7 +281,7 @@ function AprRC.command:SlashCmd(input)
             return
         elseif inputText == "addreset" then
             local step = { ResetRoute = true }
-            AprRC:NewStep(step)
+            AprRC:NewStep(step, true)
             return
         elseif inputText == "adventuremap" then
             local currentStep = AprRC:GetLastStep()
@@ -436,7 +436,7 @@ function AprRC.command:SlashCmd(input)
 
                         AprRC:SetStepCoord(step)
                         AprRC:ApplyCampaignQuestFlag(step, targetQuestID)
-                        AprRC:NewStep(step)
+                        AprRC:NewStep(step, true)
 
                         print("|cff00bfffLootItems|r " .. L["Added"])
                     end
@@ -617,7 +617,7 @@ function AprRC.command:SlashCmd(input)
                         }
                         AprRC:SetStepCoord(step)
                         AprRC:ApplyCampaignQuestFlag(step, targetQuestID)
-                        AprRC:NewStep(step)
+                        AprRC:NewStep(step, true)
 
                         print("|cff00bfffUseSpell|r " .. L["Added"])
                         AceGUI:Release(frame)
@@ -746,7 +746,7 @@ function AprRC.command:SlashCmd(input)
                         }
                         AprRC:SetStepCoord(step)
                         AprRC:ApplyCampaignQuestFlag(step, questID)
-                        AprRC:NewStep(step)
+                        AprRC:NewStep(step, true)
 
                         print("|cff00bfffQpartPart - [" ..
                             C_QuestLog.GetTitleForQuestID(questID) .. "] - " .. objectiveID .. "|r " .. L["Added"])
@@ -831,7 +831,7 @@ function AprRC.command:SlashCmd(input)
 
                         AprRC:SetStepCoord(step, 5)
                         AprRC:ApplyCampaignQuestFlag(step, scenarioQuestID)
-                        AprRC:NewStep(step)
+                        AprRC:NewStep(step, true)
 
                         print("|cff00bfffScenario - [" .. scenarioTitle .. "]|r " .. L["Added"])
                         print("|cff00bfffTrigText - " .. trimmedText .. "|r " .. L["Added"])
@@ -893,7 +893,7 @@ function AprRC.command:SlashCmd(input)
         elseif inputText == "save" then
             if AprRCData.CurrentRoute.name ~= "" then
                 local step = { RouteCompleted = true }
-                AprRC:NewStep(step)
+                AprRC:NewStep(step, true)
                 -- //TODO: Open Edit box with this route then reset currentRoute
                 AprRC.settings.profile.recordBarFrame.isRecording = false
                 AprRC.record:StopRecord()

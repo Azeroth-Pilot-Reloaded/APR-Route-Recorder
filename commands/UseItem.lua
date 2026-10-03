@@ -12,7 +12,7 @@ function AprRC:RecordUseItem(questID, itemID, onRecorded)
         if usableSpellID then
             position.UseItem = { questID = questID, itemID = itemID, itemSpellID = spellID }
             self:ApplyCampaignQuestFlag(position, questID)
-            self:NewStep(position)
+            self:NewStep(position, true)
             if onRecorded then onRecorded() end
         elseif attempts < 10 then
             attempts = attempts + 1

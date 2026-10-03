@@ -141,6 +141,7 @@ function Editor:FormContext()
 end
 
 function Editor:SelectRoute(name)
+    self.pendingManualStep = nil
     if self.mergeDialog then self.mergeDialog:Hide() end
     if self.closeDialog then self.closeDialog:Hide() end
     self.closeAfterSave, self.safetyNotice = nil, nil
@@ -468,7 +469,10 @@ local function interacting(widget, ignored)
     return false
 end
 
-function Editor:RequestRefresh()
+function Editor:RequestRefresh(name, manualStep)
+    if manualStep and self.frame and self.session and self.session.name == name and not self.session:IsDirty() then
+        self.pendingManualStep = { session = self.session, step = manualStep }
+    end
     if self.refreshPending or (not self.frame and not next(AprRCData.EditorDrafts or {})) then return end
     self.refreshPending = true
     C_Timer.After(0, function()
@@ -476,6 +480,37 @@ function Editor:RequestRefresh()
         self:SafetyTick()
         self:Tick()
     end)
+end
+
+function Editor:ScrollToStep(index, group)
+    if self.luaFindBar then return end
+    local session, widget, tab = self.session, self.list or self.luaBox, self.tab
+    if not widget then return end
+    local draft, token = session.draft, {}
+    self.stepScrollToken = token
+    if self.luaBox then self.luaScrollToken = token end
+    local function scroll()
+        if self.stepScrollToken ~= token or self.session ~= session or session.draft ~= draft or self.tab ~= tab or
+            session:GetSelected(group) ~= index or self.luaFindBar then return end
+        if self.list == widget then
+            for position, row in ipairs(widget.children) do
+                if row:GetUserData("stepIndex") == index then
+                    local range = widget.content:GetHeight() - widget.scrollframe:GetHeight()
+                    local offset = widget.content:GetTop() - row.frame:GetTop()
+                    widget:SetScroll(position == #widget.children and 1000 or
+                        (range > 0 and math.max(0, math.min(1000, offset / range * 1000)) or 0))
+                    break
+                end
+            end
+        elseif self.luaBox == widget and self.luaScrollToken == token and not session:IsDirty() then
+            local positions = self.luaStepPositions
+            local steps = positions and (group and positions.parallelSteps[group] or positions.steps)
+            if steps and steps[index] then widget.editBox:SetCursorPosition(steps[index].start) end
+        end
+    end
+    scroll()
+    -- Reapply once WoW has calculated the new rows and multiline text layout.
+    C_Timer.After(0, scroll)
 end
 
 function Editor:ScrollToLatest()
@@ -509,38 +544,63 @@ function Editor:Refresh(forceFollow)
         if not self.session and AprRCData.Routes[1] then self:SelectRoute(AprRCData.Routes[1].name) end
     end
     local session = self.session
+    local pending = self.pendingManualStep
+    local manualIndex
+    if pending then
+        if pending.session ~= session or session:IsDirty() then
+            self.pendingManualStep = nil
+        else
+            local source = Model:Source(session.name)
+            for index, step in ipairs(source and source.steps or {}) do
+                if step == pending.step then manualIndex = index; break end
+            end
+            if not manualIndex then self.pendingManualStep = nil end
+        end
+    end
     local aprIndex, aprGroup
-    if AprRC.settings.profile.followAPR and session then
+    if not manualIndex and AprRC.settings.profile.followAPR and session then
         aprIndex, aprGroup = AprRC:GetAPRPlaybackSelection(session.name)
     end
     if not aprIndex then self.luaAPRPosition = nil end
     local following = not aprIndex and self.follow and session and session.name == AprRCData.CurrentRoute.name
     if session and not AprRC.CommandBarSetting.dragging and
         not (self.stepsSplit and self.stepsSplit.dragging) and not self.confirm and not self.nameDialog and
-        not self.luaFindBar and not interacting(self.frame, (following or aprIndex) and self.luaBox or nil) and
+        not self.luaFindBar and not interacting(self.frame, (manualIndex or following or aprIndex) and self.luaBox or nil) and
         not self.fieldPicker and not self.mergeDialog and not self.closeDialog and
-        not session:IsDirty() and (session:IsStale(true) or (forceFollow and following)) then
+        not session:IsDirty() and (session:IsStale(true) or manualIndex or (forceFollow and following)) then
         local listScroll = self.list and self.list.localstatus.scrollvalue or 0
         local luaScroll = self.luaBox and self.luaBox.scrollFrame:GetVerticalScroll() or 0
         local luaCursor = self.luaBox and self.luaBox.editBox:GetCursorPosition() or 0
         local luaFocus = self.luaBox and self.luaBox.editBox:HasFocus()
         session:Reload()
         session.rawHistory = nil
-        if following and self.tab ~= "parallel" then
-            session.selected = math.max(1, #session.draft.steps)
+        if manualIndex or (following and self.tab ~= "parallel") then
+            session.selected = manualIndex or math.max(1, #session.draft.steps)
             self.query, self.filter = "", "all"
-            self.page = math.max(1, math.ceil(#session.draft.steps / UI.PageSize))
+            self.page = math.max(1, math.ceil(session.selected / UI.PageSize))
             self.formModes, self.formPages = {}, {}
         end
-        self:DrawTab()
-        if (not following or self.tab == "parallel") and self.list then self.list:SetScroll(listScroll) end
+        if manualIndex and self.tab ~= "lua" then
+            self.editGroupConditions = nil
+            -- Keep Lua open; visual commands reveal their new main-route step.
+            local page = self.page
+            self:SelectTab("steps")
+            if self.page ~= page then self.page = page; self:DrawList() end
+            if self.compact then self:ShowStepPane("list") end
+        else self:DrawTab() end
+        if not manualIndex and (not following or self.tab == "parallel") and self.list then self.list:SetScroll(listScroll) end
         if self.luaBox then
             if luaFocus then self.luaBox.editBox:SetFocus() end
-            if following then self:ScrollToLatest()
+            if manualIndex then self:ScrollToStep(manualIndex)
+            elseif following then self:ScrollToLatest()
             else
                 self.luaBox.editBox:SetCursorPosition(math.min(luaCursor, #self.luaBox:GetText()))
                 self.luaBox.scrollFrame:SetVerticalScroll(luaScroll)
             end
+        end
+        if manualIndex then
+            self.pendingManualStep = nil
+            if self.list then self:ScrollToStep(manualIndex) end
         end
     end
     if aprIndex then self:FollowAPRStep(aprIndex, aprGroup) end
@@ -717,6 +777,7 @@ function Editor:Show()
             widget:Show(); self:ConfirmClose(); return
         end
         if self.fieldPicker then self.fieldPicker:Hide() end
+        self.pendingManualStep, self.stepScrollToken = nil, nil
         AprRC.TutoFrame:Close()
         status.width, status.height = widget.frame:GetWidth(), widget.frame:GetHeight()
         if self.session then self.session:Persist() end

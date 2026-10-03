@@ -10,11 +10,12 @@ E.session.selected = 1
 E.page = 1
 E:DrawTab()
 
--- The actual slash command refreshes a clean list without follow enabled.
+-- Manual commands reveal the added step even without recording follow.
 AprRC.command:SlashCmd("note Live slash command")
 TestRunTimers()
 assert(E.session.draft.steps[#route.steps].Note == "Live slash command")
-assert(E.session.selected == 1 and E.page == 1)
+assert(E.session.selected == #route.steps and E.page == math.ceil(#route.steps / 40))
+assert(E.list.localstatus.scrollvalue == 1000)
 
 -- Commands dispatched by native toolbar buttons take the same refresh path.
 AprRCData.CommandBarCommands = { { command = "note" } }
@@ -37,7 +38,7 @@ for _, child in ipairs(dialog.children) do
 end
 TestRunTimers()
 assert(E.session.draft.steps[#route.steps].Note == "Toolbar note")
-assert(E.session.selected == 1)
+assert(E.session.selected == #route.steps and E.list.localstatus.scrollvalue == 1000)
 
 -- Legacy popup callbacks can change an existing step without calling UpdateRoute.
 StaticPopupDialogs = {}
@@ -91,7 +92,7 @@ E.follow = false
 E.luaBox.editBox:ClearFocus()
 E.luaBox.editBox:SetCursorPosition(12)
 E.luaBox.scrollFrame:SetVerticalScroll(30)
-AprRC.command:SlashCmd("note Lua without following")
+AprRC:NewStep({ Note = "Lua without following" })
 TestRunTimers()
 assert(E.luaBox:GetText():find("Lua without following", 1, true))
 assert(E.luaBox.editBox:GetCursorPosition() == 12)

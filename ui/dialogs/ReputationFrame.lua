@@ -341,7 +341,7 @@ function AprRC.ReputationFrame:Show(stepKey)
         end
 
         if config.createStep then
-            AprRC:NewStep({ [stepKey] = requirement })
+            AprRC:NewStep({ [stepKey] = requirement }, true)
         else
             currentStep = currentStep or AprRC:GetLastStep()
             currentStep[stepKey] = requirement

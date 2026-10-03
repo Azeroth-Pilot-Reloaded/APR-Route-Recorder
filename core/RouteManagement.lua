@@ -19,9 +19,9 @@ function AprRC:InitRoute(name)
     self:NotifyRouteChanged()
 end
 
-function AprRC:NotifyRouteChanged(name)
+function AprRC:NotifyRouteChanged(name, manualStep)
     self:RequestAPRRouteSync(name)
-    if self.routeEditor then self.routeEditor:RequestRefresh() end
+    if self.routeEditor then self.routeEditor:RequestRefresh(name or AprRCData.CurrentRoute.name, manualStep) end
 end
 
 function AprRC:UpdateRoute()
@@ -35,7 +35,7 @@ function AprRC:UpdateRoute()
     self:NotifyRouteChanged()
 end
 
-function AprRC:NewStep(step)
+function AprRC:NewStep(step, manual)
     step = AprRC:NormalizeStepOptionFields(step)
     AprRC:Debug("NewStep", step)
     local lastStep = AprRC:GetLastStep()
@@ -47,7 +47,7 @@ function AprRC:NewStep(step)
         table.remove(AprRCData.CurrentRoute.steps)
     end
     tinsert(AprRCData.CurrentRoute.steps, step)
-    self:NotifyRouteChanged()
+    self:NotifyRouteChanged(nil, manual and step or nil)
 end
 
 function AprRC:GetStepByIndex(index)

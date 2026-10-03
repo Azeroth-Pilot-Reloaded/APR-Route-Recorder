@@ -168,6 +168,7 @@ function Editor:DrawSteps(parent)
         self.page = math.ceil(self:SelectedStep() / PAGE_SIZE)
         self.formModes, self.formPages = {}, {}
         self:DrawTab()
+        self:ScrollToStep(self:SelectedStep(), self:StepGroup())
     end, 100)
     addButton:SetRelativeWidth(0.27)
     addButton:SetDisabled(not addType:GetValue())
@@ -181,7 +182,10 @@ function Editor:DrawSteps(parent)
     self.moveDown = UI.IconButton(actions, "down", "Move down", function() self:Move(1) end)
     self.duplicate = UI.IconButton(actions, "duplicate", "Duplicate", function()
         local session = self.session
-        if session:Insert(self:Steps()[self:SelectedStep()], self:SelectedStep(), self:StepGroup()) then self:AfterStructureChange() end
+        if session:Insert(self:Steps()[self:SelectedStep()], self:SelectedStep(), self:StepGroup()) then
+            self:AfterStructureChange()
+            self:ScrollToStep(self:SelectedStep(), self:StepGroup())
+        end
     end)
     self.delete = UI.IconButton(actions, "trash", "Delete", function()
         local session, index, groupIndex = self.session, self:SelectedStep(), self:StepGroup()
@@ -278,6 +282,7 @@ function Editor:DrawList()
             category == "travel" and { 0.50, 0.76, 1 } or { 0.89, 0.80, 0.62 }
         local definition = AprRC.options.step[key]
         local row = AprRC:CreateWidget("APRStepRow")
+        row:SetUserData("stepIndex", index)
         row:SetStep(index, UI.Label(key), detail, table.concat(metadata, "  ·  "),
             questIcons[key] or (definition and definition.icon) or questIcons.Step, index == self:SelectedStep(), color)
         local group = self:StepGroup() and session.draft.parallelSteps[self:StepGroup()]
@@ -394,6 +399,7 @@ function Editor:DrawInspector()
 end
 
 function Editor:DetachLua()
+    self.stepScrollToken = nil
     self.luaScrollToken = nil
     self.luaStepPositions, self.luaAPRPosition = nil, nil
     if self.luaFindInput then
