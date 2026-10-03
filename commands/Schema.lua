@@ -200,7 +200,7 @@ S.reputation = object({
     type = { kind = "enum", values = { "standard", "renown", "friendship" } },
     level = "id"
 }, { "factionID", "level" })
-S.emote = object({ npcID = "nonnegative", emote = "text" }, { "npcID", "emote" })
+S.emote = object({ npcID = "nonnegative", emote = "text", manual = "bool" }, { "npcID", "emote" })
 S.buffs = list(object({ spellId = "id", tooltipMessage = "text" }, { "spellId" }))
 S.qpart = { kind = "map", key = "id", entry = "ids" }
 S.buttons = { kind = "map", key = "objectiveKey", entry = "id" }

@@ -479,7 +479,7 @@ R:Register({
     key = "Emote",
     command = "emote",
     schema = S.emote,
-    example = "{ npcID = 0, emote = \"salute\" }",
+    example = "{ emote = \"sit\", manual = true, npcID = 0 }",
     newStep = true,
     coord = true,
     hidden = true,

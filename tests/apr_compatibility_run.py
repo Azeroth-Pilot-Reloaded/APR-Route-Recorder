@@ -90,3 +90,34 @@ for key, saved in pairs(APRData.CustomRoute) do
 end
 print("Real APR routes: import, save, edit, automatic publication and reload passed for " .. count .. " routes.")
 ''')
+
+load(APR_ROOT / "APR-Core/utils/RouteManager.lua")
+load(APR_ROOT / "APR-Core/utils/StepUtils.lua")
+lua.execute('''
+APR.IsRouteCompatibleWithClient = function() return true end
+APR.IsDelveRoute = function() return false end
+APR.AreConditionalFiltersMet = function() return false end
+APR.ActiveRoute, APR.PlayerID = "playback", "playback-test"
+local route = { steps = { { Note = "Main 1", _index = 1 }, { Note = "Main 2", _index = 2 } },
+    parallelSteps = { { conditions = {}, steps = {} },
+        { conditions = {}, steps = { { Note = "Parallel", _index = 1 } } } } }
+APR.RouteQuestStepList.playback = route
+AprRCData.APRRouteKeys["Recorder playback"] = "playback"
+APRData[APR.PlayerID] = { playback = 2,
+    ["playback-ParallelStepsState"] = { groups = { [1] = { activationOrder = 1, effectiveBeforeIndex = 2 } } } }
+local index, group = AprRC:GetAPRPlaybackSelection("Recorder playback")
+assert(index == 1 and group == 2, "Real APR insertion must map back to the original parallel group")
+local runtime = APR:GetStep(2)
+runtime.Note = "Navigation runtime copy"
+index, group = AprRC:GetAPRPlaybackSelection("Recorder playback")
+assert(index == 1 and group == 2, "Runtime playback mutations must not affect following")
+APRData[APR.PlayerID].playback = 3
+index, group = AprRC:GetAPRPlaybackSelection("Recorder playback")
+assert(index == 2 and group == nil, "Main indexes must not include inserted parallel steps")
+APR.ActiveRoute = "legacy-playback"
+APR.RouteQuestStepList[APR.ActiveRoute] = { { Note = "Legacy 1" }, { Note = "Legacy 2" } }
+APRData[APR.PlayerID][APR.ActiveRoute] = 2
+index, group = AprRC:GetAPRPlaybackSelection(APR.ActiveRoute)
+assert(index == 2 and group == nil)
+print("Real APR playback: effective indexes, empty/active parallel groups, runtime copies and legacy routes passed.")
+''')

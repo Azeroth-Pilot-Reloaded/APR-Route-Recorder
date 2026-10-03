@@ -97,6 +97,43 @@ function AprRC:GetImportableAPRRoutes()
     return entries
 end
 
+-- Playback indexes include inserted parallel steps. Locate the source table in
+-- the definition instead of treating APR's index as a main-step index.
+function AprRC:GetAPRPlaybackSelection(name)
+    local key = APR and APR.ActiveRoute
+    local publishedKey = AprRCData.APRRouteKeys and AprRCData.APRRouteKeys[name]
+    if not key or (key ~= name and key ~= publishedKey) then return end
+    local player = APRData and APR.PlayerID and APRData[APR.PlayerID]
+    local progress = player and player[key]
+    if type(progress) ~= "number" or progress < 1 or progress % 1 ~= 0 then return end
+    local definition = APR.RouteQuestStepList and APR.RouteQuestStepList[key]
+    if type(definition) ~= "table" then return end
+    local mainSteps = definition.steps or definition
+    local effectiveSteps = APR.GetRouteSteps and APR:GetRouteSteps(key) or mainSteps
+    local source = effectiveSteps and effectiveSteps[progress]
+    if type(source) ~= "table" then return end
+    local cached = self.aprPlaybackSelection
+    if cached and cached.key == key and cached.definition == definition and cached.source == source then
+        local group = cached.group and (definition.parallelSteps or {})[cached.group]
+        local steps = cached.group and group and group.steps or (not cached.group and mainSteps)
+        if steps and steps[cached.index] == source then return cached.index, cached.group end
+    end
+    local function locate(steps, group)
+        for index, step in ipairs(steps or {}) do
+            if step == source then
+                self.aprPlaybackSelection = { key = key, definition = definition, source = source, index = index, group = group }
+                return index, group
+            end
+        end
+    end
+    local index = locate(mainSteps)
+    if index then return index end
+    for groupIndex, group in ipairs(definition.parallelSteps or {}) do
+        local parallelIndex = locate(group.steps, groupIndex)
+        if parallelIndex then return parallelIndex, groupIndex end
+    end
+end
+
 function AprRC:ImportAPRRoute(key)
     local source = APR and APR.RouteQuestStepList and APR.RouteQuestStepList[key]
     if not source or not self:GetImportableAPRRoutes()[key] then return nil, L["APR route is not available."] end

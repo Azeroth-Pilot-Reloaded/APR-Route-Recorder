@@ -423,7 +423,11 @@ function Editor:Refresh(forceFollow)
         if not self.session and AprRCData.Routes[1] then self:SelectRoute(AprRCData.Routes[1].name) end
     end
     local session = self.session
-    local following = self.follow and session and session.name == AprRCData.CurrentRoute.name
+    local aprIndex, aprGroup
+    if AprRC.settings.profile.followAPR and session then
+        aprIndex, aprGroup = AprRC:GetAPRPlaybackSelection(session.name)
+    end
+    local following = not aprIndex and self.follow and session and session.name == AprRCData.CurrentRoute.name
     if session and not AprRC.CommandBarSetting.dragging and
         not (self.stepsSplit and self.stepsSplit.dragging) and not self.confirm and not self.nameDialog and
         not interacting(self.frame, following and self.luaBox or nil) and
@@ -451,7 +455,34 @@ function Editor:Refresh(forceFollow)
             end
         end
     end
+    if aprIndex then self:FollowAPRStep(aprIndex, aprGroup) end
     self:UpdateStatus()
+end
+
+function Editor:FollowAPRStep(index, group)
+    local session = self.session
+    if self.tab ~= "steps" and self.tab ~= "parallel" then return end
+    if session:IsDirty() or self.confirm or self.nameDialog or self.fieldPicker or
+        AprRC.CommandBarSetting.dragging or (self.stepsSplit and self.stepsSplit.dragging) or interacting(self.frame) then return end
+    if not session:GetSteps(group)[index] then return end
+    local tab = group and "parallel" or "steps"
+    local page = math.ceil(index / UI.PageSize)
+    if self.tab == tab and session:GetSelected(group) == index and (not group or session.parallelGroup == group) and
+        self.page == page and self.query == "" and self.filter == "all" and not self.editGroupConditions then return end
+    session:SetSelected(index, group)
+    if group then session.parallelGroup = group end
+    self.query, self.filter, self.page = "", "all", page
+    self.editGroupConditions = nil
+    self.formModes, self.formPages = {}, {}
+    if self.tab ~= tab then self:SelectTab(tab) else self:DrawTab() end
+    -- SelectTab resets pagination when crossing the main/parallel boundary.
+    if self.page ~= page then self.page = page; self:DrawList() end
+    if self.list then
+        local row = self.list.children[(index - 1) % UI.PageSize + 1]
+        local range = self.list.content:GetHeight() - self.list.scrollframe:GetHeight()
+        local offset = row and (self.list.content:GetTop() - row.frame:GetTop()) or 0
+        self.list:SetScroll(range > 0 and math.max(0, math.min(1000, offset / range * 1000)) or 0)
+    end
 end
 
 function Editor:Tick(forceFollow)
@@ -562,11 +593,27 @@ function Editor:Show()
     end)
     local follow = AprRC:CreateWidget("CheckBox")
     follow:SetLabel(T("Follow recording"))
-    follow:SetWidth(205)
+    follow:SetWidth(follow.text:GetStringWidth() + 30)
     self.follow = self.follow ~= false
     follow:SetValue(self.follow)
     follow:SetCallback("OnValueChanged", function(_, _, value) self.follow = value; self:Tick(value) end)
     footer:AddChild(follow)
+    local followAPR = AprRC:CreateWidget("CheckBox")
+    self.followAPRCheckbox = followAPR
+    followAPR:SetLabel(T("Follow APR"))
+    followAPR:SetWidth(followAPR.text:GetStringWidth() + 30)
+    followAPR:SetValue(AprRC.settings.profile.followAPR == true)
+    followAPR:SetCallback("OnValueChanged", function(_, _, value)
+        AprRC.settings.profile.followAPR = value
+        self:Tick()
+    end)
+    followAPR:SetCallback("OnEnter", function(widget)
+        GameTooltip:SetOwner(widget.frame, "ANCHOR_TOP")
+        AprRC:AddTooltipLine(GameTooltip, T("Follow APR's current step when the same route is open. Pauses while editing."), 1, 1, 1, true)
+        GameTooltip:Show()
+    end)
+    followAPR:SetCallback("OnLeave", function() GameTooltip:Hide() end)
+    footer:AddChild(followAPR)
     frame:SetCallback("OnClose", function(widget)
         if self.fieldPicker then self.fieldPicker:Hide() end
         AprRC.TutoFrame:Close()
@@ -574,6 +621,7 @@ function Editor:Show()
         if self.session then self.session:Persist() end
         if self.timer then self:CancelTimer(self.timer); self.timer = nil end
         self:DetachLua()
+        self.followAPRCheckbox = nil
         AprRC.CommandBarSetting:CancelDrag()
         AprRC.CommandBar:DetachWorkshop(widget.frame)
         GUI:Release(self.compactButton); self.compactButton = nil

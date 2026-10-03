@@ -128,6 +128,15 @@ Drafts are detached from recorded routes and stored in `AprRCData.EditorDrafts`.
 
 ## APR integration
 
+Enable **Follow APR** in the workshop footer to select APR's current playback
+step when the same route is open in the recorder. Matching uses the exact route
+key or that route's published recorder copy, rather than its display label.
+Main and inserted parallel steps select the appropriate tab, group and page.
+The preference is saved across reopening and UI reloads. Following pauses for
+unsaved drafts and focused editing controls; other tabs stay open. When both
+follow options are enabled for the same route, APR playback takes precedence
+over following the latest recording.
+
 The recorder remains the source of its saved routes. Every saved route is automatically copied to `APRData.CustomRoute` and APR's live catalog on startup, creation, import, recording changes and editor saves. Updates are coalesced until the next frame and unchanged definitions are not republished. Pending changes are flushed on logout. Opening the workshop is not required. Drafts are published only after **Save**.
 
 Copies appear in APR's **Custom** tab under their recorder name with ` - Custom`. Their stable keys are stored in `AprRCData.APRRouteKeys`. An existing route with that key, including an old manual export, is preserved; the new copy receives a numbered Recorder suffix. Saved copies remain available when the recorder is disabled or reset. Resetting the recorder does not delete APR's existing copies.

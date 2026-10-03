@@ -1,5 +1,8 @@
 local L = LibStub("AceLocale-3.0"):NewLocale("APR-Recorder", "zhCN")
 if not L then return end
+L["FIELD_manual"] = "手动表情"
+L["Follow APR"] = "跟随 APR"
+L["Follow APR's current step when the same route is open. Pauses while editing."] = "打开相同路线时跟随 APR 的当前步骤。编辑时暂停。"
 L["FIELD_VendorMoney"] = "含售价的金钱条件"
 L["Ctrl: condition details"] = "Ctrl：条件详情"
 

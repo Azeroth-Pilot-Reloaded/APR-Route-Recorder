@@ -71,6 +71,7 @@ function AprRC.settings:InitializeSettings()
             minimap = { minimapPos = 285 },
             enableMinimapButton = true,
             enableCampaignQuestsFlag = false,
+            followAPR = false,
             questIDDisplay = {
                 enabled = true,
                 alwaysVisible = false,

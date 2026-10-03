@@ -1,5 +1,8 @@
 local L = LibStub("AceLocale-3.0"):NewLocale("APR-Recorder", "koKR")
 if not L then return end
+L["FIELD_manual"] = "수동 감정 표현"
+L["Follow APR"] = "APR 따라가기"
+L["Follow APR's current step when the same route is open. Pauses while editing."] = "같은 경로가 열려 있으면 APR의 현재 단계를 따라갑니다. 편집 중에는 일시 중지됩니다."
 L["FIELD_VendorMoney"] = "판매 가치를 포함한 소지금 조건"
 L["Ctrl: condition details"] = "Ctrl: 조건 세부 정보"
 

@@ -1,5 +1,8 @@
 local L = LibStub("AceLocale-3.0"):NewLocale("APR-Recorder", "frFR")
 if not L then return end
+L["FIELD_manual"] = "Emote manuelle"
+L["Follow APR"] = "Suivre APR"
+L["Follow APR's current step when the same route is open. Pauses while editing."] = "Suit l’étape actuelle d’APR lorsque la même route est ouverte. Se met en pause pendant l’édition."
 
 L["FIELD_VendorMoney"] = "Condition d'argent après revente"
 L["Ctrl: condition details"] = "Ctrl : détails des conditions"
