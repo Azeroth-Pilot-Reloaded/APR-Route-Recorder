@@ -24,6 +24,7 @@ for name in ("utils/Utils.lua", "utils/LuaData.lua", "core/RouteManagement.lua",
     load(ROOT / name)
 for path in (ROOT / "commands/options").glob("*.lua"):
     load(path)
+load(ROOT / "ui/editor/Merge.lua")
 load(ROOT / "ui/editor/Model.lua")
 load(APR_ROOT / "APR-Core/utils/RouteUtils.lua")
 lua.execute('function APR:NewModule() return {} end')
@@ -77,6 +78,23 @@ for key in pairs(entries) do
     assert(AprRC:DeepCompare(saved.scenarios, expected.scenarios))
     assert(saved.mapID == source.mapID)
     assert(AprRC:DeepCompare(saved.nextRoute, expected.nextRoute))
+    -- Imported legacy fields also survive concurrent recording and a rebase.
+    session.draft.label = session.draft.label .. " (merged)"
+    session:Snapshot()
+    route = AprRC:FindRouteByName(route.name)
+    route.steps[#route.steps + 1] = { Note = "Captured while editing an APR import" }
+    AprRC:NotifyRouteChanged(route.name)
+    local plan = assert(session:MergePlan())
+    assert(#plan.conflicts == 0 and session:ApplyMerge(plan, {}, false))
+    assert(session:IsDirty() and not session:IsStale())
+    assert(session:Save())
+    TestRunTimers()
+    local merged = AprRC:FindRouteByName(route.name)
+    assert(#merged.steps == #(source.steps or {}) + 1)
+    for index, step in ipairs(expected.steps or {}) do
+        assert(SameStepData(merged.steps[index], step), "Merge changed legacy step data for " .. key)
+    end
+    assert(SameStepData(merged.parallelSteps or {}, expected.parallelSteps or {}))
     count = count + 1
 end
 APR.RouteQuestStepList = {}

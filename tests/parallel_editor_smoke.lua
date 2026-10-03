@@ -121,9 +121,9 @@ for _, size in ipairs({ { 440, 680 }, { 560, 780 } }) do
     fits(E.inspector.parent); fits(E.stepsSplit.parent); fits(E.frame)
 end
 E:ToggleCompact()
-E:Hide()
+TestCloseWorkshop()
 E:Show()
 assert(E.tab == "parallel" and #E:Steps() == 85 and E.session.parallelGroup == 2)
-E:Hide()
+TestCloseWorkshop()
 assert(#UIErrors == 0, table.concat(UIErrors, "\n"))
 print("Parallel group and step editing, conditions, undo, save, search and layout checks passed.")

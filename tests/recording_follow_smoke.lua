@@ -110,7 +110,7 @@ E.follow = true
 E.session.selected = 1
 E:Tick(true)
 assert(E.session.selected == #route.steps)
-E:Hide(); TestRunTimers()
+TestCloseWorkshop(); TestRunTimers()
 AprRC.settings.profile.recordBarFrame.isRecording = false
 assert(#UIErrors == 0, table.concat(UIErrors, "\n"))
 print("Live command refresh, last-step following, Lua cursor/scroll and draft protection passed.")

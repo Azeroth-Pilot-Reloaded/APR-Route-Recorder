@@ -186,7 +186,7 @@ property = field("Add a field")
 property:SetFocus()
 assert(not property.entries.HasAchievement, "Existing properties must not be suggested again")
 popup = property.pullout.frame
-E:Hide()
+TestCloseWorkshop()
 assert(not popup:IsShown(), "Closing the workshop must close detached menus")
 assert(AprRC:DeepCompare(route, original))
 assert(AprRC:DeepCompare(live, AprRCData.CurrentRoute))

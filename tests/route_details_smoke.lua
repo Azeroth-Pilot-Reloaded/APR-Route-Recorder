@@ -156,7 +156,7 @@ assert(not E.session and E.deleteRouteButton.disabled and E.saveButton.disabled)
 assert(#AprRCData.Routes == 0)
 AprRCData.Routes = savedRoutes
 table.remove(savedRoutes, #savedRoutes)
-E:Hide()
+TestCloseWorkshop()
 C_Item.GetItemInfo, C_Spell = oldItemInfo, oldSpell
 assert(#UIErrors == 0, table.concat(UIErrors, "\n"))
 print("Money conversion, nested conditions, item/skill descriptions and confirmed route deletion passed.")

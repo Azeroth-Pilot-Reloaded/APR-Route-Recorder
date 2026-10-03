@@ -156,10 +156,11 @@ function AprRC.command:SlashCmd(input)
         AprRC.coordinate:RefreshFrameAnchor()
         return
     elseif inputText == 'backup' then
-        AprRCData.CurrentRoute.steps = {}
-        for k, v in pairs(AprRCData.BackupRoute) do
-            AprRCData.CurrentRoute.steps[k] = v
-        end
+        AprRC.editorModel:Archive(AprRCData.CurrentRoute.name, AprRCData.CurrentRoute, "Before restore")
+        AprRCData.CurrentRoute.steps = AprRC:CopyData(AprRCData.BackupRoute)
+        AprRC:ResetRecordingSession()
+        AprRC:RebuildQuestLookupFromRoute(AprRCData.CurrentRoute)
+        AprRC:UpdateRoute()
         return
     elseif inputText == "resetbar" or inputText == "resetcommandbar" or inputText == "barreset" then
         AprRC.CommandBar:ResetToDefault()

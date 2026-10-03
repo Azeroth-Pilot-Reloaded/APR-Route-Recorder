@@ -82,7 +82,7 @@ assert(input.editbox:GetScript("OnEscapePressed") == escape, "Closing must resto
 assert(E.session.raw == edited)
 E:OpenLuaFind()
 input, escape = E.luaFindInput, E.luaFindEscape
-E:Hide()
+TestCloseWorkshop()
 assert(input.editbox:GetScript("OnEscapePressed") == escape)
 assert(widget.editBox:GetScript("OnKeyDown") == originalKey)
 assert(not E.luaFindInput and not E.luaBox)

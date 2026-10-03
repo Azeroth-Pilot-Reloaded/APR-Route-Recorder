@@ -54,7 +54,7 @@ assert(#E.list.children[1].conditionBadges == 6 and #E.list.children[2].conditio
 E:SelectTab("parallel")
 assert(#E.list.children[1].conditionBadges == 2, "Parallel rows include group filters")
 assert(E.list.children[1].conditionBadges[2].contexts[1]:find(UI.Text("Group conditions"), 1, true))
-E:Hide()
+TestCloseWorkshop()
 C_Texture, C_CreatureInfo = oldTexture, oldCreature
 assert(#UIErrors == 0, table.concat(UIErrors, "\n"))
 print("Class/race badges: aliases, nested/group conditions, exclusions, overflow, selection and pooling passed.")

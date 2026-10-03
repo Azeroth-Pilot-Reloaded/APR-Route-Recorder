@@ -141,6 +141,6 @@ AprRC:NotifyRouteChanged(route.name)
 TestRunTimers()
 assert(E.session.raw == "{ steps = { -- unfinished" and #E.session.draft.steps == 5001)
 AprRC.CopyData, AprRC.SerializeData, Model.Summary = copy, serialize, summary
-E.session:Reload(); E:Hide(); TestRunTimers()
+E.session:Reload(); TestCloseWorkshop(); TestRunTimers()
 assert(#UIErrors == 0, table.concat(UIErrors, "\n"))
 print("5,000-step routes: idle work, pagination, recording, undo/redo and save conflicts passed.")

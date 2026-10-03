@@ -4,6 +4,49 @@ local Model = AprRC.editorModel
 local L_APR = LibStub("AceLocale-3.0"):GetLocale("APR")
 local Session = {}
 Session.__index = Session
+local stepIDs, idRoutes = setmetatable({}, { __mode = "k" }), {}
+
+-- Identities live beside the route, never in exported steps or APR metadata.
+-- They survive /reload and distinguish a changed last step from new captures.
+local function visitLists(route, callback)
+    callback("route.steps", route.steps or {})
+    callback("route.parallelSteps", route.parallelSteps or {})
+    for index, group in ipairs(route.parallelSteps or {}) do
+        callback("route.parallelSteps[" .. index .. "].steps", group.steps or {})
+    end
+end
+
+function Model:StepIDs(route, previous)
+    local result = {}
+    visitLists(route, function(path, values)
+        local ids = {}; result[path] = ids
+        for index, value in ipairs(values) do
+            local id = stepIDs[value] or (previous and previous[path] and previous[path][index])
+            if not id then
+                AprRCData.EditorStepSerial = (AprRCData.EditorStepSerial or 0) + 1
+                id = AprRCData.EditorStepSerial
+            end
+            stepIDs[value], ids[index] = id, id
+        end
+    end)
+    return result
+end
+
+function Model:SourceIDs(route)
+    AprRCData.EditorRouteStepIDs = AprRCData.EditorRouteStepIDs or {}
+    local previous = not idRoutes[route.name] and AprRCData.EditorRouteStepIDs[route.name] or nil
+    local ids = self:StepIDs(route, previous)
+    idRoutes[route.name] = route
+    AprRCData.EditorRouteStepIDs[route.name] = ids
+    return ids
+end
+
+function Model:BindIDs(route, ids)
+    if not ids then return end
+    visitLists(route, function(path, values)
+        for index, value in ipairs(values) do stepIDs[value] = ids[path] and ids[path][index] end
+    end)
+end
 
 function Model:RouteText(route, withPositions)
     local data = AprRC:CopyData(route)
@@ -30,14 +73,51 @@ function Model:Source(name)
     return AprRC:FindRouteByName(name)
 end
 
+-- Recovery versions belong to a route, never to the last opened window. Keep
+-- full definitions (metadata/parallel steps too), and incomplete Lua drafts.
+function Model:Archive(name, route, reason, raw, base)
+    if not route then return end
+    AprRCData.RouteHistory = AprRCData.RouteHistory or {}
+    local history = AprRCData.RouteHistory[name] or {}
+    AprRCData.RouteHistory[name] = history
+    local last = history[#history]
+    if last and last.reason == reason and last.raw == raw and AprRC:DeepCompare(last.route, route) then return end
+    AprRCData.RouteHistorySerial = (AprRCData.RouteHistorySerial or 0) + 1
+    history[#history + 1] = { id = AprRCData.RouteHistorySerial, time = time(), reason = reason,
+        route = AprRC:CopyData(route), raw = raw, base = base }
+    if #history > 40 then table.remove(history, 1) end
+end
+
+function Model:History(name)
+    return AprRCData.RouteHistory and AprRCData.RouteHistory[name] or {}
+end
+
+function Model:RecoveryCopy(name, version)
+    local index, copyName = 1, name .. "-recovered-1"
+    while AprRC:FindRouteByName(copyName) do
+        index = index + 1; copyName = name .. "-recovered-" .. index
+    end
+    -- Create from the live source; the recovered version remains a detached
+    -- draft, so even invalid Lua can be recovered without publishing it.
+    local route, reason = self:NewRoute(copyName, self:Source(name) or version.route)
+    if not route then return nil, reason end
+    local session = self:Open(route)
+    session.draft = AprRC:CopyData(version.route); session.draft.name = route.name
+    session.raw = version.raw
+    session:Snapshot()
+    return route, session
+end
+
 function Model:Open(route)
-    AprRCData.BackupRoute = AprRC:CopyData(route.steps)
     local session = setmetatable({ name = route.name, selected = 1, history = {}, cursor = 0 }, Session)
     local saved = AprRCData.EditorDrafts and AprRCData.EditorDrafts[route.name]
     session:Reload(route)
     if saved then
         session.draft = AprRC:CopyData(saved.draft)
         session.base = saved.base
+        session.baseIDs = saved.baseIDs
+        session.hasDraftIDs = saved.hasDraftIDs
+        Model:BindIDs(session.draft, saved.draftIDs)
         session.source = nil -- The persisted baseline may predate the live source.
         session.raw = saved.raw
         session.selected = saved.selected or 1
@@ -50,19 +130,31 @@ function Model:Open(route)
     return session
 end
 
-function Session:Reload(route)
+function Session:Reload(route, committed)
     route = route or Model:Source(self.name)
     if not route then return false end
+    if not committed and self.draft and self:IsDirty() then
+        Model:Archive(self.name, self.draft, "Before reload", self.raw, self.base)
+    end
     self.draft = AprRC:BuildRouteDefinition(route)
     self.draft.name = route.name
+    self.baseIDs = Model:SourceIDs(route)
+    self.hasDraftIDs = true
+    Model:BindIDs(self.draft, self.baseIDs)
     self.base = Model:RouteText(self.draft)
     self:RememberSource(route)
     self.raw = nil
+    self.incomingWarned, self.observed = nil, nil
     self.selected = math.max(1, math.min(self.selected, #route.steps))
     self:ClampSelection()
     self.history, self.cursor = {}, 0
     self:Snapshot()
     return true
+end
+
+function Session:Touch()
+    self.lastActivity = (GetTime or time)()
+    self.lastReminder = nil
 end
 
 function Session:IsDirty()
@@ -83,9 +175,17 @@ function Session:IsStale(refreshOnly)
     local revision = AprRC.routeRevisions and AprRC.routeRevisions[self.name] or 0
     -- Polling must stay cheap for an unchanged route. Explicit save/reopen
     -- checks still compare all data, including unannounced external edits.
-    if refreshOnly and source == self.source and source.steps == self.sourceSteps and
+    local observed = self.observed
+    if refreshOnly and observed and observed.source == source and observed.steps == source.steps and
+        observed.count == #source.steps and observed.revision == revision and observed.base == self.base then
+        return observed.stale
+    end
+    if refreshOnly and not observed and source == self.source and source.steps == self.sourceSteps and
         #source.steps == self.sourceCount and revision == self.sourceRevision then return false end
     local stale = Model:RouteText(AprRC:BuildRouteDefinition(source)) ~= self.base
+    Model:SourceIDs(source)
+    self.observed = { source = source, steps = source.steps, count = #source.steps,
+        revision = revision, base = self.base, stale = stale }
     if not stale then self:RememberSource(source) end
     return stale
 end
@@ -96,7 +196,9 @@ function Session:Persist()
         AprRCData.EditorDrafts[self.name] = {
             -- History snapshots are detached and immutable. Reuse the current one
             -- while typing Lua instead of copying thousands of steps per keystroke.
-            draft = self.history[self.cursor].draft, base = self.base,
+            draft = self.history[self.cursor].draft, base = self.base, baseIDs = self.baseIDs,
+            draftIDs = self.history[self.cursor].ids,
+            hasDraftIDs = self.hasDraftIDs,
             raw = self.raw, selected = self.selected,
             parallelGroup = self.parallelGroup, parallelSelected = self.parallelSelected,
         }
@@ -106,9 +208,11 @@ function Session:Persist()
 end
 
 function Session:Snapshot()
+    self:Touch()
     self.rawHistory = nil
     self.dirty = Model:RouteText(self.draft) ~= self.base
-    local snapshot = { draft = AprRC:CopyData(self.draft), selected = self.selected,
+    local snapshot = { draft = AprRC:CopyData(self.draft), ids = Model:StepIDs(self.draft),
+        hasDraftIDs = self.hasDraftIDs, selected = self.selected,
         parallelGroup = self.parallelGroup, parallelSelected = self.parallelSelected, dirty = self.dirty }
     if self.history[self.cursor] and AprRC:DeepCompare(self.history[self.cursor].draft, snapshot.draft) then
         self:Persist()
@@ -126,12 +230,15 @@ function Session:Undo(delta)
     if index < 1 or index > #self.history then return false end
     self.cursor = index
     self.draft = AprRC:CopyData(self.history[index].draft)
+    Model:BindIDs(self.draft, self.history[index].ids)
+    self.hasDraftIDs = self.history[index].hasDraftIDs
     self.dirty = self.history[index].dirty
     self.selected = self.history[index].selected
     self.parallelGroup = self.history[index].parallelGroup
     self.parallelSelected = self.history[index].parallelSelected
     self:ClampSelection()
     self.raw = nil
+    self:Touch()
     self:Persist()
     return true
 end
@@ -148,6 +255,7 @@ function Session:ApplyRaw()
     local route, reason = self:Read()
     if not route then return false, reason end
     self.draft, self.raw = route, nil
+    self.hasDraftIDs = false -- Raw replacements have no trustworthy step identities.
     self.selected = math.max(1, math.min(self.selected, #route.steps))
     self:ClampSelection()
     self:Snapshot()
@@ -165,6 +273,7 @@ function Session:GetSelected(group)
 end
 
 function Session:SetSelected(index, group)
+    if self:IsDirty() then self:Touch() end
     if group then self.parallelSelected = index else self.selected = index end
 end
 
@@ -252,6 +361,8 @@ function Session:Save(overwrite)
     local source = Model:Source(self.name)
     if not source then return false, "missing" end
     if not overwrite and self:IsStale() then return false, "conflict" end
+    Model:Archive(self.name, source, "Before save")
+    if overwrite then Model:Archive(self.name, self.draft, "Draft before merge", self.raw, self.base) end
     AprRCData.BackupRoute = AprRC:CopyData(source.steps)
     if not AprRC:UpdateRouteByName(self.name, route) then return false, "missing" end
     if AprRCData.CurrentRoute.name == self.name then
@@ -259,8 +370,56 @@ function Session:Save(overwrite)
         AprRC:ResetRecordingSession()
         AprRC:RebuildQuestLookupFromRoute(route)
     end
-    self:Reload(route)
+    self:Reload(route, true)
     self:Persist()
+    return true
+end
+
+function Session:MergePlan()
+    local draft, reason = self:Read()
+    if not draft then return nil, reason end
+    local source = Model:Source(self.name)
+    if not source then return nil, "missing" end
+    local base, errorMessage = AprRC:ParseLuaData(self.base)
+    if not base then return nil, errorMessage end
+    base.name = self.name
+    local incoming = AprRC:BuildRouteDefinition(source); incoming.name = self.name
+    local identities = { base = self.baseIDs, left = not self.raw and self.hasDraftIDs ~= false and Model:StepIDs(self.draft) or nil,
+        right = Model:SourceIDs(source) }
+    local result, conflicts = AprRC.routeMerge:Routes(base, draft, incoming, nil, identities)
+    return { base = base, draft = draft, incoming = incoming, result = result, conflicts = conflicts,
+        identities = identities, draftText = Model:RouteText(draft), incomingText = Model:RouteText(incoming) }
+end
+
+function Session:ApplyMerge(plan, choices, save)
+    local source = Model:Source(self.name)
+    if not source then return false, "missing" end
+    local draft, reason = self:Read()
+    if not draft then return false, reason end
+    if Model:RouteText(draft) ~= plan.draftText or
+        Model:RouteText(AprRC:BuildRouteDefinition(source)) ~= plan.incomingText then return false, "changed" end
+    local merged, conflicts, mergedIDs = AprRC.routeMerge:Routes(plan.base, plan.draft, plan.incoming, choices, plan.identities)
+    for _, conflict in ipairs(conflicts) do if not conflict.resolved then return false, "unresolved" end end
+    merged = AprRC:BuildRouteDefinition(merged); merged.name = self.name
+    local validated, why = AprRC:ReadRouteDefinition(Model:RouteText(merged), self.name, merged, plan.incoming)
+    if not validated then return false, why end
+    Model:Archive(self.name, source, "Recording before merge")
+    Model:Archive(self.name, self.draft, "Draft before merge", self.raw, self.base)
+    -- Rebase undo starts at the latest source, then applies the merged edits.
+    -- Resetting the history also avoids replaying old-base snapshots as clean.
+    self.base = plan.incomingText
+    self.baseIDs = plan.identities.right
+    self.hasDraftIDs = true
+    self:RememberSource(source)
+    self.observed, self.incomingWarned, self.raw = nil, nil, nil
+    self.history, self.cursor = {}, 0
+    self.draft = AprRC:CopyData(plan.incoming)
+    Model:BindIDs(self.draft, self.baseIDs)
+    self:Snapshot()
+    self.draft = validated
+    Model:BindIDs(self.draft, mergedIDs)
+    self:Snapshot()
+    if save then return self:Save() end
     return true
 end
 

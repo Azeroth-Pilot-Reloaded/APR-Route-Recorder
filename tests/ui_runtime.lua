@@ -274,6 +274,14 @@ function AprRC:NewModule()
         CancelTimer = function(self) self.timerCallback = nil end,
     }
 end
+
+-- Existing lifecycle tests close the window while retaining their drafts.
+-- Exercise the new confirmation instead of bypassing its native hide path.
+function TestCloseWorkshop()
+    local editor = AprRC.routeEditor
+    editor:Hide()
+    if editor.closeDialog then editor.closeKeepButton:Fire("OnClick") end
+end
 AprRC.record = {
     UpdateRecordButton = function() end,
     StopRecord = function() AprRC.settings.profile.recordBarFrame.isRecording = false end,

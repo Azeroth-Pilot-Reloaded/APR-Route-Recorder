@@ -110,13 +110,13 @@ APR.RouteQuestStepList[route.name] = definition
 APRData[APR.PlayerID] = { [route.name] = 1 }
 E:Tick()
 assert(E.session.selected == 1)
-E:Hide(); E:Show()
+TestCloseWorkshop(); E:Show()
 assert(E.followAPRCheckbox:GetValue() == true, "APR follow preference must survive reopening")
 E.followAPRCheckbox:Fire("OnValueChanged", false)
 APRData[APR.PlayerID][route.name] = 4
 E:Tick()
 assert(E.session.selected == 1)
-E:Hide()
+TestCloseWorkshop()
 APRData, APR.RouteQuestStepList = previousAPRData, previousCatalog
 APR.ActiveRoute, APR.PlayerID, APR.GetRouteSteps = previousActive, previousPlayer, previousGetSteps
 E.follow, AprRC.settings.profile.followAPR = previousFollow, previousSetting

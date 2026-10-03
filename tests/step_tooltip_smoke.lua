@@ -85,7 +85,7 @@ E:DrawList()
 modifier(true)
 assert(not GameTooltip:IsShown(), "Released rows must not retain modifier callbacks")
 assert(AprRC:SerializeData(route) == original and not E.session:IsDirty())
-E:Hide()
+TestCloseWorkshop()
 IsControlKeyDown = oldControl
 assert(#UIErrors == 0, table.concat(UIErrors, "\n"))
 print("Ctrl step tooltips: nested/group conditions, live modifiers, Diogenator dividers and tooltip cleanup passed.")

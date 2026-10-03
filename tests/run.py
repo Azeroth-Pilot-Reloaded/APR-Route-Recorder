@@ -3,6 +3,7 @@ from pathlib import Path
 from lupa.lua51 import LuaRuntime
 from ui_run import run as run_ui_tests
 from localization_run import run as run_localization_tests
+from reload_merge_run import run as run_reload_merge_tests
 
 ROOT = Path(__file__).resolve().parents[1]
 lua = LuaRuntime(unpack_returned_tuples=True)
@@ -19,6 +20,7 @@ for name in sorted((ROOT / "commands/options").glob("*.lua")):
 for name in ("commands/Commands.lua", "commands/UseItem.lua", "recording/Session.lua", "recording/Events.lua", "recording/Merchant.lua",
              "recording/Chromie.lua", "recording/Treasure.lua", "recording/Flight.lua", "recording/DroppedQuest.lua"):
     lua.execute((ROOT / name).read_text(encoding="utf-8"))
+lua.execute((ROOT / "ui/editor/Merge.lua").read_text(encoding="utf-8"))
 lua.execute((ROOT / "ui/editor/Model.lua").read_text(encoding="utf-8"))
 for name in sorted((ROOT / "tests").glob("*_test.lua")):
     lua.execute(name.read_text(encoding="utf-8"))
@@ -31,5 +33,6 @@ for line in (ROOT / "APR-Recorder.toc").read_text(encoding="utf-8").splitlines()
     if line and not line.startswith("#"):
         assert (ROOT / line).is_file(), line
 print("Regression tests, Lua 5.1 syntax and TOC paths passed.")
+run_reload_merge_tests()
 run_ui_tests()
 run_localization_tests()

@@ -124,7 +124,48 @@ restores the previous editing width. Recording controls, Commands and other tabs
 remain accessible in both modes. Width, height and compact mode are saved across
 reopening and reloads; switching modes preserves unsaved and incomplete Lua drafts.
 
-Drafts are detached from recorded routes and stored in `AprRCData.EditorDrafts`. Closing or switching routes preserves them, including incomplete Lua. Saving validates the entire definition through the existing data-only parser, checks that the recorded route has not changed, backs up the prior steps, and then replaces the saved route. A concurrent change requires saving a separate copy or explicitly discarding the draft. Starting recording from the workshop requires a saved draft.
+Drafts are detached from recorded routes and stored in `AprRCData.EditorDrafts`,
+including incomplete Lua. Starting recording from the workshop requires a saved
+draft. Recording can continue while an already open route is being edited.
+
+**Save** validates the complete draft and performs a three-way merge against the
+version from the start of editing and the latest recorded route. Compatible
+changes are retained automatically, including new recorded steps. Conflicts open
+a comparison of the common ancestor, the **draft on the left**, and the
+**recorded route on the right**. Choose each conflicting value, then **Merge and
+save**. Concurrent insertions offer **Keep both (left, then right)**. Structural
+edits that cannot be safely aligned require a choice for the affected block.
+Shift, Ctrl and Alt no longer bypass conflict resolution. If recording or the
+draft changes during review, applying the choices refreshes the comparison and
+requires reviewing its updated conflicts.
+
+The **Versions** tab also provides **Rebase draft**: apply the draft's changes
+on top of the latest recording without committing them. Review the result and
+Save later. Undo after a rebase returns to that latest recording. The tab remains
+accessible when Lua is incomplete; merging still requires valid data.
+
+Recovery stores the latest 40 full versions per route in `AprRCData.RouteHistory`,
+including metadata, parallel steps and raw Lua. Versions are captured before
+save, merge, rebase, route reload, backup restoration and confirmed draft closure,
+and at incoming-change/idle checkpoints. Opening another route does not replace
+them or the legacy step backup. **Recover a copy** opens a separate route and
+detached draft; it preserves the active recording target and the original route.
+Internal step identities are persisted beside routes and are never exported to
+APR or added to route syntax.
+
+When recording changes a route with an unsaved draft, a chat/on-screen warning
+and an amber workshop status appear. The immediate warning is coalesced until
+the versions are reconciled. After two minutes without editor activity, a chat/
+on-screen reminder repeats every two minutes. Recording events do not postpone
+the reminder. Monitoring continues with the workshop closed and restores
+persisted drafts after login. Closing the workshop, including its native close
+button, asks to **Save and close**, **Close and keep draft**, or cancel whenever
+unsaved drafts remain. Invalid Lua cannot be saved but can still be kept.
+
+These versions and drafts use WoW SavedVariables: their contents reach disk on
+UI reload/logout, not on each in-memory editor Save. They protect against route
+replacement and draft discard; a client crash before disk persistence can still
+lose changes since the last successful UI reload/logout.
 
 ## APR integration
 
@@ -182,7 +223,7 @@ The native stubs do not render WoW textures, fonts, clipping, or protected game 
 2. Record quest pickup, objectives and turn-in; check titles, locations, conditions and live-follow behavior. Keep a text field focused while recording another step; input should remain intact.
 3. Import an APR route, including parallel steps and multiple class/race conditions. Edit and Save, reload the UI, and verify the Custom copy in APR. Confirm that the original route and an unsaved draft stay unchanged. Record with the workshop closed and verify automatic publication.
 4. Switch between visual and Lua editing; test invalid Lua, copy/paste, indentation and Ctrl+Z / Ctrl+Y. Close/reopen and `/reload` with a draft.
-5. Modify a draft while recording changes the source; verify Save refuses to overwrite it and Save a copy preserves both versions.
+5. Modify a draft while recording adds steps; verify Save retains both changes. Edit the same field on both sides, choose left/right, and record another step while reviewing; applying must refresh the comparison. Rebase without committing, then recover a version as a separate copy. Check the immediate warning, two-minute idle reminders with the workshop closed, and all close-confirmation choices.
 6. Open legacy command and extra-line-text dialogs, close them, then reopen the workshop. Check the status bar, Lua key handlers and recorder controls still work.
 7. Check recording of flights, portals and quests in combat with the workshop open. Drag the recorder launcher, reload, and verify its position and recording indicator.
 8. Cast a spell and consume the last copy of a usable quest item, then check their recent sections in the Use, Button and Trigger selectors. Confirm a choice, reopen, search by name and ID, then clear the history. Reload and switch characters to check persistence and isolation.

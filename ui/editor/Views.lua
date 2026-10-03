@@ -451,6 +451,7 @@ function Editor:DrawLua()
         local couldUndo = session.rawCursor > 1
         local couldRedo = session.rawCursor < #session.rawHistory
         session.raw = value
+        session:Touch()
         local history = session.rawHistory
         if history[session.rawCursor].text ~= value then
             for index = #history, session.rawCursor + 1, -1 do history[index] = nil end
@@ -597,6 +598,7 @@ function Editor:Undo(delta)
         local snapshot = session.rawHistory[index]
         if not snapshot then return end
         session.rawCursor, session.raw = index, snapshot.text
+        session:Touch()
         self.settingLua = true
         self.luaBox:SetText(snapshot.text)
         self.luaBox.editBox:SetCursorPosition(math.min(snapshot.cursor, #snapshot.text))

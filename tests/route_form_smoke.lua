@@ -102,7 +102,7 @@ for _, size in ipairs({ { 880, 560 }, { 1120, 780 } }) do
     assert(E.routeForm.frame:GetHeight() > 100)
 end
 E:ToggleCompact(); E.frame:SetWidth(440); E.frame:SetHeight(680); E.frame:DoLayout(); flat()
-E:ToggleCompact(); E:Hide()
+E:ToggleCompact(); TestCloseWorkshop()
 
 -- Same visual representation for scalar and list inputs, with no mutation on render.
 local holder = GUI:Create("SimpleGroup")

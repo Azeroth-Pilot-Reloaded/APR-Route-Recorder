@@ -25,7 +25,7 @@ E:ToggleCompact()
 assert(not E.stepsSplit.divider:IsShown())
 E:ToggleCompact()
 assert(math.abs(E.stepsSplit.ratio - 0.64) < 0.001)
-E:Hide(); E:Show()
+TestCloseWorkshop(); E:Show()
 assert(math.abs(E.stepsSplit.ratio - 0.64) < 0.001)
 
 -- Single inputs retain an adjacent trash icon; compound and multiline entries
@@ -146,6 +146,6 @@ for _, compact in ipairs({ false, true }) do
 end
 E:ToggleRecording()
 assert(not AprRC.settings.profile.recordBarFrame.isRecording and not Bar.frame:IsShown())
-E:Hide()
+TestCloseWorkshop()
 assert(#UIErrors == 0, table.concat(UIErrors, "\n"))
 print("Icon placement, native divider/command dragging, persisted widths and recording visibility passed.")

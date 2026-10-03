@@ -122,7 +122,7 @@ popup:Hide()
 assert(popupText:GetFont() == original)
 
 Styles:Set("font", "DEFAULT"); Styles:Set("flags", "NONE")
-E:Hide()
+TestCloseWorkshop()
 AprRC.settings.profile.recordBarFrame.isRecording = false
 Bar:RefreshFrameAnchor()
 assert(#UIErrors == 0, table.concat(UIErrors, "\n"))

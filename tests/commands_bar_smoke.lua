@@ -103,7 +103,7 @@ Editor:UpdateStatus()
 assert(not Bar.frame:IsShown())
 for _, button in ipairs(Settings.runButtons) do assert(button.disabled) end
 assert(not Bar:Run("bankdeposit"))
-Editor:Hide()
+TestCloseWorkshop()
 -- The settings module must not access pooled widgets after closing or switching tabs.
 Settings:DrawResults()
 Settings:RefreshRunState()

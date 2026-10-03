@@ -81,7 +81,7 @@ function Editor:UpdateStatus()
     SetStatusLabel(self.recordStatus, state)
     SetStatusLabel(self.summary, session and ("|cffedc36a" .. tostring(#session.draft.steps) .. " " .. T("Steps") .. "|r  ·  " ..
         (dirty and "|cffffcf66" .. T("Unsaved draft") or "|cff82d9a0" .. T("Saved")) .. "|r") or "")
-    self.frame:SetStatusText(self.notice or (dirty and T("Follow pauses while you edit. Save or reload to resume.") or
+    self.frame:SetStatusText(self.notice or self.safetyNotice or (dirty and T("Follow pauses while you edit. Save or reload to resume.") or
         T("Drafts are kept when closing this window, switching routes or reloading the UI.")))
     if self.tab == "commands" then AprRC.CommandBarSetting:RefreshRunState() end
 end
@@ -141,11 +141,15 @@ function Editor:FormContext()
 end
 
 function Editor:SelectRoute(name)
+    if self.mergeDialog then self.mergeDialog:Hide() end
+    if self.closeDialog then self.closeDialog:Hide() end
+    self.closeAfterSave, self.safetyNotice = nil, nil
     if self.session then self.session:Persist() end
     local route = Model:Source(name)
     if not route then return end
     if not sessions[name] then sessions[name] = Model:Open(route) end
     self.session = sessions[name]
+    self.session:Touch()
     if not self.session:IsDirty() and self.session:IsStale() then self.session:Reload() end
     self.notice, self.query, self.filter, self.page = nil, "", "all", 1
     self.editGroupConditions = nil
@@ -156,6 +160,82 @@ function Editor:SelectRoute(name)
     self:SelectTab(self.tab or "steps")
     self:UpdateStatus()
 end
+
+function Editor:SetSession(name, session) sessions[name] = session end
+
+function Editor:UnsavedCount()
+    local count = 0
+    for _ in pairs(AprRCData.EditorDrafts or {}) do count = count + 1 end
+    return count
+end
+
+function Editor:KeepDraftsOnClose()
+    for name, session in pairs(sessions) do
+        if session:IsDirty() then
+            Model:Archive(name, session.draft, "Before close", session.raw, session.base)
+            session:Persist()
+        end
+    end
+end
+
+function Editor:SafetyTick()
+    local now = (GetTime or time)()
+    -- Restore persisted drafts lazily, including routes not currently displayed.
+    -- The monitor keeps running when the workshop is closed.
+    for name in pairs(AprRCData.EditorDrafts or {}) do
+        if not sessions[name] then
+            local route = Model:Source(name)
+            if route then sessions[name] = Model:Open(route) end
+        end
+    end
+    for name, session in pairs(sessions) do
+        if session:IsDirty() then
+            if not session.lastActivity then session:Touch() end
+            local incoming = session:IsStale(true)
+            if incoming and not session.incomingWarned then
+                session.incomingWarned = true
+                Model:Archive(name, Model:Source(name), "Recording checkpoint")
+                self:Warn(T("INCOMING_CHANGES_WARNING"):format(name))
+            elseif not incoming then session.incomingWarned = nil end
+            if self.session == session then
+                self.safetyNotice = incoming and ("|cffffcf66" .. T("INCOMING_CHANGES_STATUS") .. "|r") or nil
+            end
+            if now - session.lastActivity >= 120 and (not session.lastReminder or now - session.lastReminder >= 120) then
+                session.lastReminder = now
+                Model:Archive(name, Model:Source(name), "Recording checkpoint")
+                Model:Archive(name, session.draft, "Draft checkpoint", session.raw, session.base)
+                self:Warn(T("UNSAVED_DRAFT_REMINDER"):format(name))
+            end
+        else
+            session.incomingWarned, session.lastReminder = nil, nil
+            if self.session == session then self.safetyNotice = nil end
+        end
+    end
+end
+
+function Editor:Warn(text)
+    APR:PrintInfo("|cffffcf66" .. text .. "|r")
+    if UIErrorsFrame then UIErrorsFrame:AddMessage(text, 1, 0.8, 0.2) end
+end
+
+local safetyFrame = CreateFrame("Frame")
+Editor.safetyFrame = safetyFrame
+local safetyElapsed = 0
+safetyFrame:RegisterEvent("PLAYER_LOGOUT")
+safetyFrame:SetScript("OnEvent", function()
+    -- Persist identities after the last capture, even when it happened between
+    -- safety ticks. WoW writes SavedVariables after PLAYER_LOGOUT on /reload.
+    for _, route in ipairs(AprRCData.Routes or {}) do Model:SourceIDs(route) end
+    if AprRCData.CurrentRoute and AprRCData.CurrentRoute.name ~= "" then Model:SourceIDs(AprRCData.CurrentRoute) end
+    for _, session in pairs(sessions) do session:Persist() end
+end)
+safetyFrame:SetScript("OnUpdate", function(_, elapsed)
+    safetyElapsed = safetyElapsed + elapsed
+    if safetyElapsed < 1 then return end
+    safetyElapsed = 0
+    local ok, reason = pcall(Editor.SafetyTick, Editor)
+    if not ok then AprRC:Debug("Route draft monitor:", reason) end
+end)
 
 function Editor:RefreshRoutes()
     local entries = {}
@@ -224,16 +304,15 @@ function Editor:NameDialog(copy)
     input:SetFocus()
 end
 
-function Editor:Save(overwrite)
+function Editor:Save()
     if not self.session then return false end
-    local ok, reason = self.session:Save(overwrite)
+    if self.session:IsStale() then return self:Integrate("save") end
+    local ok, reason = self.session:Save()
     if not ok then
         self:Message(reason == "conflict" and T("SAVE_CONFLICT_HELP") or reason, true)
         return false
     end
-    self.session.rawHistory = nil
-    self:DrawTab()
-    self:Message(T("Saved"))
+    self:AfterSave()
     return true
 end
 
@@ -300,7 +379,8 @@ function Editor:ToggleRecording()
 end
 
 function Editor:SelectTab(tab)
-    if tab ~= "lua" and self.session and self.session.raw then
+    if self.session then self.session:Touch() end
+    if tab ~= "lua" and tab ~= "versions" and self.session and self.session.raw then
         local ok, reason = self.session:ApplyRaw()
         if not ok then
             self:Message(T("Finish editing the Lua table before opening the visual editor.") .. " " .. tostring(reason), true)
@@ -347,6 +427,8 @@ function Editor:DrawTab()
         self:DrawInspector()
     elseif self.tab == "lua" then
         self:DrawLua()
+    elseif self.tab == "versions" then
+        self:DrawVersions()
     end
     self.tabs:DoLayout()
     self.frame:DoLayout()
@@ -387,10 +469,11 @@ local function interacting(widget, ignored)
 end
 
 function Editor:RequestRefresh()
-    if not self.frame or self.refreshPending then return end
+    if self.refreshPending or (not self.frame and not next(AprRCData.EditorDrafts or {})) then return end
     self.refreshPending = true
     C_Timer.After(0, function()
         self.refreshPending = nil
+        self:SafetyTick()
         self:Tick()
     end)
 end
@@ -415,6 +498,7 @@ end
 
 function Editor:Refresh(forceFollow)
     if not self.frame then return end
+    self:SafetyTick()
     if self.descriptionsDirty and not self.confirm and not self.fieldPicker and not interacting(self.frame) then
         self.descriptionsDirty = nil
         self:DrawList()
@@ -434,7 +518,8 @@ function Editor:Refresh(forceFollow)
     if session and not AprRC.CommandBarSetting.dragging and
         not (self.stepsSplit and self.stepsSplit.dragging) and not self.confirm and not self.nameDialog and
         not self.luaFindBar and not interacting(self.frame, (following or aprIndex) and self.luaBox or nil) and
-        not self.fieldPicker and not session:IsDirty() and (session:IsStale(true) or (forceFollow and following)) then
+        not self.fieldPicker and not self.mergeDialog and not self.closeDialog and
+        not session:IsDirty() and (session:IsStale(true) or (forceFollow and following)) then
         local listScroll = self.list and self.list.localstatus.scrollvalue or 0
         local luaScroll = self.luaBox and self.luaBox.scrollFrame:GetVerticalScroll() or 0
         local luaCursor = self.luaBox and self.luaBox.editBox:GetCursorPosition() or 0
@@ -502,8 +587,10 @@ function Editor:Tick(forceFollow)
     if not ok then AprRC:Debug("Route workshop refresh:", reason) end
 end
 
-function Editor:Hide()
+function Editor:Hide(force)
+    self.forceClose = force
     if self.frame then self.frame:Hide() end
+    self.forceClose = nil
 end
 
 function Editor:ApplySizeLimits()
@@ -575,15 +662,16 @@ function Editor:Show()
     self.tabs:SetUserData("body", true)
     self.tabs:SetTabs({ { value = "steps", text = T("Steps") },
         { value = "parallel", text = UI.Label("parallelSteps") }, { value = "route", text = T("Route") },
-        { value = "lua", text = T("Lua editor") }, { value = "commands", text = T("Commands") },
+        { value = "lua", text = T("Lua editor") }, { value = "versions", text = T("Versions") },
+        { value = "commands", text = T("Commands") },
         { value = "tools", text = T("Tools") } })
     self.tabs:SetCallback("OnGroupSelected", function(_, _, tab) if not self.selectingTab then self:SelectTab(tab) end end)
     frame:AddChild(self.tabs)
     local footer = UI.Toolbar(frame, true)
-    self.saveButton = UI.Button(footer, "Save", function() self:Save(IsModifierKeyDown()) end, 135)
+    self.saveButton = UI.Button(footer, "Save", function() self:Save() end, 135)
     self.saveButton:SetCallback("OnEnter", function(widget)
         GameTooltip:SetOwner(widget.frame, "ANCHOR_TOP")
-        AprRC:AddTooltipLine(GameTooltip, T("SAVE_OVERRIDE_HELP"), 1, 1, 1, true)
+        AprRC:AddTooltipLine(GameTooltip, T("SAVE_MERGE_HELP"), 1, 1, 1, true)
         GameTooltip:Show()
     end)
     self.saveButton:SetCallback("OnLeave", function() GameTooltip:Hide() end)
@@ -625,6 +713,9 @@ function Editor:Show()
     followAPR:SetCallback("OnLeave", function() GameTooltip:Hide() end)
     footer:AddChild(followAPR)
     frame:SetCallback("OnClose", function(widget)
+        if not self.forceClose and ((self.session and self.session:IsDirty()) or self:UnsavedCount() > 0) then
+            widget:Show(); self:ConfirmClose(); return
+        end
         if self.fieldPicker then self.fieldPicker:Hide() end
         AprRC.TutoFrame:Close()
         status.width, status.height = widget.frame:GetWidth(), widget.frame:GetHeight()
@@ -638,6 +729,9 @@ function Editor:Show()
         if self.confirm then self.confirm:Hide() end
         if self.nameDialog then self.nameDialog:Hide() end
         if self.importDialog then self.importDialog:Hide() end
+        if self.mergeDialog then self.mergeDialog:Hide() end
+        if self.closeDialog then self.closeDialog:Hide() end
+        self.closeAfterSave = nil
         widget.frame:SetBackdropColor(0, 0, 0, 1)
         widget.frame:SetBackdropBorderColor(1, 1, 1, 1)
         widget.frame:SetClampedToScreen(wasClamped)

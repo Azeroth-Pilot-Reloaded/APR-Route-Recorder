@@ -39,7 +39,7 @@ for _, size in ipairs({ { 560, 780 }, { 440, 680 }, { 700, 900 } }) do
     end
 end
 E.frame:SetWidth(560)
-E:Hide()
+TestCloseWorkshop()
 E:Show()
 assert(E.compact and E.frame.frame:GetWidth() == 560, "Compact mode must survive reopening")
 assert(E.session.draft.steps[1].Note == "Unsaved edit")
@@ -51,6 +51,6 @@ assert(not E.compact and E.frame.frame:GetWidth() == 1120)
 assert(E.session.raw == "{ steps = {" and E.luaBox:GetText() == "{ steps = {", "Changing width lost invalid Lua draft")
 E:SelectTab("steps")
 assert(E.tab == "lua", "Compact controls must not bypass Lua validation")
-E:Hide()
+TestCloseWorkshop()
 assert(#UIErrors == 0, table.concat(UIErrors, "\n"))
 print("Half-width layout, pane switching, draft retention and persisted size checks passed.")

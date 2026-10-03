@@ -1,7 +1,7 @@
 local E, Tour = AprRC.routeEditor, AprRC.TutoFrame
 local L = LibStub("AceLocale-3.0"):GetLocale("APR-Recorder")
 
-E:Hide()
+TestCloseWorkshop()
 Tour:Close()
 AprRCData.TutorialSeen = nil
 AprRC.settings.profile.enableAddon = true
@@ -41,7 +41,7 @@ end
 assert(Tour.next:GetText() == L["TUTORIAL_FINISH"])
 Tour.next:GetScript("OnClick")()
 assert(not Tour.frame and not Tour.pointerID and not Tour.active)
-E:Hide(); E:Show()
+TestCloseWorkshop(); E:Show()
 assert(not Tour.frame, "Seen tours must not reopen automatically")
 
 -- Replay works through chat even while recording is stopped and the addon is disabled.
@@ -51,7 +51,7 @@ assert(Tour.frame and not Tour.pointerID)
 Tour:Close()
 AprRC.command:SlashCmd("tuto")
 assert(Tour.frame)
-E:Hide()
+TestCloseWorkshop()
 assert(not Tour.frame, "Closing the workshop must release its tutorial")
 AprRCData.TutorialSeen = nil
 E:Show()
@@ -60,7 +60,7 @@ AprRC.settings.profile.enableAddon = true
 E:Show()
 assert(Tour.frame)
 Tour.frame:Hide() -- The native close button uses the same OnClose callback.
-E:Hide(); E:Show()
+TestCloseWorkshop(); E:Show()
 assert(not Tour.frame, "Dismissal must also suppress automatic replay")
 
 E:SelectTab("tools")
@@ -73,7 +73,7 @@ local function find(widget, text)
 end
 assert(find(E.frame, L["TUTORIAL_REPLAY"])):Fire("OnClick")
 assert(Tour.frame)
-E:Hide()
+TestCloseWorkshop()
 assert(AprRC:SerializeData(routes) == AprRC:SerializeData(AprRCData.Routes), "Tutorial changed saved routes")
 assert(AprRC:SerializeData(current) == AprRC:SerializeData(AprRCData.CurrentRoute), "Tutorial changed the recording target")
 assert(recording == AprRC.settings.profile.recordBarFrame.isRecording, "Tutorial changed recording state")
@@ -90,6 +90,6 @@ if E.session then
     Tour:Close()
     E.session.raw = nil
 end
-E:Hide()
+TestCloseWorkshop()
 assert(#UIErrors == 0, table.concat(UIErrors, "\n"))
 print("First-use tutorial, chapter navigation, dismissal, replay and route isolation passed.")
