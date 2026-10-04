@@ -1,6 +1,6 @@
 local L = LibStub("AceLocale-3.0"):GetLocale("APR-Recorder")
 -- Data-only Lua literals. No loadstring: route input must never execute code.
-function AprRC:ParseLuaData(text, withComments)
+function AprRC:ParseLuaData(text, withComments, withPositions)
     if type(text) ~= "string" or #text > 1000000 then return nil, L["Invalid or oversized input"] end
     local pos, count = 1, 0
     local comments, tables, seenComments = {}, {}, {}
@@ -61,9 +61,20 @@ function AprRC:ParseLuaData(text, withComments)
         skip()
         local c = text:sub(pos, pos)
         if c == '"' or c == "'" then return quoted() end
+        local equals = c == "[" and text:match("^%[(=*)%[", pos)
+        if equals then
+            local start = pos + #equals + 2
+            local first, finish = text:find("]" .. equals .. "]", start, true)
+            if not finish then pos = #text + 1; error(L["Unterminated string"]) end
+            pos = finish + 1
+            local literal = text:sub(start, first - 1):gsub("\r\n", "\n"):gsub("\r", "\n")
+            literal = literal:gsub("^\n", "")
+            return literal
+        end
         if take("{") then
             local result, index = {}, 1
-            local node = withComments and { start = pos - 1, entries = {}, children = {} }
+            local node = (withComments or withPositions) and { start = pos - 1, entries = {}, children = {} }
+            if node and withPositions then node.value = result end
             if node then tables[#tables + 1] = node end
             while not take("}") do
                 local key, entry, child
@@ -141,6 +152,21 @@ function AprRC:ParseLuaData(text, withComments)
         return parsed, node
     end)
     if ok then
+        local positions
+        if withPositions then
+            positions = {}
+            local function collect(node)
+                if not node then return end
+                local fields = {}
+                for _, entry in ipairs(node.entries) do
+                    fields[entry.key] = { start = entry.start - 1, finish = entry.finish - 1 }
+                end
+                positions[node.value] = { start = node.start - 1, finish = node.finish - 1, fields = fields }
+                node.value = nil
+                for _, child in pairs(node.children) do collect(child) end
+            end
+            collect(root)
+        end
         -- Store comments beside the root route, never as fields in a step.
         -- Anchor them to table keys so metadata reordering keeps them attached.
         if root and #comments > 0 then
@@ -188,11 +214,17 @@ function AprRC:ParseLuaData(text, withComments)
                 return next(node) ~= nil
             end
             clean(root)
-            return result, nil, root
+            return result, nil, root, positions
         end
-        return result
+        return result, nil, nil, positions
     end
-    return nil, tostring(result)
+    local before = text:sub(1, pos - 1):gsub("\r\n", "\n"):gsub("\r", "\n")
+    local _, lines = before:gsub("\n", "")
+    local tail = before:match("[^\n]*$") or ""
+    local column = #tail:gsub("[\128-\191]", "") + 1
+    local location = { position = math.min(pos, #text + 1), line = lines + 1, column = column }
+    local message = tostring(result):gsub("^.-:%d+:%s*", "")
+    return nil, L["%s (line %d, column %d)"]:format(message, location.line, location.column), nil, location
 end
 
 function AprRC:CopyData(value)

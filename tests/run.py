@@ -22,6 +22,8 @@ for name in ("commands/Commands.lua", "commands/UseItem.lua", "recording/Session
     lua.execute((ROOT / name).read_text(encoding="utf-8"))
 lua.execute((ROOT / "ui/editor/Merge.lua").read_text(encoding="utf-8"))
 lua.execute((ROOT / "ui/editor/Model.lua").read_text(encoding="utf-8"))
+lua.execute((ROOT / "ui/editor/LuaCode.lua").read_text(encoding="utf-8"))
+lua.execute((ROOT / "ui/editor/LuaLanguage.lua").read_text(encoding="utf-8"))
 for name in sorted((ROOT / "tests").glob("*_test.lua")):
     lua.execute(name.read_text(encoding="utf-8"))
 for folder in ("core", "config", "commands", "recording", "utils", "ui", "data"):

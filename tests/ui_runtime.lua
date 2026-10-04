@@ -11,11 +11,14 @@ SetDesaturation = function() end
 IsControlKeyDown = function() return false end
 IsModifierKeyDown = function() return false end
 IsShiftKeyDown, IsMetaKeyDown = IsControlKeyDown, IsControlKeyDown
+IsAltKeyDown = IsControlKeyDown
 GetCursorInfo, ClearCursor, GetMouseFocus = function() end, function() end, function() end
 GetTime = function() return 0 end
 GameFontNormal, GameFontNormalSmall, GameFontHighlight, GameFontHighlightSmall = {}, {}, {}, {}
 GameFontDisable, GameFontDisableSmall, ChatFontNormal = {}, {}, {}
 UIErrors = {}
+-- Rendered font metrics can differ from the nominal size returned by GetFont.
+TestFontMetrics = {}
 geterrorhandler = function() return function(err) UIErrors[#UIErrors + 1] = tostring(err) end end
 -- WoW extends Lua 5.1 xpcall to accept arguments.
 local originalXpcall = xpcall
@@ -74,22 +77,51 @@ end
 function Native:GetText() return self.text or "" end
 function Native:GetStringWidth() return #self:GetText():gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "") * 6 end
 Native.GetTextWidth = Native.GetStringWidth
-function Native:GetStringHeight() return math.max(14, math.ceil(self:GetStringWidth() / math.max(1, self:GetWidth())) * 14) end
+local function fontHeight(self) return TestFontMetrics[self.fontPath or ""] or 14 end
+function Native:GetStringHeight()
+    local rows, spacing = 0, self.spacing or 0
+    for line in (self:GetText() .. "\n"):gmatch("(.-)\n") do
+        local width = #line:gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "") * 6
+        rows = rows + (self.wordWrap == false and 1 or math.max(1, math.ceil(width / math.max(1, self:GetWidth()))))
+    end
+    return rows * fontHeight(self) + math.max(0, rows - 1) * spacing
+end
 function Native:GetNumLetters() return #self:GetText() end
 function Native:SetCursorPosition(cursor)
     self.cursor = cursor
-    local _, lines = self:GetText():sub(1, cursor):gsub("\n", "")
-    event(self, "OnCursorChanged", 0, -lines * 14, 0, 14)
+    self.selection = { cursor, cursor }
+    local _, lines = (self.text or ""):sub(1, cursor):gsub("\n", "")
+    -- Native caret geometry uses the font's line height, not custom spacing.
+    self.cursorY, self.cursorHeight = -lines * fontHeight(self), fontHeight(self)
+    event(self, "OnCursorChanged", 0, self.cursorY, 0, self.cursorHeight)
 end
 function Native:GetCursorPosition() return self.cursor or 0 end
 function Native:Insert(text)
-    local cursor = self:GetCursorPosition()
-    self.text = self:GetText():sub(1, cursor) .. text .. self:GetText():sub(cursor + 1)
+    -- Native editing acts on the backing buffer, even if an addon overrides
+    -- the public text/cursor accessors to expose uncolored source positions.
+    local cursor = self.cursor or 0
+    local value = self.text or ""
+    local finish = cursor
+    if self.selection and self.selection[1] ~= self.selection[2] then
+        cursor, finish = math.min(unpack(self.selection)), math.max(unpack(self.selection))
+    end
+    self.text = value:sub(1, cursor) .. text .. value:sub(finish + 1)
     self.cursor = cursor + #text
+    self.selection = { self.cursor, self.cursor }
     event(self, "OnTextChanged", true)
 end
-function Native:SetFocus() self.focus = true; event(self, "OnEditFocusGained") end
-function Native:ClearFocus() self.focus = false; event(self, "OnEditFocusLost") end
+local keyboardFocus
+GetCurrentKeyBoardFocus = function() return keyboardFocus end
+function Native:SetFocus()
+    if keyboardFocus == self then return end
+    if keyboardFocus then keyboardFocus:ClearFocus() end
+    keyboardFocus, self.focus = self, true
+    event(self, "OnEditFocusGained")
+end
+function Native:ClearFocus()
+    if keyboardFocus == self then keyboardFocus = nil end
+    self.focus = false; event(self, "OnEditFocusLost")
+end
 function Native:HasFocus() return self.focus end
 function Native:GetTop() return 780 end
 function Native:GetLeft() return 0 end
@@ -119,9 +151,18 @@ function Native:GetRegions()
 end
 function Native:IsObjectType(kind) return self.frameType:lower() == kind:lower() end
 function Native:SetScrollChild(child) self.scrollChild = child end
-function Native:SetVerticalScroll(value) self.scroll = value end
+function Native:SetVerticalScroll(value)
+    if self.scroll ~= value then self.scroll = value; event(self, "OnVerticalScroll", value) end
+end
 function Native:GetVerticalScroll() return self.scroll or 0 end
-function Native:GetVerticalScrollRange() return 100 end
+function Native:SetHorizontalScroll(value) self.horizontalScroll = value end
+function Native:GetHorizontalScroll() return self.horizontalScroll or 0 end
+function Native:GetVerticalScrollRange()
+    if self.obj and self.obj.type == "APRLuaEditor" and self.scrollChild then
+        return math.max(0, self.scrollChild:GetHeight() - self:GetHeight())
+    end
+    return 100
+end
 function Native:SetValue(value)
     if self.value ~= value then self.value = value; event(self, "OnValueChanged", value) end
 end
@@ -155,18 +196,21 @@ function Native:IsMouseOver() return self == TestMouseOver end
 function Native:IsProtected() return false end
 function Native:IsClampedToScreen() return false end
 local noops = {
-    "SetBackdrop", "SetBackdropColor", "SetBackdropBorderColor", "SetClampedToScreen",
+    "SetBackdrop", "SetBackdropColor", "SetBackdropBorderColor", "SetClampedToScreen", "SetClipsChildren",
     "SetResizeBounds", "SetMinResize", "SetMovable", "SetResizable", "SetToplevel", "Raise", "SetJustifyH",
-    "SetJustifyV", "SetWordWrap", "SetNonSpaceWrap", "SetTextColor", "SetColorTexture", "SetVertexColor",
+    "SetJustifyV", "SetNonSpaceWrap", "SetTextColor", "SetColorTexture", "SetVertexColor",
     "SetTexCoord", "SetBlendMode", "SetDrawLayer", "SetFontObject", "SetNormalFontObject", "SetDisabledFontObject",
     "SetHighlightFontObject", "SetHitRectInsets", "EnableMouseWheel", "SetAutoFocus", "SetMultiLine",
     "SetMaxLetters", "SetTextInsets", "SetCountInvisibleLetters", "HighlightText", "SetOrientation", "SetAltArrowKeyMode",
     "SetMinMaxValues", "SetValueStep", "SetThumbTexture", "LockHighlight", "UnlockHighlight", "SetOwner",
     "AddLine", "StartMoving", "StartSizing", "StopMovingOrSizing", "RegisterForClicks", "SetDisabledTexture",
-    "RegisterEvent", "UnregisterEvent", "SetAutoFocus", "SetAlpha", "SetScale", "SetSpacing", "SetIndentedWordWrap",
+    "RegisterEvent", "UnregisterEvent", "SetAutoFocus", "SetAlpha", "SetScale", "SetIndentedWordWrap",
     "RegisterForDrag", "SetDesaturated",
 }
 for _, name in ipairs(noops) do Native[name] = function() end end
+function Native:SetSpacing(value) self.spacing = value end
+function Native:GetSpacing() return self.spacing or 0 end
+function Native:SetWordWrap(value) self.wordWrap = value end
 function Native:HighlightText(first, last) self.selection = { first or 0, last or #self:GetText() } end
 function Native:SetColorTexture(...) self.rgba = { ... } end
 function Native:AddLine(text)
@@ -216,7 +260,7 @@ end
 
 function CreateFrame(frameType, name, parent, template)
     local frame = setmetatable({ frameType = frameType, name = name, parent = parent, scripts = {}, points = {},
-        children = {}, shown = true }, { __index = Native })
+        children = {}, shown = true, keyboardEnabled = frameType == "EditBox" }, { __index = Native })
     if name then _G[name] = frame end
     if parent then parent.children[#parent.children + 1] = frame end
     if name and template == "UIDropDownMenuTemplate" then
@@ -230,6 +274,28 @@ function CreateFrame(frameType, name, parent, template)
         _G[name .. "ScrollBarScrollDownButton"] = CreateFrame("Button", nil, frame)
     end
     return frame
+end
+-- Dispatch through enabled, visible surfaces in frame-level order, rather than
+-- calling an EditBox script directly. A focused EditBox consumes native input;
+-- higher keyboard listeners may stop propagation before that happens.
+function TestDispatchKey(frames, key, character)
+    local ordered = {}
+    for _, frame in ipairs(frames) do ordered[#ordered + 1] = frame end
+    table.sort(ordered, function(a, b) return a:GetFrameLevel() > b:GetFrameLevel() end)
+    for _, frame in ipairs(ordered) do
+        local visible, parent = true, frame
+        while parent do
+            if not parent:IsShown() then visible = false; break end
+            parent = parent:GetParent()
+        end
+        if visible and frame.keyboardEnabled and (frame.frameType ~= "EditBox" or frame:HasFocus()) then
+            event(frame, "OnKeyDown", key)
+            if frame.frameType == "EditBox" and character and not IsControlKeyDown() and not IsMetaKeyDown() then
+                frame:Insert(character)
+            end
+            if not frame.propagateKeyboardInput then return frame end
+        end
+    end
 end
 function Native:CreateTexture(name) return CreateFrame("Texture", name, self) end
 function Native:CreateLine(name) return CreateFrame("Line", name, self) end

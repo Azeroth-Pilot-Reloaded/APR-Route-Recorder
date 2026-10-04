@@ -127,10 +127,12 @@ end
 function Merge:Routes(base, left, right, choices, identities)
     local valueIDs = {}
     local function visit(route, callback)
-        callback("route.steps", route.steps or {})
-        callback("route.parallelSteps", route.parallelSteps or {})
-        for index, group in ipairs(route.parallelSteps or {}) do
-            callback("route.parallelSteps[" .. index .. "].steps", group.steps or {})
+        callback("route.steps", type(route.steps) == "table" and route.steps or {})
+        callback("route.parallelSteps", type(route.parallelSteps) == "table" and route.parallelSteps or {})
+        for index, group in ipairs(type(route.parallelSteps) == "table" and route.parallelSteps or {}) do
+            if type(group) == "table" then
+                callback("route.parallelSteps[" .. index .. "].steps", type(group.steps) == "table" and group.steps or {})
+            end
         end
     end
     local function bind(route, ids)
@@ -164,12 +166,24 @@ function Merge:Routes(base, left, right, choices, identities)
     base, left, right = routeData(base), routeData(left), routeData(right)
     if identities then bind(base, identities.base); bind(left, identities.left); bind(right, identities.right) end
     local conflicts = {}
-    local function conflict(ancestor, ours, theirs, path, insertion)
+    local function conflict(ancestor, ours, theirs, path, insertion, list)
         local id = #conflicts + 1
         local choice = choices and choices[id]
-        local resolved = choice == "left" or choice == "right" or (insertion and choice == "both")
+        local custom = type(choice) == "table" and choice.custom == true
+        if custom and list then
+            custom = type(choice.value) == "table"
+            if custom then
+                for key, value in pairs(choice.value) do
+                    if type(key) ~= "number" or key < 1 or key > #choice.value or key % 1 ~= 0 or type(value) ~= "table" then
+                        custom = false; break
+                    end
+                end
+            end
+        end
+        local resolved = choice == "left" or choice == "right" or (insertion and choice == "both") or custom
         conflicts[id] = { path = path, base = copy(ancestor), left = copy(ours), right = copy(theirs),
-            insertion = insertion, resolved = resolved }
+            insertion = insertion, list = list, resolved = resolved }
+        if custom then return copy(choice.value) end
         if choice == "right" then return copy(theirs) end
         if choice == "both" and insertion then
             local result = copy(ours); append(result, theirs); return result
@@ -181,7 +195,7 @@ function Merge:Routes(base, left, right, choices, identities)
         local baseline = listIDs(ancestor)
         local leftHunks = diff(ancestor, ours, baseline, listIDs(ours))
         local rightHunks = diff(ancestor, theirs, baseline, listIDs(theirs))
-        if not leftHunks or not rightHunks then return conflict(ancestor, ours, theirs, path) end
+        if not leftHunks or not rightHunks then return conflict(ancestor, ours, theirs, path, nil, true) end
         local result, position, l, r = {}, 1, 1, 1
         while leftHunks[l] or rightHunks[r] do
             local lh, rh = leftHunks[l], rightHunks[r]
@@ -213,7 +227,7 @@ function Merge:Routes(base, left, right, choices, identities)
                         merged[index] = mergeValue(original[index], a[index], b[index], path .. "[" .. (first + index - 1) .. "]")
                     end
                 else
-                    merged = conflict(original, a, b, path .. "[" .. first .. ":" .. last .. "]", #original == 0)
+                    merged = conflict(original, a, b, path .. "[" .. first .. ":" .. last .. "]", #original == 0, true)
                 end
                 append(result, merged); position = last + 1
             else

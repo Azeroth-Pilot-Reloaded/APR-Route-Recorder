@@ -66,8 +66,8 @@ function AprRC:BuildRouteDefinition(route)
 end
 
 function AprRC:ReadRouteDefinition(text, name, previous, validationBaseline)
-    local parsed, errorMessage, comments = self:ParseLuaData(text, true)
-    if type(parsed) ~= "table" then return nil, errorMessage or L["Expected a route table"] end
+    local parsed, errorMessage, comments, location = self:ParseLuaData(text, true)
+    if type(parsed) ~= "table" then return nil, errorMessage or L["Expected a route table"], location end
     local result
     if parsed.steps ~= nil then
         result = parsed

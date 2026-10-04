@@ -41,21 +41,27 @@ GUI:RegisterWidgetType("APRSearchSelect", function()
     function widget:SetLabel(text) self.label:SetText(text or "") end
     function widget:GetValue() return self.value end
     function widget:SetCommitOnly(enabled) self.commitOnly = enabled end
+    function widget:SetMaxResults(count) self.maxResults = count end
     function widget:SetValue(value)
         if self.entries[value] ~= nil then self.value = value else self.value = nil end
         self:SetText(self.entries[self.value] or "")
     end
-    function widget:SetList(entries)
+    function widget:SetList(entries, order)
         self.entries, self.order = {}, {}
         for key, text in pairs(entries) do
             self.entries[key] = text
             self.order[#self.order + 1] = key
         end
-        table.sort(self.order, function(a, b)
-            local left, right = normalize(self.entries[a]), normalize(self.entries[b])
-            if left == right then return tostring(a) < tostring(b) end
-            return left < right
-        end)
+        if order then
+            self.order = {}
+            for _, key in ipairs(order) do if self.entries[key] then self.order[#self.order + 1] = key end end
+        else
+            table.sort(self.order, function(a, b)
+                local left, right = normalize(self.entries[a]), normalize(self.entries[b])
+                if left == right then return tostring(a) < tostring(b) end
+                return left < right
+            end)
+        end
     end
     function widget:CloseMenu()
         self.open = false
@@ -66,7 +72,12 @@ GUI:RegisterWidgetType("APRSearchSelect", function()
         if self.commitOnly then self:SetText(self.entries[self.value] or "") end
         if self.editbox:HasFocus() then self.editbox:ClearFocus() end
     end
-    function widget:SetFocus() self.editbox:SetFocus() end
+    function widget:SetFocus() if not self.disabled then self.editbox:SetFocus() end end
+    function widget:SetDisabled(disabled)
+        self.disabled = disabled
+        editbox:EnableMouse(not disabled)
+        if disabled then self:ClearFocus() end
+    end
     function widget:Select(key)
         if not self.entries[key] then return end
         self:SetValue(key)
@@ -93,6 +104,7 @@ GUI:RegisterWidgetType("APRSearchSelect", function()
         end
     end
     function widget:OpenMenu(query)
+        if self.disabled then return end
         local pullout = self.pullout
         if not pullout then
             pullout = AprRC:CreateWidget("Dropdown-Pullout")
@@ -114,6 +126,7 @@ GUI:RegisterWidgetType("APRSearchSelect", function()
                 item:SetText(self.entries[key])
                 item:SetCallback("OnClick", function() self:Select(key) end)
                 pullout:AddItem(item)
+                if self.maxResults and #self.matches >= self.maxResults then break end
             end
         end
         if #self.matches == 0 then
@@ -137,8 +150,11 @@ GUI:RegisterWidgetType("APRSearchSelect", function()
         if #self.matches > 0 then self:Highlight(1) end
     end
     function widget:OnAcquire()
+        label:Show()
         self.entries, self.order, self.matches = {}, {}, {}
         self.commitOnly = false
+        self.maxResults = nil
+        self:SetDisabled(false)
         self.value, self.active, self.open = nil, nil, false
         self:SetText("")
         self:SetLabel("")
@@ -146,6 +162,7 @@ GUI:RegisterWidgetType("APRSearchSelect", function()
         self:SetHeight(44)
     end
     function widget:OnRelease()
+        editbox:SetScript("OnEnter", nil); editbox:SetScript("OnLeave", nil)
         self:ClearFocus()
         if self.pullout then GUI:Release(self.pullout); self.pullout = nil end
         self.entries, self.order, self.matches = {}, {}, {}

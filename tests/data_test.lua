@@ -16,6 +16,20 @@ for _, invalid in ipairs({ '{ x = function() end }', '(function() while true do 
     assert(AprRC:ParseLuaData(invalid) == nil, invalid)
 end
 local route = { { Note = "Keep this text", TakePortal = { questID = 42, mapID = 85 } } }
+-- Syntax diagnostics preserve byte offsets for the editor and count visible
+-- UTF-8 columns across Windows and Unix line endings.
+local invalid = '{\r\n    Note = "é",\r\n    Zone = }'
+local value, message, comments, location = AprRC:ParseLuaData(invalid, true)
+assert(not value and not comments and location.position == #invalid)
+assert(location.line == 3 and location.column == 12 and not message:find("LuaData.lua", 1, true))
+local _, _, _, unicode = AprRC:ParseLuaData('{ Note = "é", Zone = }')
+assert(unicode.column == #'{ Note = "é", Zone = }' - 1)
+local prefix = '{ steps = { { Note = '
+local broken = prefix .. string.rep(" ", 16035 - #prefix - 1) .. '} } }'
+local _, detail, _, exact = AprRC:ParseLuaData(broken)
+assert(exact.position == 16035 and exact.column == 16035 and detail:find("16035", 1, true))
+local _, _, _, eof = AprRC:ParseLuaData('{ Note = "unfinished')
+assert(eof.position == #'{ Note = "unfinished' + 1)
 local export = AprRC:StringToTable(AprRC:TableToString(route))
 assert(export[1].TakePortal.mapID == 85 and export[1].TakePortal.ZoneId == nil)
 assert(export[1]._index == 1 and route[1]._index == nil)

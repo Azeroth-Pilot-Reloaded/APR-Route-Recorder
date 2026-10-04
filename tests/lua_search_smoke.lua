@@ -22,7 +22,7 @@ assert(#E.luaFindResults == 3 and E.luaFindIndex == 1, "Search must ignore ASCII
 assert(E.luaFindStatus.label:GetText() == "1 / 3")
 local function selected()
     local range = widget.editBox.selection
-    return widget:GetText():sub(range[1] + 1, range[2])
+    return AprRC.luaCode:Decode(widget.editBox.text:sub(range[1] + 1, range[2]))
 end
 assert(selected() == "Alpha")
 E.luaFindNext:Fire("OnClick")

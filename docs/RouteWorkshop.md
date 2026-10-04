@@ -27,6 +27,40 @@ The reference was [Alenya's Guides Writer](https://www.curseforge.com/wow/addons
 
 The visual editor exposes automatically recorded fields as editable properties too. A form edits the selected step; recording commands still edit the last recorded step. These are separate contexts and the Tools tab labels that distinction.
 
+## Lua editing tools
+
+`Ctrl+S` saves the selected route from the workshop and its input fields, using
+the same conflict resolution as the Save button. In Lua, `Ctrl+L` selects the
+whole source line, including its newline; repeated presses extend the selection.
+`Ctrl+K Ctrl+L` continues to toggle folding.
+
+Syntax and APR field errors update after the existing **400 ms input pause**.
+The footer reports their line and column; click its message or a red gutter
+marker to reveal the source. `F8` / `Shift+F8` move between errors. Diagnostics
+never save data, reposition the caret during input or execute Lua.
+
+APR completion appears after a pause while entering a field or an ID. Use
+`Ctrl+Space` or **APR completion** to request it, arrows to select, Tab / Enter
+or a click to accept, and Escape to dismiss. Fields come from the APR schemas;
+quest suggestions use the route and journal, spell suggestions the route,
+grimoire, professions and recent choices, and items the route, bags and recent
+choices. Search a known name or type an ID. Completion inserts data without
+dispatching recording commands.
+
+`Ctrl+F` searches and `Ctrl+H` opens replacement. **Aa** controls case matching;
+**[ab]** restricts matches to whole words. Search and replacement are literal,
+including pattern characters and `%1`. **Replace** uses the current result;
+**Replace all** replaces all matching source ranges as one undo action, including
+folded data.
+
+**Format Lua** / `Shift+Alt+F` applies indentation and whitespace formatting to
+valid Lua data. Strings, comments, constants, values and field order are retained;
+invalid input remains intact. The searchable **Step outline** / `Ctrl+Shift+O`
+lists main and parallel steps with source lines and titles. Selecting an entry
+unfolds and centers its source. Only 80 menu results are rendered at a time;
+filter by step number, group or title to reach later steps. Formatting, replacement
+and accepted completions can all be undone with `Ctrl+Z`.
+
 The **Delete route** trash button in the workshop footer asks for confirmation,
 including the selected route's name. Confirming removes the saved route, its
 draft and the recorder's published APR copy. Deleting the route being recorded
@@ -132,8 +166,12 @@ draft. Recording can continue while an already open route is being edited.
 version from the start of editing and the latest recorded route. Compatible
 changes are retained automatically, including new recorded steps. Conflicts open
 a comparison of the common ancestor, the **draft on the left**, and the
-**recorded route on the right**. Choose each conflicting value, then **Merge and
-save**. Concurrent insertions offer **Keep both (left, then right)**. Structural
+**recorded route on the right**, with Lua syntax colors and red/green backgrounds
+for changed lines. The **Merge result (editable)** panel at the top immediately
+shows the selected value. Correct it directly if needed; edits are kept when
+navigating between conflicts. Use `nil` to delete a field. Invalid Lua prevents
+applying the merge, and the complete route is validated before saving or rebasing.
+Choose each conflicting value, then **Merge and save**. Concurrent insertions offer **Keep both (left, then right)**. Structural
 edits that cannot be safely aligned require a choice for the affected block.
 Shift, Ctrl and Alt no longer bypass conflict resolution. If recording or the
 draft changes during review, applying the choices refreshes the comparison and
@@ -143,6 +181,16 @@ The **Versions** tab also provides **Rebase draft**: apply the draft's changes
 on top of the latest recording without committing them. Review the result and
 Save later. Undo after a rebase returns to that latest recording. The tab remains
 accessible when Lua is incomplete; merging still requires valid data.
+
+**Compare versions**, available in the Lua and Versions tabs, opens a side-by-side
+comparison. Select the saved route, current Lua draft, common ancestor or any
+archived version on either side. **Compare with draft** on a history entry opens
+that version directly. The views show syntax colors, original line numbers, red
+deletions, green additions, stronger highlights within modified lines and hatched
+padding where one side has no corresponding line. Scrolling is synchronized;
+**Previous change** / **Next change**, or **Shift+F7** / **F7** while a pane has
+focus, center the selected change. Both panes are read-only, and comparisons
+accept incomplete Lua without applying, saving or replacing either version.
 
 Recovery stores the latest 40 full versions per route in `AprRCData.RouteHistory`,
 including metadata, parallel steps and raw Lua. Versions are captured before
@@ -180,8 +228,41 @@ undo history. Other tabs stay open. When both
 follow options are enabled for the same route, APR playback takes precedence
 over following the latest recording.
 
+The Lua editor uses a dark syntax palette for fields, strings, numbers, keywords
+and comments, plus colored nested brackets. Line numbers and **+ / -** controls
+fold multiline tables, long strings, block comments and `-- #region` /
+`-- #endregion` sections without changing their source or undo history.
+**Shift+click** a fold control to include its nested blocks. Searching inside a
+folded table reveals it; **Ctrl+A** unfolds all blocks to copy the complete source.
+Use the bottom scrollbar or **Shift+mouse wheel** to scroll horizontally.
+The gutter, diff backgrounds and search centering use the rendered font's line
+height. The editor keeps native line spacing so mouse selection and the cursor
+stay aligned with the visible code, including after changing fonts.
+
+The folding toolbar provides **Fold all**, **Unfold all** and shortcut help.
+Keyboard chords use the [VS Code folding bindings](https://code.visualstudio.com/docs/editing/codebasics#_folding):
+press the first combination, release it, then press the second within three seconds.
+The code pane or Lua search field must have keyboard focus. The shortcut-help
+button displays **Ctrl+K …** while waiting for the second combination. Ctrl may
+be held or released between steps. Folding levels also accept the numeric
+keypad and the unshifted number-row characters on French AZERTY keyboards.
+Moving focus out of the editor, pressing Esc or waiting three seconds cancels
+the pending sequence. Handled commands do not reach the game's key bindings.
+
+| Action | Shortcut |
+| --- | --- |
+| Fold / unfold current block | Ctrl+Shift+[ / Ctrl+Shift+] |
+| Fold / unfold current block and its children | Ctrl+K, Ctrl+[ / Ctrl+K, Ctrl+] |
+| Toggle current block | Ctrl+K, Ctrl+L |
+| Fold / unfold all | Ctrl+K, Ctrl+0 / Ctrl+K, Ctrl+J |
+| Fold level 1–7, keeping the block containing the cursor open | Ctrl+K, Ctrl+1–7 |
+| Fold / unfold marked regions | Ctrl+K, Ctrl+8 / Ctrl+K, Ctrl+9 |
+| Fold block comments | Ctrl+K, Ctrl+/ |
+
 In the Lua editor, **Ctrl+F** opens a literal, case-insensitive text search with
-highlighted matches and a match counter. **Enter** finds the next match,
+highlighted matches and a match counter. Each result is centered vertically and
+its horizontal position is brought into view, within the document's scroll limits.
+**Enter** finds the next match,
 **Shift+Enter** the previous one; both wrap at the ends. The arrow buttons also
 navigate matches; **Esc** closes the search. Search also works on incomplete Lua drafts and
 pauses APR following until closed.
@@ -228,5 +309,7 @@ The native stubs do not render WoW textures, fonts, clipping, or protected game 
 7. Check recording of flights, portals and quests in combat with the workshop open. Drag the recorder launcher, reload, and verify its position and recording indicator.
 8. Cast a spell and consume the last copy of a usable quest item, then check their recent sections in the Use, Button and Trigger selectors. Confirm a choice, reopen, search by name and ID, then clear the history. Reload and switch characters to check persistence and isolation.
 9. In Parallel steps, add a group, set its conditions and edit its steps. Duplicate, reorder and delete groups and steps; undo and redo, then Save. Check full and compact layouts and confirm APR receives the group conditions and step order.
+10. In a long Lua draft, search for a field in a collapsed table and check that it unfolds and appears in the middle of the viewport. Verify the selected value and line number after several hundred lines, then replace it and check that only that value changes. Repeat with a different font and UI scale. Exercise folding shortcuts and Shift+click, including nested tables, block comments and marked regions; text and undo history must remain intact. Type continuously with search open, then press Enter, Backspace and Delete: the caret and source must stay together. Colors and folds refresh after 400 ms without input; source and draft persistence update immediately. A pause must preserve mouse/Shift selections and scroll position. Saving invalid data reports its line and column and selects the error in the editor.
+11. Compare two archived versions with insertions, deletions and modified strings. Check line alignment, colors, hatching, horizontal scrolling, synchronized vertical scrolling after resizing and F7 / Shift+F7 navigation. Switch both selectors to the same version, then compare an incomplete draft. Neither saved routes nor drafts should change.
 
 `python tests/apr_compatibility_run.py [path/to/azeroth-pilot-reloaded]` additionally exercises real APR definitions and its registration/loading API from a neighboring checkout, including the Midnight Speedrun route and delve scenarios. Coordinate conversion is stubbed; playback still requires the in-game checks above.

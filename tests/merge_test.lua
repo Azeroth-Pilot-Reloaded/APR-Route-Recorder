@@ -23,6 +23,10 @@ merged = Merge:Routes(base, left, right, { "right" })
 assert(merged.steps[1].Note == "Automatic" and merged.steps[1].Coord.y == 8)
 local _, invalidChoices = Merge:Routes(base, left, right, { "anything" })
 assert(not invalidChoices[1].resolved)
+merged, conflicts = Merge:Routes(base, left, right, { { custom = true, value = "Corrected manually" } })
+assert(conflicts[1].resolved and merged.steps[1].Note == "Corrected manually" and #merged.steps == 4)
+merged, conflicts = Merge:Routes(base, left, right, { { custom = true } })
+assert(conflicts[1].resolved and merged.steps[1].Note == nil, "A custom nil explicitly deletes the field")
 
 -- Deletes, insertions and moves use ancestor positions, not current indexes.
 left, right = AprRC:CopyData(base), AprRC:CopyData(base)
@@ -54,6 +58,10 @@ merged, conflicts = Merge:Routes(base, left, right)
 assert(#conflicts == 1 and conflicts[1].insertion)
 merged = Merge:Routes(base, left, right, { "both" })
 assert(#merged.steps == 5 and merged.steps[4].Note == "Left tail" and merged.steps[5].Note == "Right tail")
+merged, conflicts = Merge:Routes(base, left, right, { { custom = true, value = { { Note = "Combined manually" } } } })
+assert(conflicts[1].resolved and #merged.steps == 4 and merged.steps[4].Note == "Combined manually")
+_, conflicts = Merge:Routes(base, left, right, { { custom = true, value = "not a step list" } })
+assert(not conflicts[1].resolved, "Manual structural corrections require a list of tables")
 
 -- Parallel groups, metadata, nested fields and explicit false values merge too.
 base.conditions = { HasSpell = 1 }
@@ -137,6 +145,20 @@ for _, version in ipairs(Model:History(live.name)) do
     if #version.route.steps == 4 and version.route.steps[3].Note == "Last hour of work" then kept = true end
 end
 assert(kept, "Recording recovery was overwritten by opening another editor session")
+-- Manual corrections go through route validation before mutating either side.
+local manual = route({ { Range = 1, Note = "Initial" } })
+local mergeFixture = AprRCData
+AprRCData = { CurrentRoute = manual, Routes = { manual }, QuestLookup = {} }
+local manualSession = Model:Open(manual)
+manualSession.draft.steps[1].Range = 2; manualSession:Snapshot()
+manual.steps[1].Range = 3
+local manualPlan = assert(manualSession:MergePlan())
+ok, reason = manualSession:ApplyMerge(manualPlan, { { custom = true, value = "invalid range" } }, true)
+assert(not ok and reason and manual.steps[1].Range == 3 and manualSession.draft.steps[1].Range == 2)
+assert(manualSession:ApplyMerge(manualPlan, { { custom = true, value = 4 } }, false))
+assert(manualSession.draft.steps[1].Range == 4 and manual.steps[1].Range == 3 and manualSession:IsDirty())
+-- Preserve the recovery fixture used by the remaining history checks.
+AprRCData = mergeFixture
 -- Adding a parallel group shifts display indexes, not existing step identities.
 local parallel = { name = "2393-Parallel identities", steps = { { Note = "Main" } },
     parallelSteps = { { conditions = {}, steps = { { Note = "A" }, { Note = "B" } } } } }

@@ -317,8 +317,9 @@ end
 function Editor:Save()
     if not self.session then return false end
     if self.session:IsStale() then return self:Integrate("save") end
-    local ok, reason = self.session:Save()
+    local ok, reason, location = self.session:Save()
     if not ok then
+        self:RevealLuaError(location)
         self:Message(reason == "conflict" and T("SAVE_CONFLICT_HELP") or reason, true)
         return false
     end
@@ -389,10 +390,12 @@ function Editor:ToggleRecording()
 end
 
 function Editor:SelectTab(tab)
+    local luaError
     if self.session then self.session:Touch() end
     if tab ~= "lua" and tab ~= "versions" and self.session and self.session.raw then
-        local ok, reason = self.session:ApplyRaw()
+        local ok, reason, location = self.session:ApplyRaw()
         if not ok then
+            luaError = location
             self:Message(T("Finish editing the Lua table before opening the visual editor.") .. " " .. tostring(reason), true)
             tab = "lua"
         else
@@ -408,6 +411,7 @@ function Editor:SelectTab(tab)
     self.tabs:SelectTab(tab)
     self.selectingTab = false
     self:DrawTab()
+    if luaError then self:RevealLuaError(luaError) end
 end
 
 function Editor:DrawTab()
@@ -765,6 +769,7 @@ function Editor:Show()
     end
     local frame = AprRC:CreateWidget("Frame")
     self.frame = frame
+    self:InstallSaveShortcut(frame)
     frame:SetTitle("APR  |  " .. T("Route workshop"))
     -- Several legacy dialogs hide this region before returning frames to the pool.
     frame.statustext:GetParent():Show()
@@ -861,6 +866,8 @@ function Editor:Show()
         if self.session then self.session:Persist() end
         if self.timer then self:CancelTimer(self.timer); self.timer = nil end
         self:DetachLua()
+        self.saveKeyboard:EnableKeyboard(false); self.saveKeyboard:SetPropagateKeyboardInput(true)
+        self.saveKeyboard:SetScript("OnKeyDown", nil); self.saveKeyboard = nil
         self.followAPRCheckbox = nil
         AprRC.CommandBarSetting:CancelDrag()
         AprRC.CommandBar:DetachWorkshop(widget.frame)
@@ -869,6 +876,7 @@ function Editor:Show()
         if self.nameDialog then self.nameDialog:Hide() end
         if self.importDialog then self.importDialog:Hide() end
         if self.mergeDialog then self.mergeDialog:Hide() end
+        if self.versionDiffDialog then self.versionDiffDialog:Hide() end
         if self.closeDialog then self.closeDialog:Hide() end
         self.closeAfterSave = nil
         widget.frame:SetBackdropColor(0, 0, 0, 1)

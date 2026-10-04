@@ -254,8 +254,8 @@ end
 
 function Session:ApplyRaw()
     if self.raw == nil then return true end
-    local route, reason = self:Read()
-    if not route then return false, reason end
+    local route, reason, location = self:Read()
+    if not route then return false, reason, location end
     self.draft, self.raw = route, nil
     self.hasDraftIDs = false -- Raw replacements have no trustworthy step identities.
     self.selected = math.max(1, math.min(self.selected, #route.steps))
@@ -358,8 +358,8 @@ function Session:Delete(index, group)
 end
 
 function Session:Save(overwrite)
-    local route, reason = self:Read()
-    if not route then return false, reason end
+    local route, reason, location = self:Read()
+    if not route then return false, reason, location end
     local source = Model:Source(self.name)
     if not source then return false, "missing" end
     if not overwrite and self:IsStale() then return false, "conflict" end
@@ -378,8 +378,8 @@ function Session:Save(overwrite)
 end
 
 function Session:MergePlan()
-    local draft, reason = self:Read()
-    if not draft then return nil, reason end
+    local draft, reason, location = self:Read()
+    if not draft then return nil, reason, location end
     local source = Model:Source(self.name)
     if not source then return nil, "missing" end
     local base, errorMessage, comments = AprRC:ParseLuaData(self.base, true)
@@ -403,9 +403,14 @@ function Session:ApplyMerge(plan, choices, save)
         Model:RouteText(AprRC:BuildRouteDefinition(source)) ~= plan.incomingText then return false, "changed" end
     local merged, conflicts, mergedIDs = AprRC.routeMerge:Routes(plan.base, plan.draft, plan.incoming, choices, plan.identities)
     for _, conflict in ipairs(conflicts) do if not conflict.resolved then return false, "unresolved" end end
-    merged = AprRC:BuildRouteDefinition(merged); merged.name = self.name
-    local validated, why = AprRC:ReadRouteDefinition(Model:RouteText(merged), self.name, merged, plan.incoming)
+    -- Validate manual conflict corrections before normalization visits steps.
+    -- A syntactically valid scalar in place of a step must be a validation
+    -- error, never a runtime error or a partially applied merge.
+    merged.name = nil
+    local text = AprRC:SerializeData(merged, 0, nil, nil, nil, "route")
+    local validated, why = AprRC:ReadRouteDefinition(text, self.name, merged, plan.incoming)
     if not validated then return false, why end
+    validated = AprRC:BuildRouteDefinition(validated); validated.name = self.name
     Model:Archive(self.name, source, "Recording before merge")
     Model:Archive(self.name, self.draft, "Draft before merge", self.raw, self.base)
     -- Rebase undo starts at the latest source, then applies the merged edits.

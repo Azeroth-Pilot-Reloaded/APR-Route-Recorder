@@ -432,6 +432,7 @@ function Editor:DrawInspector()
 end
 
 function Editor:DetachLua()
+    self:DetachLuaTools()
     self.stepScrollToken = nil
     self.luaScrollToken = nil
     self.luaStepPositions, self.luaAPRPosition = nil, nil
@@ -441,6 +442,9 @@ function Editor:DetachLua()
     self.luaFindBar, self.luaFindInput, self.luaFindStatus = nil, nil, nil
     self.luaFindPrevious, self.luaFindNext, self.luaFindResults, self.luaFindIndex = nil, nil, nil, nil
     if self.luaBox then
+        self.luaBox:SetFoldingInput(nil)
+        self.luaBox:SetCommandHandler(nil)
+        self.luaBox:CancelFoldingChord()
         self.luaBox.editBox:SetScript("OnKeyDown", self.luaKeyDown)
         self.luaBox:SetCallback("OnTextChanged", nil)
         self.luaBox = nil
@@ -450,9 +454,8 @@ end
 
 function Editor:DrawLua()
     local container = UI.Body(self.tabs)
-    UI.LabelWidget(container, T("Ctrl+A then Ctrl+C to copy. Ctrl+Z / Ctrl+Y to undo / redo.") .. " " ..
-        T("Ctrl+F to search. Enter / Shift+Enter: next / previous. Esc: close."))
-    local edit = AprRC:CreateWidget("MultiLineEditBox")
+    local edit = AprRC:CreateWidget("APRLuaEditor")
+    edit.autoIndent = true
     edit:SetLabel("")
     edit:DisableButton(true)
     edit:SetUserData("body", true)
@@ -462,29 +465,41 @@ function Editor:DrawLua()
     local text = session.raw
     if not text then text, self.luaStepPositions = Model:RouteText(session.draft, true) end
     edit:SetText(text)
+    local folding = UI.Toolbar(container)
+    table.remove(container.children); table.insert(container.children, #container.children, folding)
+    UI.Button(folding, "Fold all", function() edit:FoldAll(true); edit:SetFocus() end, 130)
+    UI.Button(folding, "Unfold all", function() edit:UnfoldAll(); edit:SetFocus() end, 130)
+    UI.Button(folding, "Compare versions", function() self:OpenVersionDiff() end, 170)
+    local shortcutText = T("Lua shortcuts") .. "\n" .. T("Ctrl+S: save. Ctrl+L: select line. Ctrl+H: replace.") .. "\n" ..
+        T("Ctrl+Space: APR completion. Shift+Alt+F: format. Ctrl+Shift+O: step outline. F8 / Shift+F8: errors.") .. "\n" ..
+        T("Ctrl+A then Ctrl+C to copy. Ctrl+Z / Ctrl+Y to undo / redo.") .. "\n" ..
+        T("Ctrl+F to search. Enter / Shift+Enter: next / previous. Esc: close.") .. "\n" ..
+        T("Click + / - to fold or unfold a Lua table.") .. " " .. T("Shift+wheel: horizontal scroll.") .. "\n" ..
+        "Ctrl+K Ctrl+0: " .. T("Fold all") .. "\nCtrl+K Ctrl+J: " .. T("Unfold all") ..
+        "\nCtrl+Shift+[ / ]: " .. T("Fold / unfold section") ..
+        "\nCtrl+K Ctrl+[ / ]: " .. T("Fold / unfold recursively") ..
+        "\nCtrl+K Ctrl+L: " .. T("Toggle section folding") ..
+        "\nCtrl+K Ctrl+1 … 7: " .. T("Fold by level") ..
+        "\nCtrl+K Ctrl+8 / 9: " .. T("Fold / unfold regions") ..
+        "\nCtrl+K Ctrl+/: " .. T("Fold block comments") .. "\n" .. T("Shift+click: include nested sections.")
+    local help = UI.Button(folding, "Folding shortcuts", function() end, 170)
+    edit:SetCallback("OnFoldingChordChanged", function(_, _, pending)
+        help:SetText(pending and "Ctrl+K …" or T("Folding shortcuts"))
+    end)
+    local function showHelp()
+        GameTooltip:SetOwner(help.frame, "ANCHOR_TOP")
+        AprRC:AddTooltipLine(GameTooltip, shortcutText, 1, 1, 1, true); GameTooltip:Show()
+    end
+    help:SetCallback("OnClick", showHelp); help:SetCallback("OnEnter", showHelp)
+    help:SetCallback("OnLeave", function() GameTooltip:Hide() end)
     if not session.rawHistory then
         session.rawHistory, session.rawCursor = { { text = text, cursor = 0 } }, 1
     end
     self.luaPreviousLength = #text
-    local indenting = false
-    edit:SetCallback("OnTextChanged", function(_, _, value)
-        if self.settingLua or indenting then return end
+    edit:SetCallback("OnTextChanged", function(_, _, value, autoIndent)
+        if self.settingLua then return end
         local box = edit.editBox
         value = value or box:GetText() or ""
-        if #value == self.luaPreviousLength + 1 then
-            local cursor = box:GetCursorPosition()
-            if value:sub(cursor, cursor) == "\n" then
-                -- Inspect only the preceding line, not the entire route prefix.
-                local start = cursor - 1
-                while start > 0 and value:sub(start, start) ~= "\n" do start = start - 1 end
-                local line = value:sub(start + 1, cursor - 1)
-                local indent = line:match("^([ \t]+)")
-                if indent then
-                    indenting = true; box:Insert(indent); indenting = false
-                    value = box:GetText()
-                end
-            end
-        end
         self.luaPreviousLength = #value
         local wasDirty, hadNotice = session:IsDirty(), self.notice ~= nil
         local couldUndo = session.rawCursor > 1
@@ -494,19 +509,33 @@ function Editor:DrawLua()
         session:Touch()
         local history = session.rawHistory
         if history[session.rawCursor].text ~= value then
-            for index = #history, session.rawCursor + 1, -1 do history[index] = nil end
-            history[#history + 1] = { text = value, cursor = box:GetCursorPosition() }
+            if autoIndent then history[session.rawCursor] = { text = value, cursor = box:GetCursorPosition() }
+            else
+                for index = #history, session.rawCursor + 1, -1 do history[index] = nil end
+                history[#history + 1] = { text = value, cursor = box:GetCursorPosition() }
+            end
             if #history > 50 then table.remove(history, 1) end
             session.rawCursor = #history
         end
         session:Persist()
+        self:LuaInputChanged(edit)
         self.notice = nil
-        if self.luaFindBar then self:FindLua(0, true) end
+        if self.luaFindBar and not edit.pendingCode then self:FindLua(0, true, true) end
         if not wasDirty or hadNotice or couldUndo ~= (session.rawCursor > 1) or
             couldRedo ~= (session.rawCursor < #history) then self:UpdateStatus() end
     end)
+    edit:SetCallback("OnCodeSettled", function()
+        if self.luaBox == edit and self.luaFindBar then self:FindLua(0, true, true) end
+        if self.luaBox == edit then self:AnalyzeLua(edit) end
+    end)
+    edit:SetCallback("OnCodeCursorChanged", function(_, _, cursor)
+        local snapshot = session.rawHistory and session.rawHistory[session.rawCursor]
+        if edit.pendingCode and snapshot and snapshot.text == edit:GetText() then snapshot.cursor = cursor end
+        if self.luaCompletion and self.luaCompletion.context.cursor ~= cursor then self:CloseLuaCompletion() end
+    end)
     self.luaKeyDown = edit.editBox:GetScript("OnKeyDown")
     edit.editBox:SetScript("OnKeyDown", function(box, key, ...)
+        if edit:HandleEditorKey(key) then return end
         if IsControlKeyDown() or (IsMetaKeyDown and IsMetaKeyDown()) then
             if key == "F" then self:OpenLuaFind(); return end
             if key == "Z" then self:Undo(IsShiftKeyDown() and 1 or -1); return end
@@ -514,6 +543,7 @@ function Editor:DrawLua()
         end
         if self.luaKeyDown then self.luaKeyDown(box, key, ...) end
     end)
+    self:AttachLuaTools(container, edit, session)
 end
 
 function Editor:FollowLuaAPRStep(index, group, recenter)
@@ -539,8 +569,20 @@ function Editor:FollowLuaAPRStep(index, group, recenter)
     end)
 end
 
+function Editor:RevealLuaError(location)
+    if not location or not self.luaBox then return end
+    local widget, first = self.luaBox, location.position - 1
+    local text = widget:GetText()
+    local last = math.min(#text, first + 1)
+    while last < #text and text:byte(last + 1) >= 128 and text:byte(last + 1) < 192 do last = last + 1 end
+    widget:SetCursorPosition(first)
+    widget:HighlightText(first, last)
+    widget:CenterRange(first, last)
+end
+
 function Editor:OpenLuaFind()
     if not self.luaBox then return end
+    self:CloseLuaCompletion()
     if self.luaFindInput then self.luaFindInput:SetFocus(); self.luaFindInput:HighlightText(); return end
     self.luaScrollToken, self.luaAPRPosition = nil, nil
     self.luaFindAnchor = self.luaBox.editBox:GetCursorPosition()
@@ -551,7 +593,7 @@ function Editor:OpenLuaFind()
     table.insert(parent.children, 2, bar)
     local input = AprRC:CreateWidget("EditBox")
     self.luaFindInput = input
-    input:SetLabel(T("Search Lua"))
+    input:SetLabel("")
     input:DisableButton(true)
     input:SetRelativeWidth(0.55)
     input:SetText(self.luaFindQuery or "")
@@ -570,7 +612,9 @@ function Editor:OpenLuaFind()
     self.luaFindNext = UI.IconButton(bar, "next", "Next", function() self:FindLua(1) end)
     UI.Button(bar, CLOSE, function() self:CloseLuaFind() end, 80)
     self.luaFindStatus = UI.LabelWidget(bar, "")
+    self:AddLuaSearchControls(bar)
     parent:DoLayout(); self.frame:DoLayout()
+    self.luaBox:SetFoldingInput(input.editbox)
     GUI:ClearFocus(); input:SetFocus(); input:HighlightText()
     self:FindLua(0, true)
 end
@@ -578,34 +622,30 @@ end
 function Editor:CloseLuaFind()
     local bar, input = self.luaFindBar, self.luaFindInput
     if not bar then return end
+    self:CloseLuaReplace()
     input.editbox:SetScript("OnEscapePressed", self.luaFindEscape)
     input.editbox:ClearFocus()
+    self.luaBox:SetFoldingInput(nil)
+    self.luaBox:CancelFoldingChord()
     local parent = bar.parent
     for index, child in ipairs(parent.children) do
         if child == bar then table.remove(parent.children, index); break end
     end
     self.luaFindBar, self.luaFindInput, self.luaFindStatus = nil, nil, nil
     self.luaFindPrevious, self.luaFindNext, self.luaFindResults, self.luaFindIndex = nil, nil, nil, nil
+    self.luaCaseCheck, self.luaWordCheck = nil, nil
+    self:UpdateLuaCommandInputs()
     GUI:Release(bar)
     parent:DoLayout(); self.frame:DoLayout()
     self.luaBox:SetFocus()
 end
 
-function Editor:FindLua(direction, reset)
+function Editor:FindLua(direction, reset, passive)
     if not self.luaFindBar then return end
     local results = self.luaFindResults
     if reset or not results then
         results = {}
-        local query = (self.luaFindQuery or ""):lower()
-        local text, start = self.luaBox:GetText():lower(), 1
-        if query ~= "" then
-            while true do
-                local first, last = text:find(query, start, true)
-                if not first then break end
-                results[#results + 1] = { start = first - 1, finish = last }
-                start = last + 1
-            end
-        end
+        results = AprRC.luaLanguage:Search(self.luaBox:GetText(), self.luaFindQuery or "", self.luaMatchCase, self.luaWholeWord)
         self.luaFindResults, self.luaFindIndex = results, nil
     end
     local count = #results
@@ -613,7 +653,7 @@ function Editor:FindLua(direction, reset)
     self.luaFindNext:SetDisabled(count == 0)
     if count == 0 then
         self.luaFindStatus:SetText((self.luaFindQuery or "") == "" and "" or T("No matches"))
-        self.luaBox:HighlightText(0, 0)
+        if not passive then self.luaBox:HighlightText(0, 0) end
         return
     end
     local index = self.luaFindIndex
@@ -624,10 +664,12 @@ function Editor:FindLua(direction, reset)
         end
     else index = (index - 1 + direction) % count + 1 end
     self.luaFindIndex = index
+    self.luaFindStatus:SetText(index .. " / " .. count)
+    if passive then return end
     local range = results[index]
     self.luaBox.editBox:SetCursorPosition(range.finish)
     self.luaBox:HighlightText(range.start, range.finish)
-    self.luaFindStatus:SetText(index .. " / " .. count)
+    self.luaBox:CenterRange(range.start, range.finish)
 end
 
 function Editor:Undo(delta)
@@ -642,9 +684,10 @@ function Editor:Undo(delta)
         self.settingLua = true
         self.luaBox:SetText(snapshot.text)
         self.luaBox.editBox:SetCursorPosition(math.min(snapshot.cursor, #snapshot.text))
+        self:QueueLuaAnalysis(self.luaBox)
         self.luaPreviousLength = #snapshot.text
         self.settingLua = false
-        if self.luaFindBar then self:FindLua(0, true) end
+        if self.luaFindBar then self:FindLua(0, true, true) end
         session:Persist()
         self:UpdateStatus()
     elseif session:Undo(delta) then
