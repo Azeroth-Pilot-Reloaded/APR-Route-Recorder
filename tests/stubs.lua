@@ -7,10 +7,12 @@ AprRC = { settings = { profile = { enableAddon = true, recordBarFrame = { isReco
 function AprRC:NewModule() return {} end
 APR = { LevelRequirementProfiles = { MidnightDelves = {} },
     REPUTATION_TYPE = { Standard = "standard", Renown = "renown", Friendship = "friendship" },
-    EXPANSIONS = { Midnight = "Midnight", Custom = "Custom" },
+    EXPANSIONS = { Midnight = "Midnight", Custom = "Custom", Forever = "WoW Forever" },
+    GAME_VERSIONS = { Retail = "retail", Classic = "classic", Forever = "forever" },
     CATEGORIES = { Leveling = "Leveling", Miscellaneous = "Miscellaneous" },
-    PREFAB_TYPES = { Speedrun = "speedrun" } }
-APR.Classes = { Evoker = 13, Mage = 8, Warlock = 9 }
+    PREFAB_TYPES = { Leveling = "leveling", Speedrun = "speedrun", StartingZone = "starting_zone" } }
+APR.Classes = { Warrior = 1, Paladin = 2, Hunter = 3, Rogue = 4, Priest = 5, ["Death Knight"] = 6,
+    Shaman = 7, Mage = 8, Warlock = 9, Monk = 10, Druid = 11, ["Demon Hunter"] = 12, Evoker = 13 }
 APR.Specs = { ["Mage - Frost"] = 64 }
 APR.RACES = { Orc = "Orc", Troll = "Troll" }
 APR.EVENTS = { Remix = "Remix" }

@@ -9,10 +9,10 @@ local numericClasses = {
     prefab = { [APR.PREFAB_TYPES.Speedrun] = { index = 9, conditions = { ClassNot = 9 } } },
 }
 local text = Model:RouteText(numericClasses)
-assert(text:find('        Class = "WARLOCK",\n', 1, true), text)
-assert(text:find('                Class = "WARLOCK",\n', 1, true), text)
-assert(text:find('nextRoute = { { conditions = { AllOf = { { Class = "WARLOCK" } } }, route = "Next" } },\n', 1, true), text)
-assert(text:find("    prefab = {\n", 1, true) < text:find("    parallelSteps = {\n", 1, true), text)
+assert(text:find('conditions = { Class = APR.Classes.Warlock, ClassSpec = 266 },\n', 1, true), text)
+assert(text:find('                Class = APR.Classes.Warlock,\n', 1, true), text)
+assert(text:find('{ route = "Next", conditions = { AllOf = { { Class = APR.Classes.Warlock } } } },\n', 1, true), text)
+assert(text:find("    prefab = { ", 1, true) < text:find("    parallelSteps = {\n", 1, true), text)
 local normalized = assert(AprRC:ReadRouteDefinition(text, numericClasses.name))
 assert(normalized.conditions.Class == "WARLOCK" and normalized.conditions.ClassSpec == 266)
 assert(normalized.steps[1].Class[1] == "WARLOCK" and normalized.steps[1].Class[2] == "MAGE")

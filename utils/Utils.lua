@@ -266,7 +266,7 @@ function AprRC:ExtraLinetableToString(tbl, level, cache)
 end
 
 function AprRC:RouteToString(tbl, level)
-    return self:SerializeData(tbl, level)
+    return self:SerializeData(tbl, level, nil, nil, nil, "route")
 end
 
 function AprRC:TableToString(tbl)
@@ -541,6 +541,62 @@ function AprRC:CustomSortKeys(tbl)
         table.insert(keys, parallelIndex, "prefab")
     end
 
+    return keys
+end
+
+-- Step fields have their own layout. Do not apply it to metadata, coordinates,
+-- action payloads or condition objects that happen to use the same field names.
+function AprRC:CustomSortStepKeys(step)
+    local keys = self:CustomSortKeys(step)
+    local actions = { DropQuest = true, Group = true, GroupTask = true,
+        MountVehicle = true, VehicleExit = true, EquipItem = true }
+    for _, list in ipairs({ APR.mainStepOptions or {}, APR.secondaryStepOptions or {} }) do
+        for _, key in ipairs(list) do actions[key] = true end
+    end
+    local groups = {
+        DroppableQuest = 2, Fillers = 3, Note = 4, ExtraLine = 4, _comment = 4,
+        Coord = 5, Coords = 5, Range = 6,
+        Gossip = 7, GossipOptionIDs = 7, GossipETA = 7,
+        Button = 8, SpellButton = 8, ExtraActionB = 8,
+        conditions = 10, skipForLvl = 10, InterfaceVersionExact = 10,
+        Zone = 11, Zones = 11, _index = 12,
+    }
+    local ranks, original, hasAction = {}, {}, false
+    for index, key in ipairs(keys) do
+        local definition = self.options and self.options.step[key]
+        local rank = groups[key]
+        if not rank and type(key) == "string" then
+            if key:match("^ExtraLineText%d*$") or key:match("^TrigText%d*$") then rank = 4
+            elseif key:match("DB$") or (definition and definition.requires and key ~= "DropQuest") then rank = 2 end
+        end
+        if not rank and definition and definition.condition then rank = 10 end
+        if not rank and step[key] ~= false and (actions[key] or (definition and definition.newStep)) then rank = 1 end
+        ranks[key], original[key] = rank or 9, index
+        if rank == 1 then hasAction = true end
+    end
+    -- These fields can also be the sole action. With a main action present,
+    -- their usual subaction, note or gossip position takes precedence.
+    if not hasAction then
+        for _, key in ipairs({ "PickUpDB", "QpartDB", "DoneDB", "WaypointDB", "DroppableQuest",
+            "Note", "GossipOptionIDs", "Gossip", "Fillers" }) do
+            if step[key] ~= nil and step[key] ~= false then ranks[key] = 1; break end
+        end
+    end
+    table.sort(keys, function(a, b)
+        if ranks[a] ~= ranks[b] then return ranks[a] < ranks[b] end
+        if ranks[a] == 4 then
+            if a == "Note" or b == "Note" then return a == "Note" end
+            if type(a) == "string" and type(b) == "string" then
+                local baseA, numberA = a:match("^(%a+)(%d*)$")
+                local baseB, numberB = b:match("^(%a+)(%d*)$")
+                if baseA and baseA == baseB then
+                    local lineA, lineB = tonumber(numberA) or 1, tonumber(numberB) or 1
+                    if lineA ~= lineB then return lineA < lineB end
+                end
+            end
+        end
+        return original[a] < original[b]
+    end)
     return keys
 end
 

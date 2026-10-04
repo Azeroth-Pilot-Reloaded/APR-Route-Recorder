@@ -35,6 +35,7 @@ function AprRC:SyncRouteToAPR(route)
     APR.RouteQuestStepList = APR.RouteQuestStepList or {}
     local key = self:GetAPRRouteKey(route)
     local definition = self:BuildRouteDefinition(route)
+    definition._luaComments = nil
     if not definition.gameVersion and definition.expansion ~= APR.EXPANSIONS.Custom then
         definition.gameVersion = definition.expansion == APR.EXPANSIONS.Forever and "forever" or "retail"
     end

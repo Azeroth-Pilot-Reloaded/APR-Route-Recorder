@@ -74,6 +74,24 @@ def run():
         assert(live.steps[6].Note == "Capture after second reload")
         assert(#AprRC.editorModel:History(live.name) > 0)
     ''')
+    commented = first.execute('''
+        local route = { name = "2393-Reload comments", steps = { { Note = "Saved" } } }
+        AprRCData = { CurrentRoute = route, Routes = { route }, QuestLookup = {} }
+        local session = AprRC.editorModel:Open(route)
+        session.raw = "--saved µ\\n" .. AprRC.editorModel:RouteText(session.draft)
+        assert(session:Save())
+        return AprRC:SerializeData(AprRCData)
+    ''')
+    fourth = runtime()
+    fourth.globals().SerializedState = commented
+    fourth.execute('''
+        AprRCData = assert(AprRC:ParseLuaData(SerializedState))
+        local session = AprRC.editorModel:Open(AprRCData.CurrentRoute)
+        assert(not session:IsDirty() and not session:IsStale())
+        assert(AprRC.editorModel:RouteText(session.draft):find("--saved µ", 1, true))
+        assert(session:Save())
+        assert(AprRC.editorModel:RouteText(session.draft):find("--saved µ", 1, true))
+    ''')
     print("Fresh-runtime reloads: draft conflicts, recorded tails, rebased identities and recovery history passed.")
 
 

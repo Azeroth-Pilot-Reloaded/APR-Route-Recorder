@@ -66,7 +66,7 @@ function AprRC:BuildRouteDefinition(route)
 end
 
 function AprRC:ReadRouteDefinition(text, name, previous, validationBaseline)
-    local parsed, errorMessage = self:ParseLuaData(text)
+    local parsed, errorMessage, comments = self:ParseLuaData(text, true)
     if type(parsed) ~= "table" then return nil, errorMessage or L["Expected a route table"] end
     local result
     if parsed.steps ~= nil then
@@ -74,6 +74,7 @@ function AprRC:ReadRouteDefinition(text, name, previous, validationBaseline)
     else
         -- Accept old step-only exports without discarding existing metadata.
         result = self:CopyData(previous or {})
+        result._luaComments = nil
         result.steps = parsed
     end
     local function normalize(steps)
@@ -104,6 +105,23 @@ function AprRC:ReadRouteDefinition(text, name, previous, validationBaseline)
             -- Unknown fields can round-trip unchanged, but cannot be introduced.
         end
     end
+    if parsed.steps == nil then
+        local routeComments = self:CopyData(previous and previous._luaComments or {})
+        routeComments.children = routeComments.children or {}
+        routeComments.children.steps = comments
+        for _, slot in ipairs({ "leading", "trailing" }) do
+            if comments and comments[slot] then
+                routeComments[slot] = routeComments[slot] or {}
+                for _, comment in ipairs(comments[slot]) do
+                    routeComments[slot][#routeComments[slot] + 1] = comment
+                end
+                comments[slot] = nil
+            end
+        end
+        if not next(routeComments.children) then routeComments.children = nil end
+        comments = next(routeComments) and routeComments or nil
+    end
+    result._luaComments = comments
     result.name = name
     return self:NormalizeRouteClasses(result)
 end

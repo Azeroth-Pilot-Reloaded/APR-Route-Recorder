@@ -31,8 +31,8 @@ local compactText = AprRC:TableToString(compactSteps)
 assert(compactText == [[{
     {
         PickUp = { 91281 },
-        Zones = { 84, 85, 2339 },
         NoArrow = true,
+        Zones = { 84, 85, 2339 },
         _index = 1,
     },
     {

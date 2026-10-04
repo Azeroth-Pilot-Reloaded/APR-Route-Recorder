@@ -53,7 +53,7 @@ function Model:RouteText(route, withPositions)
     AprRC:NormalizeRouteClasses(data)
     data.name = nil
     local locations = withPositions and {}
-    local text = AprRC:SerializeData(data, 0, nil, locations)
+    local text = AprRC:SerializeData(data, 0, nil, locations, nil, "route")
     if not locations then return text end
     local positions = { steps = {}, parallelSteps = {} }
     for index, step in ipairs(data.steps or {}) do positions.steps[index] = locations[step] end
@@ -380,8 +380,9 @@ function Session:MergePlan()
     if not draft then return nil, reason end
     local source = Model:Source(self.name)
     if not source then return nil, "missing" end
-    local base, errorMessage = AprRC:ParseLuaData(self.base)
+    local base, errorMessage, comments = AprRC:ParseLuaData(self.base, true)
     if not base then return nil, errorMessage end
+    base._luaComments = comments
     base.name = self.name
     local incoming = AprRC:BuildRouteDefinition(source); incoming.name = self.name
     local identities = { base = self.baseIDs, left = not self.raw and self.hasDraftIDs ~= false and Model:StepIDs(self.draft) or nil,

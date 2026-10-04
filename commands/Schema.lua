@@ -222,7 +222,7 @@ S.prefab = {
     entry = {
         kind = "union",
         choices = { "id",
-            object({ index = "id", conditions = "conditions" }, { "index", "conditions" }) }
+            object({ index = "id", conditions = "conditions" }, { "index" }) }
     }
 }
 S.classValue = {
