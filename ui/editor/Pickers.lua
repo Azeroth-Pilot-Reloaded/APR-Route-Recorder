@@ -5,7 +5,7 @@ UI.Pickers = Pickers
 LibStub("AceGUI-3.0"):RegisterLayout("APRPickerActions", function(content, children)
     for index, child in ipairs(children) do
         child.frame:ClearAllPoints()
-        child.frame:SetPoint("TOPRIGHT", content, "TOPRIGHT", -(#children - index) * 34, 0)
+        child.frame:SetPoint("TOPRIGHT", content, "TOPRIGHT", -(#children - index) * UI.ActionStride, 0)
         child.frame:Show()
     end
     content.obj:LayoutFinished(content:GetWidth(), 30)
@@ -167,10 +167,12 @@ function Pickers:AddButton(parent, schema, path, context, accept)
         local currentPath = context.pickerPath and context.pickerPath(path) or path
         local currentSpec = self:Resolve(schema, currentPath)
         if not currentSpec then return end
-        if spec.kind == "objective" and currentSpec.kind ~= "objective" then
-            local _, reason = R:ValidateValue("id", tonumber(currentPath:match("([^/]+)$")))
-            context.error(reason)
-            return
+        if spec.kind == "objective" then
+            local valid, reason = R:ValidateValue("id", tonumber(currentPath:match("([^/]+)$")))
+            if not valid or currentSpec.kind ~= "objective" then
+                context.error(reason)
+                return
+            end
         end
         currentSpec.path = currentPath
         local frame = self:Open(currentSpec, context, accept)

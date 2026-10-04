@@ -186,6 +186,7 @@ function Form:NavigationRow(parent, schema, value, context, key, label, remove)
 end
 
 function Form:Money(parent, value, set, context, path, schema)
+    parent:SetLayout("APRForm")
     local model = AprRC.editorModel
     local parts = { model:MoneyParts(value) }
     local units = { "Gold", "Silver", "Copper" }
@@ -198,6 +199,7 @@ function Form:Money(parent, value, set, context, path, schema)
     if not valid then message:SetText("|cffff8b7c" .. tostring(reason) .. "|r") end
     for index, unit in ipairs(units) do
         local column = UI.Group(columns)
+        column:SetUserData("minWidth", 100)
         local edit = AprRC:CreateWidget("EditBox")
         edit:SetFullWidth(true)
         edit:DisableButton(true)
@@ -307,6 +309,7 @@ function Form:Position(parent, value, set, context, path, step)
     if not step and value.Range ~= nil then fields[#fields + 1] = "Range" end
     for _, key in ipairs(fields) do
         local column = UI.Group(body)
+        column:SetUserData("minWidth", key == "Zone" and 150 or 100)
         if key == "Zone" then column:SetUserData("weight", 1.5) end
         local coord = step and value.Coord or value
         local current = (key == "x" or key == "y") and (coord or {})[key] or value[key]
@@ -331,6 +334,15 @@ function Form:Position(parent, value, set, context, path, step)
 end
 
 function Form:RemoveButton(group, body, callback)
+    local header = body:GetUserData("collectionHeader")
+    if header then
+        UI.IconButton(header, "trash", "Remove", callback)
+        -- Keep the add action at the far right of the section header.
+        local remove = table.remove(header.children)
+        table.insert(header.children, #header.children, remove)
+        header:DoLayout()
+        return
+    end
     local actions = body.children[#body.children]
     if actions and actions:GetUserData("pickerActions") then
         group:SetUserData("compound", not body:GetUserData("singleInput"))
@@ -412,60 +424,91 @@ function Form:Fields(schema, value)
 end
 
 -- Quest objectives are a map, but each entry only needs two scalar inputs.
-function Form:QuestObjectives(parent, value, set, context, path)
+function Form:QuestObjectives(parent, value, set, context, path, label)
     value = type(value) == "table" and value or {}
-    local function row(initialKey, objectives, adding)
+    parent:SetLayout("APRForm")
+    local header = UI.Group(parent)
+    header:SetLayout("APRInspectorHeader")
+    local heading = UI.Group(header)
+    UI.LabelWidget(heading, "|cffffd36a" .. label .. "|r")
+    parent:SetUserData("collectionHeader", header)
+    local pendingInput
+    local add = UI.IconButton(header, "add", "Add entry", function()
+        if context.isCurrent and not context.isCurrent() then return end
+        if value[0] ~= nil then
+            if pendingInput then pendingInput:SetFocus() end
+            return
+        end
+        value[0] = {}
+        set(value); context.changed(); context.redraw(path .. "/0/questID")
+    end)
+    add:SetUserData("addEntryPath", path)
+    local function row(initialKey, objectives)
         local key, entries = initialKey, objectives
         local group = UI.Group(parent)
         group:SetLayout("APRField")
         local columns = UI.Group(group)
         columns:SetLayout("APRColumns")
         local quest, objective = UI.Group(columns), UI.Group(columns)
+        quest:SetUserData("minWidth", 140)
+        objective:SetUserData("minWidth", 160)
         objective:SetUserData("weight", 1.5)
         local childContext = {}
         for name, entry in pairs(context) do childContext[name] = entry end
-        childContext.changed = adding and function() end or context.changed
-        local objectivePath = path .. "/" .. tostring(initialKey or 1)
+        local objectivePath = path .. "/" .. tostring(initialKey)
         -- Resolve the picker against the edited ID without rebuilding a focused field.
         childContext.pickerPath = function(currentPath)
             if currentPath == objectivePath then return path .. "/" .. tostring(key) end
             return currentPath
         end
-        if adding then
-            childContext.redraw = function()
-                quest.children[1]:SetText(tostring(key or ""))
-                local parts = {}
-                for _, entry in ipairs(entries or {}) do parts[#parts + 1] = tostring(entry) end
-                objective.children[1]:SetText(table.concat(parts, ", "))
-            end
-        end
         self:Render(quest, "id", initialKey, function(newKey)
-            if not adding and newKey ~= key then
+            if newKey ~= key then
                 if value[newKey] ~= nil then context.error(T("This key already exists.")); return end
                 value[newKey], value[key] = value[key], nil
                 set(value)
             end
             key = newKey
-        end, childContext, path .. "/questID", T("Quest ID"))
+        end, childContext, objectivePath .. "/questID", T("Quest ID"))
         columns:SetUserData("alignControl", quest.children[1])
         self:Render(objective, "ids", objectives, function(newEntries)
             entries = newEntries
-            if not adding then value[key] = entries; set(value) end
+            value[key] = entries; set(value)
         end, childContext, objectivePath, T("Objectives"))
-        UI.IconButton(group, adding and "add" or "trash", adding and "Add entry" or "Remove", function()
+        if initialKey == 0 then
+            pendingInput = quest.children[1]
+            pendingInput:SetText("")
+            -- Keep a new row blank; validation appears when the user types.
+            quest.children[2]:SetText("")
+            objective.children[2]:SetText("")
+        end
+        UI.IconButton(group, "trash", "Remove", function()
             if context.isCurrent and not context.isCurrent() then return end
-            if adding then
-                local valid, reason = R:ValidateValue("id", key)
-                if valid then valid, reason = R:ValidateValue("ids", entries) end
-                if not valid then context.error(reason); return end
-                if value[key] ~= nil then context.error(T("This key already exists.")); return end
-                value[key] = entries
-            else value[key] = nil end
+            value[key] = nil
             set(value); context.changed(); context.redraw()
         end)
     end
     for _, key in ipairs(keys(value)) do row(key, value[key]) end
-    row(nil, nil, true)
+end
+
+function Form:ColumnKind(schema, path)
+    schema = self:Unified(schema)
+    if path:match("/copper$") then return end
+    local valueKind = kind(schema)
+    if valueKind == "bool" then return "toggle" end
+    if self:MultiChoices(schema, path) then return "choice" end
+    if valueKind == "id" or valueKind == "number" or valueKind == "positive" or valueKind == "nonnegative" or
+        valueKind == "integer" or valueKind == "enum" or valueKind == "profile" then return "input" end
+end
+
+function Form:MinimumWidth(group)
+    local body = group.children[1]
+    local control = body and body.children[1]
+    local label = control and (control.label or control.text)
+    local actions = body and body.children[#body.children]
+    local count = actions and actions:GetUserData("pickerActions") and #actions.children or 0
+    if group.children[2] then count = count + 1 end
+    return math.max(180, (label and label:GetStringWidth() or 0) + count * UI.ActionStride +
+        (control and control.type == "CheckBox" and 40 or 20))
 end
 
 -- A schema-driven form edits values, never Lua source. Structural changes rebuild
@@ -576,6 +619,7 @@ function Form:Render(parent, schema, value, set, context, path, label)
         end
         UI.Dropdown(parent, label, entries, selected, function(index) changed(actual[index]) end)
     elseif valueKind == "object" or valueKind == "step" or valueKind == "route" or valueKind == "conditions" or valueKind == "routeConditions" then
+        parent:SetLayout("APRForm")
         value = type(value) == "table" and value or {}
         if valueKind == "object" and schema.fields.x and schema.fields.y then
             self:Position(parent, value, set, context, path)
@@ -590,7 +634,9 @@ function Form:Render(parent, schema, value, set, context, path, label)
             for _, key in ipairs(schema.required or {}) do required[key] = true end
         end
         local ordered = keys(fields)
-        local priority = { label = 1, expansion = 2, category = 3, mapID = 4, Coord = 20, Zone = 21, Range = 22, ExtraLineText = 23 }
+        local priority = { label = 1, expansion = 2, category = 3, mapID = 4, questID = 5, Qid = 5,
+            slot = 5, itemID = 6, stat = 6, spellID = 7, itemSpellID = 8,
+            Coord = 20, Zone = 21, Range = 22, ExtraLineText = 23 }
         local function rank(key)
             local definition = R.step[key]
             if valueKind == "step" and definition and definition.newStep then return 10 end
@@ -601,15 +647,35 @@ function Form:Render(parent, schema, value, set, context, path, label)
             if rank(a) == rank(b) then return tostring(a) < tostring(b) end
             return rank(a) < rank(b)
         end)
+        local columns, columnKind, columnRank
         for _, key in ipairs(ordered) do
             local position = valueKind == "step" and (value.Coord ~= nil or value.Zone ~= nil)
             if position and key == "Coord" then
+                columns = nil
                 self:Position(parent, value, set, context, path, true)
             elseif not (position and key == "Zone") and (value[key] ~= nil or required[key]) then
                 local fieldPath = path .. "/" .. key
                 local fieldSchema = fields[key]
                 local function remove() value[key] = nil; changed(value, true) end
-                if context.inlineSections and not self:IsCompact(fieldSchema, fieldPath) then
+                local scalarKind = self:ColumnKind(fieldSchema, fieldPath)
+                local target = parent
+                if scalarKind then
+                    if not columns or columnKind ~= scalarKind or
+                        ((valueKind == "step" or valueKind == "route") and columnRank ~= rank(key)) then
+                        columns = UI.Group(parent)
+                        columns:SetLayout("APRColumns")
+                        columns:SetUserData("maxColumns", 2)
+                        columnKind, columnRank = scalarKind, rank(key)
+                    end
+                    target = columns
+                else columns = nil end
+                if fieldSchema == R.schemas.qpart then
+                    local group = UI.Group(parent, "")
+                    local body = UI.Group(group)
+                    self:Render(body, fieldSchema, value[key], function(entry) value[key] = entry; set(value) end,
+                        context, fieldPath, UI.Label(key))
+                    if not required[key] then self:RemoveButton(group, body, remove) end
+                elseif context.inlineSections and not self:IsCompact(fieldSchema, fieldPath) then
                     local body, childContext = self:InlineSection(parent, context, UI.Label(key), fieldPath,
                         not required[key] and remove)
                     self:Render(body, fieldSchema, value[key], function(entry) value[key] = entry; set(value) end,
@@ -617,12 +683,13 @@ function Form:Render(parent, schema, value, set, context, path, label)
                 elseif context.navigate and not self:IsCompact(fieldSchema, fieldPath) then
                     self:NavigationRow(parent, fieldSchema, value[key], context, key, UI.Label(key), not required[key] and remove)
                 else
-                    local group = UI.Group(parent, not self:IsCompact(fieldSchema, fieldPath) and UI.Label(key) or nil)
+                    local group = UI.Group(target, not self:IsCompact(fieldSchema, fieldPath) and UI.Label(key) or nil)
                     group:SetLayout("APRField")
                     local body = UI.Group(group)
                     self:Render(body, fieldSchema, value[key], function(entry) value[key] = entry; set(value) end,
                         context, fieldPath, UI.Label(key))
                     if not required[key] then self:RemoveButton(group, body, remove) end
+                    if scalarKind then group:SetUserData("minWidth", self:MinimumWidth(group)) end
                 end
             end
         end
@@ -641,8 +708,9 @@ function Form:Render(parent, schema, value, set, context, path, label)
             end)
         end
     elseif schema == R.schemas.qpart then
-        self:QuestObjectives(parent, value, set, context, path)
+        self:QuestObjectives(parent, value, set, context, path, label)
     elseif valueKind == "map" or valueKind == "list" or valueKind == "steps" then
+        parent:SetLayout("APRForm")
         value = type(value) == "table" and value or {}
         local entries = keys(value)
         local page = context.pages[path] or 1
@@ -662,7 +730,38 @@ function Form:Render(parent, schema, value, set, context, path, label)
                 changed(value, true)
             end
             local inline = context.inlineSections and not self:IsCompact(entrySchema, path .. "/" .. key)
-            if not inline and context.navigate and not self:IsCompact(entrySchema, path .. "/" .. key) then
+            if valueKind == "map" and kind(schema.key) ~= "enum" and self:IsCompact(entrySchema, path .. "/" .. key) then
+                local currentKey = key
+                local group = UI.Group(parent)
+                group:SetLayout("APRField")
+                local columns = UI.Group(group)
+                columns:SetLayout("APRColumns")
+                local keyColumn, valueColumn = UI.Group(columns), UI.Group(columns)
+                keyColumn:SetUserData("minWidth", 200)
+                valueColumn:SetUserData("minWidth", 160)
+                local childContext = {}
+                for name, entry in pairs(context) do childContext[name] = entry end
+                local entryPath = path .. "/" .. key
+                childContext.pickerPath = function(currentPath)
+                    return currentPath == entryPath and (path .. "/" .. tostring(currentKey)) or currentPath
+                end
+                self:Render(keyColumn, schema.key, key, function(newKey)
+                    if newKey ~= currentKey then
+                        if value[newKey] ~= nil then context.error(T("This key already exists.")); return end
+                        value[newKey], value[currentKey] = value[currentKey], nil
+                        currentKey = newKey
+                        set(value)
+                    end
+                end, childContext, entryPath .. "/key", T(schema.key == "id" and "Quest ID" or "ID / objective (e.g. 12345-1)"))
+                keyColumn:SetUserData("minWidth", math.max(200,
+                    keyColumn.children[1].label:GetStringWidth() + UI.ActionStride + 20))
+                columns:SetUserData("alignControl", keyColumn.children[1])
+                self:Render(valueColumn, entrySchema, value[key], function(entry) value[currentKey] = entry; set(value) end,
+                    childContext, entryPath, T("Value"))
+                UI.IconButton(group, "trash", "Remove", function()
+                    value[currentKey] = nil; changed(value, true)
+                end)
+            elseif not inline and context.navigate and not self:IsCompact(entrySchema, path .. "/" .. key) then
                 self:NavigationRow(parent, entrySchema, value[key], context, key,
                     self:EntryLabel(entrySchema, value[key], key), remove)
             else
@@ -699,13 +798,15 @@ function Form:Render(parent, schema, value, set, context, path, label)
                 UI.Dropdown(parent, label, choices, nil, function(entry) selected = entry end)
                 getKey = function() return selected end
             else
+                local input = UI.Group(parent)
+                input:SetLayout("APRInput")
                 local entryKey = AprRC:CreateWidget("EditBox")
                 entryKey:SetFullWidth(true)
                 entryKey:SetLabel(T(schema.key == "id" and "Quest ID" or "ID / objective (e.g. 12345-1)"))
                 entryKey:DisableButton(true)
-                parent:AddChild(entryKey)
+                input:AddChild(entryKey)
                 local keyPath = schema.key == "id" and (path .. "/questID") or (path .. "/key")
-                UI.Pickers:AddButton(parent, schema.key, keyPath, context, function(selected)
+                UI.Pickers:AddButton(input, schema.key, keyPath, context, function(selected)
                     entryKey:SetText(tostring(selected))
                 end)
                 getKey = function()

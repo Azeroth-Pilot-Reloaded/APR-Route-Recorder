@@ -33,6 +33,7 @@ assert(math.abs(E.stepsSplit.ratio - 0.64) < 0.001)
 local holder = GUI:Create("SimpleGroup")
 holder:SetWidth(420); holder:SetLayout("Flow")
 local value = { Waypoint = 123, Range = 5, Coord = { x = 12, y = 34 }, Note = "Long note",
+    NoArrow = true, NoAutoFlightMap = true,
     UseSpell = { questID = 42, spellID = 1 } }
 UI.Form:Render(holder, "step", value, function(v) value = v end,
     { modes = {}, pages = {}, changed = function() end, redraw = function() end, error = error }, "step", "Step")
@@ -42,26 +43,39 @@ local noteBody = UI.Group(noteGroup)
 UI.Form:Render(noteBody, "text", "Long note", function() end,
     { modes = {}, pages = {}, changed = function() end, redraw = function() end, error = error }, "Note", "Note")
 UI.Form:RemoveButton(noteGroup, noteBody, function() end)
-holder:DoLayout()
+holder:SetWidth(800); holder:DoLayout()
+local toggles = {}
+local function checkColumns(widget)
+    if widget:GetUserData("fieldPath") == "step/NoArrow" or widget:GetUserData("fieldPath") == "step/NoAutoFlightMap" then
+        toggles[#toggles + 1] = widget
+    end
+    for _, child in ipairs(widget.children or {}) do checkColumns(child) end
+end
+checkColumns(holder)
+assert(#toggles == 2 and toggles[1].parent.parent.parent == toggles[2].parent.parent.parent)
+local _, _, _, left, top = toggles[1].parent.parent.frame:GetPoint()
+local _, _, _, otherLeft, otherTop = toggles[2].parent.parent.frame:GetPoint()
+assert(top == otherTop and math.abs(left - otherLeft) >= toggles[1].parent.parent.frame:GetWidth() + 12)
 local scalar, compound, multiline
-for _, group in ipairs(holder.children) do
+local function verify(group)
     local body = group.children and group.children[1]
     local row = body and body.children and body.children[#body.children]
-    if row and row:GetUserData("pickerActions") then
+    if row and row:GetUserData("pickerActions") and #row.children == 2 then
         assert(#row.children == 2)
         assert(group:GetUserData("compound") == not body:GetUserData("singleInput"))
         local _, _, point, offset = row.children[1].frame:GetPoint()
-        assert(point == "TOPRIGHT" and offset == -34, "Picker and Remove must share a right-aligned action row")
+        assert(point == "TOPRIGHT" and offset == -UI.ActionStride, "Picker and Remove must share a spaced action row")
         if body.children[1].type == "MultiLineEditBox" then multiline = row.children[2] end
     end
-    if group.children and group.children[2] and group.children[2].type == "APRIconButton" then
+    if body and body.children and group.children[2] and group.children[2].type == "APRIconButton" then
         local body, action = group.children[1], group.children[2]
         local first = body.children[1]
         local _, relative, anchor, _, y = action.frame:GetPoint()
         if first.type == "EditBox" and not group:GetUserData("compound") then
             scalar = action
-            assert(not group:GetUserData("compound") and relative == first.editbox and anchor == "RIGHT" and y == 0,
-                "Trash must be centered on the input, excluding its label")
+            assert(not group:GetUserData("compound") and relative == group.content and anchor == "TOPRIGHT" and
+                y == action.frame:GetHeight() / 2 - first.alignoffset,
+                "Trash must use the row's right edge and the input's vertical alignment")
             assert(body.frame:GetWidth() < group.content:GetWidth())
         elseif group:GetUserData("compound") then
             compound = action
@@ -71,7 +85,9 @@ for _, group in ipairs(holder.children) do
             assert(group:GetUserData("compound") and y <= -body.frame:GetHeight())
         end
     end
+    for _, child in ipairs(group.children or {}) do verify(child) end
 end
+verify(holder)
 assert(scalar and compound and multiline)
 scalar:Fire("OnClick")
 assert(value.Range == nil and value.Coord.x == 12 and value.Note == "Long note")

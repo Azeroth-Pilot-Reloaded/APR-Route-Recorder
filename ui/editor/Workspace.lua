@@ -135,7 +135,15 @@ function Editor:FormContext()
         end,
         modes = self.formModes, pages = self.formPages,
         changed = function() self:Changed() end,
-        redraw = function() self:DrawInspector() end,
+        redraw = function(focusPath)
+            self:DrawInspector()
+            if not focusPath then return end
+            local function focus(widget)
+                if widget:GetUserData("fieldPath") == focusPath and widget.SetFocus then widget:SetFocus(); return true end
+                for _, child in ipairs(widget.children or {}) do if focus(child) then return true end end
+            end
+            focus(panel)
+        end,
         error = function(reason) self:Message(reason, true) end,
     }
 end

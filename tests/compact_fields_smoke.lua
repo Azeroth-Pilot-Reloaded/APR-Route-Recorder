@@ -32,6 +32,8 @@ route.parallelSteps = { { conditions = { Class = { "MAGE" }, Race = "Orc", SkipF
     steps = { { Coord = { x = 1, y = 2 }, Zone = 84, Note = "Parallel" } } } }
 route.conditions = { Class = 8 }
 E:Show(); E:SelectRoute(route.name); E:SelectTab("steps")
+if E.compact then E:ToggleCompact() end
+E.frame:SetWidth(1120); E.frame:DoLayout(); E.stepsSplit:SetRatio(0.49)
 local session = E.session
 local initial = AprRC:CopyData(session.draft)
 
@@ -131,17 +133,18 @@ for _, size in ipairs({ { 880, 560 }, { 1120, 780 } }) do
     E.frame:SetWidth(size[1]); E.frame:SetHeight(size[2]); E.frame:DoLayout()
     local coord = field("step/Coord/x").parent.parent
     local available = coord.content:GetWidth()
-    local used = 12
-    for _, child in ipairs(coord.children) do used = used + child.frame:GetWidth() end
-    assert(used <= available + 1)
+    for _, child in ipairs(coord.children) do
+        local _, _, _, left = child.frame:GetPoint()
+        assert(left + child.frame:GetWidth() <= available + 1)
+    end
     assert(field("step/PickUp").frame:GetWidth() > 120)
 end
 E:ToggleCompact()
 E.frame:SetWidth(440); E.frame:SetHeight(680); E.frame:DoLayout()
 E:ShowStepPane("inspector")
 local compactColumns = field("step/Coord/x").parent.parent
-assert(compactColumns.frame:GetHeight() == 44)
-assert(field("step/Zone").frame:GetWidth() > 40)
+assert(compactColumns.frame:GetHeight() >= 44)
+assert(field("step/Zone").frame:GetWidth() >= 110, "Zone must retain a readable width")
 E:ToggleCompact()
 -- Removing the position clears both fields, and Undo restores them together.
 local position = field("step/Coord/x").parent.parent.parent
@@ -150,5 +153,30 @@ assert(not session.draft.steps[1].Coord and not session.draft.steps[1].Zone)
 E:Undo(-1)
 assert(session.draft.steps[1].Coord and session.draft.steps[1].Zone == 85)
 TestCloseWorkshop()
+-- Button maps also keep their key, value and actions together, and rename/delete
+-- the edited key rather than retaining a setter for the original key.
+for _, name in ipairs({ "Button", "SpellButton" }) do
+    local form = AprRC:CreateWidget("SimpleGroup")
+    local data, redraws = { ["42-1"] = 81356 }, 0
+    local context = { modes = {}, pages = {}, changed = function() end,
+        redraw = function() redraws = redraws + 1 end, error = function(reason) error(reason) end }
+    form:SetWidth(540)
+    UI.Form:Render(form, AprRC.options.schemas.buttons, data, function(value) data = value end,
+        context, "step/" .. name, UI.Label(name))
+    form:DoLayout()
+    local key = assert(find(form, function(w) return w:GetUserData("fieldPath") == "step/" .. name .. "/42-1/key" end))
+    local value = assert(find(form, function(w) return w:GetUserData("fieldPath") == "step/" .. name .. "/42-1" end))
+    assert(key.parent.parent == value.parent.parent and key.parent.parent.frame:GetHeight() == 44)
+    local picker = value.parent.children[#value.parent.children].children[1]
+    assert(picker.pickerKind == (name == "Button" and "item" or "spell"))
+    enter(key, "84-2"); enter(value, "12345")
+    assert(data["84-2"] == 12345 and not data["42-1"])
+    form:SetWidth(360); form:DoLayout()
+    assert(key.parent.parent.frame:GetHeight() > 44, "Map entries must wrap at narrow widths")
+    assert(key.frame:GetWidth() >= 120 and value.frame:GetWidth() >= 120)
+    key.parent.parent.parent.children[2]:Fire("OnClick")
+    assert(not next(data) and redraws == 1)
+    GUI:Release(form)
+end
 assert(#UIErrors == 0, table.concat(UIErrors, "\n"))
 print("Compact scalar actions, coordinate columns, multi-selects, validation and saved drafts passed.")

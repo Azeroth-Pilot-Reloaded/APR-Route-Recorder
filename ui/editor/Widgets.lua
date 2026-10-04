@@ -1,5 +1,28 @@
 local GUI = LibStub("AceGUI-3.0")
 local UI = AprRC.editorUI
+UI.FormSpacing, UI.ColumnSpacing, UI.ActionStride = 8, 12, 38
+
+-- Forms keep a clear gap between sections, and hide empty validation labels.
+GUI:RegisterLayout("APRForm", function(content, children)
+    if content.aprLayout then return end
+    content.aprLayout = true
+    local width, height, visible = content.width or content:GetWidth(), 0, 0
+    for _, child in ipairs(children) do
+        if child:GetUserData("validation") and child.label:GetText() == "" then
+            child.frame:Hide()
+        else
+            if visible > 0 then height = height + UI.FormSpacing end
+            child:SetWidth(child.width == "fill" and width or math.min(width, child.frame:GetWidth()))
+            child.frame:ClearAllPoints()
+            child.frame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -height)
+            if child.DoLayout then child:DoLayout() end
+            child.frame:Show()
+            height, visible = height + child.frame:GetHeight(), visible + 1
+        end
+    end
+    content.obj:LayoutFinished(width, height)
+    content.aprLayout = nil
+end)
 
 GUI:RegisterWidgetType("APRIconButton", function()
     local frame = CreateFrame("Button", nil, UIParent)
@@ -50,9 +73,9 @@ GUI:RegisterLayout("APRInput", function(content, children)
     local actions = children[#children]
     if not actions or not actions:GetUserData("pickerActions") then actions = nil end
     local width, height = content:GetWidth(), 0
-    local actionWidth = actions and #actions.children * 34 or 0
+    local actionWidth = actions and (#actions.children * UI.ActionStride - UI.FormSpacing) or 0
     if control then
-        control:SetWidth(math.max(1, width - actionWidth))
+        control:SetWidth(math.max(1, width - actionWidth - (actions and UI.FormSpacing or 0)))
         control.frame:ClearAllPoints()
         control.frame:SetPoint("TOPLEFT", content, "TOPLEFT")
         control.frame:Show()
@@ -71,6 +94,7 @@ GUI:RegisterLayout("APRInput", function(content, children)
             if child:GetUserData("validation") and child.label:GetText() == "" then
                 child.frame:Hide()
             else
+                height = height + UI.FormSpacing / 2
                 child:SetWidth(width)
                 child.frame:ClearAllPoints()
                 child.frame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -height)
@@ -88,11 +112,11 @@ GUI:RegisterLayout("APRInspectorHeader", function(content, children)
     for index, child in ipairs(children) do
         child.frame:ClearAllPoints()
         if index == 1 then
-            child:SetWidth(math.max(1, width - 68))
+            child:SetWidth(math.max(1, width - (#children - 1) * UI.ActionStride))
             child.frame:SetPoint("TOPLEFT", content, "TOPLEFT")
             child:DoLayout()
         else
-            child.frame:SetPoint("TOPRIGHT", content, "TOPRIGHT", -(#children - index) * 34, 0)
+            child.frame:SetPoint("TOPRIGHT", content, "TOPRIGHT", -(#children - index) * UI.ActionStride, 0)
         end
         height = math.max(height, child.frame:GetHeight())
         child.frame:Show()
@@ -103,18 +127,32 @@ end)
 GUI:RegisterLayout("APRColumns", function(content, children)
     if content.aprLayout then return end
     content.aprLayout = true
-    local total, height, left = 0, 0, 0
-    for _, child in ipairs(children) do total = total + (child:GetUserData("weight") or 1) end
-    local available = math.max(1, content:GetWidth() - math.max(0, #children - 1) * 6)
-    for _, child in ipairs(children) do
-        local width = available * (child:GetUserData("weight") or 1) / total
-        child:SetWidth(width)
-        child.frame:ClearAllPoints()
-        child.frame:SetPoint("TOPLEFT", content, "TOPLEFT", left, 0)
-        child:DoLayout()
-        child.frame:Show()
-        height = math.max(height, child.frame:GetHeight())
-        left = left + width + 6
+    local width, height, first = content:GetWidth(), 0, 1
+    local maxColumns = content.obj:GetUserData("maxColumns") or #children
+    while first <= #children do
+        local last, minimum, weight = first - 1, 0, 0
+        while last < #children and last - first + 1 < maxColumns do
+            local child = children[last + 1]
+            local needed = (child:GetUserData("minWidth") or 140) + (last >= first and UI.ColumnSpacing or 0)
+            if last >= first and minimum + needed > width then break end
+            last, minimum, weight = last + 1, minimum + needed, weight + (child:GetUserData("weight") or 1)
+        end
+        local left, rowHeight = 0, 0
+        local extra = math.max(0, width - minimum)
+        for index = first, last do
+            local child = children[index]
+            local childWidth = last == first and width or
+                (child:GetUserData("minWidth") or 140) + extra * (child:GetUserData("weight") or 1) / weight
+            child:SetWidth(math.max(1, childWidth))
+            child.frame:ClearAllPoints()
+            child.frame:SetPoint("TOPLEFT", content, "TOPLEFT", left, -height)
+            child:DoLayout()
+            child.frame:Show()
+            rowHeight = math.max(rowHeight, child.frame:GetHeight())
+            left = left + childWidth + UI.ColumnSpacing
+        end
+        height, first = height + rowHeight, last + 1
+        if first <= #children then height = height + UI.FormSpacing end
     end
     content.obj:LayoutFinished(content:GetWidth(), height)
     content.aprLayout = nil
@@ -130,7 +168,7 @@ GUI:RegisterLayout("APRField", function(content, children)
     local compound = content.obj:GetUserData("compound")
     local height = 0
     if body then
-        body:SetWidth(math.max(1, width - (action and not compound and 36 or 0)))
+        body:SetWidth(math.max(1, width - (action and not compound and UI.ActionStride or 0)))
         body.frame:ClearAllPoints()
         body.frame:SetPoint("TOPLEFT", content, "TOPLEFT")
         body:DoLayout()
@@ -140,20 +178,16 @@ GUI:RegisterLayout("APRField", function(content, children)
     if action then
         action.frame:ClearAllPoints()
         if compound then
-            action.frame:SetPoint("TOPRIGHT", content, "TOPRIGHT", 0, -(height + 4))
+            action.frame:SetPoint("TOPRIGHT", content, "TOPRIGHT", 0, -(height + UI.FormSpacing))
         else
             local control = body:GetUserData("alignControl") or body.children[1]
-            if control.editbox then
-                -- The widget includes a label above the actual input. Anchor
-                -- to the input itself so the trash stays vertically centered.
-                action.frame:SetPoint("RIGHT", control.editbox, "RIGHT", 36, 0)
-            else
-                local center = control.alignoffset or control.frame:GetHeight() / 2
-                action.frame:SetPoint("TOPRIGHT", content, "TOPRIGHT", 0, action.frame:GetHeight() / 2 - center)
-            end
+            local center = control and (control.alignoffset or control.frame:GetHeight() / 2) or 15
+            -- Only use the first control for vertical alignment. The action's
+            -- horizontal position belongs to the whole row, including all columns.
+            action.frame:SetPoint("TOPRIGHT", content, "TOPRIGHT", 0, action.frame:GetHeight() / 2 - center)
         end
         action.frame:Show()
-        height = compound and height + 34 or math.max(height, 38)
+        height = compound and height + 30 + UI.FormSpacing or math.max(height, 38)
     end
     content.obj:LayoutFinished(width, height)
     content.aprLayout = nil

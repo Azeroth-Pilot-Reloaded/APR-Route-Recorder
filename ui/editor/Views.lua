@@ -374,6 +374,7 @@ function Editor:DrawInspector()
     local panel = self.routeForm or self.inspector
     if not panel then return end
     local oldScroll = panel.localstatus.scrollvalue or 0
+    panel:SetLayout("APRForm")
     panel:ReleaseChildren()
     local session = self.session
     local context = self:FormContext()
