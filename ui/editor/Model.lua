@@ -144,6 +144,7 @@ function Session:Reload(route, committed)
     self.base = Model:RouteText(self.draft)
     self:RememberSource(route)
     self.raw = nil
+    self.followPaused = nil
     self.incomingWarned, self.observed = nil, nil
     self.selected = math.max(1, math.min(self.selected, #route.steps))
     self:ClampSelection()
@@ -211,6 +212,7 @@ function Session:Snapshot()
     self:Touch()
     self.rawHistory = nil
     self.dirty = Model:RouteText(self.draft) ~= self.base
+    if self.dirty then self.followPaused = true end
     local snapshot = { draft = AprRC:CopyData(self.draft), ids = Model:StepIDs(self.draft),
         hasDraftIDs = self.hasDraftIDs, selected = self.selected,
         parallelGroup = self.parallelGroup, parallelSelected = self.parallelSelected, dirty = self.dirty }

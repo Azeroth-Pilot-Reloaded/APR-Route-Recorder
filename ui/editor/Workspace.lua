@@ -81,7 +81,7 @@ function Editor:UpdateStatus()
     SetStatusLabel(self.recordStatus, state)
     SetStatusLabel(self.summary, session and ("|cffedc36a" .. tostring(#session.draft.steps) .. " " .. T("Steps") .. "|r  ·  " ..
         (dirty and "|cffffcf66" .. T("Unsaved draft") or "|cff82d9a0" .. T("Saved")) .. "|r") or "")
-    self.frame:SetStatusText(self.notice or self.safetyNotice or (dirty and T("Follow pauses while you edit. Save or reload to resume.") or
+    self.frame:SetStatusText(self.notice or self.safetyNotice or ((dirty or (session and session.followPaused)) and T("Follow pauses while you edit. Save or reload to resume.") or
         T("Drafts are kept when closing this window, switching routes or reloading the UI.")))
     if self.tab == "commands" then AprRC.CommandBarSetting:RefreshRunState() end
 end
@@ -142,6 +142,7 @@ end
 
 function Editor:SelectRoute(name)
     self.pendingManualStep = nil
+    self.nextFollowAt, self.aprFollowTarget = GetTime() + 5, nil
     if self.mergeDialog then self.mergeDialog:Hide() end
     if self.closeDialog then self.closeDialog:Hide() end
     self.closeAfterSave, self.safetyNotice = nil, nil
@@ -562,6 +563,9 @@ end
 
 function Editor:Refresh(forceFollow)
     if not self.frame then return end
+    local now = GetTime()
+    local recenter = forceFollow or now >= (self.nextFollowAt or 0)
+    if recenter then self.nextFollowAt = now + 5 end
     self:SafetyTick()
     if self.descriptionsDirty and not self.confirm and not self.fieldPicker and not interacting(self.frame) then
         self.descriptionsDirty = nil
@@ -596,7 +600,7 @@ function Editor:Refresh(forceFollow)
         not (self.stepsSplit and self.stepsSplit.dragging) and not self.confirm and not self.nameDialog and
         not self.luaFindBar and not interacting(self.frame, (manualIndex or following or aprIndex) and self.luaBox or nil) and
         not self.fieldPicker and not self.mergeDialog and not self.closeDialog and
-        not session:IsDirty() and (session:IsStale(true) or manualIndex or (forceFollow and following)) then
+        not session:IsDirty() and not session.followPaused and (session:IsStale(true) or manualIndex or (forceFollow and following)) then
         local listScroll = self.list and self.list.localstatus.scrollvalue or 0
         local luaScroll = self.luaBox and self.luaBox.scrollFrame:GetVerticalScroll() or 0
         local luaCursor = self.luaBox and self.luaBox.editBox:GetCursorPosition() or 0
@@ -632,27 +636,62 @@ function Editor:Refresh(forceFollow)
             if self.list then self:ScrollToStep(manualIndex) end
         end
     end
-    if aprIndex then self:FollowAPRStep(aprIndex, aprGroup) end
+    if aprIndex then
+        local target = self.aprFollowTarget
+        if recenter or not target or target.session ~= session or target.index ~= aprIndex or target.group ~= aprGroup then
+            if self:FollowAPRStep(aprIndex, aprGroup, recenter) then
+                self.aprFollowTarget = { session = session, index = aprIndex, group = aprGroup }
+            end
+        end
+    else
+        self.aprFollowTarget = nil
+        if following and recenter then self:FollowRecordingStep() end
+    end
     self:UpdateStatus()
 end
 
-function Editor:FollowAPRStep(index, group)
+function Editor:FollowRecordingStep()
+    local session = self.session
+    if session:IsDirty() or session.followPaused or self.confirm or self.nameDialog or self.fieldPicker or
+        self.luaFindBar or self.mergeDialog or self.closeDialog or AprRC.CommandBarSetting.dragging or
+        (self.stepsSplit and self.stepsSplit.dragging) or interacting(self.frame, self.luaBox) then return end
+    if self.tab ~= "steps" and self.tab ~= "parallel" and self.tab ~= "lua" then return end
+    local index = #session.draft.steps
+    if index == 0 then return end
+    if self.tab == "lua" then
+        session:SetSelected(index)
+        self:ScrollToStep(index)
+    else
+        if self.tab ~= "steps" then self:SelectTab("steps") end
+        if self:SelectedStep() ~= index or self.query ~= "" or self.filter ~= "all" or self.editGroupConditions or
+            self.page ~= math.ceil(index / UI.PageSize) then
+            self.query, self.filter = "", "all"
+            self:SelectStep(index)
+        else self:ScrollToStep(index) end
+    end
+end
+
+function Editor:FollowAPRStep(index, group, recenter)
     local session = self.session
     if self.tab ~= "steps" and self.tab ~= "parallel" and self.tab ~= "lua" then return end
-    if session:IsDirty() or self.confirm or self.nameDialog or self.fieldPicker or self.luaFindBar or
+    if session:IsDirty() or session.followPaused or self.confirm or self.nameDialog or self.fieldPicker or self.luaFindBar or
+        self.mergeDialog or self.closeDialog or
         AprRC.CommandBarSetting.dragging or (self.stepsSplit and self.stepsSplit.dragging) or
         interacting(self.frame, self.tab == "lua" and self.luaBox or nil) then return end
     if not session:GetSteps(group)[index] then return end
     if self.tab == "lua" then
         session:SetSelected(index, group)
         if group then session.parallelGroup = group end
-        self:FollowLuaAPRStep(index, group)
-        return
+        self:FollowLuaAPRStep(index, group, recenter)
+        return true
     end
     local tab = group and "parallel" or "steps"
     local page = math.ceil(index / UI.PageSize)
     if self.tab == tab and session:GetSelected(group) == index and (not group or session.parallelGroup == group) and
-        self.page == page and self.query == "" and self.filter == "all" and not self.editGroupConditions then return end
+        self.page == page and self.query == "" and self.filter == "all" and not self.editGroupConditions then
+        if recenter and self.list then self:ScrollToStep(index, group) end
+        return true
+    end
     session:SetSelected(index, group)
     if group then session.parallelGroup = group end
     self.query, self.filter, self.page = "", "all", page
@@ -667,6 +706,7 @@ function Editor:FollowAPRStep(index, group)
         local offset = row and (self.list.content:GetTop() - row.frame:GetTop()) or 0
         self.list:SetScroll(range > 0 and math.max(0, math.min(1000, offset / range * 1000)) or 0)
     end
+    return true
 end
 
 function Editor:Tick(forceFollow)
@@ -792,7 +832,8 @@ function Editor:Show()
     followAPR:SetValue(AprRC.settings.profile.followAPR == true)
     followAPR:SetCallback("OnValueChanged", function(_, _, value)
         AprRC.settings.profile.followAPR = value
-        self:Tick()
+        if value then self.aprFollowTarget = nil end
+        self:Tick(value)
     end)
     followAPR:SetCallback("OnEnter", function(widget)
         GameTooltip:SetOwner(widget.frame, "ANCHOR_TOP")

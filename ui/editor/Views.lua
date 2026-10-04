@@ -489,6 +489,7 @@ function Editor:DrawLua()
         local couldUndo = session.rawCursor > 1
         local couldRedo = session.rawCursor < #session.rawHistory
         session.raw = value
+        session.followPaused = true
         session:Touch()
         local history = session.rawHistory
         if history[session.rawCursor].text ~= value then
@@ -514,13 +515,13 @@ function Editor:DrawLua()
     end)
 end
 
-function Editor:FollowLuaAPRStep(index, group)
+function Editor:FollowLuaAPRStep(index, group, recenter)
     local positions = self.luaStepPositions
     local steps = positions and (group and positions.parallelSteps[group] or positions.steps)
     local range = steps and steps[index]
     if not range then return end
     local previous = self.luaAPRPosition
-    if previous and previous.positions == positions and previous.index == index and previous.group == group then return end
+    if not recenter and previous and previous.positions == positions and previous.index == index and previous.group == group then return end
     self.luaAPRPosition = { positions = positions, index = index, group = group }
     local widget, session, token = self.luaBox, self.session, {}
     self.luaScrollToken = token
