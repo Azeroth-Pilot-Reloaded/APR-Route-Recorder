@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="680" height="208" viewBox="0 0 680 208" role="img" aria-labelledby="title desc">
+<title id="title">Lua editor</title><desc id="desc">Write complete APR routes with completion, diagnostics, folding, and version comparisons.</desc>
+<defs><linearGradient id="bg"><stop stop-color="#27213e"/><stop offset="1" stop-color="#141a2c"/></linearGradient></defs>
+<rect x="1" y="1" width="678" height="206" rx="20" fill="url(#bg)" stroke="#514664"/><rect x="1" y="26" width="4" height="156" rx="2" fill="#b5a1ef"/>
+<g font-family="Segoe UI,Arial,sans-serif"><text x="30" y="44" font-size="20" font-weight="700" letter-spacing="3" fill="#c8b5fa">LUA EDITOR</text>
+<text x="28" y="94" font-size="38" font-weight="650" fill="#f6f4fc">Your route. Every detail.</text>
+<text x="30" y="137" font-size="25" fill="#b9b2ce">Completion, diagnostics, folding,</text>
+<text x="30" y="176" font-size="25" fill="#b9b2ce">and version comparisons.</text></g></svg>

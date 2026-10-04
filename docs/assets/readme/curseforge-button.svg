@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="100" viewBox="0 0 320 100" role="img" aria-labelledby="title desc">
+  <title id="title">CurseForge</title>
+  <desc id="desc">Download APR Route Recorder.</desc>
+  <defs>
+    <linearGradient id="surface" x2="1" y2="1">
+      <stop stop-color="#ba4e26"/>
+      <stop offset="1" stop-color="#783621"/>
+    </linearGradient>
+  </defs>
+  <rect x="4.5" y="4.5" width="311" height="91" rx="15.5" fill="url(#surface)" stroke="#eb8859"/>
+  <rect x="20" y="27" width="46" height="46" rx="13" fill="#ffffff" fill-opacity=".12"/>
+  <!-- Brand mark from simple-icons/simple-icons, icons/curseforge.svg (CC0). -->
+  <path transform="translate(28 35) scale(1.25)" fill="#ffffff" d="M18.326 9.2145S23.2261 8.4418 24 6.1882h-7.5066V4.4H0l2.0318 2.3576V9.173s5.1267-.2665 7.1098 1.2372c2.7146 2.516-3.053 5.917-3.053 5.917L5.0995 19.6c1.5465-1.4726 4.494-3.3775 9.8983-3.2857-2.0565.65-4.1245 1.6651-5.7344 3.2857h10.9248l-1.0288-3.2726s-7.918-4.6688-.8336-7.1127z"/>
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif">
+    <text x="81" y="46" fill="#ffffff" font-size="21" font-weight="700">CurseForge</text>
+    <text x="81" y="67" fill="#ffe1ce" font-size="13">Download the addon</text>
+  </g>
+  <path d="M282 43l7 7-7 7m-9-7h16" fill="none" stroke="#ffe1ce" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

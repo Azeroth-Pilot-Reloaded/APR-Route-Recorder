@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="196" viewBox="0 0 1400 196" role="img" aria-labelledby="title desc">
+<title id="title">Record. Refine. Share.</title>
+<desc id="desc">Capture your journey, edit in the visual workshop or Lua editor, and publish saved routes to APR.</desc>
+<defs>
+<linearGradient id="surface" x2="1" y2="1"><stop stop-color="#101d32"/><stop offset="1" stop-color="#131525"/></linearGradient>
+<linearGradient id="edge"><stop stop-color="#dcac5a"/><stop offset=".5" stop-color="#5db8d9"/><stop offset="1" stop-color="#aa98ee"/></linearGradient>
+</defs>
+<rect x="1" y="1" width="1398" height="194" rx="24" fill="url(#surface)" stroke="#33425b"/>
+<path d="M25 1H1375" stroke="url(#edge)" stroke-width="3"/>
+<g font-family="Segoe UI,Arial,sans-serif">
+<path d="M467 40V156M934 40V156" stroke="#33425b"/>
+<circle cx="58" cy="55" r="7" fill="#f0b65c"/>
+<text x="78" y="63" font-size="20" font-weight="700" letter-spacing="3" fill="#f0b65c">RECORD</text>
+<text x="42" y="107" font-size="29" font-weight="650" fill="#f2f5fa">Capture your journey.</text>
+<text x="42" y="147" font-size="21" fill="#a6b5cc">Quests, travel, dialogue, and more.</text>
+<rect x="504" y="48" width="14" height="14" rx="3" fill="#6ecbdf"/>
+<text x="534" y="63" font-size="20" font-weight="700" letter-spacing="3" fill="#6ecbdf">REFINE</text>
+<text x="504" y="107" font-size="29" font-weight="650" fill="#f2f5fa">Edit your way.</text>
+<text x="504" y="147" font-size="21" fill="#a6b5cc">Visual workshop or full Lua editor.</text>
+<path d="m973 48 7 7-7 7-7-7z" fill="#b5a1ef"/>
+<text x="994" y="63" font-size="20" font-weight="700" letter-spacing="3" fill="#b5a1ef">SHARE</text>
+<text x="968" y="107" font-size="29" font-weight="650" fill="#f2f5fa">Bring your route to APR.</text>
+<text x="968" y="147" font-size="21" fill="#a6b5cc">Save once. Find it in the Custom tab.</text>
+</g>
+</svg>

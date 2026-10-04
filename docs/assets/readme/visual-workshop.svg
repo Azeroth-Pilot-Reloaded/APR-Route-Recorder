@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="164" viewBox="0 0 1400 164" role="img" aria-labelledby="title desc">
+<title id="title">Visual workshop</title><desc id="desc">Build every step visually, with forms, selectors, and a step inspector.</desc>
+<defs><linearGradient id="bg"><stop stop-color="#11293b"/><stop offset="1" stop-color="#10182a"/></linearGradient></defs>
+<rect x="1" y="1" width="1398" height="162" rx="24" fill="url(#bg)" stroke="#314e62"/>
+<rect x="1" y="26" width="4" height="112" rx="2" fill="#6ecbdf"/>
+<g font-family="Segoe UI,Arial,sans-serif">
+<text x="38" y="46" font-size="18" font-weight="700" letter-spacing="4" fill="#79d4e6">VISUAL WORKSHOP</text>
+<text x="36" y="93" font-size="37" font-weight="650" fill="#f2f7fb">Build every step, visually.</text>
+<text x="38" y="132" font-size="21" fill="#aec5d7">Searchable forms. Clear conditions. No Lua required.</text>
+</g>
+<g fill="none" stroke-linecap="round">
+<rect x="1106" y="28" width="252" height="106" rx="9" fill="#0d1727" stroke="#456578"/>
+<path d="M1186 29v104" stroke="#456578"/>
+<rect x="1120" y="45" width="51" height="17" rx="4" fill="#203e52" stroke="#74c6db"/>
+<path d="M1125 54h20M1122 78h48M1122 100h35M1201 51h118M1201 76h76M1201 102h102" stroke="#64879e" stroke-width="4"/>
+<path d="m1211 111 7-7 8 8 16-20" stroke="#dcac5a" stroke-width="3"/>
+</g>
+</svg>
