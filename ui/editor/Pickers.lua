@@ -164,7 +164,16 @@ function Pickers:AddButton(parent, schema, path, context, accept)
     row:SetLayout("APRPickerActions")
     row:SetUserData("pickerActions", true)
     local button = UI.IconButton(row, "search", "PICKER_SELECT", function()
-        local frame = self:Open(spec, context, accept)
+        local currentPath = context.pickerPath and context.pickerPath(path) or path
+        local currentSpec = self:Resolve(schema, currentPath)
+        if not currentSpec then return end
+        if spec.kind == "objective" and currentSpec.kind ~= "objective" then
+            local _, reason = R:ValidateValue("id", tonumber(currentPath:match("([^/]+)$")))
+            context.error(reason)
+            return
+        end
+        currentSpec.path = currentPath
+        local frame = self:Open(currentSpec, context, accept)
         if frame and context.pickerOpened then context.pickerOpened(frame) end
     end)
     button.pickerPath, button.pickerKind = path, spec.kind

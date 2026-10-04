@@ -411,6 +411,63 @@ function Form:Fields(schema, value)
     return fields
 end
 
+-- Quest objectives are a map, but each entry only needs two scalar inputs.
+function Form:QuestObjectives(parent, value, set, context, path)
+    value = type(value) == "table" and value or {}
+    local function row(initialKey, objectives, adding)
+        local key, entries = initialKey, objectives
+        local group = UI.Group(parent)
+        group:SetLayout("APRField")
+        local columns = UI.Group(group)
+        columns:SetLayout("APRColumns")
+        local quest, objective = UI.Group(columns), UI.Group(columns)
+        objective:SetUserData("weight", 1.5)
+        local childContext = {}
+        for name, entry in pairs(context) do childContext[name] = entry end
+        childContext.changed = adding and function() end or context.changed
+        local objectivePath = path .. "/" .. tostring(initialKey or 1)
+        -- Resolve the picker against the edited ID without rebuilding a focused field.
+        childContext.pickerPath = function(currentPath)
+            if currentPath == objectivePath then return path .. "/" .. tostring(key) end
+            return currentPath
+        end
+        if adding then
+            childContext.redraw = function()
+                quest.children[1]:SetText(tostring(key or ""))
+                local parts = {}
+                for _, entry in ipairs(entries or {}) do parts[#parts + 1] = tostring(entry) end
+                objective.children[1]:SetText(table.concat(parts, ", "))
+            end
+        end
+        self:Render(quest, "id", initialKey, function(newKey)
+            if not adding and newKey ~= key then
+                if value[newKey] ~= nil then context.error(T("This key already exists.")); return end
+                value[newKey], value[key] = value[key], nil
+                set(value)
+            end
+            key = newKey
+        end, childContext, path .. "/questID", T("Quest ID"))
+        columns:SetUserData("alignControl", quest.children[1])
+        self:Render(objective, "ids", objectives, function(newEntries)
+            entries = newEntries
+            if not adding then value[key] = entries; set(value) end
+        end, childContext, objectivePath, T("Objectives"))
+        UI.IconButton(group, adding and "add" or "trash", adding and "Add entry" or "Remove", function()
+            if context.isCurrent and not context.isCurrent() then return end
+            if adding then
+                local valid, reason = R:ValidateValue("id", key)
+                if valid then valid, reason = R:ValidateValue("ids", entries) end
+                if not valid then context.error(reason); return end
+                if value[key] ~= nil then context.error(T("This key already exists.")); return end
+                value[key] = entries
+            else value[key] = nil end
+            set(value); context.changed(); context.redraw()
+        end)
+    end
+    for _, key in ipairs(keys(value)) do row(key, value[key]) end
+    row(nil, nil, true)
+end
+
 -- A schema-driven form edits values, never Lua source. Structural changes rebuild
 -- the form; typing only updates the detached draft and leaves keyboard focus alone.
 function Form:Render(parent, schema, value, set, context, path, label)
@@ -583,6 +640,8 @@ function Form:Render(parent, schema, value, set, context, path, label)
                 changed(value, true)
             end)
         end
+    elseif schema == R.schemas.qpart then
+        self:QuestObjectives(parent, value, set, context, path)
     elseif valueKind == "map" or valueKind == "list" or valueKind == "steps" then
         value = type(value) == "table" and value or {}
         local entries = keys(value)

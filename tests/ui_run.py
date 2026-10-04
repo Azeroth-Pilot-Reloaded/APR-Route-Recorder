@@ -64,6 +64,7 @@ def run():
     load("tests/save_override_smoke.lua")
     load("tests/revisions_smoke.lua")
     load("tests/pickers_smoke.lua")
+    load("tests/objective_rows_smoke.lua")
     load("tests/recent_choices_smoke.lua")
     load("tests/search_select_smoke.lua")
     load("tests/apr_import_smoke.lua")

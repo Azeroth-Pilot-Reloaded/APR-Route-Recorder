@@ -1042,3 +1042,4 @@ L["UNSAVED_DRAFT_REMINDER"] = "Rappel : le brouillon de %s n’est toujours pas 
 L["SAVE_MERGE_HELP"] = "Save conserve les changements compatibles du brouillon et du record. Les conflits proposent un choix gauche/droite. Les touches Shift/Ctrl/Alt ne forcent plus un écrasement."
 L["Before restore"] = "Avant restauration"
 L["%d unsaved draft(s) will be kept."] = "Les %d brouillons non sauvegardés seront conservés."
+L["Objectives"] = "Objectifs"

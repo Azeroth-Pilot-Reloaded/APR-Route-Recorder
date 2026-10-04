@@ -991,3 +991,4 @@ L["UNSAVED_DRAFT_REMINDER"] = "Reminder: the draft for %s is still unsaved. Clic
 L["SAVE_MERGE_HELP"] = "Save keeps compatible draft and recording changes. Conflicts offer left/right choices. Shift/Ctrl/Alt no longer force an overwrite."
 L["Before restore"] = "Before restore"
 L["%d unsaved draft(s) will be kept."] = "%d unsaved draft(s) will be kept."
+L["Objectives"] = "目标"
