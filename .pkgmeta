@@ -1,8 +1,23 @@
 package-as: APR-Recorder
 
 ignore:
+  # Development configuration and automation.
+  - .github
+  - .vscode
+  - .venv
+  - .editorconfig
+  - .gitignore
+  - .luacheckrc
+  - .pkgmeta
+  - .env
+  # Documentation, tests and build tools.
   - README.md
   - SECURITY.md
   - wiki.md
   - tests
   - docs
+  - tools
+  # SVG build sources; keep the TGA textures and redistribution licenses.
+  - assets/ui/mdi/*.svg
+  - assets/ui/mdi/README.md
+  - assets/ui/mdi/manifest.json
