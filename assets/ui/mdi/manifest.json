@@ -1,0 +1,25 @@
+{
+  "collection": "Material Design Icons (Pictogrammers)",
+  "version": "7.4.47",
+  "package": "@mdi/svg",
+  "source": "https://registry.npmjs.org/@mdi/svg/-/svg-7.4.47.tgz",
+  "library": "https://pictogrammers.com/library/mdi/",
+  "license": "Apache-2.0",
+  "modifications": "Original SVGs unchanged; TGA exports rendered at 32x32 with gold fill #efcd8d.",
+  "icons": {
+    "add": "plus",
+    "compact": "arrow-collapse-horizontal",
+    "down": "chevron-down",
+    "duplicate": "content-copy",
+    "expand": "arrow-expand-horizontal",
+    "next": "chevron-right",
+    "play": "play",
+    "previous": "chevron-left",
+    "redo": "redo",
+    "refresh": "refresh",
+    "search": "magnify",
+    "trash": "delete-outline",
+    "undo": "undo",
+    "up": "chevron-up"
+  }
+}
