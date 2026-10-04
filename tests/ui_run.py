@@ -72,6 +72,7 @@ def run():
     load("tests/apr_import_smoke.lua")
     load("tests/apr_follow_smoke.lua")
     load("tests/follow_recenter_smoke.lua")
+    load("tests/editor_focus_smoke.lua")
     load("tests/lua_search_smoke.lua")
     load("tests/lua_editor_smoke.lua")
     load("tests/lua_layout_smoke.lua")

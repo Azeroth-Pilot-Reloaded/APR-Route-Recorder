@@ -66,7 +66,10 @@ and accepted completions can all be undone with `Ctrl+Z`.
 
 Closing a saved route does not prompt because of drafts belonging to other routes;
 those drafts remain persisted. Only pending changes in the displayed route show
-**Save**, **Keep draft**, and **Cancel**. Confirmation dialogs contain just the
+**Save**, **Keep draft**, **Discard changes**, and **Cancel**. Discard closes the
+editor and removes the displayed route's draft while keeping its latest saved
+version, including background recording changes. Drafts of other routes remain
+available. Cancel returns to editing. Confirmation dialogs contain just the
 message and actions. Undoing to the saved source clears its draft, and whitespace-only
 edits are reconciled after the input pause. Repeated reminders, saves and closes
 do not add identical recovery versions under different reason labels.
@@ -226,6 +229,13 @@ replacement and draft discard; a client crash before disk persistence can still
 lose changes since the last successful UI reload/logout.
 
 ## APR integration
+
+**Follow recording** selects the latest step only while capture is active and
+the recorded route is open. Selecting steps, changing tabs or pages, typing,
+and scrolling suspend it for five seconds after the last interaction. Focused
+inputs, open dialogs and unsaved drafts keep it paused. Stopping capture preserves
+the selected step and Lua cursor. Explicit commands that add steps still reveal
+their result, including with automatic follow disabled.
 
 Enable **Follow APR** in the workshop footer to select APR's current playback
 step when the same route is open in the recorder. Matching uses the exact route

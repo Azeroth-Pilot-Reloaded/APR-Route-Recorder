@@ -213,26 +213,46 @@ function Editor:ConfirmClose()
     local session = self.session
     local dialog = AprRC:CreateWidget("APRConfirmation")
     dialog:SetLayout("APRWorkspace")
+    dialog:SetOwner(self.frame and self.frame.frame)
     self.closeDialog = dialog
     dialog:SetTitle(T("Unsaved draft"))
-    dialog:SetWidth(math.min(480, UIParent:GetWidth())); dialog:SetHeight(145)
+    dialog:SetWidth(math.min(480, UIParent:GetWidth())); dialog:SetHeight(180)
     UI.LabelWidget(UI.Group(dialog), T("Save before closing?") .. "\n" .. session.name)
-    local actions = UI.Toolbar(dialog, true); actions:SetLayout("APRCompactToolbar")
-    self.closeSaveButton = UI.Button(actions, "Save", function()
+    local actions = UI.Toolbar(dialog, true); actions:SetLayout("APRForm")
+    local saveActions = UI.Toolbar(actions); saveActions:SetLayout("APRCompactToolbar")
+    local discardActions = UI.Toolbar(actions); discardActions:SetLayout("APRCompactToolbar")
+    self.closeSaveButton = UI.Button(saveActions, "Save", function()
         dialog:Hide()
         if self.session ~= session then return end
         self.closeAfterSave = session
         if not self:Save() and not self.mergeDialog then self.closeAfterSave = nil end
     end, 130)
     self.closeSaveButton:SetDisabled(not session or not session:IsDirty())
-    self.closeKeepButton = UI.Button(actions, "Keep draft", function()
+    self.closeKeepButton = UI.Button(saveActions, "Keep draft", function()
         dialog:Hide()
         if self.session ~= session then return end
         self:KeepDraftsOnClose(); self:Hide(true)
     end, 180)
-    self.closeCancelButton = UI.Button(actions, CANCEL, function() dialog:Hide() end, 110)
+    self.closeDiscardButton = UI.Button(discardActions, "Discard changes", function()
+        dialog:Hide()
+        if self.session ~= session then return end
+        -- Discard explicitly: do not create another recovery version of these edits.
+        if session:Reload(nil, true) then session:Persist()
+        else
+            self:SetSession(session.name, nil)
+            AprRCData.EditorDrafts[session.name] = nil
+            self.session = nil
+        end
+        self.closeAfterSave = nil
+        self:Hide(true)
+    end, 210)
+    self.closeCancelButton = UI.Button(discardActions, CANCEL, function() dialog:Hide() end, 110)
+    for _, button in ipairs({ self.closeSaveButton, self.closeKeepButton, self.closeDiscardButton, self.closeCancelButton }) do
+        button:SetUserData("flex", 1)
+    end
+    dialog:DoLayout()
     dialog:SetCallback("OnClose", function(widget)
-        self.closeDialog, self.closeSaveButton, self.closeKeepButton, self.closeCancelButton = nil, nil, nil, nil
+        self.closeDialog, self.closeSaveButton, self.closeKeepButton, self.closeDiscardButton, self.closeCancelButton = nil, nil, nil, nil, nil
         GUI:Release(widget)
     end)
 end

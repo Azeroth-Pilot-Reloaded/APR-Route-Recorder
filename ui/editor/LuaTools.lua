@@ -10,15 +10,16 @@ function Editor:InstallSaveShortcut(widget)
     keyboard:EnableKeyboard(true); keyboard:SetPropagateKeyboardInput(true)
     keyboard:SetScript("OnKeyDown", function(listener, key)
         local handled = false
+        local focused = GetCurrentKeyBoardFocus and GetCurrentKeyBoardFocus()
+        local focus, inside = focused, focused == nil
+        while focus do
+            if focus == frame then inside = true; break end
+            focus = focus:GetParent()
+        end
+        if self.frame == widget and inside and (focused or frame:IsMouseOver()) then self:MarkInteraction() end
         if key:upper() == "S" and (IsControlKeyDown() or (IsMetaKeyDown and IsMetaKeyDown())) and
-            self.frame == widget and self.session then
-            local focus = GetCurrentKeyBoardFocus and GetCurrentKeyBoardFocus()
-            local inside = focus == nil
-            while focus do
-                if focus == frame then inside = true; break end
-                focus = focus:GetParent()
-            end
-            if inside then handled = true; self:Save() end
+            self.frame == widget and self.session and inside then
+            handled = true; self:Save()
         end
         listener:SetPropagateKeyboardInput(not handled)
     end)

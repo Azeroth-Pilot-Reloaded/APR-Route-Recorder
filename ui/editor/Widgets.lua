@@ -77,18 +77,26 @@ GUI:RegisterLayout("APRCompactToolbar", function(content, children)
     end
     fixed = math.max(0, #visible - 1) * 6
     for _, child in ipairs(visible) do
+        local maximum = child:GetUserData("naturalWidth")
+        if maximum and child.label then
+            local measure = child.label.GetUnboundedStringWidth or child.label.GetStringWidth
+            child:SetWidth(math.min(maximum, math.ceil(measure(child.label)) + 4))
+        end
         local flex = child:GetUserData("flex")
         if flex then weight = weight + flex else fixed = fixed + child.frame:GetWidth() end
     end
-    local left, height = 0, 30
+    local height = 30
     for _, child in ipairs(visible) do
         local flex = child:GetUserData("flex")
         if flex then child:SetWidth(math.max(20, width - fixed) * flex / weight) end
-        child.frame:ClearAllPoints()
-        child.frame:SetPoint("TOPLEFT", content, "TOPLEFT", left, 0)
         child.frame:Show()
         if child.DoLayout then child:DoLayout() end
         height = math.max(height, child.frame:GetHeight())
+    end
+    local left = 0
+    for _, child in ipairs(visible) do
+        child.frame:ClearAllPoints()
+        child.frame:SetPoint("TOPLEFT", content, "TOPLEFT", left, -(height - child.frame:GetHeight()) / 2)
         left = left + child.frame:GetWidth() + 6
     end
     content.obj:LayoutFinished(width, height)
@@ -100,6 +108,7 @@ end)
 GUI:RegisterWidgetType("APRConfirmation", function()
     local frame = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
     frame:SetFrameStrata("FULLSCREEN_DIALOG"); frame:SetFrameLevel(300)
+    frame:SetToplevel(true)
     frame:SetClampedToScreen(true); frame:EnableMouse(true)
     frame:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8X8", edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border", edgeSize = 16 })
     frame:SetBackdropColor(0.08, 0.065, 0.045, 1); frame:SetBackdropBorderColor(0.72, 0.58, 0.34, 1)
@@ -109,19 +118,35 @@ GUI:RegisterWidgetType("APRConfirmation", function()
     content:SetPoint("TOPLEFT", 16, -38); content:SetPoint("BOTTOMRIGHT", -16, 14)
     local widget = { type = "APRConfirmation", frame = frame, content = content, titletext = title }
     function widget:OnAcquire()
+        self.owner = nil
+        frame:SetParent(UIParent)
+        frame:SetFrameStrata("FULLSCREEN_DIALOG"); frame:SetFrameLevel(300)
         frame:ClearAllPoints(); frame:SetPoint("CENTER", UIParent, "CENTER")
         self:SetWidth(450); self:SetHeight(150); self:SetTitle(""); self:SetLayout("APRWorkspace")
+        self:Show()
+    end
+    function widget:OnRelease() self.owner = nil end
+    function widget:SetOwner(owner)
+        self.owner = owner
+        frame:SetParent(owner or UIParent)
+        frame:ClearAllPoints(); frame:SetPoint("CENTER", owner or UIParent, "CENTER")
         self:Show()
     end
     function widget:SetTitle(text) title:SetText(text) end
     function widget:OnWidthSet(width) content:SetWidth(math.max(1, width - 32)) end
     function widget:OnHeightSet(height) content:SetHeight(math.max(1, height - 52)) end
     function widget:LayoutFinished() end
-    function widget:Show() frame:Show() end
+    function widget:Show()
+        if self.owner then
+            frame:SetFrameStrata(self.owner:GetFrameStrata())
+            frame:SetFrameLevel(self.owner:GetFrameLevel() + 50)
+        end
+        frame:Show(); frame:Raise()
+    end
     function widget:Hide() frame:Hide() end
     frame:SetScript("OnHide", function() widget:Fire("OnClose") end)
     return GUI:RegisterAsContainer(widget)
-end, 1)
+end, 2)
 
 -- A scalar input and its actions share one line. Validation only consumes space
 -- when there is an error; multiline values retain the ordinary Flow layout.

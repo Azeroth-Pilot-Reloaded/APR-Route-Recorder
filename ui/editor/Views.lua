@@ -110,6 +110,7 @@ function Editor:DrawSteps(parent)
     search:DisableButton(true)
     search:SetText(self.query or "")
     search:SetCallback("OnTextChanged", function(_, _, text)
+        self:MarkInteraction()
         self.query, self.page = text, 1
         self:DrawList()
         self.list:SetScroll(0)
@@ -117,18 +118,22 @@ function Editor:DrawSteps(parent)
     heading:AddChild(search)
     UI.Dropdown(heading, "", { all = T("All steps"), quests = T("Quests"), travel = T("Travel"), other = T("Other actions") },
         self.filter or "all", function(value)
+            self:MarkInteraction()
             self.filter, self.page = value, 1
             self:DrawList(); self.list:SetScroll(0)
         end)
     self.list = UI.Scroll(self.listPanel)
     local footer = UI.Toolbar(self.listPanel, true)
     self.previousButton = UI.IconButton(footer, "previous", "Previous", function()
+        self:MarkInteraction()
         self.page = self.page - 1; self:DrawList(); self.list:SetScroll(0)
     end)
     self.nextButton = UI.IconButton(footer, "next", "Next", function()
+        self:MarkInteraction()
         self.page = self.page + 1; self:DrawList(); self.list:SetScroll(0)
     end)
     UI.Button(footer, "Jump to latest", function()
+        self:MarkInteraction()
         self.editGroupConditions = nil
         self.query, self.filter, self.page = "", "all", math.max(1, math.ceil(#self:Steps() / PAGE_SIZE))
         self.session:SetSelected(math.max(1, #self:Steps()), self:StepGroup())
@@ -230,8 +235,9 @@ function Editor:DrawSteps(parent)
     self:DrawInspector()
 end
 
-function Editor:SelectStep(index, openInspector)
+function Editor:SelectStep(index, openInspector, automatic)
     if not self:Steps()[index] then return false end
+    if not automatic then self:MarkInteraction() end
     GUI:ClearFocus()
     if self.fieldPicker then self.fieldPicker:Hide() end
     self.session:SetSelected(index, self:StepGroup())
@@ -461,6 +467,7 @@ function Editor:DrawLua()
     edit:SetUserData("body", true)
     container:AddChild(edit)
     self.luaBox, AprRC.export.editbox = edit, edit
+    self:WatchScrollInteraction(edit.scrollFrame, edit.scrollBar)
     local session = self.session
     local text = session.raw
     if not text then text, self.luaStepPositions = Model:RouteText(session.draft, true) end
@@ -499,6 +506,7 @@ function Editor:DrawLua()
     self.luaPreviousLength = #text
     edit:SetCallback("OnTextChanged", function(_, _, value, autoIndent)
         if self.settingLua then return end
+        self:MarkInteraction()
         local box = edit.editBox
         value = value or box:GetText() or ""
         self.luaPreviousLength = #value

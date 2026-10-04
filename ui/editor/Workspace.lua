@@ -27,6 +27,7 @@ function UI.Scroll(parent)
     widget:SetLayout("Flow")
     widget:SetUserData("body", true)
     parent:AddChild(widget)
+    Editor:WatchScrollInteraction(widget.scrollframe, widget.scrollbar)
     return widget
 end
 
@@ -46,6 +47,7 @@ function Editor:Confirm(text, callback)
     if self.confirm then self.confirm:Show(); return end
     local dialog = AprRC:CreateWidget("APRConfirmation")
     dialog:SetLayout("APRWorkspace")
+    dialog:SetOwner(self.frame and self.frame.frame)
     self.confirm = dialog
     dialog:SetTitle(T("Route workshop"))
     dialog:SetWidth(470)
@@ -59,7 +61,47 @@ end
 
 local function SetStatusLabel(widget, text)
     -- AceGUI labels recalculate their anchors/layout even when the text is unchanged.
-    if widget.label:GetText() ~= text then widget:SetText(text) end
+    if widget.label:GetText() ~= text then
+        widget:SetText(text)
+        if widget.parent then widget.parent:DoLayout() end
+    end
+end
+
+local function CompactStatus(parent, maximum, alignment)
+    local widget = UI.LabelWidget(parent, "")
+    widget.label:SetWordWrap(false)
+    widget:SetJustifyH(alignment)
+    widget:SetUserData("compactStatus", true)
+    widget:SetUserData("naturalWidth", maximum)
+    local release = widget.events.OnRelease
+    widget:SetCallback("OnRelease", function(...)
+        widget.label:SetWordWrap(true)
+        if release then release(...) end
+    end)
+    return widget
+end
+
+function Editor:MarkInteraction()
+    self.lastInteractionAt = GetTime()
+    self.nextFollowAt = self.lastInteractionAt + 5
+    self.stepScrollToken, self.luaScrollToken, self.pendingManualStep = nil, nil, nil
+end
+
+function Editor:WatchScrollInteraction(scroll, scrollbar)
+    local function activity(native)
+        while native do
+            if self.frame and native == self.frame.frame then self:MarkInteraction(); return end
+            native = native:GetParent()
+        end
+    end
+    if scroll and not scroll.aprInteractionHooked then
+        scroll.aprInteractionHooked = true
+        scroll:HookScript("OnMouseWheel", activity)
+    end
+    if scrollbar and not scrollbar.aprInteractionHooked then
+        scrollbar.aprInteractionHooked = true
+        scrollbar:HookScript("OnMouseDown", activity)
+    end
 end
 
 function Editor:UpdateStatus()
@@ -150,6 +192,7 @@ function Editor:FormContext()
 end
 
 function Editor:SelectRoute(name)
+    self:MarkInteraction()
     self.pendingManualStep = nil
     self.nextFollowAt, self.aprFollowTarget = GetTime() + 5, nil
     if self.mergeDialog then self.mergeDialog:Hide() end
@@ -451,7 +494,7 @@ function Editor:DrawTab()
     self.frame:DoLayout()
     if reopenFind and self.luaBox then self:OpenLuaFind() end
     self:UpdateStatus()
-    if self.tab ~= "parallel" and not self.luaFindBar and self.session and self.follow and not self.session:IsDirty() and
+    if self.tab ~= "parallel" and self:CanFollowRecording() and
         self.session.selected == #self.session.draft.steps then self:ScrollToLatest() end
     AprRC.TutoFrame:RefreshPointer()
 end
@@ -485,6 +528,22 @@ local function interacting(widget, ignored)
     return false
 end
 
+function Editor:CanFollowRecording()
+    local session = self.session
+    if not self.frame or not session or not self.follow or
+        not AprRC.settings.profile.recordBarFrame.isRecording or session.name ~= AprRCData.CurrentRoute.name then return false end
+    if interacting(self.frame) or (self.frame.frame:IsMouseOver() and
+        (IsMouseButtonDown("LeftButton") or IsMouseButtonDown("RightButton"))) then
+        self:MarkInteraction()
+        return false
+    end
+    return (not self.lastInteractionAt or GetTime() >= self.lastInteractionAt + 5) and
+        not session:IsDirty() and not session.followPaused and
+        not self.confirm and not self.nameDialog and not self.fieldPicker and not self.luaFindBar and
+        not self.mergeDialog and not self.closeDialog and not AprRC.CommandBarSetting.dragging and
+        not (self.stepsSplit and self.stepsSplit.dragging)
+end
+
 function Editor:HandleStepKey(key)
     if not self.frame or not self.session or not self.list or
         (self.tab ~= "steps" and self.tab ~= "parallel") then return false end
@@ -493,15 +552,18 @@ function Editor:HandleStepKey(key)
         (self.stepsSplit and self.stepsSplit.dragging) or (IsModifierKeyDown and IsModifierKeyDown()) then return false end
     if key == "RIGHT" then
         if not self.compact or self.compactPane ~= "inspector" then return false end
+        self:MarkInteraction()
         self:ShowStepPane("list")
         return true
     elseif key == "LEFT" then
         if not self:Steps()[self:SelectedStep()] then return false end
+        self:MarkInteraction()
         self:ShowStepPane("inspector")
         return true
     elseif key == "UP" or key == "DOWN" then
         local matches = Model:Filter(self:Steps(), self.query, self.filter, UI.Label)
         if #matches == 0 then return false end
+        self:MarkInteraction()
         local position
         for offset, index in ipairs(matches) do
             if index == self:SelectedStep() then position = offset; break end
@@ -559,7 +621,7 @@ function Editor:ScrollToStep(index, group)
 end
 
 function Editor:ScrollToLatest()
-    if self.tab == "parallel" or self.luaFindBar then return end
+    if self.tab == "parallel" or not self:CanFollowRecording() then return end
     if self.list then self.list:SetScroll(1000) end
     local box = self.luaBox
     if not box then return end
@@ -572,7 +634,7 @@ function Editor:ScrollToLatest()
     scroll()
     -- WoW can calculate the multiline edit box's scroll range after layout.
     C_Timer.After(0, function()
-        if self.luaScrollToken == token and self.luaBox == box and self.follow and not self.session:IsDirty() then scroll() end
+        if self.luaScrollToken == token and self.luaBox == box and self:CanFollowRecording() then scroll() end
     end)
 end
 
@@ -580,7 +642,7 @@ function Editor:Refresh(forceFollow)
     if not self.frame then return end
     local now = GetTime()
     local recenter = forceFollow or now >= (self.nextFollowAt or 0)
-    if recenter then self.nextFollowAt = now + 5 end
+    if now >= (self.nextFollowAt or 0) then self.nextFollowAt = now + 5 end
     self:SafetyTick()
     if self.descriptionsDirty and not self.confirm and not self.fieldPicker and not interacting(self.frame) then
         self.descriptionsDirty = nil
@@ -610,10 +672,10 @@ function Editor:Refresh(forceFollow)
         aprIndex, aprGroup = AprRC:GetAPRPlaybackSelection(session.name)
     end
     if not aprIndex then self.luaAPRPosition = nil end
-    local following = not aprIndex and self.follow and session and session.name == AprRCData.CurrentRoute.name
+    local following = not aprIndex and self:CanFollowRecording()
     if session and not AprRC.CommandBarSetting.dragging and
         not (self.stepsSplit and self.stepsSplit.dragging) and not self.confirm and not self.nameDialog and
-        not self.luaFindBar and not interacting(self.frame, (manualIndex or following or aprIndex) and self.luaBox or nil) and
+        not self.luaFindBar and not interacting(self.frame, (manualIndex or aprIndex) and self.luaBox or nil) and
         not self.fieldPicker and not self.mergeDialog and not self.closeDialog and
         not session:IsDirty() and not session.followPaused and (session:IsStale(true) or manualIndex or (forceFollow and following)) then
         local listScroll = self.list and self.list.localstatus.scrollvalue or 0
@@ -666,10 +728,8 @@ function Editor:Refresh(forceFollow)
 end
 
 function Editor:FollowRecordingStep()
+    if not self:CanFollowRecording() then return end
     local session = self.session
-    if session:IsDirty() or session.followPaused or self.confirm or self.nameDialog or self.fieldPicker or
-        self.luaFindBar or self.mergeDialog or self.closeDialog or AprRC.CommandBarSetting.dragging or
-        (self.stepsSplit and self.stepsSplit.dragging) or interacting(self.frame, self.luaBox) then return end
     if self.tab ~= "steps" and self.tab ~= "parallel" and self.tab ~= "lua" then return end
     local index = #session.draft.steps
     if index == 0 then return end
@@ -681,7 +741,7 @@ function Editor:FollowRecordingStep()
         if self:SelectedStep() ~= index or self.query ~= "" or self.filter ~= "all" or self.editGroupConditions or
             self.page ~= math.ceil(index / UI.PageSize) then
             self.query, self.filter = "", "all"
-            self:SelectStep(index)
+            self:SelectStep(index, nil, true)
         else self:ScrollToStep(index) end
     end
 end
@@ -772,6 +832,12 @@ function Editor:Show()
     end
     local frame = AprRC:CreateWidget("Frame")
     self.frame = frame
+    if not frame.frame.aprInteractionHooked then
+        frame.frame.aprInteractionHooked = true
+        frame.frame:HookScript("OnMouseDown", function(native)
+            if self.frame and self.frame.frame == native then self:MarkInteraction() end
+        end)
+    end
     self:InstallSaveShortcut(frame)
     frame:SetTitle("APR  |  " .. T("Route workshop"))
     -- Several legacy dialogs hide this region before returning frames to the pool.
@@ -800,12 +866,10 @@ function Editor:Show()
     self.compactButton.frame:SetParent(frame.frame)
     self.compactButton.frame:SetPoint("TOPRIGHT", frame.frame, "TOPRIGHT", -14, -8)
     self.compactButton.frame:Show()
-    self.recordStatus = UI.LabelWidget(header, "")
-    self.summary = UI.LabelWidget(header, "")
-    self.recordStatus:SetWidth(150); self.summary:SetWidth(145)
+    self.recordStatus = CompactStatus(header, 220, "LEFT")
+    self.summary = CompactStatus(header, 220, "RIGHT")
     -- State remains visible in the footer at narrow widths, without enlarging
     -- the route selector's single-row header.
-    self.recordStatus:SetUserData("compactStatus", true); self.summary:SetUserData("compactStatus", true)
     self.tabs = AprRC:CreateWidget("TabGroup")
     self.tabs:SetLayout("APRFill")
     self.tabs:SetAutoAdjustHeight(false)
@@ -815,7 +879,9 @@ function Editor:Show()
         { value = "lua", text = T("Lua editor") }, { value = "versions", text = T("Versions") },
         { value = "commands", text = T("Commands") },
         { value = "tools", text = T("Tools") } })
-    self.tabs:SetCallback("OnGroupSelected", function(_, _, tab) if not self.selectingTab then self:SelectTab(tab) end end)
+    self.tabs:SetCallback("OnGroupSelected", function(_, _, tab)
+        if not self.selectingTab then self:MarkInteraction(); self:SelectTab(tab) end
+    end)
     frame:AddChild(self.tabs)
     local footer = UI.Toolbar(frame, true)
     self.saveButton = UI.Button(footer, "Save", function() self:Save() end, 135)

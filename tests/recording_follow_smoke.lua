@@ -1,4 +1,6 @@
 local E, Model = AprRC.routeEditor, AprRC.editorModel
+local oldTime, now = GetTime, 0
+GetTime = function() return now end
 local route = assert(Model:NewRoute("Live recording refresh"))
 for index = 1, 85 do route.steps[index] = { Note = "Recorded step " .. index } end
 AprRCData.CurrentRoute = route
@@ -52,7 +54,8 @@ StaticPopupDialogs.APRRC_EDITBOX_DIALOG.OnAccept({
 TestRunTimers()
 assert(E.session.draft.steps[#route.steps].Note == "Legacy popup note")
 
--- Follow always goes to the last page, even after selecting an older step/filter.
+-- Capture follows the last page once the editor has been idle.
+now = 10
 E.follow = true
 E.query, E.filter = "no matching steps", "quests"
 AprRC:NewStep({ Note = "Capture at end" })
@@ -68,14 +71,20 @@ AprRC.command:SlashCmd("noarrow true")
 TestRunTimers()
 assert(E.session.selected == #route.steps and E.session.draft.steps[#route.steps].NoArrow)
 
--- Clean Lua viewing may retain focus while following capture to the end.
+-- A focused clean Lua editor must retain both source and cursor during capture.
 E:SelectTab("lua")
 E.luaBox.editBox:SetFocus()
+E.luaBox.editBox:SetCursorPosition(12)
+local beforeCapture = E.luaBox:GetText()
 AprRC:NewStep({ Note = "Visible in Lua" })
 TestRunTimers(); TestRunTimers()
-assert(E.luaBox:GetText():find("Visible in Lua", 1, true))
+assert(E.luaBox:GetText() == beforeCapture and E.luaBox.editBox:GetCursorPosition() == 12)
 assert(E.luaBox.editBox:HasFocus())
-assert(E.luaBox.editBox:GetCursorPosition() == #E.luaBox:GetText())
+E.luaBox.editBox:ClearFocus()
+now = now + 6; E:Tick(); TestRunTimers()
+assert(E.luaBox:GetText():find("Visible in Lua", 1, true))
+assert(not E.luaBox.editBox:HasFocus())
+assert(E.luaBox.editBox:GetCursorPosition() >= E.luaStepPositions.steps[#route.steps].start)
 assert(E.session.selected == #route.steps and not E.session:IsDirty())
 
 -- Unsaved Lua is never overwritten, including incomplete syntax.
@@ -109,9 +118,11 @@ assert(#E.session.draft.steps == #route.steps - 1)
 E.session:Reload()
 E.follow = true
 E.session.selected = 1
+now = now + 6
 E:Tick(true)
 assert(E.session.selected == #route.steps)
 TestCloseWorkshop(); TestRunTimers()
 AprRC.settings.profile.recordBarFrame.isRecording = false
+GetTime = oldTime
 assert(#UIErrors == 0, table.concat(UIErrors, "\n"))
 print("Live command refresh, last-step following, Lua cursor/scroll and draft protection passed.")
