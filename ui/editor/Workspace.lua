@@ -469,6 +469,35 @@ local function interacting(widget, ignored)
     return false
 end
 
+function Editor:HandleStepKey(key)
+    if not self.frame or not self.session or not self.list or
+        (self.tab ~= "steps" and self.tab ~= "parallel") then return false end
+    if (GetCurrentKeyBoardFocus and GetCurrentKeyBoardFocus()) or interacting(self.frame) or
+        self.confirm or self.nameDialog or self.fieldPicker or self.mergeDialog or self.closeDialog or
+        (self.stepsSplit and self.stepsSplit.dragging) or (IsModifierKeyDown and IsModifierKeyDown()) then return false end
+    if key == "RIGHT" then
+        if not self.compact or self.compactPane ~= "inspector" then return false end
+        self:ShowStepPane("list")
+        return true
+    elseif key == "LEFT" then
+        if not self:Steps()[self:SelectedStep()] then return false end
+        self:ShowStepPane("inspector")
+        return true
+    elseif key == "UP" or key == "DOWN" then
+        local matches = Model:Filter(self:Steps(), self.query, self.filter, UI.Label)
+        if #matches == 0 then return false end
+        local position
+        for offset, index in ipairs(matches) do
+            if index == self:SelectedStep() then position = offset; break end
+        end
+        local target = position and math.max(1, math.min(#matches, position + (key == "UP" and -1 or 1))) or
+            (key == "UP" and #matches or 1)
+        if matches[target] ~= self:SelectedStep() then self:SelectStep(matches[target]) end
+        return true
+    end
+    return false
+end
+
 function Editor:RequestRefresh(name, manualStep)
     if manualStep and self.frame and self.session and self.session.name == name and not self.session:IsDirty() then
         self.pendingManualStep = { session = self.session, step = manualStep }

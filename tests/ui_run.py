@@ -66,6 +66,7 @@ def run():
     load("tests/pickers_smoke.lua")
     load("tests/objective_rows_smoke.lua")
     load("tests/step_navigation_smoke.lua")
+    load("tests/step_keyboard_smoke.lua")
     load("tests/recent_choices_smoke.lua")
     load("tests/search_select_smoke.lua")
     load("tests/apr_import_smoke.lua")

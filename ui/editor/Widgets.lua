@@ -203,6 +203,9 @@ GUI:RegisterWidgetType("APRSplitGroup", function()
     end
     function widget:OnRelease()
         divider:SetScript("OnUpdate", nil); self.dragging = nil; content.aprCompactPane = nil
+        frame:SetScript("OnKeyDown", nil)
+        frame:EnableKeyboard(false)
+        frame:SetPropagateKeyboardInput(true)
     end
     function widget:OnWidthSet(width) content:SetWidth(width) end
     function widget:OnHeightSet(height) content:SetHeight(height) end

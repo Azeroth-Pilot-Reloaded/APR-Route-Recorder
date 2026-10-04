@@ -93,6 +93,11 @@ function Editor:DrawSteps(parent)
     local container = parent or self.tabs
     container:AddChild(split)
     self.stepsSplit = split
+    split.frame:EnableKeyboard(true)
+    split.frame:SetPropagateKeyboardInput(true)
+    split.frame:SetScript("OnKeyDown", function(frame, key)
+        frame:SetPropagateKeyboardInput(not self:HandleStepKey(key))
+    end)
     split.content.aprCompactPane = self.compact and (self.compactPane or "list") or nil
     self.listPanel = UI.Body(split)
     local heading = UI.Toolbar(self.listPanel)

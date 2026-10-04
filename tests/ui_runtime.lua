@@ -30,6 +30,8 @@ local function event(self, name, ...)
 end
 function Native:SetScript(name, callback) self.scripts[name] = callback end
 function Native:GetScript(name) return self.scripts[name] end
+function Native:EnableKeyboard(enabled) self.keyboardEnabled = enabled end
+function Native:SetPropagateKeyboardInput(enabled) self.propagateKeyboardInput = enabled end
 function Native:HookScript(name, callback)
     local old = self.scripts[name]
     self.scripts[name] = function(...) if old then old(...) end; callback(...) end
