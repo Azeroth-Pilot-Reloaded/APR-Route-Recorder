@@ -992,3 +992,5 @@ L["SAVE_MERGE_HELP"] = "Save keeps compatible draft and recording changes. Confl
 L["Before restore"] = "Before restore"
 L["%d unsaved draft(s) will be kept."] = "%d unsaved draft(s) will be kept."
 L["Objectives"] = "目标"
+L["Previous step"] = "上一步"
+L["Next step"] = "下一步"

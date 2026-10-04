@@ -111,6 +111,23 @@ GUI:RegisterLayout("APRInput", function(content, children)
     content.aprLayout = nil
 end)
 
+GUI:RegisterLayout("APRInspectorHeader", function(content, children)
+    local width, height = content:GetWidth(), 30
+    for index, child in ipairs(children) do
+        child.frame:ClearAllPoints()
+        if index == 1 then
+            child:SetWidth(math.max(1, width - 68))
+            child.frame:SetPoint("TOPLEFT", content, "TOPLEFT")
+            child:DoLayout()
+        else
+            child.frame:SetPoint("TOPRIGHT", content, "TOPRIGHT", -(#children - index) * 34, 0)
+        end
+        height = math.max(height, child.frame:GetHeight())
+        child.frame:Show()
+    end
+    content.obj:LayoutFinished(width, height)
+end)
+
 GUI:RegisterLayout("APRColumns", function(content, children)
     if content.aprLayout then return end
     content.aprLayout = true

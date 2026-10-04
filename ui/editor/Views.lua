@@ -173,9 +173,18 @@ function Editor:DrawSteps(parent)
     addButton:SetRelativeWidth(0.27)
     addButton:SetDisabled(not addType:GetValue())
     local detail = UI.Body(split)
+    local navigation = UI.Toolbar(detail)
+    navigation:SetLayout("APRInspectorHeader")
+    local back = UI.Group(navigation)
     if self.compact then
-        UI.Button(UI.Toolbar(detail), "Back to steps", function() self:ShowStepPane("list") end, 210)
+        UI.Button(back, "Back to steps", function() self:ShowStepPane("list") end, 210)
     end
+    self.stepPrevious = UI.IconButton(navigation, "previous", "Previous step", function()
+        self:SelectStep(self:SelectedStep() - 1)
+    end)
+    self.stepNext = UI.IconButton(navigation, "next", "Next step", function()
+        self:SelectStep(self:SelectedStep() + 1)
+    end)
     self.inspector = UI.Scroll(detail)
     local actions = UI.Toolbar(detail, true)
     self.moveUp = UI.IconButton(actions, "up", "Move up", function() self:Move(-1) end)
@@ -214,6 +223,28 @@ function Editor:DrawSteps(parent)
     actions:AddChild(moveTo)
     self:DrawList()
     self:DrawInspector()
+end
+
+function Editor:SelectStep(index, openInspector)
+    if not self:Steps()[index] then return false end
+    GUI:ClearFocus()
+    if self.fieldPicker then self.fieldPicker:Hide() end
+    self.session:SetSelected(index, self:StepGroup())
+    self.editGroupConditions = nil
+    local matches = Model:Filter(self:Steps(), self.query, self.filter, UI.Label)
+    local position
+    for offset, candidate in ipairs(matches) do
+        if candidate == index then position = offset; break end
+    end
+    if not position then self.query, self.filter, position = "", "all", index end
+    self.page = math.ceil(position / PAGE_SIZE)
+    self.session:Persist()
+    self.formModes, self.formPages = {}, {}
+    self:DrawList(); self:DrawInspector()
+    self.inspector:SetScroll(0)
+    if openInspector and self.compact then self:ShowStepPane("inspector") end
+    self:ScrollToStep(index, self:StepGroup())
+    return true
 end
 
 function Editor:ShowStepPane(pane)
@@ -288,13 +319,7 @@ function Editor:DrawList()
         local group = self:StepGroup() and session.draft.parallelSteps[self:StepGroup()]
         row:SetConditionBadges(UI.ConditionBadges(step, group and group.conditions))
         row:SetCallback("OnClick", function()
-            session:SetSelected(index, self:StepGroup())
-            self.editGroupConditions = nil
-            session:Persist()
-            self.formModes, self.formPages = {}, {}
-            self:DrawList(); self:DrawInspector()
-            self.inspector:SetScroll(0)
-            if self.compact then self:ShowStepPane("inspector") end
+            self:SelectStep(index, true)
         end)
         row:SetCallback("OnEnter", function()
             UI.ShowStepTooltip(row, index .. ". " .. UI.Label(key), rawDetail, table.concat(metadata, "\n"),
@@ -354,6 +379,8 @@ function Editor:DrawInspector()
             self.routeFormTrail, "Route overview", session.name)
     else
         local step = not self.editGroupConditions and self:Steps()[self:SelectedStep()]
+        self.stepPrevious:SetDisabled(not step or self:SelectedStep() <= 1)
+        self.stepNext:SetDisabled(not step or self:SelectedStep() >= #self:Steps())
         self.moveUp:SetDisabled(not step or self:SelectedStep() == 1 or step.RouteCompleted)
         self.moveDown:SetDisabled(not step or self:SelectedStep() == #self:Steps() or step.RouteCompleted or
             (self:Steps()[self:SelectedStep() + 1] or {}).RouteCompleted)

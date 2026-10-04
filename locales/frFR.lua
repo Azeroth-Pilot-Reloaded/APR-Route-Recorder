@@ -1043,3 +1043,5 @@ L["SAVE_MERGE_HELP"] = "Save conserve les changements compatibles du brouillon e
 L["Before restore"] = "Avant restauration"
 L["%d unsaved draft(s) will be kept."] = "Les %d brouillons non sauvegardés seront conservés."
 L["Objectives"] = "Objectifs"
+L["Previous step"] = "Étape précédente"
+L["Next step"] = "Étape suivante"
