@@ -34,6 +34,7 @@ function Editor:DetachLuaTools()
     self.luaDiagnosticLabel, self.luaOutlineSelect, self.luaFormatButton = nil, nil, nil
     self.luaReplaceBar, self.luaReplaceInput, self.luaReplaceButton, self.luaReplaceAllButton = nil, nil, nil, nil
     self.luaCaseCheck, self.luaWordCheck = nil, nil
+    self.luaToolbar = nil
 end
 
 function Editor:QueueLuaAnalysis(edit)
@@ -64,8 +65,12 @@ function Editor:AnalyzeLua(edit)
         self.luaAnalysisBaseline = AprRC:ParseLuaData(self.session.base)
         self.luaAnalysisBaselineText = self.session.base
     end
-    self.luaDiagnostics, self.luaOutline, self.luaParsed, self.luaSourceMap = Language:Analyze(text, self.luaAnalysisBaseline)
+    local comments
+    self.luaDiagnostics, self.luaOutline, self.luaParsed, self.luaSourceMap, comments = Language:Analyze(text, self.luaAnalysisBaseline)
     self.luaAnalysisText = text
+    local dirty = self.session:IsDirty()
+    self.session:ReconcileRaw(self.luaParsed, comments, true)
+    if dirty ~= self.session:IsDirty() then self:UpdateStatus() end
     edit:SetDiagnostics(self.luaDiagnostics)
     local first = self.luaDiagnostics[1]
     if first then
@@ -120,7 +125,10 @@ function Editor:FormatLua()
     self:CloseLuaCompletion()
     local text, cursor, location = Language:Format(edit:GetText(), edit:GetCursorPosition())
     if not text then self:RevealLuaError(location); self:Message(cursor, true); return end
-    self.luaToolsAction = true; edit:EditText(text, cursor); self.luaToolsAction = nil; edit:SetFocus()
+    self.luaToolsAction = true
+    local changed = edit:EditText(text, cursor)
+    self.luaToolsAction = nil; edit:SetFocus()
+    self:Message(T(changed and "Lua formatted" or "Lua already formatted"))
 end
 
 function Editor:UpdateLuaCommandInputs()
@@ -133,16 +141,12 @@ function Editor:UpdateLuaCommandInputs()
 end
 
 function Editor:AttachLuaTools(container, edit)
-    local tools = UI.Toolbar(container)
-    table.remove(container.children)
-    for index, child in ipairs(container.children) do
-        if child == edit then table.insert(container.children, index, tools); break end
-    end
-    self.luaFormatButton = UI.Button(tools, "Format Lua", function() self:FormatLua() end, 125)
-    UI.Button(tools, "APR completion", function() edit:SetFocus(); self:CompleteLua(true) end, 160)
-    UI.Button(tools, "Replace", function() self:OpenLuaReplace() end, 110)
+    local tools = self.luaToolbar
+    self.luaFormatButton = UI.IconButton(tools, "format", T("Format Lua") .. " · Shift+Alt+F", function() self:FormatLua() end)
+    UI.IconButton(tools, "completion", T("APR completion") .. " · Ctrl+Space", function() edit:SetFocus(); self:CompleteLua(true) end)
+    UI.IconButton(tools, "replace", T("Replace") .. " · Ctrl+H", function() self:OpenLuaReplace() end)
     local outline = UI.SearchSelect(tools, T("Step outline"), {}, nil, function(index) self:NavigateLuaStep(index) end)
-    outline:SetFullWidth(false); outline:SetRelativeWidth(0.35); outline:SetCommitOnly(true); outline:SetMaxResults(80)
+    outline:SetFullWidth(false); outline:SetUserData("flex", 1); outline:SetCommitOnly(true); outline:SetMaxResults(80)
     outline.label:Hide(); outline:SetHeight(26)
     outline:SetText(T("Step outline"))
     outline.editbox:SetScript("OnEnter", function()
@@ -169,6 +173,11 @@ function Editor:AttachLuaTools(container, edit)
     end)
     diagnostic:SetCallback("OnLeave", function() GameTooltip:Hide() end)
     footer:AddChild(diagnostic); self.luaDiagnosticLabel = diagnostic
+    edit:SetCallback("OnEditFocusLost", function()
+        if not self.luaCompletionFrame or not self.luaCompletionFrame:IsShown() or not self.luaCompletionFrame:IsMouseOver() then
+            self:CloseLuaCompletion()
+        end
+    end)
     edit:SetCallback("OnDiagnosticClicked", function(_, _, issue) self:RevealLuaError(issue.location); edit:SetFocus() end)
     self:UpdateLuaCommandInputs()
     self:QueueLuaAnalysis(edit)
@@ -189,12 +198,12 @@ function Editor:HandleLuaCommand(key)
     if key == "F" and IsShiftKeyDown() and IsAltKeyDown() then self:FormatLua(); return true end
     if key == "F8" then self:NavigateLuaDiagnostic(IsShiftKeyDown() and -1 or 1); return true end
     if self.luaCompletion and self.luaBox.editBox:HasFocus() then
-        if key == "UP" or key == "DOWN" then
+        if (key == "UP" or key == "DOWN") and IsAltKeyDown() then
             local completion = self.luaCompletion
             completion.index = (completion.index - 1 + (key == "UP" and -1 or 1)) % #completion.items + 1
             self:DrawLuaCompletion(); return true
         end
-        if key == "TAB" or key == "ENTER" then self:AcceptLuaCompletion(); return true end
+        if key == "TAB" then self:AcceptLuaCompletion(); return true end
         if key == "ESCAPE" then self:CloseLuaCompletion(); return true end
     end
     return false
@@ -275,6 +284,7 @@ end
 
 function Editor:CloseLuaCompletion()
     if self.luaCompletionFrame then self.luaCompletionFrame:Hide() end
+    if self.luaCompletionGhost then self.luaCompletionGhost:Hide() end
     self.luaCompletion = nil
 end
 
@@ -287,7 +297,7 @@ function Editor:CompleteLua(explicit)
     if not context or (not explicit and context.prefix == "") then self:CloseLuaCompletion(); return end
     local items = Language:Candidates(context, self.luaParsed or self.session.draft)
     if #items == 0 then self:CloseLuaCompletion(); return end
-    self.luaCompletion = { context = context, items = items, index = 1, source = text, edit = edit }
+    self.luaCompletion = { context = context, items = items, index = 1, source = text, edit = edit, explicit = explicit }
     self:DrawLuaCompletion()
 end
 
@@ -295,6 +305,33 @@ function Editor:DrawLuaCompletion()
     local completion = self.luaCompletion
     if not completion then return end
     local edit = completion.edit
+    local item = completion.items[completion.index]
+    local insert = item.insert
+    if item.kind == "field" and not completion.source:sub(completion.context.last + 1):match("^%s*=") then insert = insert .. " = " end
+    local suffix = insert:sub(1, #completion.context.prefix) == completion.context.prefix and
+        insert:sub(#completion.context.prefix + 1) or (" → " .. insert)
+    local x, y = edit:CursorAnchor()
+    local ghost = self.luaCompletionGhost
+    if not ghost then
+        ghost = CreateFrame("Frame", nil, edit.scrollFrame)
+        ghost:SetClipsChildren(true)
+        ghost.text = ghost:CreateFontString(nil, "OVERLAY")
+        ghost.text:SetPoint("TOPLEFT"); ghost.text:SetJustifyH("LEFT"); ghost.text:SetWordWrap(false)
+        self.luaCompletionGhost = ghost
+    end
+    ghost:SetParent(edit.scrollFrame); ghost:SetFrameLevel(edit.editBox:GetFrameLevel() + 5)
+    local font, size, flags = edit.editBox:GetFont()
+    ghost.text:SetFont(font, size, flags); ghost.text:SetTextColor(0.55, 0.6, 0.65)
+    ghost.text:SetText(suffix:gsub("|", "||"))
+    ghost:ClearAllPoints(); ghost:SetPoint("TOPLEFT", edit.scrollFrame, "TOPLEFT", x, y)
+    ghost:SetSize(math.max(1, math.min(ghost.text:GetStringWidth(), edit.scrollFrame:GetWidth() - x)), edit.lineHeight)
+    -- Never add the ghost to the EditBox buffer: copy, save, undo and validation
+    -- continue to see only what the user actually typed.
+    if suffix ~= "" and x >= 0 and y <= 0 and -y < edit.scrollFrame:GetHeight() then ghost:Show() else ghost:Hide() end
+    if not completion.explicit then
+        if self.luaCompletionFrame then self.luaCompletionFrame:Hide() end
+        return
+    end
     local popup = self.luaCompletionFrame
     if not popup then
         popup = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
@@ -302,16 +339,16 @@ function Editor:DrawLuaCompletion()
         popup:SetBackdropColor(0.08, 0.08, 0.08, 1); popup:SetBackdropBorderColor(0.5, 0.5, 0.5, 1)
         popup:SetClampedToScreen(true); popup.rows = {}
         popup.header = popup:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        popup.header:SetPoint("TOPLEFT", 8, -7); popup.header:SetText(T("APR completion · Tab / Enter to accept"))
+        popup.header:SetPoint("TOPLEFT", 8, -7); popup.header:SetText(T("APR completion · Tab to accept · Alt+↑/↓"))
         self.luaCompletionFrame = popup
     end
-    popup:SetParent(edit.frame); popup:SetFrameStrata("DIALOG"); popup:SetFrameLevel(edit.editBox:GetFrameLevel() + 10)
+    popup:SetParent(edit.frame); popup:SetFrameStrata(edit.frame:GetFrameStrata()); popup:SetFrameLevel(edit.editBox:GetFrameLevel() + 10)
     popup:SetSize(math.min(430, edit.frame:GetWidth()), 29 + #completion.items * 23)
-    local position = Code:ToDisplay(edit.ranges, completion.context.cursor)
-    local line = Code:LineAt(edit.lines, position)
     popup:ClearAllPoints()
-    local y = line * edit.lineHeight - edit.scrollFrame:GetVerticalScroll()
-    popup:SetPoint("TOPRIGHT", edit.scrollFrame, "TOPRIGHT", -4, -math.max(0, math.min(edit.scrollFrame:GetHeight() - popup:GetHeight(), y)))
+    local left = math.max(0, math.min(edit.scrollFrame:GetWidth() - popup:GetWidth(), x))
+    local below = -y + edit.lineHeight
+    if below + popup:GetHeight() > edit.scrollFrame:GetHeight() then below = math.max(0, -y - popup:GetHeight()) end
+    popup:SetPoint("TOPLEFT", edit.scrollFrame, "TOPLEFT", left, -below)
     for index, item in ipairs(completion.items) do
         local row = popup.rows[index]
         if not row then

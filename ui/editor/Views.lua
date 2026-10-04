@@ -466,10 +466,11 @@ function Editor:DrawLua()
     if not text then text, self.luaStepPositions = Model:RouteText(session.draft, true) end
     edit:SetText(text)
     local folding = UI.Toolbar(container)
+    folding:SetLayout("APRCompactToolbar"); self.luaToolbar = folding
     table.remove(container.children); table.insert(container.children, #container.children, folding)
-    UI.Button(folding, "Fold all", function() edit:FoldAll(true); edit:SetFocus() end, 130)
-    UI.Button(folding, "Unfold all", function() edit:UnfoldAll(); edit:SetFocus() end, 130)
-    UI.Button(folding, "Compare versions", function() self:OpenVersionDiff() end, 170)
+    UI.IconButton(folding, "compact", "Fold all", function() edit:FoldAll(true); edit:SetFocus() end)
+    UI.IconButton(folding, "expand", "Unfold all", function() edit:UnfoldAll(); edit:SetFocus() end)
+    UI.IconButton(folding, "compare", "Compare versions", function() self:OpenVersionDiff() end)
     local shortcutText = T("Lua shortcuts") .. "\n" .. T("Ctrl+S: save. Ctrl+L: select line. Ctrl+H: replace.") .. "\n" ..
         T("Ctrl+Space: APR completion. Shift+Alt+F: format. Ctrl+Shift+O: step outline. F8 / Shift+F8: errors.") .. "\n" ..
         T("Ctrl+A then Ctrl+C to copy. Ctrl+Z / Ctrl+Y to undo / redo.") .. "\n" ..
@@ -482,7 +483,7 @@ function Editor:DrawLua()
         "\nCtrl+K Ctrl+1 … 7: " .. T("Fold by level") ..
         "\nCtrl+K Ctrl+8 / 9: " .. T("Fold / unfold regions") ..
         "\nCtrl+K Ctrl+/: " .. T("Fold block comments") .. "\n" .. T("Shift+click: include nested sections.")
-    local help = UI.Button(folding, "Folding shortcuts", function() end, 170)
+    local help = UI.IconButton(folding, "help", "Folding shortcuts", function() end)
     edit:SetCallback("OnFoldingChordChanged", function(_, _, pending)
         help:SetText(pending and "Ctrl+K …" or T("Folding shortcuts"))
     end)
@@ -504,7 +505,7 @@ function Editor:DrawLua()
         local wasDirty, hadNotice = session:IsDirty(), self.notice ~= nil
         local couldUndo = session.rawCursor > 1
         local couldRedo = session.rawCursor < #session.rawHistory
-        session.raw = value
+        session:SetRaw(value)
         session.followPaused = true
         session:Touch()
         local history = session.rawHistory
@@ -533,6 +534,7 @@ function Editor:DrawLua()
         if edit.pendingCode and snapshot and snapshot.text == edit:GetText() then snapshot.cursor = cursor end
         if self.luaCompletion and self.luaCompletion.context.cursor ~= cursor then self:CloseLuaCompletion() end
     end)
+    edit:SetCallback("OnScrollChanged", function() if self.luaCompletion then self:DrawLuaCompletion() end end)
     self.luaKeyDown = edit.editBox:GetScript("OnKeyDown")
     edit.editBox:SetScript("OnKeyDown", function(box, key, ...)
         if edit:HandleEditorKey(key) then return end
@@ -679,7 +681,7 @@ function Editor:Undo(delta)
         local index = session.rawCursor + delta
         local snapshot = session.rawHistory[index]
         if not snapshot then return end
-        session.rawCursor, session.raw = index, snapshot.text
+        session.rawCursor = index; session:SetRaw(snapshot.text)
         session:Touch()
         self.settingLua = true
         self.luaBox:SetText(snapshot.text)

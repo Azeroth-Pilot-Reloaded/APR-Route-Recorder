@@ -177,6 +177,7 @@ GUI:RegisterWidgetType("APRLuaEditor", function()
         self.settingCode = true
         self.display, self.ranges = Code:Project(self.raw, self.folds, self.collapsed)
         self.lines, self.rawLines = Code:Lines(self.display), Code:Lines(self.raw)
+        self.navigationLines = nil
         if plain then
             self.rendered = self.display:gsub("|", "||")
             self.spans = { { start = 0, finish = #self.display, offset = 0, nativeFinish = #self.rendered } }
@@ -190,7 +191,7 @@ GUI:RegisterWidgetType("APRLuaEditor", function()
                 self.visibleFolds[fold.line] = self.visibleFolds[fold.line] or fold
             end
         end
-        self.inputBuffer, self.nativeChanges = self.rendered, {}
+        self.inputBuffer, self.nativeChanges, self.encodedDisplay = self.rendered, {}, self.display
         native.set(box, self.rendered)
         self:SizeCode()
         native.move(box, Code:EncodePosition(self.display, self.spans, Code:ToDisplay(self.ranges, cursor or 0)))
@@ -330,6 +331,102 @@ GUI:RegisterWidgetType("APRLuaEditor", function()
         local prefix = self.rendered:sub(span.offset + 1, math.min(position, span.nativeFinish)):gsub("||", "|")
         return span.start + #prefix + shift
     end
+    function widget:NativePosition(position)
+        local changes, from, mapped = self.nativeChanges or {}, 1
+        for index = #changes, 1, -1 do
+            local change = changes[index]
+            local inserted = Code:Decode(change.inserted)
+            if position > change.displayFirst + #inserted then position = position - change.displayDelta
+            elseif position >= change.displayFirst then
+                mapped, from = change.first + Code:NativePosition(change.inserted, position - change.displayFirst), index + 1
+                break
+            end
+        end
+        mapped = mapped or Code:EncodePosition(self.encodedDisplay or self.display, self.spans, position)
+        for index = from, #changes do
+            local change = changes[index]
+            if mapped > change.oldFinish then mapped = mapped + change.newFinish - change.oldFinish
+            elseif mapped >= change.first then mapped = change.newFinish end
+        end
+        return mapped
+    end
+    function widget:NavigationLines()
+        if not self.pendingCode then return self.lines end
+        if not self.navigationLines then self.navigationLines = Code:Lines(self.display) end
+        return self.navigationLines
+    end
+    function widget:CursorAnchor()
+        local position = Code:ToDisplay(self.ranges, self:GetCursorPosition())
+        local lines = self:NavigationLines()
+        local line = Code:LineAt(lines, position)
+        measure:SetText(self.display:sub(lines[line].start + 1, position):gsub("|", "||"))
+        return measure:GetStringWidth() - scroll:GetHorizontalScroll(),
+            -(line - 1) * self.lineHeight + scroll:GetVerticalScroll()
+    end
+    function widget:NavigateCode(key)
+        if key ~= "UP" and key ~= "DOWN" and key ~= "LEFT" and key ~= "RIGHT" and key ~= "HOME" and key ~= "END" then return false end
+        if IsAltKeyDown() then return false end
+        if self.pendingCode then self:QueueCode() end
+        local position = self:DisplayPosition(native.cursor(box))
+        local lines = self:NavigationLines()
+        local line = Code:LineAt(lines, position)
+        local shift = IsShiftKeyDown()
+        if not shift then self.arrowAnchor = nil
+        elseif not self.arrowAnchor then self.arrowAnchor = position end
+        local control = IsControlKeyDown() or (IsMetaKeyDown and IsMetaKeyDown())
+        local function previous(p)
+            p = math.max(0, p - 1)
+            while p > 0 and (self.display:byte(p + 1) or 0) >= 128 and self.display:byte(p + 1) < 192 do p = p - 1 end
+            return p
+        end
+        local function following(p)
+            p = math.min(#self.display, p + 1)
+            while p < #self.display and self.display:byte(p + 1) >= 128 and self.display:byte(p + 1) < 192 do p = p + 1 end
+            return p
+        end
+        if key == "UP" or key == "DOWN" then
+            if not self.arrowX then
+                measure:SetText(self.display:sub(lines[line].start + 1, position):gsub("|", "||"))
+                self.arrowX = measure:GetStringWidth()
+            end
+            local target = line + (key == "UP" and -1 or 1)
+            if target >= 1 and target <= #lines then
+                local value = lines[target].text:gsub("\r$", "")
+                local low, high = 0, #value
+                while low < high do
+                    local middle = math.ceil((low + high) / 2)
+                    measure:SetText(value:sub(1, middle):gsub("|", "||"))
+                    if measure:GetStringWidth() <= self.arrowX then low = middle else high = middle - 1 end
+                end
+                while low > 0 and (value:byte(low + 1) or 0) >= 128 and (value:byte(low + 1) or 0) < 192 do low = low - 1 end
+                position = lines[target].start + low
+            end
+        else
+            self.arrowX = nil
+            if key == "HOME" then position = control and 0 or lines[line].start
+            elseif key == "END" then position = control and #self.display or lines[line].start + #lines[line].text:gsub("\r$", "")
+            elseif key == "LEFT" then
+                position = previous(position)
+                if control then
+                    while position > 0 and self.display:sub(position + 1, position + 1):match("%s") do position = previous(position) end
+                    while position > 0 and self.display:sub(position, position):match("[%w_]") do position = previous(position) end
+                end
+            else
+                position = following(position)
+                if control then
+                    while position < #self.display and self.display:sub(position + 1, position + 1):match("[%w_]") do position = following(position) end
+                    while position < #self.display and self.display:sub(position + 1, position + 1):match("%s") do position = following(position) end
+                end
+            end
+        end
+        self.navigatingCode = true
+        native.move(box, self:NativePosition(position))
+        if shift then
+            native.highlight(box, self:NativePosition(math.min(position, self.arrowAnchor)), self:NativePosition(math.max(position, self.arrowAnchor)))
+        end
+        self.navigatingCode = nil
+        return true
+    end
     function widget:RevealPosition(position)
         local changed
         for _, fold in ipairs(self.folds) do
@@ -453,7 +550,8 @@ GUI:RegisterWidgetType("APRLuaEditor", function()
         if box:HasFocus() and key == "L" and (IsControlKeyDown() or (IsMetaKeyDown and IsMetaKeyDown())) then
             self:SelectLine(); return true
         end
-        if self.commandHandler then return self.commandHandler(key) end
+        if self.commandHandler and self.commandHandler(key) then return true end
+        if box:HasFocus() then return self:NavigateCode(key) end
         return false
     end
     function widget:CancelFoldingChord()
@@ -553,6 +651,8 @@ GUI:RegisterWidgetType("APRLuaEditor", function()
         self.pendingIndent, self.tokens, self.visibleFolds, self.autoIndent = nil, nil, nil, nil
         self.cursorBuffer, self.cursorNative, self.cursorDisplay = nil, nil, nil
         self.inputBuffer, self.nativeChanges = nil, nil
+        self.encodedDisplay, self.arrowX, self.arrowAnchor = nil, nil, nil
+        self.navigationLines = nil
         self.centerToken, self.foldChord, self.commandInput = nil, nil, nil
         self.codeHistory, self.codeHistoryIndex = nil, nil
         self.raw, self.display, self.rendered, self.spans, self.ranges = nil, nil, nil, nil, nil
@@ -582,6 +682,8 @@ GUI:RegisterWidgetType("APRLuaEditor", function()
     box:SetScript("OnTextChanged", function(_, userInput)
         if widget.settingCode or not userInput then return end
         widget.selectedLines = nil
+        widget.arrowX, widget.arrowAnchor = nil, nil
+        widget.navigationLines = nil
         widget.pendingIndent = nil
         if widget.readOnly or widget.commandInput then
             widget.commandInput = nil; widget:Render(widget:GetCursorPosition()); return
@@ -664,6 +766,7 @@ GUI:RegisterWidgetType("APRLuaEditor", function()
     local cursorChanged = box:GetScript("OnCursorChanged")
     box:SetScript("OnCursorChanged", function(frame, ...)
         if widget.settingCode then return end
+        if not widget.navigatingCode then widget.arrowX, widget.arrowAnchor = nil, nil end
         if not widget.selectingLines then widget.selectedLines = nil end
         cursorChanged(frame, ...)
         if not widget.ranges then return end
@@ -671,9 +774,9 @@ GUI:RegisterWidgetType("APRLuaEditor", function()
         if snapshot and snapshot.text == widget.raw then snapshot.cursor = widget:GetCursorPosition() end
         widget:Fire("OnCodeCursorChanged", widget:GetCursorPosition())
         if widget.pendingCode then return end
-        local _, position = Code:Decode(native.get(box):sub(1, native.cursor(box)))
+        local position = widget:DisplayPosition(native.cursor(box))
         for _, range in ipairs(widget.ranges) do
-            if range.hidden and position > range.display and position < range.display + range.length then
+            if not widget.navigatingCode and range.hidden and position > range.display and position < range.display + range.length then
                 widget.collapsed[range.foldStart or range.start - 1] = nil
                 widget:Render(range.start); return
             end

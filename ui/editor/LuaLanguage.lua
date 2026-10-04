@@ -61,7 +61,7 @@ end
 -- The parser returns table/field byte ranges without modifying the source.
 -- Schema diagnostics use the same validation and saved baseline as Save.
 function Language:Analyze(text, baseline)
-    local parsed, reason, _, map = AprRC:ParseLuaData(text, false, true)
+    local parsed, reason, comments, map = AprRC:ParseLuaData(text, true, true)
     if parsed == nil then return { { message = reason, location = map } }, {}, nil end
     local errors, outline, lines, seenErrors = {}, {}, Code:Lines(text), {}
     local function add(message, value, field)
@@ -159,7 +159,7 @@ function Language:Analyze(text, baseline)
         end
     end
     table.sort(errors, function(a, b) return a.location.position < b.location.position end)
-    return errors, outline, parsed, map
+    return errors, outline, parsed, map, comments
 end
 
 -- Change whitespace only. Strings, comments, key order and APR constants keep
@@ -167,6 +167,53 @@ end
 function Language:Format(text, cursor)
     local parsed, reason, _, location = AprRC:ParseLuaData(text)
     if parsed == nil then return nil, reason, location end
+    local original, originalCursor = text, cursor or 0
+    -- Expand route/step containers and long nested tables. The old whitespace
+    -- pass left a whole one-line route on one line, making Format look inert.
+    local scanned, stack, closing, owner, previous, beforePrevious = Code:Scan(text), {}, {}, {}
+    for index, token in ipairs(scanned) do
+        if token.kind then
+            local value = text:sub(token.start + 1, token.finish)
+            if token.kind == "punctuation" and value == "{" then
+                local parent = stack[#stack]
+                local key = previous == "=" and beforePrevious or nil
+                local entry = { first = index, token = token, parent = parent, key = key }
+                if parent then parent.nested = true end
+                stack[#stack + 1] = entry
+            elseif token.kind == "punctuation" and value == "}" then
+                local entry = table.remove(stack)
+                if entry then
+                    closing[index] = entry
+                    entry.last = index
+                    local content = text:sub(entry.token.finish + 1, token.start)
+                    entry.expand = content:find("%S") and (not entry.parent or entry.nested or content:find("\n", 1, true) or
+                        #content > 90 or entry.key == "steps" or entry.key == "parallelSteps" or
+                        entry.parent.key == "steps" or entry.parent.key == "parallelSteps")
+                end
+            end
+            owner[index] = stack[#stack]
+            beforePrevious, previous = previous, value
+        end
+    end
+    local changes, last = {}, nil
+    for index, token in ipairs(scanned) do
+        if token.kind then
+            if last then
+                local left, right = text:sub(last.token.start + 1, last.token.finish), text:sub(token.start + 1, token.finish)
+                local newline = left == "{" and last.owner and last.owner.expand or
+                    (left == "," or left == ";") and last.owner and last.owner.expand and token.kind ~= "comment"
+                if right == "}" then
+                    if closing[index] and closing[index].expand then newline = true end
+                end
+                local gap = text:sub(last.token.finish + 1, token.start)
+                if newline and not gap:find("\n", 1, true) then
+                    changes[#changes + 1] = { start = last.token.finish, finish = token.start }
+                end
+            end
+            last = { token = token, owner = owner[index] }
+        end
+    end
+    if #changes > 0 then text, cursor = self:Replace(text, changes, "\n", cursor or 0) end
     local tokens, lines = Code:Scan(text), Code:Lines(text)
     local byLine, protected, protectedStart = {}, {}, {}
     for _, token in ipairs(tokens) do
@@ -222,7 +269,7 @@ function Language:Format(text, cursor)
     end
     local formatted = table.concat(result, "\n")
     local verified = AprRC:ParseLuaData(formatted)
-    if not AprRC:DeepCompare(parsed, verified) then return text, cursor or 0 end
+    if not AprRC:DeepCompare(parsed, verified) then return nil, L["Unable to format Lua safely."], self:Location(original, originalCursor) end
     return formatted, mapped
 end
 

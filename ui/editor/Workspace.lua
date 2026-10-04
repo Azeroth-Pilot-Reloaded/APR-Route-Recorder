@@ -44,16 +44,16 @@ end
 
 function Editor:Confirm(text, callback)
     if self.confirm then self.confirm:Show(); return end
-    local dialog = AprRC:CreateWidget("Frame")
+    local dialog = AprRC:CreateWidget("APRConfirmation")
+    dialog:SetLayout("APRWorkspace")
     self.confirm = dialog
     dialog:SetTitle(T("Route workshop"))
     dialog:SetWidth(470)
-    dialog:SetHeight(190)
-    dialog:EnableResize(false)
-    dialog:SetLayout("Flow")
-    UI.LabelWidget(dialog, text)
-    UI.Button(dialog, YES, function() dialog:Hide(); callback() end)
-    UI.Button(dialog, CANCEL, function() dialog:Hide() end)
+    dialog:SetHeight(150)
+    UI.LabelWidget(UI.Group(dialog), text)
+    local actions = UI.Toolbar(dialog, true); actions:SetLayout("APRCompactToolbar")
+    UI.Button(actions, YES, function() dialog:Hide(); callback() end, 110)
+    UI.Button(actions, CANCEL, function() dialog:Hide() end, 110)
     dialog:SetCallback("OnClose", function(widget) self.confirm = nil; GUI:Release(widget) end)
 end
 
@@ -68,6 +68,7 @@ function Editor:UpdateStatus()
     local dirty = session and session:IsDirty()
     local active = AprRC.settings.profile.recordBarFrame.isRecording
     self.recordButton:SetText(T(active and "Stop recording" or "Record this route"))
+    self.recordButton:SetIcon(active and "stop" or "play")
     self.recordButton:SetDisabled(not session or not AprRC.settings.profile.enableAddon)
     self.saveButton:SetDisabled(not session)
     self.copyButton:SetDisabled(not session)
@@ -259,12 +260,14 @@ function Editor:RefreshRoutes()
         end
         table.remove(parent.children, position)
         GUI:Release(picker)
-        self.routeDropdown = UI.Dropdown(parent, T("Select a route"), entries, nil,
+        self.routeDropdown = UI.Dropdown(parent, "", entries, nil,
             function(name) self:SelectRoute(name) end)
         table.remove(parent.children) -- Restore the selector's position in the toolbar.
         table.insert(parent.children, position, self.routeDropdown)
         self.routeDropdown:SetFullWidth(false)
-        self.routeDropdown:SetRelativeWidth(0.54)
+        self.routeDropdown:SetUserData("flex", 1)
+        if self.routeDropdown.label then self.routeDropdown.label:Hide() end
+        self.routeDropdown:SetHeight(26)
         parent:DoLayout()
     else
         picker:SetList(entries)
@@ -786,11 +789,12 @@ function Editor:Show()
     frame.frame:SetBackdropColor(0.07, 0.055, 0.035, 0.98)
     frame.frame:SetBackdropBorderColor(0.72, 0.58, 0.34, 1)
     local header = UI.Toolbar(frame)
-    self.routeDropdown = UI.Dropdown(header, T("Select a route"), {}, nil, function(name) self:SelectRoute(name) end)
+    header:SetLayout("APRCompactToolbar")
+    self.routeDropdown = UI.Dropdown(header, "", {}, nil, function(name) self:SelectRoute(name) end)
     self.routeDropdown:SetFullWidth(false)
-    self.routeDropdown:SetRelativeWidth(0.54)
-    UI.Button(header, "New route", function() self:NameDialog() end, 155)
-    self.recordButton = UI.Button(header, "Record this route", function() self:ToggleRecording() end, 210)
+    self.routeDropdown:SetUserData("flex", 1)
+    UI.IconButton(header, "add", "New route", function() self:NameDialog() end)
+    self.recordButton = UI.IconButton(header, "play", "Record this route", function() self:ToggleRecording() end)
     self.compactButton = UI.IconButton(nil, self.compact and "expand" or "compact",
         self.compact and "Full width" or "Compact mode", function() self:ToggleCompact() end)
     self.compactButton.frame:SetParent(frame.frame)
@@ -798,6 +802,10 @@ function Editor:Show()
     self.compactButton.frame:Show()
     self.recordStatus = UI.LabelWidget(header, "")
     self.summary = UI.LabelWidget(header, "")
+    self.recordStatus:SetWidth(150); self.summary:SetWidth(145)
+    -- State remains visible in the footer at narrow widths, without enlarging
+    -- the route selector's single-row header.
+    self.recordStatus:SetUserData("compactStatus", true); self.summary:SetUserData("compactStatus", true)
     self.tabs = AprRC:CreateWidget("TabGroup")
     self.tabs:SetLayout("APRFill")
     self.tabs:SetAutoAdjustHeight(false)
@@ -856,7 +864,8 @@ function Editor:Show()
     followAPR:SetCallback("OnLeave", function() GameTooltip:Hide() end)
     footer:AddChild(followAPR)
     frame:SetCallback("OnClose", function(widget)
-        if not self.forceClose and ((self.session and self.session:IsDirty()) or self:UnsavedCount() > 0) then
+        if self.session then self.session:ReconcileRaw() end
+        if not self.forceClose and self.session and self.session:IsDirty() then
             widget:Show(); self:ConfirmClose(); return
         end
         if self.fieldPicker then self.fieldPicker:Hide() end
@@ -864,6 +873,7 @@ function Editor:Show()
         AprRC.TutoFrame:Close()
         status.width, status.height = widget.frame:GetWidth(), widget.frame:GetHeight()
         if self.session then self.session:Persist() end
+        self:KeepDraftsOnClose()
         if self.timer then self:CancelTimer(self.timer); self.timer = nil end
         self:DetachLua()
         self.saveKeyboard:EnableKeyboard(false); self.saveKeyboard:SetPropagateKeyboardInput(true)

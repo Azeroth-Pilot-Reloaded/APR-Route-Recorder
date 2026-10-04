@@ -136,6 +136,22 @@ function Code:Decode(text, position)
     return table.concat(parts), cursor
 end
 
+-- Inverse byte mapping for a pending native edit, including escaped pipes.
+function Code:NativePosition(buffer, displayPosition)
+    local pos, visible = 1, 0
+    while pos <= #buffer do
+        local c = buffer:sub(pos, pos + 1)
+        if c == "|r" then pos = pos + 2
+        elseif buffer:sub(pos, pos + 9):match("^|c%x%x%x%x%x%x%x%x$") then pos = pos + 10
+        else
+            if visible >= displayPosition then return pos - 1 end
+            if c == "||" then pos, visible = pos + 2, visible + 1
+            else pos, visible = pos + 1, visible + 1 end
+        end
+    end
+    return #buffer
+end
+
 -- Compare large native buffers in C-sized chunks, then locate the changed
 -- bytes. Byte-by-byte prefix/suffix scans are too costly on long routes.
 function Code:NativeEdit(before, after)

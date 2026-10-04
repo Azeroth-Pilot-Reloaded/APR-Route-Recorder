@@ -211,25 +211,26 @@ end
 function Editor:ConfirmClose()
     if self.closeDialog then self.closeDialog:Show(); return end
     local session = self.session
-    local dialog = AprRC:CreateWidget("Frame")
+    local dialog = AprRC:CreateWidget("APRConfirmation")
+    dialog:SetLayout("APRWorkspace")
     self.closeDialog = dialog
     dialog:SetTitle(T("Unsaved draft"))
-    dialog:SetWidth(520); dialog:SetHeight(230); dialog:EnableResize(false); dialog:SetLayout("Flow")
-    UI.LabelWidget(dialog, T("Save before closing? You can also close and keep the draft for later."))
-    UI.LabelWidget(dialog, T("%d unsaved draft(s) will be kept."):format(self:UnsavedCount()))
-    self.closeSaveButton = UI.Button(dialog, "Save and close", function()
+    dialog:SetWidth(math.min(480, UIParent:GetWidth())); dialog:SetHeight(145)
+    UI.LabelWidget(UI.Group(dialog), T("Save before closing?") .. "\n" .. session.name)
+    local actions = UI.Toolbar(dialog, true); actions:SetLayout("APRCompactToolbar")
+    self.closeSaveButton = UI.Button(actions, "Save", function()
         dialog:Hide()
         if self.session ~= session then return end
         self.closeAfterSave = session
         if not self:Save() and not self.mergeDialog then self.closeAfterSave = nil end
-    end, 190)
+    end, 130)
     self.closeSaveButton:SetDisabled(not session or not session:IsDirty())
-    self.closeKeepButton = UI.Button(dialog, "Close and keep draft", function()
+    self.closeKeepButton = UI.Button(actions, "Keep draft", function()
         dialog:Hide()
         if self.session ~= session then return end
         self:KeepDraftsOnClose(); self:Hide(true)
-    end, 220)
-    self.closeCancelButton = UI.Button(dialog, CANCEL, function() dialog:Hide() end, 110)
+    end, 180)
+    self.closeCancelButton = UI.Button(actions, CANCEL, function() dialog:Hide() end, 110)
     dialog:SetCallback("OnClose", function(widget)
         self.closeDialog, self.closeSaveButton, self.closeKeepButton, self.closeCancelButton = nil, nil, nil, nil
         GUI:Release(widget)

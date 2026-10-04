@@ -77,6 +77,7 @@ def run():
     load("tests/lua_layout_smoke.lua")
     load("tests/lua_input_smoke.lua")
     load("tests/lua_tools_smoke.lua")
+    load("tests/editor_simplicity_smoke.lua")
     load("tests/editor_navigation_diff_smoke.lua")
     load("tests/parallel_editor_smoke.lua")
     load("tests/compact_fields_smoke.lua")

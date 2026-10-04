@@ -20,6 +20,12 @@
     "search": "magnify",
     "trash": "delete-outline",
     "undo": "undo",
-    "up": "chevron-up"
+    "up": "chevron-up",
+    "format": "format-indent-increase",
+    "completion": "code-braces",
+    "replace": "find-replace",
+    "help": "help-circle-outline",
+    "compare": "file-compare",
+    "stop": "stop"
   }
 }

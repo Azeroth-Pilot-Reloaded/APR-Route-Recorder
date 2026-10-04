@@ -125,14 +125,15 @@ end
 assert(rawRecovery(E.tabs), "Incomplete Lua must be recoverable from Versions"):Fire("OnClick")
 assert(E.session.name ~= recording.name and E.session.raw == "{ steps = { -- unfinished")
 assert(E.tab == "lua" and AprRCData.CurrentRoute == recording and #recording.steps == 10)
--- Switching to a saved route must not hide the other route's unsaved draft.
+-- Other drafts stay persisted; a saved current route closes without a prompt.
 local recoveryName = E.session.name
 local clean = assert(Model:NewRoute("Clean route with pending recovery"))
 E:RefreshRoutes(); E:SelectRoute(clean.name)
 assert(not E.session:IsDirty())
 E:Hide()
-assert(E.closeDialog and E.closeSaveButton.disabled, "Other unsaved routes must still require close confirmation")
-E.closeCancelButton:Fire("OnClick")
+assert(not E.frame and not E.closeDialog and AprRCData.EditorDrafts[recoveryName],
+    "Other drafts must be kept without a misleading unsaved popup on a saved route")
+E:Show()
 E:SelectRoute(recoveryName)
 TestCloseWorkshop()
 APR.PrintInfo, GetTime = oldPrint, oldClock

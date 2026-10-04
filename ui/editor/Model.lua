@@ -80,8 +80,11 @@ function Model:Archive(name, route, reason, raw, base)
     AprRCData.RouteHistory = AprRCData.RouteHistory or {}
     local history = AprRCData.RouteHistory[name] or {}
     AprRCData.RouteHistory[name] = history
-    local last = history[#history]
-    if last and last.reason == reason and last.raw == raw and AprRC:DeepCompare(last.route, route) then return end
+    -- Repeated reminders/close/save actions must not manufacture new recovery
+    -- copies of the same content just because their reason changed.
+    for _, version in ipairs(history) do
+        if version.raw == raw and AprRC:DeepCompare(version.route, route) then return end
+    end
     AprRCData.RouteHistorySerial = (AprRCData.RouteHistorySerial or 0) + 1
     history[#history + 1] = { id = AprRCData.RouteHistorySerial, time = time(), reason = reason,
         route = AprRC:CopyData(route), raw = raw, base = base }
@@ -126,6 +129,7 @@ function Model:Open(route)
         session:ClampSelection()
         session.history, session.cursor = {}, 0
         session:Snapshot()
+        session:ReconcileRaw()
     end
     return session
 end
@@ -143,7 +147,7 @@ function Session:Reload(route, committed)
     Model:BindIDs(self.draft, self.baseIDs)
     self.base = Model:RouteText(self.draft)
     self:RememberSource(route)
-    self.raw = nil
+    self.raw, self.rawClean, self.rawReconciledText = nil, nil, nil
     self.followPaused = nil
     self.incomingWarned, self.observed = nil, nil
     self.selected = math.max(1, math.min(self.selected, #route.steps))
@@ -160,7 +164,44 @@ end
 
 function Session:IsDirty()
     -- Visual mutations end in Snapshot(); raw edits are tracked separately.
-    return self.raw ~= nil or self.dirty == true
+    if self.raw ~= nil then return not self.rawClean end
+    return self.dirty == true
+end
+
+function Session:SetRaw(text)
+    self.raw = text ~= self.draftText and text or nil
+    self.rawClean, self.rawReconciledText = nil, nil
+end
+
+-- Run only after the input pause (or before closing), never per keystroke.
+-- Whitespace and edits undone back to the saved content are not new drafts.
+function Session:ReconcileRaw(parsed, comments, analyzed)
+    if not self.raw or self.rawReconciledText == self.raw then return end
+    self.rawReconciledText = self.raw
+    -- Compare parsed data directly. Read()/RouteText() clone and serialize the
+    -- whole route; that must not happen when Undo flushes a long Lua buffer.
+    if not analyzed then local _; parsed, _, comments = AprRC:ParseLuaData(self.raw, true) end
+    if self.reconcileBaseText ~= self.base then
+        local baseline, _, baselineComments = AprRC:ParseLuaData(self.base, true)
+        if baseline then baseline._luaComments = baselineComments end
+        self.reconcileBase, self.reconcileBaseText = baseline, self.base
+    end
+    self.rawClean = nil
+    if type(parsed) == "table" and parsed.steps ~= nil and self.reconcileBase then
+        parsed.name, parsed._luaComments = nil, comments
+        local function normalize(steps)
+            if type(steps) == "table" then
+                for _, step in ipairs(steps) do if type(step) == "table" then AprRC:NormalizeStepOptionFields(step) end end
+            end
+        end
+        normalize(parsed.steps)
+        for _, group in ipairs(type(parsed.parallelSteps) == "table" and parsed.parallelSteps or {}) do
+            if type(group) == "table" then normalize(group.steps) end
+        end
+        AprRC:NormalizeRouteClasses(parsed)
+        self.rawClean = AprRC:DeepCompare(parsed, self.reconcileBase) or nil
+    end
+    self:Persist()
 end
 
 function Session:RememberSource(source)
@@ -211,7 +252,8 @@ end
 function Session:Snapshot()
     self:Touch()
     self.rawHistory = nil
-    self.dirty = Model:RouteText(self.draft) ~= self.base
+    self.draftText = Model:RouteText(self.draft)
+    self.dirty = self.draftText ~= self.base
     if self.dirty then self.followPaused = true end
     local snapshot = { draft = AprRC:CopyData(self.draft), ids = Model:StepIDs(self.draft),
         hasDraftIDs = self.hasDraftIDs, selected = self.selected,
@@ -239,7 +281,8 @@ function Session:Undo(delta)
     self.parallelGroup = self.history[index].parallelGroup
     self.parallelSelected = self.history[index].parallelSelected
     self:ClampSelection()
-    self.raw = nil
+    self.raw, self.rawClean, self.rawReconciledText = nil, nil, nil
+    self.draftText = Model:RouteText(self.draft)
     self:Touch()
     self:Persist()
     return true

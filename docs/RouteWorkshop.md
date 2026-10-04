@@ -39,9 +39,12 @@ The footer reports their line and column; click its message or a red gutter
 marker to reveal the source. `F8` / `Shift+F8` move between errors. Diagnostics
 never save data, reposition the caret during input or execute Lua.
 
-APR completion appears after a pause while entering a field or an ID. Use
-`Ctrl+Space` or **APR completion** to request it, arrows to select, Tab / Enter
-or a click to accept, and Escape to dismiss. Fields come from the APR schemas;
+The route header and Lua tools each occupy one compact row; hover an icon for
+its action and shortcut. APR completion appears inline at the caret after a pause
+while entering a field or an ID. **Tab** accepts the suggestion; **Escape** hides
+it. Arrow keys navigate the source and **Enter** inserts a line normally.
+`Ctrl+Space` or the **APR completion** icon opens the alternatives at the caret;
+use **Alt+Up/Down** to choose, then Tab or a click to accept. Fields come from the APR schemas;
 quest suggestions use the route and journal, spell suggestions the route,
 grimoire, professions and recent choices, and items the route, bags and recent
 choices. Search a known name or type an ID. Completion inserts data without
@@ -53,13 +56,20 @@ including pattern characters and `%1`. **Replace** uses the current result;
 **Replace all** replaces all matching source ranges as one undo action, including
 folded data.
 
-**Format Lua** / `Shift+Alt+F` applies indentation and whitespace formatting to
+**Format Lua** / `Shift+Alt+F` expands route/step containers and applies indentation and whitespace formatting to
 valid Lua data. Strings, comments, constants, values and field order are retained;
 invalid input remains intact. The searchable **Step outline** / `Ctrl+Shift+O`
 lists main and parallel steps with source lines and titles. Selecting an entry
 unfolds and centers its source. Only 80 menu results are rendered at a time;
 filter by step number, group or title to reach later steps. Formatting, replacement
 and accepted completions can all be undone with `Ctrl+Z`.
+
+Closing a saved route does not prompt because of drafts belonging to other routes;
+those drafts remain persisted. Only pending changes in the displayed route show
+**Save**, **Keep draft**, and **Cancel**. Confirmation dialogs contain just the
+message and actions. Undoing to the saved source clears its draft, and whitespace-only
+edits are reconciled after the input pause. Repeated reminders, saves and closes
+do not add identical recovery versions under different reason labels.
 
 The **Delete route** trash button in the workshop footer asks for confirmation,
 including the selected route's name. Confirming removes the saved route, its

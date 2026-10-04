@@ -9,7 +9,7 @@ local keyboard = widget.keyboardFrame
 local shortcutHelp
 for _, child in ipairs(widget.parent.children) do
     for _, button in ipairs(child.children or {}) do
-        if button.type == "Button" and button.text:GetText() == UI.Text("Folding shortcuts") then shortcutHelp = button end
+        if button.type == "APRIconButton" and button.tooltip == UI.Text("Folding shortcuts") then shortcutHelp = button end
     end
 end
 assert(shortcutHelp)
@@ -51,9 +51,9 @@ end
 widget:SetFocus()
 assert(widget.editBox.keyboardEnabled and keyboard.keyboardEnabled and keyboard:GetFrameLevel() > widget.editBox:GetFrameLevel())
 assert(key("K") == keyboard and widget.foldChord, "The prefix must be intercepted before native text and game bindings")
-assert(shortcutHelp.text:GetText() == "Ctrl+K …", "The received prefix must have visible feedback")
+assert(shortcutHelp.tooltip == "Ctrl+K …", "The received prefix must update the shortcut hint")
 key("J"); TestRunTimers()
-assert(shortcutHelp.text:GetText() == UI.Text("Folding shortcuts"))
+assert(shortcutHelp.tooltip == UI.Text("Folding shortcuts"))
 chord("0")
 assert(widget.collapsed[0] and #widget.display < #sections, "Repressing Ctrl between chord steps must not cancel the shortcut")
 chord("J", "RCTRL")
@@ -116,7 +116,7 @@ chord("J"); assert(not next(widget.collapsed) and input:GetText() == query)
 key("K"); GetTime = function() return oldTime() + 5 end
 keyboard:GetScript("OnUpdate")(keyboard)
 assert(not widget.foldChord and not keyboard:GetScript("OnUpdate"), "Chord status must clear on timeout without another key")
-assert(shortcutHelp.text:GetText() == UI.Text("Folding shortcuts"))
+assert(shortcutHelp.tooltip == UI.Text("Folding shortcuts"))
 GetTime = oldTime
 key("K"); input:ClearFocus(); keyboard:GetScript("OnUpdate")(keyboard)
 assert(not widget.foldChord, "Leaving the search field must cancel a pending chord")

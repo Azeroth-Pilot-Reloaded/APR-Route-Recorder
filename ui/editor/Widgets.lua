@@ -47,11 +47,12 @@ GUI:RegisterWidgetType("APRIconButton", function()
     end
     frame:SetScript("OnClick", function() if not widget.disabled then widget:Fire("OnClick") end end)
     frame:SetScript("OnEnter", function()
+        if widget.events.OnEnter then widget:Fire("OnEnter"); return end
         GameTooltip:SetOwner(frame, "ANCHOR_TOP")
         AprRC:AddTooltipLine(GameTooltip, widget.tooltip or "", 1, 0.82, 0.4, true)
         GameTooltip:Show()
     end)
-    frame:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    frame:SetScript("OnLeave", function() GameTooltip:Hide(); widget:Fire("OnLeave") end)
     return GUI:RegisterAsWidget(widget)
 end, 1)
 
@@ -63,6 +64,64 @@ function UI.IconButton(parent, icon, tooltip, callback)
     if parent then parent:AddChild(button) end
     return button
 end
+
+-- One compact row; flexible controls use the remaining width. Unlike Flow,
+-- font baselines do not push icons onto an extra line.
+GUI:RegisterLayout("APRCompactToolbar", function(content, children)
+    if content.aprLayout then return end
+    content.aprLayout = true
+    local width, fixed, weight, visible = content:GetWidth(), 0, 0, {}
+    for _, child in ipairs(children) do
+        if child:GetUserData("compactStatus") and width < 680 then child.frame:Hide()
+        else visible[#visible + 1] = child end
+    end
+    fixed = math.max(0, #visible - 1) * 6
+    for _, child in ipairs(visible) do
+        local flex = child:GetUserData("flex")
+        if flex then weight = weight + flex else fixed = fixed + child.frame:GetWidth() end
+    end
+    local left, height = 0, 30
+    for _, child in ipairs(visible) do
+        local flex = child:GetUserData("flex")
+        if flex then child:SetWidth(math.max(20, width - fixed) * flex / weight) end
+        child.frame:ClearAllPoints()
+        child.frame:SetPoint("TOPLEFT", content, "TOPLEFT", left, 0)
+        child.frame:Show()
+        if child.DoLayout then child:DoLayout() end
+        height = math.max(height, child.frame:GetHeight())
+        left = left + child.frame:GetWidth() + 6
+    end
+    content.obj:LayoutFinished(width, height)
+    content.aprLayout = nil
+end)
+
+-- Confirmation dialogs have only their message and actions. There is no
+-- inherited status bar or second Close button from AceGUI's large Frame.
+GUI:RegisterWidgetType("APRConfirmation", function()
+    local frame = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
+    frame:SetFrameStrata("FULLSCREEN_DIALOG"); frame:SetFrameLevel(300)
+    frame:SetClampedToScreen(true); frame:EnableMouse(true)
+    frame:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8X8", edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border", edgeSize = 16 })
+    frame:SetBackdropColor(0.08, 0.065, 0.045, 1); frame:SetBackdropBorderColor(0.72, 0.58, 0.34, 1)
+    local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    title:SetPoint("TOPLEFT", 16, -12); title:SetPoint("TOPRIGHT", -16, -12)
+    local content = CreateFrame("Frame", nil, frame)
+    content:SetPoint("TOPLEFT", 16, -38); content:SetPoint("BOTTOMRIGHT", -16, 14)
+    local widget = { type = "APRConfirmation", frame = frame, content = content, titletext = title }
+    function widget:OnAcquire()
+        frame:ClearAllPoints(); frame:SetPoint("CENTER", UIParent, "CENTER")
+        self:SetWidth(450); self:SetHeight(150); self:SetTitle(""); self:SetLayout("APRWorkspace")
+        self:Show()
+    end
+    function widget:SetTitle(text) title:SetText(text) end
+    function widget:OnWidthSet(width) content:SetWidth(math.max(1, width - 32)) end
+    function widget:OnHeightSet(height) content:SetHeight(math.max(1, height - 52)) end
+    function widget:LayoutFinished() end
+    function widget:Show() frame:Show() end
+    function widget:Hide() frame:Hide() end
+    frame:SetScript("OnHide", function() widget:Fire("OnClose") end)
+    return GUI:RegisterAsContainer(widget)
+end, 1)
 
 -- A scalar input and its actions share one line. Validation only consumes space
 -- when there is an error; multiline values retain the ordinary Flow layout.

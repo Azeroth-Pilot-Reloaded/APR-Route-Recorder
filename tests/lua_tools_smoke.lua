@@ -128,6 +128,7 @@ local function complete(raw, prefix, insert, finish)
     edit:EditText(raw, raw:find(prefix, 1, true) + #prefix - 1); edit:SetFocus()
     key(edit.keyboardFrame, "SPACE", true)
     assert(E.luaCompletion and E.luaCompletionFrame:IsShown())
+    assert(E.luaCompletionFrame:GetFrameStrata() == edit.frame:GetFrameStrata(), "Completion must be above the workshop, not behind its fullscreen layer")
     local completion = E.luaCompletion
     for index, item in ipairs(completion.items) do if item.insert == insert then completion.index = index end end
     assert(completion.items[completion.index].insert == insert)
