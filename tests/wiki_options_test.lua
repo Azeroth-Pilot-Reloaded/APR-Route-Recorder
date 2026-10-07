@@ -146,7 +146,7 @@ local route = {
     parallelSteps = { { conditions = conditions, steps = { { Grind = { level = 4, xp = -700 } } } } },
 }
 for _, key in ipairs({ "LootMoney", "VendorMoney", "ExitTutorial", "LeaveQuest", "DeathSkip", "SellItems", "LearnSkill", "BankDeposit",
-    "BankWithdraw", "DestroyItems", "TameBeast", "SpellETA", "EmoteETA", "Bloodlust", "MerchantNPC",
+    "BankWithdraw", "DestroyItems", "Repair", "TameBeast", "SpellETA", "EmoteETA", "Bloodlust", "MerchantNPC",
     "NoAutoAccept", "NoAutoTurnIn", "ExtraLine", "Gossip", "Hardcore" }) do
     local definition = assert(R.step[key], key)
     local parsed, reason = R:Parse(definition, definition.example)

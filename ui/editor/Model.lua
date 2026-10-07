@@ -570,6 +570,8 @@ function Model:FieldSummary(key, value)
         return table.concat(result, ", ")
     end
     if key == "LootMoney" then return self:MoneyText(value.copper)
+    elseif key == "Repair" then return "#" .. tostring(value.npcID or "?") .. " · " .. tostring(value.minDurability or 90) .. "%"
+    elseif key == "TameBeast" then return AprRC.options:NPCName(value.npcID) or value.Text or value.text or ("#" .. tostring(value.npcID or "?"))
     elseif key == "Money" or key == "VendorMoney" then return (value.operator or ">=") .. " " .. self:MoneyText(value.copper)
     elseif key == "DestroyItems" or key == "BankDeposit" or key == "BankWithdraw" then return items(value.items)
     elseif key == "ItemCount" then
@@ -622,7 +624,7 @@ local actionOrder = {
     "LeaveScenario", "EnterInstance", "LeaveInstance", "UseItem", "UseSpell", "Grind",
     "Reputation", "BuyMerchant", "LootItems", "LootMoney", "LeaveQuests", "Emote", "ChromiePick",
     "LearnProfession", "WarMode", "ResetRoute", "VehicleExit", "MountVehicle",
-    "ExitTutorial", "LeaveQuest", "DeathSkip", "SellItems", "LearnSkill",
+    "ExitTutorial", "LeaveQuest", "DeathSkip", "SellItems", "Repair", "LearnSkill",
     "BankDeposit", "BankWithdraw", "DestroyItems", "TameBeast",
 }
 local questActions = { PickUp = true, Qpart = true, QpartPart = true, Done = true, LeaveQuests = true,
@@ -659,7 +661,7 @@ function Model:Summary(step)
         preview[1] = table.concat(titles, ", ")
         raw[1] = preview[1]
     end
-    for _, field in ipairs({ "LootMoney", "DestroyItems", "LearnSkill", "BankDeposit", "BankWithdraw" }) do
+    for _, field in ipairs({ "LootMoney", "DestroyItems", "LearnSkill", "BankDeposit", "BankWithdraw", "Repair", "TameBeast" }) do
         local actionDetail = self:FieldSummary(field, step[field])
         if actionDetail and actionDetail ~= "" then
             if field ~= key then actionDetail = summaryLabel(field) .. ": " .. actionDetail end

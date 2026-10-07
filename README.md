@@ -272,9 +272,10 @@ The table includes navigation, display, and route options so you can see the com
 | 🟠 **Action** | `UseItem`, `UseSpell` | Add an item-use or spell-cast step linked to a quest. |
 | 🟠 **Action** | `LearnSkill` | Add trainer spells or all available services, optionally restricted to an NPC. |
 | 🟠 **Action** | `SellItems` | Add selected items, gray junk, or equipped slots to a merchant sale step. |
+| 🟠 **Action** | `Repair` | Open the declared NPC's vendor option and repair automatically, independently of general auto-gossip/auto-repair settings. APR skips the step when every durable equipped item reaches `minDurability` (default 90%) and shows `REPAIR` in both panels. Example: `Repair = { npcID = 3331, minDurability = 90 }`. |
 | 🟠 **Action** | `BankDeposit`, `BankWithdraw` | Add item transfers to or from the character bank. |
 | 🟠 **Action** | `DestroyItems` | Add deletion of explicitly listed item stacks. |
-| 🟠 **Action** | `TameBeast` | Add a taming target and optional spell/quest details. |
+| 🟠 **Action** | `TameBeast` | Add a taming target, defaulting `Text` to its known name. APR shows `TAMEBEAST` (`Tame the %s beast`) with the cached localized name or the `Text` fallback, updates both panels when a live unit reveals its name, and offers spell/target buttons. Complete after a successful cast on the specified NPC. Example: `TameBeast = { npcID = 3127, spellID = 1515, Text = "Venomtail Scorpid" }`. |
 | 🟠 **Action** | `EnterInstance`, `LeaveInstance` | Guide entry into or departure from an instance using quest and map IDs. |
 | 🟠 **Action** | `EnterScenario`, `DoScenario`, `LeaveScenario` | Guide scenario entry, completion, and departure. Fine-grained `Scenario` criteria can also be edited. |
 | 🟠 **Action** | `ExitTutorial` | Add the tutorial exit step. |

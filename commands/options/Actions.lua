@@ -40,6 +40,16 @@ R:Register({
 })
 
 R:Register({
+    key = "Repair",
+    command = "repair",
+    schema = S.repair,
+    example = "{ npcID = 3331, minDurability = 90 }",
+    newStep = true,
+    coord = true,
+    icon = "Interface\\Icons\\Trade_BlackSmithing",
+})
+
+R:Register({
     key = "LearnSkill",
     command = "learnskill",
     schema = S.learnSkill,
@@ -82,7 +92,7 @@ R:Register({
     key = "TameBeast",
     command = "tamebeast",
     schema = S.tameBeast,
-    example = "{ npcID = 2163, spellID = 1515 }",
+    example = "{ npcID = 3127, spellID = 1515, Text = \"Venomtail Scorpid\" }",
     newStep = true,
     coord = true,
     icon = "Interface\\Icons\\Ability_Hunter_BeastTaming",

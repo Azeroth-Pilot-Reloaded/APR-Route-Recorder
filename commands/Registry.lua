@@ -29,6 +29,45 @@ function options:CanEdit(route)
     return true
 end
 
+local function public(value)
+    return not (issecretvalue and issecretvalue(value)) and value or nil
+end
+
+function options:NPCID(unit)
+    if APR and APR.GetTargetID then return public(APR:GetTargetID(unit)) end
+    local guid = UnitGUID and public(UnitGUID(unit))
+    if type(guid) ~= "string" then return end
+    return tonumber(guid:match("^Creature%-%d+%-%d+%-%d+%-%d+%-(%d+)") or
+        guid:match("^Vehicle%-%d+%-%d+%-%d+%-%d+%-(%d+)"))
+end
+
+function options:NPCName(npcID)
+    if type(npcID) ~= "number" or npcID <= 0 then return end
+    local function name(value)
+        value = public(value)
+        if type(value) == "string" and strtrim(value) ~= "" and value ~= UNKNOWN then return value end
+    end
+    local cached = name(APRData and APRData.NPCList and APRData.NPCList[npcID])
+    if cached then return cached end
+    for _, unit in ipairs({ "target", "mouseover", "npc" }) do
+        if self:NPCID(unit) == npcID then
+            local live = name(UnitName and UnitName(unit))
+            if live then return live end
+        end
+    end
+end
+
+-- Only fill omitted values; explicit route text and legacy text remain intact.
+function options:ActionDefaults(schema, value)
+    if type(value) ~= "table" then return value end
+    if schema == self.schemas.repair and value.minDurability == nil then
+        value.minDurability = 90
+    elseif schema == self.schemas.tameBeast and value.Text == nil and value.text == nil then
+        value.Text = self:NPCName(value.npcID)
+    end
+    return value
+end
+
 function options:Parse(definition, text)
     text = strtrim(text or "")
     local schema = definition.schema
@@ -67,7 +106,7 @@ function options:Apply(definition, value, route, target)
         route[definition.key] = AprRC:CopyData(value)
     else
         local step = AprRC:CopyData(definition.newStep and (definition.defaults or {}) or (target or {}))
-        step[definition.key] = AprRC:CopyData(value)
+        step[definition.key] = self:ActionDefaults(definition.schema, AprRC:CopyData(value))
         if definition.requires and not step[definition.requires] then
             return false, L["Add %s to this step first"]:format(definition.requires)
         end
@@ -185,6 +224,15 @@ function options:ShowInput(definition, target, route, submit)
         current = route[definition.key]
     elseif target and not definition.newStep then
         current = target[definition.key]
+    end
+    if current == nil and definition.newStep and
+        (definition.schema == self.schemas.tameBeast or definition.schema == self.schemas.repair) then
+        local npcID = self:NPCID("target")
+        if type(npcID) == "number" and npcID > 0 then
+            current = { npcID = npcID }
+            if definition.schema == self.schemas.tameBeast then current.spellID = 1515 end
+            self:ActionDefaults(definition.schema, current)
+        end
     end
     edit:SetText(current ~= nil and AprRC:SerializeData(current) or definition.example or "")
     frame:AddChild(edit)

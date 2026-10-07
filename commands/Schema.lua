@@ -35,7 +35,8 @@ S.lootItems = list(object({ questID = "id", itemID = "id", quantity = "id" }, { 
 S.lootMoney = object({ copper = "id", includeEquipped = "bool", equippedSlots = "ids" }, { "copper" })
 S.itemAction = object({ items = "ids", text = "text" }, { "items" })
 S.learnSkill = object({ spellID = "id", spellIDs = "ids", allAvailable = "bool", npcID = "id", text = "text" })
-S.tameBeast = object({ questID = "id", npcID = "id", spellID = "id", text = "text" }, { "npcID" })
+S.repair = object({ npcID = "id", minDurability = "number" }, { "npcID" })
+S.tameBeast = object({ questID = "id", npcID = "id", spellID = "id", Text = "text", text = "text" }, { "npcID" })
 S.spellETA = object({ spellID = "id", itemID = "id", seconds = "positive" }, { "seconds" })
 S.operator = { kind = "enum", values = { "<", "<=", ">", ">=", "==", "~=" } }
 -- Labels are localized by the client; only the numeric value is stored in routes.
@@ -362,6 +363,9 @@ function options:ValidateValue(schema, value, path, depth, previous)
         end
         if schema == S.reputation and value.type == "standard" and value.level > 8 then return fail(L
             ["standard standing must be 1-8"]) end
+        if schema == S.repair and value.minDurability and (value.minDurability < 0 or value.minDurability > 100) then
+            return fail(L["minDurability must be between 0 and 100"])
+        end
         if schema == S.sellItems and not (value.items or value.equippedSlots or value.junk == true) then
             return fail(L["items, equippedSlots or junk = true is required"])
         end

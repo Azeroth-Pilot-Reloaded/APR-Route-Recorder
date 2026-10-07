@@ -155,7 +155,7 @@ end
 function Form:Summary(schema, value)
     schema, value = self:Unified(schema, value)
     if type(value) ~= "table" then return tostring(value) end
-    for _, key in ipairs({ "Money", "VendorMoney", "LootMoney", "DestroyItems", "LearnSkill", "Skill", "ItemCount", "Collection", "EquippedItem" }) do
+    for _, key in ipairs({ "Money", "VendorMoney", "LootMoney", "DestroyItems", "LearnSkill", "Skill", "ItemCount", "Collection", "EquippedItem", "Repair", "TameBeast" }) do
         if self:Unified(R.step[key].schema) == schema then
             local detail = AprRC.editorModel:FieldSummary(key, value)
             if detail and detail ~= "" then return detail end
@@ -381,7 +381,11 @@ function Form:Default(schema)
     if valueKind == "object" then
         local result = {}
         for _, key in ipairs(schema.required or {}) do result[key] = self:Default(schema.fields[key]) end
-        return result
+        if schema == R.schemas.tameBeast or schema == R.schemas.repair then
+            result.npcID = R:NPCID("target") or result.npcID
+        end
+        if schema == R.schemas.tameBeast then result.spellID = 1515 end
+        return R:ActionDefaults(schema, result)
     end
     if valueKind == "text" or valueKind == "profile" or valueKind == "objectiveKey" then return "" end
     if valueKind == "id" or valueKind == "positive" or valueKind == "number" or valueKind == "nonnegative" or valueKind == "integer" then return 0 end
@@ -656,6 +660,21 @@ function Form:Render(parent, schema, value, set, context, path, label)
             elseif not (position and key == "Zone") and (value[key] ~= nil or required[key]) then
                 local fieldPath = path .. "/" .. key
                 local fieldSchema = fields[key]
+                local function setField(entry)
+                    local previousText = value.Text
+                    if schema == R.schemas.tameBeast and key == "npcID" then
+                        if entry ~= value.npcID and value.Text == R:NPCName(value.npcID) then value.Text = nil end
+                        value.npcID = entry
+                        R:ActionDefaults(schema, value)
+                    else value[key] = entry end
+                    set(value)
+                    if schema == R.schemas.tameBeast and key == "npcID" and value.Text ~= previousText then
+                        -- Refresh the optional Text field after the input callback finishes.
+                        C_Timer.After(0, function()
+                            if not context.isCurrent or context.isCurrent() then context.redraw(fieldPath) end
+                        end)
+                    end
+                end
                 local function remove() value[key] = nil; changed(value, true) end
                 local scalarKind = self:ColumnKind(fieldSchema, fieldPath)
                 local target = parent
@@ -672,13 +691,13 @@ function Form:Render(parent, schema, value, set, context, path, label)
                 if fieldSchema == R.schemas.qpart then
                     local group = UI.Group(parent, "")
                     local body = UI.Group(group)
-                    self:Render(body, fieldSchema, value[key], function(entry) value[key] = entry; set(value) end,
+                    self:Render(body, fieldSchema, value[key], setField,
                         context, fieldPath, UI.Label(key))
                     if not required[key] then self:RemoveButton(group, body, remove) end
                 elseif context.inlineSections and not self:IsCompact(fieldSchema, fieldPath) then
                     local body, childContext = self:InlineSection(parent, context, UI.Label(key), fieldPath,
                         not required[key] and remove)
-                    self:Render(body, fieldSchema, value[key], function(entry) value[key] = entry; set(value) end,
+                    self:Render(body, fieldSchema, value[key], setField,
                         childContext, fieldPath, UI.Label(key))
                 elseif context.navigate and not self:IsCompact(fieldSchema, fieldPath) then
                     self:NavigationRow(parent, fieldSchema, value[key], context, key, UI.Label(key), not required[key] and remove)
@@ -686,7 +705,7 @@ function Form:Render(parent, schema, value, set, context, path, label)
                     local group = UI.Group(target, not self:IsCompact(fieldSchema, fieldPath) and UI.Label(key) or nil)
                     group:SetLayout("APRField")
                     local body = UI.Group(group)
-                    self:Render(body, fieldSchema, value[key], function(entry) value[key] = entry; set(value) end,
+                    self:Render(body, fieldSchema, value[key], setField,
                         context, fieldPath, UI.Label(key))
                     if not required[key] then self:RemoveButton(group, body, remove) end
                     if scalarKind then group:SetUserData("minWidth", self:MinimumWidth(group)) end
