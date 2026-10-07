@@ -541,10 +541,7 @@ function AprRC.command:SlashCmd(input)
                     local link = GetQuestLogSpecialItemInfo(questLogIndex)
                     if link then
                         local itemID = AprRC:GetItemIDFromLink(link)
-                        if not currentStep.Button then
-                            currentStep.Button = {}
-                        end
-                        table.insert(currentStep.Button, questID .. "-" .. objectiveID, itemID)
+                        AprRC.options:AddStepButton(currentStep, "Button", questID .. "-" .. objectiveID, tonumber(itemID))
                     end
 
                     print("|cff00bfffFillers - [" ..

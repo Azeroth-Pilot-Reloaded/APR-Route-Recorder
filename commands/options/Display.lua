@@ -63,7 +63,7 @@ R:Register({
     key = "Button",
     command = "button",
     schema = S.buttons,
-    example = "{ [\"30778-1\"] = 81356 }",
+    example = "{ [\"30778-1\"] = 81356, [\"5648\"] = { 12345, 67890 } }",
     legacy = true,
     icon = I .. "Button",
     bar = { command = "btn", label = "Button", isDefault = true, order = 60 },
@@ -73,7 +73,7 @@ R:Register({
     key = "SpellButton",
     command = "spellbutton",
     schema = S.buttons,
-    example = "{ [\"49939-1\"] = 294197 }",
+    example = "{ [\"49939-1\"] = 294197, [\"5648\"] = { 1515, 136 } }",
     icon = "Interface\\Icons\\INV_Misc_EngGizmos_04",
 })
 

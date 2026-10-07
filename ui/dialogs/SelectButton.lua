@@ -45,10 +45,9 @@ function AprRC.SelectButton:ShowQuestSelector(type)
         callback = function(questID, objectiveID)
             AprRC.autocomplete:ShowItemAutoComplete(questID, objectiveID, function(_, itemID, frame)
                 local currentStep = AprRC:GetLastStep()
-                if not currentStep.Button then
-                    currentStep.Button = {}
-                end
-                currentStep.Button[questID .. "-" .. objectiveID] = tonumber(itemID, 10)
+                local ok, reason = AprRC.options:AddStepButton(currentStep, "Button", questID .. "-" .. objectiveID,
+                    tonumber(itemID, 10))
+                if not ok then APR:PrintError(reason); return end
 
                 print("|cff00bfff Button |r " .. L["Added"])
                 AceGUI:Release(frame)
@@ -58,10 +57,9 @@ function AprRC.SelectButton:ShowQuestSelector(type)
         callback = function(questID, objectiveID)
             AprRC.autocomplete:ShowSpellAutoComplete(questID, objectiveID, function(_, spellID, frame)
                 local currentStep = AprRC:GetLastStep()
-                if not currentStep.SpellButton then
-                    currentStep.SpellButton = {}
-                end
-                currentStep.SpellButton[questID .. "-" .. objectiveID] = tonumber(spellID, 10)
+                local ok, reason = AprRC.options:AddStepButton(currentStep, "SpellButton", questID .. "-" .. objectiveID,
+                    tonumber(spellID, 10))
+                if not ok then APR:PrintError(reason); return end
                 print("|cff00bfff SpellButton |r " .. L["Added"])
                 AceGUI:Release(frame)
             end)

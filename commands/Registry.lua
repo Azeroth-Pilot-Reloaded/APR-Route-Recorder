@@ -21,6 +21,22 @@ function options:Register(definition)
     self[definition.scope or "step"][definition.key] = definition
 end
 
+-- Keep one map key per objective and append distinct buttons in selection order.
+function options:AddStepButton(step, field, key, id)
+    if field ~= "Button" and field ~= "SpellButton" then return false end
+    local valid, reason = self:ValidateValue("objectiveKey", key)
+    if not valid then return false, reason end
+    valid, reason = self:ValidateValue("id", id)
+    if not valid then return false, reason end
+    step[field] = step[field] or {}
+    local current = step[field][key]
+    if current == nil then step[field][key] = id
+    elseif type(current) == "table" then
+        if not tContains(current, id) then current[#current + 1] = id end
+    elseif current ~= id then step[field][key] = { current, id } end
+    return true
+end
+
 function options:CanEdit(route)
     if not AprRC.settings.profile.enableAddon or not AprRC.settings.profile.recordBarFrame.isRecording then
         return false, L["Start recording a route first"]

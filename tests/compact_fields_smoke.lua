@@ -171,11 +171,24 @@ for _, name in ipairs({ "Button", "SpellButton" }) do
     assert(picker.pickerKind == (name == "Button" and "item" or "spell"))
     enter(key, "84-2"); enter(value, "12345")
     assert(data["84-2"] == 12345 and not data["42-1"])
+    enter(value, "67890, 12345")
+    assert(AprRC:DeepCompare(data["84-2"], { 67890, 12345 }), "Comma-separated IDs must keep their input order")
+    local openPicker = UI.Pickers.Open
+    UI.Pickers.Open = function(_, spec, _, accept)
+        assert(spec.kind == (name == "Button" and "item" or "spell"))
+        assert(spec.path == "step/" .. name .. "/84-2")
+        accept(1515)
+    end
+    picker:Fire("OnClick")
+    picker:Fire("OnClick")
+    UI.Pickers.Open = openPicker
+    assert(AprRC:DeepCompare(data["84-2"], { 67890, 12345, 1515 }), "Pickers must append without duplicating or replacing a list")
     form:SetWidth(360); form:DoLayout()
     assert(key.parent.parent.frame:GetHeight() > 44, "Map entries must wrap at narrow widths")
     assert(key.frame:GetWidth() >= 120 and value.frame:GetWidth() >= 120)
+    local beforeRemove = redraws
     key.parent.parent.parent.children[2]:Fire("OnClick")
-    assert(not next(data) and redraws == 1)
+    assert(not next(data) and redraws == beforeRemove + 1)
     GUI:Release(form)
 end
 assert(#UIErrors == 0, table.concat(UIErrors, "\n"))

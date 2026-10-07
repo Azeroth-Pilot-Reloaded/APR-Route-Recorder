@@ -388,7 +388,7 @@ function Form:Default(schema)
         return R:ActionDefaults(schema, result)
     end
     if valueKind == "text" or valueKind == "profile" or valueKind == "objectiveKey" then return "" end
-    if valueKind == "id" or valueKind == "positive" or valueKind == "number" or valueKind == "nonnegative" or valueKind == "integer" then return 0 end
+    if valueKind == "id" or valueKind == "idOrIds" or valueKind == "positive" or valueKind == "number" or valueKind == "nonnegative" or valueKind == "integer" then return 0 end
     return {}
 end
 
@@ -877,13 +877,18 @@ function Form:Render(parent, schema, value, set, context, path, label)
                 for entry in input:gmatch(valueKind == "strings" and "[^\r\n]+" or "[^,]+") do
                     result[#result + 1] = suffix and (tonumber(strtrim(entry)) or strtrim(entry)) or entry
                 end
+                if valueKind == "idOrIds" and type(value) ~= "table" and #result == 1 and not input:find(",", 1, true) then
+                    result = result[1]
+                end
             elseif valueKind ~= "text" and valueKind ~= "objectiveKey" then
                 result = tonumber(input) or input
             end
             changeWithValidation(result)
         end)
         UI.Pickers:AddButton(parent, schema, path, context, function(selected)
-            if suffix or valueKind == "strings" then
+            if valueKind == "idOrIds" and type(value) == "number" then
+                changed(selected, true)
+            elseif suffix or valueKind == "strings" then
                 local entries = type(value) == "table" and AprRC:CopyData(value) or
                     (type(value) == "number" and { value } or {})
                 if not tContains(entries, selected) then entries[#entries + 1] = selected end

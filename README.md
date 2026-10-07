@@ -296,7 +296,8 @@ The table includes navigation, display, and route options so you can see the com
 | 🔵 **Navigation** | `ETA`, `GossipETA`, `EmoteETA`, `SpellETA` | Set an AFK timer for the step, a dialogue choice, an emote, or a spell/item use. |
 | 🔵 **Navigation** | `SpecialETAHide` | Hide the AFK timer. |
 | 🔵 **Navigation** | `InstanceQuest`, `IsAdventureMap` | Override instance and Adventure Map flags. |
-| 🟣 **Display** | `Button`, `SpellButton`, `SpellTrigger` | Add item/spell buttons or a spell-cast completion trigger. |
+| 🟣 **Display** | `Button`, `SpellButton` | Add item/spell buttons keyed by quest ID or `questID-objective`. Each value accepts one ID or a nonempty list displayed in list order on the same step. Keep one key per quest/objective: repeated Lua keys overwrite earlier values. Examples: `Button = { ["30778-1"] = 81356 }`, `Button = { ["5648"] = { 12345, 67890 } }`, `SpellButton = { ["5648"] = { 1515, 136 } }`. In the inspector, enter IDs separated by commas; selectors append to an existing list. |
+| 🟣 **Display** | `SpellTrigger` | Add a spell-cast completion trigger. |
 | 🟣 **Display** | `ExtraLineText`, `ExtraLineText2`, … | Add helper lines using APR localization keys or literal text. |
 | 🟣 **Display** | `ExtraLine`, `Gossip` | Edit legacy helper-text and dialogue-position fields. Use `GossipOptionIDs` for new dialogue data. |
 | 🟣 **Display** | `Buffs`, `Bloodlust` | Add buff recommendations or a Bloodlust/Heroism reminder. |

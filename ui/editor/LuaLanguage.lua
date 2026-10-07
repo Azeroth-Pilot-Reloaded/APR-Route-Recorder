@@ -363,7 +363,11 @@ function Language:Candidates(context, route)
                 if kind == "quest" and mapKeys[key] and type(entry) == "table" then
                     for number in pairs(entry) do id(kind, tonumber(tostring(number):match("^%d+"))) end
                 elseif (kind == "item" and key == "Button" or kind == "spell" and key == "SpellButton") and type(entry) == "table" then
-                    for _, number in pairs(entry) do id(kind, number) end
+                    for _, buttons in pairs(entry) do
+                        if type(buttons) == "table" then
+                            for _, number in ipairs(buttons) do id(kind, number) end
+                        else id(kind, buttons) end
+                    end
                 end
                 collect(entry)
             end

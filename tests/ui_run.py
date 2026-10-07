@@ -82,6 +82,8 @@ def run():
     load("tests/editor_navigation_diff_smoke.lua")
     load("tests/parallel_editor_smoke.lua")
     load("tests/compact_fields_smoke.lua")
+    load("ui/dialogs/SelectButton.lua")
+    load("tests/button_lists_smoke.lua")
     load("tests/route_form_smoke.lua")
     load("tests/parallel_form_smoke.lua")
     load("tests/equipment_form_smoke.lua")
