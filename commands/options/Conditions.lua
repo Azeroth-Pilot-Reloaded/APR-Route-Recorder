@@ -1,6 +1,15 @@
 local R = AprRC.options
 local S = R.schemas
 
+-- Cooldown skips run on the active step, outside APR's reusable conditions.
+R:Register({
+    key = "SkipIfCooldown",
+    command = "skipifcooldown",
+    schema = S.skipIfCooldown,
+    example = '{ { itemID = 6948, operator = ">", seconds = 2, once = true } }',
+    icon = "Interface\\Icons\\INV_Misc_PocketWatch_01",
+})
+
 R:Register({
     key = "VendorMoney",
     command = "vendormoney",

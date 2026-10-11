@@ -267,7 +267,8 @@ The table includes navigation, display, and route options so you can see the com
 | 🟠 **Action** | `Fillers` | Add optional quest objectives alongside the main route. |
 | 🟠 **Action** | `LootItems` | Wait for listed item quantities; optional quest IDs can link completion to a quest. |
 | 🟠 **Action** | `LootMoney` | Add a money-collection target, with optional equipped-item vendor value. |
-| 🟠 **Action** | `Grind` | Add a level/XP target using a number, an absolute XP table, or an APR level profile. |
+| 🟠 **Action** | `Grind` | Add a level/XP target using a number, an absolute XP table, or an APR level profile. Absolute XP tables accept `questLogXP`, a list of completed quests still in the log whose current rewards reduce the target. Example: `Grind = { level = 60, xp = 0, questLogXP = { 4901, 4508 } }`. |
+| 🟠 **Action** | `EquipItem` | Add an item to equip in a specified slot; completes when the slot contains the item. Example: `EquipItem = { itemID = 2030, slot = 16 }`. |
 | 🟠 **Action** | `Reputation` | Add a standing, renown, or friendship target. |
 | 🟠 **Action** | `UseItem`, `UseSpell` | Add an item-use or spell-cast step linked to a quest. |
 | 🟠 **Action** | `LearnSkill` | Add trainer spells or all available services, optionally restricted to an NPC. |
@@ -310,6 +311,7 @@ The table includes navigation, display, and route options so you can see the com
 | 🟢 **Condition** | `Class`, `ClassNot`, `ClassSpec` | Include/exclude classes or require a specialization. |
 | 🟢 **Condition** | `Gender`, `Hardcore`, `Event` | Filter by gender, Hardcore status, or APR event mode. |
 | 🟢 **Condition** | `Level`, `MinLevel`, `MaxLevel`, `BeLvl`, `SkipForLvl` | Apply minimum, maximum, exact-level, or skip thresholds. Step thresholds support level/XP forms and profiles except `BeLvl`. |
+| 🟢 **Condition** | `SkipIfCooldown` | Skip the active step when any listed item/spell cooldown meets `<` or `>` with a nonnegative seconds threshold. `once = true` checks on entry; otherwise APR monitors continuously. Example: `SkipIfCooldown = { { itemID = 6948, operator = ">", seconds = 2, once = true } }`. This field applies directly to a step. |
 | 🟢 **Condition** | `Zones`, `OnlyInZones`, `SkipInZones` | Limit a step to selected maps or skip it in selected maps. |
 | 🟢 **Condition** | `HasAchievement`, `DontHaveAchievement` | Require an achievement to be earned or missing. |
 | 🟢 **Condition** | `HasAura`, `DontHaveAura` | Require an aura to be present or absent. |
@@ -334,11 +336,12 @@ The table includes navigation, display, and route options so you can see the com
 | ⚪ **Route** | `conditions` | Set the supported route-selection filters. |
 | ⚪ **Route** | `requiredRoute`, `nextRoute`, `prefab` | Configure dependencies, suggested next routes, and preset membership. |
 | ⚪ **Route** | `parallelSteps`, `scenarios` | Define conditional parallel groups and scenario-specific step collections. |
+| ⚪ **Route** | `parallelSteps[].repeatable` | Enable another activation of a single `UseItem` action after the previous action was passed and its group conditions became false then true. Edit the checkbox in **Group conditions**. |
 | ⚪ **Route** | `XPConsumables` | Set the route's XP-consumable profile. |
 
 </details>
 
-Conditions in the same block combine with AND. `AnyOf` expresses alternatives, `AllOf` allows multiple checks of the same kind, and `Not` inverts a complete block. Parallel-group conditions control when its steps are inserted; each step can have its own filters. Route-selection conditions support a narrower set of fields than step/group conditions.
+Conditions in the same block combine with AND. `AnyOf` expresses alternatives, `AllOf` allows multiple checks of the same kind, and `Not` inverts a complete block. Parallel-group conditions control when its steps are inserted; single `EquipItem`/`UseItem` actions also inherit live group conditions. Other groups retain activation-only conditions, and each step can have its own filters. `SkipIfCooldown` belongs directly on a step, outside reusable condition blocks. `questLogXP` is available in absolute XP tables for `Grind`, `Level`, `MinLevel`, `MaxLevel`, and `SkipForLvl`. Route-selection conditions support a narrower set of fields than step/group conditions.
 
 The Lua editor also preserves comments and accepts `_comment` step text. Step indices (`_index`) are generated automatically. For detailed syntax and APR options beyond the recorder's current editing coverage, use the [APR Route Syntax wiki](https://github.com/Azeroth-Pilot-Reloaded/azeroth-pilot-reloaded/wiki/APR-Route-Syntax).
 

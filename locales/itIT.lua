@@ -9,6 +9,11 @@ L["Follow APR's current step when the same route is open. Pauses while editing."
 L["FIELD_VendorMoney"] = "Condizione di denaro incluso il valore di vendita"
 L["Ctrl: condition details"] = "Ctrl: dettagli delle condizioni"
 
+L["FIELD_EquipItem"] = "Equipaggia un oggetto"
+L["FIELD_SkipIfCooldown"] = "Salta in base al recupero"
+L["FIELD_once"] = "Controlla solo all’ingresso"
+L["FIELD_repeatable"] = "Ripetibile (uso di un singolo oggetto)"
+L["FIELD_questLogXP"] = "Missioni completate per il credito PE"
 -- Route deletion
 L["Delete route"] = "Elimina percorso"
 L["Delete route %s, its draft and its recorder copy in APR? This cannot be undone."] = "Eliminare il percorso %s, la sua bozza e la sua copia del registratore in APR? Questa azione è irreversibile."

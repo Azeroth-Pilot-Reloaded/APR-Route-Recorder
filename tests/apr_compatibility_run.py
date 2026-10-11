@@ -26,6 +26,7 @@ for path in (ROOT / "commands/options").glob("*.lua"):
     load(path)
 load(ROOT / "ui/editor/Merge.lua")
 load(ROOT / "ui/editor/Model.lua")
+load(APR_ROOT / "APR-Core/utils/Utils.lua")
 load(APR_ROOT / "APR-Core/utils/RouteUtils.lua")
 lua.execute('function APR:NewModule() return {} end')
 load(APR_ROOT / "APR-Core/features/navigation/WorldCoordinateConverter.lua")
@@ -82,7 +83,9 @@ for key in pairs(entries) do
     session.draft.label = session.draft.label .. " (merged)"
     session:Snapshot()
     route = AprRC:FindRouteByName(route.name)
-    route.steps[#route.steps + 1] = { Note = "Captured while editing an APR import" }
+    local insertion = #route.steps + 1
+    if route.steps[#route.steps] and route.steps[#route.steps].RouteCompleted then insertion = #route.steps end
+    table.insert(route.steps, insertion, { Note = "Captured while editing an APR import" })
     AprRC:NotifyRouteChanged(route.name)
     local plan = assert(session:MergePlan())
     assert(#plan.conflicts == 0 and session:ApplyMerge(plan, {}, false))
@@ -92,7 +95,8 @@ for key in pairs(entries) do
     local merged = AprRC:FindRouteByName(route.name)
     assert(#merged.steps == #(source.steps or {}) + 1)
     for index, step in ipairs(expected.steps or {}) do
-        assert(SameStepData(merged.steps[index], step), "Merge changed legacy step data for " .. key)
+        local mergedIndex = index >= insertion and index + 1 or index
+        assert(SameStepData(merged.steps[mergedIndex], step), "Merge changed legacy step data for " .. key)
     end
     assert(SameStepData(merged.parallelSteps or {}, expected.parallelSteps or {}))
     count = count + 1
@@ -109,7 +113,10 @@ end
 print("Real APR routes: import, save, edit, automatic publication and reload passed for " .. count .. " routes.")
 ''')
 
-load(APR_ROOT / "APR-Core/utils/RouteManager.lua")
+route_manager = APR_ROOT / "APR-Core/features/questing/RouteManager.lua"
+if not route_manager.exists():
+    route_manager = APR_ROOT / "APR-Core/utils/RouteManager.lua"
+load(route_manager)
 load(APR_ROOT / "APR-Core/utils/StepUtils.lua")
 lua.execute('''
 APR.IsRouteCompatibleWithClient = function() return true end

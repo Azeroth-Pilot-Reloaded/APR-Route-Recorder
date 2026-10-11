@@ -577,6 +577,7 @@ function Model:FieldSummary(key, value)
     elseif key == "ItemCount" then
         return items(value.itemIDs or (value.itemID and { value.itemID })) .. " " .. (value.operator or ">=") .. " " .. tostring(value.count or 0)
     elseif key == "Collection" then return self:ItemText(value.itemID) .. " × " .. tostring(value.quantity or 1)
+    elseif key == "EquipItem" then return self:ItemText(value.itemID) .. " · " .. summaryLabel("slot") .. " " .. tostring(value.slot)
     elseif key == "EquippedItem" then
         if value[1] then
             local result = {}
@@ -625,7 +626,7 @@ local actionOrder = {
     "Reputation", "BuyMerchant", "LootItems", "LootMoney", "LeaveQuests", "Emote", "ChromiePick",
     "LearnProfession", "WarMode", "ResetRoute", "VehicleExit", "MountVehicle",
     "ExitTutorial", "LeaveQuest", "DeathSkip", "SellItems", "Repair", "LearnSkill",
-    "BankDeposit", "BankWithdraw", "DestroyItems", "TameBeast",
+    "BankDeposit", "BankWithdraw", "DestroyItems", "TameBeast", "EquipItem",
 }
 local questActions = { PickUp = true, Qpart = true, QpartPart = true, Done = true, LeaveQuests = true,
     LeaveQuest = true, ExitTutorial = true }
@@ -661,7 +662,7 @@ function Model:Summary(step)
         preview[1] = table.concat(titles, ", ")
         raw[1] = preview[1]
     end
-    for _, field in ipairs({ "LootMoney", "DestroyItems", "LearnSkill", "BankDeposit", "BankWithdraw", "Repair", "TameBeast" }) do
+    for _, field in ipairs({ "LootMoney", "DestroyItems", "LearnSkill", "BankDeposit", "BankWithdraw", "Repair", "TameBeast", "EquipItem" }) do
         local actionDetail = self:FieldSummary(field, step[field])
         if actionDetail and actionDetail ~= "" then
             if field ~= key then actionDetail = summaryLabel(field) .. ": " .. actionDetail end

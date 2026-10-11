@@ -67,6 +67,13 @@ S.equipmentSlot = {
 
 S.sellItems = object({ questID = "id", items = "ids", junk = "bool", npcID = "id", text = "text",
     equippedSlots = list(S.equipmentSlot) })
+S.equipItem = object({ itemID = "id", slot = S.equipmentSlot }, { "itemID", "slot" })
+local cooldownOperator = { kind = "enum", values = { "<", ">" } }
+S.itemCooldown = object({ itemID = "id", operator = cooldownOperator, seconds = "number", once = "bool" },
+    { "itemID", "operator", "seconds" })
+S.spellCooldown = object({ spellID = "id", operator = cooldownOperator, seconds = "number", once = "bool" },
+    { "spellID", "operator", "seconds" })
+S.skipIfCooldown = list({ kind = "union", choices = { S.itemCooldown, S.spellCooldown } })
 
 S.equipmentStat = {
     kind = "enum",
@@ -194,7 +201,7 @@ S.skill = object({
 S.equippedItemEntry = object({ slot = S.equipmentSlot, itemID = "id", invert = "bool" }, { "slot" })
 S.equippedItem = { kind = "union", choices = { list(S.equippedItemEntry), S.equippedItemEntry } }
 S.collection = object({ itemID = "id", quantity = "id" }, { "itemID" })
-S.absoluteXP = object({ level = "id", xp = "integer" }, { "level", "xp" })
+S.absoluteXP = object({ level = "id", xp = "integer", questLogXP = "ids" }, { "level", "xp" })
 S.level = { kind = "union", choices = { "positive", "profile", S.absoluteXP } }
 S.reputation = object({
     factionID = "id",
@@ -205,7 +212,7 @@ S.emote = object({ npcID = "nonnegative", emote = "text", manual = "bool" }, { "
 S.buffs = list(object({ spellId = "id", tooltipMessage = "text" }, { "spellId" }))
 S.qpart = { kind = "map", key = "id", entry = "ids" }
 S.buttons = { kind = "map", key = "objectiveKey", entry = "idOrIds" }
-S.parallel = list(object({ conditions = "conditions", steps = "steps" }, { "conditions", "steps" }))
+S.parallel = list(object({ conditions = "conditions", steps = "steps", repeatable = "bool" }, { "steps" }))
 S.scenarios = list(object({ scenarioID = "id", index = "id", label = "text", steps = "steps" }, { "scenarioID", "steps" }))
 S.anyOf = list("conditions")
 S.allOf = list("conditions")
@@ -365,6 +372,9 @@ function options:ValidateValue(schema, value, path, depth, previous)
             ["standard standing must be 1-8"]) end
         if schema == S.repair and value.minDurability and (value.minDurability < 0 or value.minDurability > 100) then
             return fail(L["minDurability must be between 0 and 100"])
+        end
+        if (schema == S.itemCooldown or schema == S.spellCooldown) and value.seconds < 0 then
+            return fail(L["must be zero or greater"])
         end
         if schema == S.sellItems and not (value.items or value.equippedSlots or value.junk == true) then
             return fail(L["items, equippedSlots or junk = true is required"])

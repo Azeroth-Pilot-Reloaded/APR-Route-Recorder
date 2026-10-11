@@ -9,6 +9,11 @@ L["Follow APR's current step when the same route is open. Pauses while editing."
 L["FIELD_VendorMoney"] = "판매 가치를 포함한 소지금 조건"
 L["Ctrl: condition details"] = "Ctrl: 조건 세부 정보"
 
+L["FIELD_EquipItem"] = "아이템 장착"
+L["FIELD_SkipIfCooldown"] = "재사용 대기시간에 따라 건너뛰기"
+L["FIELD_once"] = "진입 시에만 확인"
+L["FIELD_repeatable"] = "반복 가능 (단일 아이템 사용)"
+L["FIELD_questLogXP"] = "경험치에 반영할 완료된 퀘스트"
 -- Route deletion
 L["Delete route"] = "경로 삭제"
 L["Delete route %s, its draft and its recorder copy in APR? This cannot be undone."] = "%s 경로, 초안 및 APR의 기록기 사본을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다."

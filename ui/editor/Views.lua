@@ -411,6 +411,8 @@ function Editor:DrawInspector()
                 self:DrawInspector()
             end)
             UI.LabelWidget(panel, gold .. T("Parallel group") .. " " .. groupIndex .. " · " .. T("Conditions") .. "|r", true)
+            UI.Form:Render(panel, "bool", group.repeatable, function(value) group.repeatable = value end,
+                context, "route/parallelSteps/" .. groupIndex .. "/repeatable", UI.Label("repeatable"))
             UI.Form:Render(panel, "conditions", group.conditions, function(value) group.conditions = value end,
                 context, path, T("Conditions"))
         elseif step then

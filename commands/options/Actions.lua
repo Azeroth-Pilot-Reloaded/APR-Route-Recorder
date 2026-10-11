@@ -2,6 +2,15 @@ local R = AprRC.options
 local S = R.schemas
 
 R:Register({
+    key = "EquipItem",
+    command = "equipitem",
+    schema = S.equipItem,
+    example = "{ itemID = 2030, slot = 16 }",
+    newStep = true,
+    icon = "Interface\\Icons\\INV_Sword_04",
+})
+
+R:Register({
     key = "ExitTutorial",
     command = "exittutorial",
     schema = "id",

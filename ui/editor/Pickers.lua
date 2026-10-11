@@ -19,7 +19,7 @@ end
 
 local quests = { PickUp = true, PickUpDB = true, Done = true, DoneDB = true, QpartDB = true,
     Waypoint = true, WaypointDB = true, LeaveQuest = true, DropQuest = true, ExitTutorial = true,
-    GroupTask = true, questID = true, Qid = true }
+    GroupTask = true, questID = true, Qid = true, questLogXP = true }
 local spells = { spellID = true, spellId = true, spellIDs = true, itemSpellID = true,
     HasSpell = true, DontHaveSpell = true, SpellTrigger = true, LearnProfession = true }
 local items = { itemID = true, itemIDs = true, items = true }

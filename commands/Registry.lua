@@ -279,7 +279,7 @@ options.categoryOrder = { "Actions", "Navigation", "Display", "Conditions", "Rou
 
 function options:GetCategory(definition)
     if definition.scope == "route" then return "Route metadata", 5 end
-    if definition.condition then return "Conditions", 4 end
+    if definition.condition or definition.key == "SkipIfCooldown" then return "Conditions", 4 end
     if navigation[definition.key] then return "Navigation", 2 end
     if definition.newStep then return "Actions", 1 end
     return "Display", 3

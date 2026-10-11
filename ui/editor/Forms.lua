@@ -155,7 +155,7 @@ end
 function Form:Summary(schema, value)
     schema, value = self:Unified(schema, value)
     if type(value) ~= "table" then return tostring(value) end
-    for _, key in ipairs({ "Money", "VendorMoney", "LootMoney", "DestroyItems", "LearnSkill", "Skill", "ItemCount", "Collection", "EquippedItem", "Repair", "TameBeast" }) do
+    for _, key in ipairs({ "Money", "VendorMoney", "LootMoney", "DestroyItems", "LearnSkill", "Skill", "ItemCount", "Collection", "EquippedItem", "EquipItem", "Repair", "TameBeast" }) do
         if self:Unified(R.step[key].schema) == schema then
             local detail = AprRC.editorModel:FieldSummary(key, value)
             if detail and detail ~= "" then return detail end
@@ -589,6 +589,8 @@ function Form:Render(parent, schema, value, set, context, path, label)
                 positive = "Number", id = "Number", object = "Fields" }
             if choice == R.schemas.absoluteXP then names.object = "Level + XP" end
             entries[index] = T(names[kind(choice)] or "Value")
+            if choice == R.schemas.itemCooldown then entries[index] = UI.Label("itemID") end
+            if choice == R.schemas.spellCooldown then entries[index] = UI.Label("spellID") end
         end
         UI.Dropdown(parent, T("Requirement type"), entries, selected, function(index)
             context.modes[path] = index

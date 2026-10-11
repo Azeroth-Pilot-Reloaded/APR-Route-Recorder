@@ -88,6 +88,7 @@ def run():
     load("tests/parallel_form_smoke.lua")
     load("tests/equipment_form_smoke.lua")
     load("tests/repair_tame_smoke.lua")
+    load("tests/new_route_fields_smoke.lua")
     load("tests/condition_badges_smoke.lua")
     load("tests/route_details_smoke.lua")
     load("tests/step_tooltip_smoke.lua")

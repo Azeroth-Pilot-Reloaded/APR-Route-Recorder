@@ -9,6 +9,11 @@ L["Follow APR's current step when the same route is open. Pauses while editing."
 L["FIELD_VendorMoney"] = "Money including vendor value condition"
 L["Ctrl: condition details"] = "Ctrl: condition details"
 
+L["FIELD_EquipItem"] = "Equip an item"
+L["FIELD_SkipIfCooldown"] = "Skip on cooldown"
+L["FIELD_once"] = "Check only on entry"
+L["FIELD_repeatable"] = "Repeatable (single item use)"
+L["FIELD_questLogXP"] = "Completed quests for XP credit"
 -- Route deletion
 L["Delete route"] = "Delete route"
 L["Delete route %s, its draft and its recorder copy in APR? This cannot be undone."] = "Delete route %s, its draft and its recorder copy in APR? This cannot be undone."

@@ -9,6 +9,11 @@ L["Follow APR's current step when the same route is open. Pauses while editing."
 L["FIELD_VendorMoney"] = "含售价的金钱条件"
 L["Ctrl: condition details"] = "Ctrl：条件详情"
 
+L["FIELD_EquipItem"] = "装备物品"
+L["FIELD_SkipIfCooldown"] = "根据冷却时间跳过"
+L["FIELD_once"] = "仅在进入时检查"
+L["FIELD_repeatable"] = "可重复（单次物品使用）"
+L["FIELD_questLogXP"] = "用于抵扣经验值的已完成任务"
 -- Route deletion
 L["Delete route"] = "删除路线"
 L["Delete route %s, its draft and its recorder copy in APR? This cannot be undone."] = "删除路线 %s、其草稿及其在 APR 中的记录器副本？此操作无法撤销。"

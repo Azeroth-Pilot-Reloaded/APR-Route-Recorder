@@ -9,6 +9,11 @@ L["Follow APR's current step when the same route is open. Pauses while editing."
 L["FIELD_VendorMoney"] = "Geldbedingung einschließlich Verkaufswert"
 L["Ctrl: condition details"] = "Strg: Bedingungsdetails"
 
+L["FIELD_EquipItem"] = "Gegenstand anlegen"
+L["FIELD_SkipIfCooldown"] = "Bei Abklingzeit überspringen"
+L["FIELD_once"] = "Nur beim Eintritt prüfen"
+L["FIELD_repeatable"] = "Wiederholbar (einzelne Gegenstandsnutzung)"
+L["FIELD_questLogXP"] = "Abgeschlossene Quests für EP-Anrechnung"
 -- Route deletion
 L["Delete route"] = "Route löschen"
 L["Delete route %s, its draft and its recorder copy in APR? This cannot be undone."] = "Route %s, ihren Entwurf und ihre Recorder-Kopie in APR löschen? Dies kann nicht rückgängig gemacht werden."
