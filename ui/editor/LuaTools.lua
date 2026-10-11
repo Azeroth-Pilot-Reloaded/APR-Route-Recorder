@@ -82,22 +82,29 @@ function Editor:AnalyzeLua(edit, deferred)
             self.luaAnalysisBaselineText = base
         end
         local diagnostics, outline, parsed, map, comments = Language:Analyze(text, self.luaAnalysisBaseline, checkpoint)
-        local entries, order = {}, {}
+        local entries, order, positions = {}, {}, { steps = {}, parallelSteps = {} }
         for index, step in ipairs(outline) do
             if checkpoint then checkpoint() end
             local name = step.group and T("Parallel %d / step %d"):format(step.group, step.index) or T("Step %d"):format(step.index)
             entries[index] = name .. " · " .. T("Line %d"):format(step.line) .. (step.title ~= "" and " · " .. step.title or "")
             order[index] = index
+            local steps = positions.steps
+            if step.group then
+                positions.parallelSteps[step.group] = positions.parallelSteps[step.group] or {}
+                steps = positions.parallelSteps[step.group]
+            end
+            steps[step.index] = { start = step.start, finish = step.finish }
         end
         local dirty = session:IsDirty()
         session:ReconcileRaw(parsed, comments, true, checkpoint)
         return { diagnostics = diagnostics, outline = outline, parsed = parsed, map = map,
-            entries = entries, order = order, statusChanged = dirty ~= session:IsDirty() }
+            entries = entries, order = order, positions = positions, statusChanged = dirty ~= session:IsDirty() }
     end
     local function publish(result)
         self.luaAnalysisToken, self.luaAnalysisPending = nil, nil
         self.luaDiagnostics, self.luaOutline, self.luaParsed, self.luaSourceMap = result.diagnostics, result.outline, result.parsed, result.map
         self.luaAnalysisText = text
+        self.luaStepPositions = result.positions
         if result.statusChanged then self:UpdateStatus() end
         edit:SetDiagnostics(self.luaDiagnostics)
         local first = self.luaDiagnostics[1]

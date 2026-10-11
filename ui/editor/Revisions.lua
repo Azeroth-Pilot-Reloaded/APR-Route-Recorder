@@ -1,5 +1,5 @@
 local GUI = LibStub("AceGUI-3.0")
-local UI, Model, Editor = AprRC.editorUI, AprRC.editorModel, AprRC.routeEditor
+local UI, Model, Editor, Code = AprRC.editorUI, AprRC.editorModel, AprRC.routeEditor, AprRC.luaCode
 local T = UI.Text
 
 local function valueText(value)
@@ -15,11 +15,105 @@ local function preview(parent, label, value, height, editable)
     return box
 end
 
-function Editor:AfterSave()
-    self.session.rawHistory = nil
+local function mapPosition(comparison, position)
+    if #comparison.left == 0 then return 0 end
+    local line = Code:LineAt(comparison.left, position)
+    local column = position - comparison.left[line].start
+    if not comparison.mappedLines then
+        comparison.mappedLines = {}
+        for _, row in ipairs(comparison.rows) do
+            if row.left and row.right then comparison.mappedLines[#comparison.mappedLines + 1] = row end
+        end
+    end
+    local rows, low, high = comparison.mappedLines, 1, #comparison.mappedLines
+    while low <= high do
+        local middle = math.floor((low + high) / 2)
+        if rows[middle].left < line then low = middle + 1 else high = middle - 1 end
+    end
+    local nearest = rows[low] or rows[high]
+    if rows[high] and (not nearest or line - rows[high].left <= math.abs(nearest.left - line)) then nearest = rows[high] end
+    local target = comparison.right[nearest and nearest.right or math.min(line, #comparison.right)]
+    return target and target.start + math.min(column, #target.text) or 0
+end
+
+function Editor:AfterSave(keepLua)
+    local session = self.session
+    session.rawHistory = nil
     self.safetyNotice = nil
-    if self.frame then self:DrawTab(); self:Message(T("Saved")) end
-    if self.closeAfterSave == self.session then
+    if self.frame then
+        self:MarkInteraction()
+        -- Saving resumes follow after the usual idle interval, without a
+        -- queued recording/APR refresh immediately displacing the editor.
+        if AprRC.settings.profile.followAPR then
+            local index, group = AprRC:GetAPRPlaybackSelection(session.name)
+            self.aprFollowTarget = index and { session = session, index = index, group = group } or nil
+        end
+        local edit = self.luaBox
+        if keepLua and edit then
+            -- The committed route has the same data. Keep the native buffer:
+            -- formatting, folds, selection, search and both scroll axes survive.
+            local snapshot = { text = edit:GetText(), cursor = edit:GetCursorPosition() }
+            session.rawHistory, session.rawCursor = { snapshot }, 1
+            edit.codeHistory, edit.codeHistoryIndex = { snapshot }, 1
+            self.luaStepPositions, self.luaAPRPosition = nil, nil
+            self:LuaInputChanged(edit)
+        else
+            local listScroll = self.list and self.list.localstatus.scrollvalue
+            local panel = self.inspector or self.routeForm
+            local panelScroll = panel and panel.localstatus.scrollvalue
+            local lua
+            if edit then
+                local lineHeight = edit.lineHeight or 14
+                local offset = edit.scrollFrame:GetVerticalScroll()
+                local lines = edit:NavigationLines()
+                local top = lines[math.min(#lines, math.floor(offset / lineHeight) + 1)]
+                lua = { text = edit:GetText(), cursor = edit:GetCursorPosition(), collapsed = edit.collapsed,
+                    top = Code:ToRaw(edit.ranges, top.start), inset = offset % lineHeight,
+                    horizontal = edit.horizontalBar:GetValue(), focus = edit.editBox:HasFocus() }
+            end
+            self:DrawTab()
+            local currentEdit = self.luaBox
+            if lua and currentEdit then
+                -- A merge can insert lines before the cursor. Follow the
+                -- corresponding source line rather than the old byte offset.
+                local comparison = Code:Compare(lua.text, currentEdit:GetText())
+                local cursor = mapPosition(comparison, lua.cursor)
+                lua.cursor = cursor
+                currentEdit:FlushCode()
+                local available, collapsed = {}, {}
+                for _, fold in ipairs(currentEdit.folds) do available[fold.start] = true end
+                for start in pairs(lua.collapsed) do
+                    local mapped = mapPosition(comparison, start)
+                    if available[mapped] then collapsed[mapped] = true end
+                end
+                currentEdit.collapsed = collapsed
+                currentEdit:Render(cursor, nil, true)
+                local top = Code:ToDisplay(currentEdit.ranges, mapPosition(comparison, lua.top))
+                lua.vertical = (Code:LineAt(currentEdit.lines, top) - 1) * currentEdit.lineHeight + lua.inset
+                if lua.focus then currentEdit:SetFocus() end
+                session.rawHistory[1].cursor = cursor
+            end
+            local list, inspector, tab, draft, token = self.list, self.inspector or self.routeForm, self.tab, session.draft, {}
+            self.stepScrollToken = token
+            local function restore()
+                if self.stepScrollToken ~= token or self.session ~= session or session.draft ~= draft or self.tab ~= tab or
+                    self.list ~= list or (self.inspector or self.routeForm) ~= inspector or self.luaBox ~= currentEdit then return end
+                if lua and currentEdit and currentEdit:GetCursorPosition() ~= lua.cursor then return end
+                if listScroll and list then list:SetScroll(listScroll) end
+                if panelScroll and inspector then inspector:SetScroll(panelScroll) end
+                if lua and currentEdit then
+                    currentEdit.scrollFrame:SetVerticalScroll(math.min(lua.vertical, currentEdit.scrollFrame:GetVerticalScrollRange()))
+                    currentEdit.horizontalBar:SetValue(math.min(lua.horizontal,
+                        math.max(0, currentEdit.textWidth - currentEdit.scrollFrame:GetWidth())))
+                end
+            end
+            restore()
+            -- WoW finalizes the scroll ranges on the next frame.
+            C_Timer.After(0, restore)
+        end
+        self:Message(T("Saved"))
+    end
+    if self.closeAfterSave == session then
         self.closeAfterSave = nil; self:Hide(true)
     end
 end

@@ -369,7 +369,7 @@ function Editor:Save()
         self:Message(reason == "conflict" and T("SAVE_CONFLICT_HELP") or reason, true)
         return false
     end
-    self:AfterSave()
+    self:AfterSave(true)
     return true
 end
 
