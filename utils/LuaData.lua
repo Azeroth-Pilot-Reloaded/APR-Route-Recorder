@@ -1,11 +1,12 @@
 local L = LibStub("AceLocale-3.0"):GetLocale("APR-Recorder")
 -- Data-only Lua literals. No loadstring: route input must never execute code.
-function AprRC:ParseLuaData(text, withComments, withPositions)
+function AprRC:ParseLuaData(text, withComments, withPositions, checkpoint)
     if type(text) ~= "string" or #text > 1000000 then return nil, L["Invalid or oversized input"] end
     local pos, count = 1, 0
     local comments, tables, seenComments = {}, {}, {}
     local function skip()
         while true do
+            if checkpoint then checkpoint() end
             local _, last = text:find("^%s+", pos)
             if last then pos = last + 1 end
             if text:sub(pos, pos + 1) ~= "--" then return end
@@ -34,6 +35,7 @@ function AprRC:ParseLuaData(text, withComments, withPositions)
         local result = {}
         local escapes = { n = "\n", r = "\r", t = "\t", a = "\a", b = "\b", f = "\f", v = "\v" }
         while pos <= #text do
+            if checkpoint then checkpoint() end
             local c = text:sub(pos, pos)
             pos = pos + 1
             if c == quote then return table.concat(result) end
@@ -56,6 +58,7 @@ function AprRC:ParseLuaData(text, withComments, withPositions)
     end
     local value
     value = function(depth)
+        if checkpoint then checkpoint() end
         count = count + 1
         if depth > 40 or count > 100000 then error(L["Data is too deeply nested or too large"]) end
         skip()
@@ -145,12 +148,22 @@ function AprRC:ParseLuaData(text, withComments, withPositions)
         end
         error(L["Expected a data value at position "] .. pos)
     end
-    local ok, result, root = pcall(function()
+    local function parse()
         local parsed, node = value(0)
         skip()
         if pos <= #text then error(L["Unexpected input at position "] .. pos) end
         return parsed, node
-    end)
+    end
+    local ok, result, root
+    if checkpoint then
+        -- Lua 5.1 cannot yield across pcall. Keep parser failures protected by
+        -- resume, forwarding pauses to the editor's background task instead.
+        local thread = coroutine.create(parse)
+        repeat
+            ok, result, root = coroutine.resume(thread)
+            if ok and coroutine.status(thread) ~= "dead" then coroutine.yield() end
+        until not ok or coroutine.status(thread) == "dead"
+    else ok, result, root = pcall(parse) end
     if ok then
         local positions
         if withPositions then
@@ -159,6 +172,7 @@ function AprRC:ParseLuaData(text, withComments, withPositions)
                 if not node then return end
                 local fields = {}
                 for _, entry in ipairs(node.entries) do
+                    if checkpoint then checkpoint() end
                     fields[entry.key] = { start = entry.start - 1, finish = entry.finish - 1 }
                 end
                 positions[node.value] = { start = node.start - 1, finish = node.finish - 1, fields = fields }
@@ -176,6 +190,7 @@ function AprRC:ParseLuaData(text, withComments, withPositions)
             end
             local stack, tableIndex = {}, 1
             for _, comment in ipairs(comments) do
+                if checkpoint then checkpoint() end
                 while tables[tableIndex] and tables[tableIndex].start < comment.start do
                     local node = tables[tableIndex]
                     while stack[#stack] and stack[#stack].finish < node.start do table.remove(stack) end
@@ -188,7 +203,18 @@ function AprRC:ParseLuaData(text, withComments, withPositions)
                     append(root, comment.start < root.start and "leading" or "trailing", comment)
                 else
                     local nextKey, previous, slot = nil, nil, "before"
-                    for _, entry in ipairs(container.entries) do
+                    -- Entries and comments are ordered source ranges. Find the
+                    -- preceding entry without rescanning a long table for every comment.
+                    local low, high = 1, #container.entries
+                    while low <= high do
+                        local middle = math.floor((low + high) / 2)
+                        if container.entries[middle].finish <= comment.start then low = middle + 1
+                        else high = middle - 1 end
+                    end
+                    previous = container.entries[high]
+                    for index = low, #container.entries do
+                        if checkpoint then checkpoint() end
+                        local entry = container.entries[index]
                         if entry.finish <= comment.start then previous = entry
                         elseif entry.start > comment.finish or entry.finish > comment.finish then
                             nextKey = entry.key; break
@@ -206,6 +232,7 @@ function AprRC:ParseLuaData(text, withComments, withPositions)
                 end
             end
             local function clean(node)
+                if checkpoint then checkpoint() end
                 node.start, node.finish, node.entries = nil, nil, nil
                 for key, child in pairs(node.children) do
                     if not clean(child) then node.children[key] = nil end

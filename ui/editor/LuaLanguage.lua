@@ -60,10 +60,10 @@ end
 
 -- The parser returns table/field byte ranges without modifying the source.
 -- Schema diagnostics use the same validation and saved baseline as Save.
-function Language:Analyze(text, baseline)
-    local parsed, reason, comments, map = AprRC:ParseLuaData(text, true, true)
+function Language:Analyze(text, baseline, checkpoint)
+    local parsed, reason, comments, map = AprRC:ParseLuaData(text, true, true, checkpoint)
     if parsed == nil then return { { message = reason, location = map } }, {}, nil end
-    local errors, outline, lines, seenErrors = {}, {}, Code:Lines(text), {}
+    local errors, outline, lines, seenErrors = {}, {}, Code:Lines(text, checkpoint), {}
     local function add(message, value, field)
         if #errors >= 50 then return end
         local node = map[value]
@@ -89,12 +89,13 @@ function Language:Analyze(text, baseline)
         end
     end
     local function validate(schema, value, path, previous, owner, key)
-        local ok, why = R:ValidateValue(schema, value, path, nil, previous)
+        local ok, why = R:ValidateValue(schema, value, path, nil, previous, checkpoint)
         if not ok then add(why, owner or value, key) end
     end
     local function steps(values, previous, group)
         if type(values) ~= "table" then validate("steps", values, "steps", previous, parsed, "steps"); return end
         for index, step in ipairs(values) do
+            if checkpoint then checkpoint() end
             local before = #errors
             if type(step) == "table" then
                 AprRC:NormalizeStepOptionFields(step)
@@ -106,7 +107,7 @@ function Language:Analyze(text, baseline)
                     end
                     local schema = definition and definition.schema or key == "_index" and "id" or key == "_comment" and "text"
                     if schema then validate(schema, entry, tostring(key), old and old[key], step, key)
-                    elseif not old or not AprRC:DeepCompare(old[key], entry) then
+                    elseif not old or not AprRC:DeepCompare(old[key], entry, checkpoint) then
                         add(tostring(key) .. ": " .. L["unsupported field "] .. tostring(key), step, key)
                     end
                 end
@@ -129,6 +130,7 @@ function Language:Analyze(text, baseline)
         -- Check holes and non-list keys without repeating each step's schema.
         local size = 0
         for key in pairs(values) do
+            if checkpoint then checkpoint() end
             size = size + 1
             if type(key) ~= "number" or key < 1 or key % 1 ~= 0 then
                 add(L["expected consecutive list indices"], values); return
@@ -148,7 +150,7 @@ function Language:Analyze(text, baseline)
                 local definition = R.route[key]
                 if definition then
                     validate(definition.schema, value, tostring(key), baseline and baseline[key], parsed, key)
-                elseif not baseline or not AprRC:DeepCompare(baseline[key], value) then
+                elseif not baseline or not AprRC:DeepCompare(baseline[key], value, checkpoint) then
                     add(L["Unsupported route field: "] .. tostring(key), parsed, key)
                 end
             end
@@ -285,12 +287,13 @@ local function public(value)
     return value
 end
 
-function Language:Context(text, cursor, tokens)
+function Language:Context(text, cursor, tokens, checkpoint)
     local first, last = cursor, cursor
     while first > 0 and (word(text:byte(first)) or text:sub(first, first) == ".") do first = first - 1 end
     while last < #text and (word(text:byte(last + 1)) or text:sub(last + 1, last + 1) == ".") do last = last + 1 end
     local stack, frame, identifier = {}, {}, nil
-    for _, token in ipairs(tokens or Code:Scan(text)) do
+    for _, token in ipairs(tokens or Code:Scan(text, checkpoint)) do
+        if checkpoint then checkpoint() end
         if cursor > token.start and ((token.kind == "string" and cursor <= token.finish) or
             (token.kind == "comment" and cursor <= token.finish)) then return end
         if token.start >= first then break end
@@ -318,10 +321,11 @@ function Language:Context(text, cursor, tokens)
             key == "conditions" or not mapKeys[key] and not kind) }
 end
 
-function Language:Candidates(context, route)
+function Language:Candidates(context, route, checkpoint)
     if not context then return {} end
     local values, seen, prefix = {}, {}, foldCase(context.prefix)
     local function add(insert, label, kind)
+        if checkpoint then checkpoint() end
         insert, label = public(insert), public(label)
         if type(insert) ~= "string" or seen[insert] then return end
         label = type(label) == "string" and label or insert
@@ -354,6 +358,7 @@ function Language:Candidates(context, route)
         local function collect(value)
             if type(value) ~= "table" then return end
             for key, entry in pairs(value) do
+                if checkpoint then checkpoint() end
                 local category = questKeys[key] or type(key) == "string" and key:match("^Is.*Quest")
                 category = category and "quest" or spellKeys[key] and "spell" or itemKeys[key] and "item"
                 if category == kind then

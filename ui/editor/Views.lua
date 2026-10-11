@@ -537,7 +537,7 @@ function Editor:DrawLua()
     end)
     edit:SetCallback("OnCodeSettled", function()
         if self.luaBox == edit and self.luaFindBar then self:FindLua(0, true, true) end
-        if self.luaBox == edit then self:AnalyzeLua(edit) end
+        if self.luaBox == edit then self:AnalyzeLua(edit, true) end
     end)
     edit:SetCallback("OnCodeCursorChanged", function(_, _, cursor)
         local snapshot = session.rawHistory and session.rawHistory[session.rawCursor]

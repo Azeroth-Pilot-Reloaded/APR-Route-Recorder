@@ -9,9 +9,32 @@ for word in ("and break do else elseif end false for function if in local nil no
 end
 local brackets = { "ffd700", "da70d6", "179fff" }
 
-function Code:Scan(text)
+-- Background editor work shares a small frame budget. Explicit commands keep
+-- using the synchronous helpers; abandoned input never publishes old results.
+function Code:Defer(work, current, complete)
+    local clock = debugprofilestop or function() return GetTime() * 1000 end
+    local deadline, calls
+    local function checkpoint()
+        calls = calls + 1
+        if calls % 128 == 0 and clock() >= deadline then coroutine.yield() end
+    end
+    local thread = coroutine.create(function() return work(checkpoint) end)
+    local function resume()
+        if not current() then return end
+        deadline, calls = clock() + 4, 0
+        local ok, result = coroutine.resume(thread)
+        if not ok then geterrorhandler()(result); return end
+        if coroutine.status(thread) == "dead" then
+            if current() then complete(result) end
+        else C_Timer.After(0, resume) end
+    end
+    resume()
+end
+
+function Code:Scan(text, checkpoint)
     local tokens, folds, stack, regions, pos, line, depth = {}, {}, {}, {}, 1, 1, 0
     while pos <= #text do
+        if checkpoint then checkpoint() end
         local first, firstLine, kind, color, longFold = pos, line, "punctuation"
         local c = text:sub(pos, pos)
         local comment = text:sub(pos, pos + 1) == "--"
@@ -29,6 +52,7 @@ function Code:Scan(text)
         elseif c == '"' or c == "'" then
             pos, kind = pos + 1, "string"
             while pos <= #text do
+                if checkpoint then checkpoint() end
                 local char = text:sub(pos, pos)
                 pos = pos + 1
                 if char == "\\" then pos = math.min(#text + 1, pos + 1)
@@ -84,9 +108,10 @@ function Code:Scan(text)
     return tokens, folds
 end
 
-function Code:Encode(text, tokens)
+function Code:Encode(text, tokens, checkpoint)
     local parts, spans, length = {}, {}, 0
     for _, token in ipairs(tokens or self:Scan(text)) do
+        if checkpoint then checkpoint() end
         local value = text:sub(token.start + 1, token.finish):gsub("|", "||")
         local prefix = token.color and ("|cff" .. token.color) or ""
         parts[#parts + 1] = prefix .. value .. (token.color and "|r" or "")
@@ -201,9 +226,10 @@ function Code:NativeEdit(before, after)
     return first, oldFinish + extend, newFinish + extend
 end
 
-function Code:Lines(text)
+function Code:Lines(text, checkpoint)
     local lines, pos = {}, 1
     repeat
+        if checkpoint then checkpoint() end
         local finish = text:find("\n", pos, true)
         lines[#lines + 1] = { start = pos - 1, text = text:sub(pos, finish and finish - 1 or #text) }
         pos = finish and finish + 1
@@ -250,10 +276,11 @@ function Code:ChangedLines(text, other)
 end
 
 -- Hide a fold's interior while keeping full source byte positions canonical.
-function Code:Project(text, folds, collapsed)
+function Code:Project(text, folds, collapsed, checkpoint)
     if not next(collapsed) then return text, { { start = 0, finish = #text, display = 0 } } end
     local parts, ranges, last, length = {}, {}, 0, 0
     for _, fold in ipairs(folds) do
+        if checkpoint then checkpoint() end
         if collapsed[fold.start] and fold.start >= last then
             local bodyStart, bodyFinish = fold.contentStart or fold.start + 1, fold.contentFinish or fold.finish - 1
             local value = text:sub(last + 1, bodyStart)

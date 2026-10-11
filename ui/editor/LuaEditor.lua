@@ -150,18 +150,29 @@ GUI:RegisterWidgetType("APRLuaEditor", function()
         end
     end
 
-    function widget:SizeCode()
+    function widget:MeasureCode(lines, checkpoint)
         local font, size, flags = box:GetFont()
         measure:SetFont(font, size, flags)
         box:SetSpacing(0); measure:SetSpacing(0)
         measure:SetText("M"); local single = measure:GetStringHeight()
         measure:SetText("M\nM"); local pitch = measure:GetStringHeight() - single
-        self.lineHeight = pitch > 0 and pitch or single > 0 and single or size
+        local lineHeight = pitch > 0 and pitch or single > 0 and single or size
         local width = math.max(1, scroll:GetWidth())
-        for _, line in ipairs(self.lines or {}) do
+        for _, line in ipairs(lines or {}) do
+            if checkpoint then checkpoint() end
             measure:SetText(line.text:gsub("|", "||"))
             width = math.max(width, measure:GetStringWidth() + 16)
         end
+        return { width = width, lineHeight = lineHeight, font = font, size = size, flags = flags, viewport = scroll:GetWidth() }
+    end
+
+    function widget:SizeCode(metrics)
+        local font, size, flags = box:GetFont()
+        if not metrics or metrics.font ~= font or metrics.size ~= size or metrics.flags ~= flags or metrics.viewport ~= scroll:GetWidth() then
+            metrics = self:MeasureCode(self.lines)
+        end
+        local width = metrics.width
+        self.lineHeight = metrics.lineHeight
         self.textWidth = width
         box:SetWidth(width); box:SetHeight(math.max(scroll:GetHeight(), #(self.lines or {}) * self.lineHeight + 4))
         local maximum = math.max(0, width - scroll:GetWidth())
@@ -170,30 +181,44 @@ GUI:RegisterWidgetType("APRLuaEditor", function()
         self:DrawGutter()
     end
 
-    function widget:Render(cursor, selection, preserveScroll, plain)
+    function widget:PrepareCode(tokens, folds, plain, checkpoint)
+        local result = { tokens = tokens, folds = folds }
+        result.display, result.ranges = Code:Project(self.raw, folds, self.collapsed, checkpoint)
+        result.lines = Code:Lines(result.display, checkpoint)
+        result.rawLines = result.display == self.raw and result.lines or Code:Lines(self.raw, checkpoint)
+        if plain then
+            result.rendered = result.display:gsub("|", "||")
+            result.spans = { { start = 0, finish = #result.display, offset = 0, nativeFinish = #result.rendered } }
+        else
+            local displayTokens = result.display == self.raw and tokens or Code:Scan(result.display, checkpoint)
+            result.rendered, result.spans = Code:Encode(result.display, displayTokens, checkpoint)
+        end
+        result.visibleFolds = {}
+        for _, fold in ipairs(folds) do
+            if checkpoint then checkpoint() end
+            local position = Code:ToDisplay(result.ranges, fold.start)
+            if Code:ToRaw(result.ranges, position) == fold.start then
+                result.visibleFolds[fold.line] = result.visibleFolds[fold.line] or fold
+            end
+        end
+        result.metrics = self:MeasureCode(result.lines, checkpoint)
+        return result
+    end
+
+    function widget:Render(cursor, selection, preserveScroll, plain, prepared)
         local vertical, horizontalOffset = scroll:GetVerticalScroll(), horizontal:GetValue()
         self.pendingCode = nil
         self.centerToken = nil
         self.settingCode = true
-        self.display, self.ranges = Code:Project(self.raw, self.folds, self.collapsed)
-        self.lines, self.rawLines = Code:Lines(self.display), Code:Lines(self.raw)
+        prepared = prepared or self:PrepareCode(self.tokens, self.folds, plain)
+        self.display, self.ranges = prepared.display, prepared.ranges
+        self.lines, self.rawLines = prepared.lines, prepared.rawLines
+        self.rendered, self.spans = prepared.rendered, prepared.spans
+        self.visibleFolds = prepared.visibleFolds
         self.navigationLines = nil
-        if plain then
-            self.rendered = self.display:gsub("|", "||")
-            self.spans = { { start = 0, finish = #self.display, offset = 0, nativeFinish = #self.rendered } }
-        else
-            self.rendered, self.spans = Code:Encode(self.display, self.display == self.raw and self.tokens or nil)
-        end
-        self.visibleFolds = {}
-        for _, fold in ipairs(self.folds) do
-            local position = Code:ToDisplay(self.ranges, fold.start)
-            if Code:ToRaw(self.ranges, position) == fold.start then
-                self.visibleFolds[fold.line] = self.visibleFolds[fold.line] or fold
-            end
-        end
         self.inputBuffer, self.nativeChanges, self.encodedDisplay = self.rendered, {}, self.display
         native.set(box, self.rendered)
-        self:SizeCode()
+        self:SizeCode(prepared.metrics)
         native.move(box, Code:EncodePosition(self.display, self.spans, Code:ToDisplay(self.ranges, cursor or 0)))
         if selection and selection.last > selection.first then
             native.highlight(box, Code:EncodePosition(self.display, self.spans, Code:ToDisplay(self.ranges, selection.first)),
@@ -218,7 +243,22 @@ GUI:RegisterWidgetType("APRLuaEditor", function()
                 (box.IsInIMECompositionMode and box:IsInIMECompositionMode()) then
                 self:QueueCode(); return
             end
-            self:FlushCode(true)
+            Code:Defer(function(checkpoint)
+                local tokens, folds = Code:Scan(self.raw, checkpoint)
+                return self:PrepareCode(tokens, folds, nil, checkpoint)
+            end, function() return self.pendingCode == token end, function(prepared)
+                if IsMouseButtonDown("LeftButton") or IsShiftKeyDown() or
+                    (box.IsInIMECompositionMode and box:IsInIMECompositionMode()) then
+                    self:QueueCode(); return
+                end
+                -- Capture only at commit: the native caret/selection may have
+                -- moved while preparation yielded, and no marker may survive a pause.
+                local cursor = self:GetCursorPosition()
+                local selection = box:HasFocus() and self:CaptureSelection() or nil
+                self.tokens, self.folds = prepared.tokens, prepared.folds
+                self:Render(cursor, selection, true, nil, prepared)
+                self:Fire("OnCodeSettled", self.raw)
+            end)
         end)
     end
     function widget:CaptureSelection()
@@ -230,7 +270,13 @@ GUI:RegisterWidgetType("APRLuaEditor", function()
         while before:find(marker, 1, true) do marker = marker .. "\239\128\128" end
         self.settingCode = true
         native.insert(box, marker)
-        local after = Code:Decode(native.get(box))
+        local buffer = native.get(box)
+        local first, last, finish = Code:NativeEdit(before, buffer)
+        if Code:Decode(buffer:sub(first + 1, finish)) == marker then
+            return { first = Code:ToRaw(self.ranges, self:DisplayPosition(first)),
+                last = Code:ToRaw(self.ranges, self:DisplayPosition(last)) }
+        end
+        local after = Code:Decode(buffer)
         local start = after:find(marker, 1, true)
         local selection
         if start then

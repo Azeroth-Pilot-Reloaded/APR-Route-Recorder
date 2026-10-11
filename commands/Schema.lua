@@ -271,10 +271,11 @@ local routeConditions = {
     Zones = true,
 }
 
-function options:ValidateValue(schema, value, path, depth, previous)
+function options:ValidateValue(schema, value, path, depth, previous, checkpoint)
+    if checkpoint then checkpoint() end
     -- Imported APR definitions can contain legacy or newer fields. Preserve
     -- unchanged data while still validating every edit made through raw Lua.
-    if previous ~= nil and AprRC:DeepCompare(previous, value) then return true end
+    if previous ~= nil and AprRC:DeepCompare(previous, value, checkpoint) then return true end
     depth = (depth or 0) + 1
     path = path or "value"
     if depth > 40 then return false, path .. ": " .. L["Nesting limit exceeded"] end
@@ -282,7 +283,7 @@ function options:ValidateValue(schema, value, path, depth, previous)
     local function fail(message) return false, path .. ": " .. message end
     local function child(childSchema, entry, key)
         local old = type(previous) == "table" and previous[key] or nil
-        return self:ValidateValue(childSchema, entry, path .. "." .. tostring(key), depth, old)
+        return self:ValidateValue(childSchema, entry, path .. "." .. tostring(key), depth, old, checkpoint)
     end
     if kind == "union" then
         for _, choice in ipairs(schema.choices) do if child(choice, value, "value") then return true end end
@@ -321,6 +322,7 @@ function options:ValidateValue(schema, value, path, depth, previous)
         if type(value) ~= "table" then return fail(L["expected a list"]) end
         local size = 0
         for key in pairs(value) do
+            if checkpoint then checkpoint() end
             if type(key) ~= "number" or key < 1 or key % 1 ~= 0 then return fail(L["expected consecutive list indices"]) end
             size = size + 1
         end
@@ -364,7 +366,7 @@ function options:ValidateValue(schema, value, path, depth, previous)
             if entrySchema then
                 local ok, reason = child(entrySchema, entry, key)
                 if not ok then return false, reason end
-            elseif type(previous) ~= "table" or not AprRC:DeepCompare(previous[key], entry) then
+            elseif type(previous) ~= "table" or not AprRC:DeepCompare(previous[key], entry, checkpoint) then
                 return fail(L["unsupported field "] .. tostring(key))
             end
         end

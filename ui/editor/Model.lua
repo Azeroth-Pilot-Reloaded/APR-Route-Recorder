@@ -175,23 +175,26 @@ end
 
 -- Run only after the input pause (or before closing), never per keystroke.
 -- Whitespace and edits undone back to the saved content are not new drafts.
-function Session:ReconcileRaw(parsed, comments, analyzed)
+function Session:ReconcileRaw(parsed, comments, analyzed, checkpoint)
     if not self.raw or self.rawReconciledText == self.raw then return end
-    self.rawReconciledText = self.raw
+    local text = self.raw
     -- Compare parsed data directly. Read()/RouteText() clone and serialize the
     -- whole route; that must not happen when Undo flushes a long Lua buffer.
-    if not analyzed then local _; parsed, _, comments = AprRC:ParseLuaData(self.raw, true) end
+    if not analyzed then local _; parsed, _, comments = AprRC:ParseLuaData(text, true, nil, checkpoint) end
     if self.reconcileBaseText ~= self.base then
-        local baseline, _, baselineComments = AprRC:ParseLuaData(self.base, true)
+        local baseline, _, baselineComments = AprRC:ParseLuaData(self.base, true, nil, checkpoint)
         if baseline then baseline._luaComments = baselineComments end
         self.reconcileBase, self.reconcileBaseText = baseline, self.base
     end
-    self.rawClean = nil
+    local clean
     if type(parsed) == "table" and parsed.steps ~= nil and self.reconcileBase then
         parsed.name, parsed._luaComments = nil, comments
         local function normalize(steps)
             if type(steps) == "table" then
-                for _, step in ipairs(steps) do if type(step) == "table" then AprRC:NormalizeStepOptionFields(step) end end
+                for _, step in ipairs(steps) do
+                    if checkpoint then checkpoint() end
+                    if type(step) == "table" then AprRC:NormalizeStepOptionFields(step) end
+                end
             end
         end
         normalize(parsed.steps)
@@ -199,8 +202,9 @@ function Session:ReconcileRaw(parsed, comments, analyzed)
             if type(group) == "table" then normalize(group.steps) end
         end
         AprRC:NormalizeRouteClasses(parsed)
-        self.rawClean = AprRC:DeepCompare(parsed, self.reconcileBase) or nil
+        clean = AprRC:DeepCompare(parsed, self.reconcileBase, checkpoint) or nil
     end
+    self.rawClean, self.rawReconciledText = clean, text
     self:Persist()
 end
 

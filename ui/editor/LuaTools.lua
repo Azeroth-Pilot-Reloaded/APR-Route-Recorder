@@ -29,6 +29,7 @@ function Editor:DetachLuaTools()
     if self.luaReplaceInput then self.luaReplaceInput.editbox:SetScript("OnEscapePressed", self.luaReplaceEscape) end
     self.luaReplaceEscape = nil
     self.luaAnalysisToken, self.luaAnalysisText, self.luaAnalysisBaseline, self.luaAnalysisBaselineText = nil, nil, nil, nil
+    self.luaAnalysisPending = nil
     self:CloseLuaCompletion()
     if self.luaOutlineSelect then self.luaOutlineSelect:ClearFocus() end
     self.luaDiagnostics, self.luaOutline, self.luaParsed, self.luaSourceMap = nil, nil, nil, nil
@@ -42,55 +43,77 @@ function Editor:QueueLuaAnalysis(edit)
     local token = {}; self.luaAnalysisToken = token
     C_Timer.After(0.4, function()
         if self.luaAnalysisToken ~= token or self.luaBox ~= edit or edit.pendingCode then return end
-        self:AnalyzeLua(edit)
+        self:AnalyzeLua(edit, true)
     end)
 end
 
 function Editor:LuaInputChanged(edit)
     if self.luaBox ~= edit then return end
     self:CloseLuaCompletion()
+    self.luaAnalysisToken = nil
     self.luaAnalysisText = nil
-    self.luaDiagnostics, self.luaOutline = {}, {}
-    edit:SetDiagnostics()
-    if self.luaDiagnosticLabel then self.luaDiagnosticLabel:SetText(T("Checking Lua…")) end
-    if self.luaOutlineSelect and not self.luaOutlineSelect.disabled then self.luaOutlineSelect:SetDisabled(true) end
+    if not self.luaAnalysisPending then
+        self.luaAnalysisPending = true
+        self.luaDiagnostics, self.luaOutline = {}, {}
+        edit:SetDiagnostics()
+        if self.luaDiagnosticLabel then
+            self.luaDiagnosticLabel:SetText(T("Checking Lua…"))
+            self.luaDiagnosticLabel:SetColor(0.7, 0.7, 0.7)
+        end
+        if self.luaOutlineSelect and not self.luaOutlineSelect.disabled then self.luaOutlineSelect:SetDisabled(true) end
+    end
     if not edit.pendingCode then self:QueueLuaAnalysis(edit) end
 end
 
-function Editor:AnalyzeLua(edit)
+function Editor:AnalyzeLua(edit, deferred)
     if self.luaBox ~= edit or not self.session then return end
     self.luaAnalysisToken = nil
     local text = edit:GetText()
     if self.luaAnalysisText == text then return end
-    if self.luaAnalysisBaselineText ~= self.session.base then
-        self.luaAnalysisBaseline = AprRC:ParseLuaData(self.session.base)
-        self.luaAnalysisBaselineText = self.session.base
+    local session, base, token = self.session, self.session.base, {}
+    self.luaAnalysisToken = token
+    local function current()
+        return self.luaAnalysisToken == token and self.luaBox == edit and self.session == session and
+            session.base == base and edit:GetText() == text
     end
-    local comments
-    self.luaDiagnostics, self.luaOutline, self.luaParsed, self.luaSourceMap, comments = Language:Analyze(text, self.luaAnalysisBaseline)
-    self.luaAnalysisText = text
-    local dirty = self.session:IsDirty()
-    self.session:ReconcileRaw(self.luaParsed, comments, true)
-    if dirty ~= self.session:IsDirty() then self:UpdateStatus() end
-    edit:SetDiagnostics(self.luaDiagnostics)
-    local first = self.luaDiagnostics[1]
-    if first then
-        local where = first.location and (T("Line %d"):format(first.location.line) .. ":" .. first.location.column .. " · ") or ""
-        self.luaDiagnosticLabel:SetText(T("%d error(s) · %s"):format(#self.luaDiagnostics, where .. first.message))
-        self.luaDiagnosticLabel:SetColor(1, 0.35, 0.35)
-    else
-        self.luaDiagnosticLabel:SetText(T("No Lua errors")); self.luaDiagnosticLabel:SetColor(0.5, 0.85, 0.5)
+    local function analyze(checkpoint)
+        if self.luaAnalysisBaselineText ~= base then
+            self.luaAnalysisBaseline = AprRC:ParseLuaData(base, nil, nil, checkpoint)
+            self.luaAnalysisBaselineText = base
+        end
+        local diagnostics, outline, parsed, map, comments = Language:Analyze(text, self.luaAnalysisBaseline, checkpoint)
+        local entries, order = {}, {}
+        for index, step in ipairs(outline) do
+            if checkpoint then checkpoint() end
+            local name = step.group and T("Parallel %d / step %d"):format(step.group, step.index) or T("Step %d"):format(step.index)
+            entries[index] = name .. " · " .. T("Line %d"):format(step.line) .. (step.title ~= "" and " · " .. step.title or "")
+            order[index] = index
+        end
+        local dirty = session:IsDirty()
+        session:ReconcileRaw(parsed, comments, true, checkpoint)
+        return { diagnostics = diagnostics, outline = outline, parsed = parsed, map = map,
+            entries = entries, order = order, statusChanged = dirty ~= session:IsDirty() }
     end
-    local entries, order = {}, {}
-    for index, step in ipairs(self.luaOutline) do
-        local name = step.group and T("Parallel %d / step %d"):format(step.group, step.index) or T("Step %d"):format(step.index)
-        entries[index] = name .. " · " .. T("Line %d"):format(step.line) .. (step.title ~= "" and " · " .. step.title or "")
-        order[index] = index
+    local function publish(result)
+        self.luaAnalysisToken, self.luaAnalysisPending = nil, nil
+        self.luaDiagnostics, self.luaOutline, self.luaParsed, self.luaSourceMap = result.diagnostics, result.outline, result.parsed, result.map
+        self.luaAnalysisText = text
+        if result.statusChanged then self:UpdateStatus() end
+        edit:SetDiagnostics(self.luaDiagnostics)
+        local first = self.luaDiagnostics[1]
+        if first then
+            local where = first.location and (T("Line %d"):format(first.location.line) .. ":" .. first.location.column .. " · ") or ""
+            self.luaDiagnosticLabel:SetText(T("%d error(s) · %s"):format(#self.luaDiagnostics, where .. first.message))
+            self.luaDiagnosticLabel:SetColor(1, 0.35, 0.35)
+        else
+            self.luaDiagnosticLabel:SetText(T("No Lua errors")); self.luaDiagnosticLabel:SetColor(0.5, 0.85, 0.5)
+        end
+        self.luaOutlineSelect:SetList(result.entries, result.order)
+        self.luaOutlineSelect:SetDisabled(#self.luaOutline == 0)
+        if not self.luaOutlineSelect:GetValue() then self.luaOutlineSelect:SetText(T("Step outline")) end
+        if edit.editBox:HasFocus() and not self.luaToolsAction then self:CompleteLua(false) end
     end
-    self.luaOutlineSelect:SetList(entries, order)
-    self.luaOutlineSelect:SetDisabled(#self.luaOutline == 0)
-    if not self.luaOutlineSelect:GetValue() then self.luaOutlineSelect:SetText(T("Step outline")) end
-    if edit.editBox:HasFocus() and not self.luaToolsAction then self:CompleteLua(false) end
+    if deferred then Code:Defer(analyze, current, publish) else publish(analyze()) end
 end
 
 function Editor:NavigateLuaDiagnostic(direction)
@@ -284,6 +307,7 @@ function Editor:ReplaceLua(all)
 end
 
 function Editor:CloseLuaCompletion()
+    self.luaCompletionToken = nil
     if self.luaCompletionFrame then self.luaCompletionFrame:Hide() end
     if self.luaCompletionGhost then self.luaCompletionGhost:Hide() end
     self.luaCompletion = nil
@@ -294,12 +318,28 @@ function Editor:CompleteLua(explicit)
     if not edit or not edit.editBox:HasFocus() then return end
     if explicit then edit:FlushCode() end
     local text, cursor = edit:GetText(), edit:GetCursorPosition()
-    local context = Language:Context(text, cursor, edit.tokens)
-    if not context or (not explicit and context.prefix == "") then self:CloseLuaCompletion(); return end
-    local items = Language:Candidates(context, self.luaParsed or self.session.draft)
-    if #items == 0 then self:CloseLuaCompletion(); return end
-    self.luaCompletion = { context = context, items = items, index = 1, source = text, edit = edit, explicit = explicit }
-    self:DrawLuaCompletion()
+    local tokens, route, token = edit.tokens, self.luaParsed or self.session.draft, {}
+    self.luaCompletionToken = token
+    local function complete(checkpoint)
+        local context = Language:Context(text, cursor, tokens, checkpoint)
+        if not context or (not explicit and context.prefix == "") then return end
+        local items = Language:Candidates(context, route, checkpoint)
+        if #items == 0 then return end
+        return { context = context, items = items, index = 1, source = text, edit = edit, explicit = explicit }
+    end
+    local function publish(result)
+        self.luaCompletionToken = nil
+        if not result then self:CloseLuaCompletion(); return end
+        self.luaCompletion = result
+        self:DrawLuaCompletion()
+    end
+    if explicit then publish(complete())
+    else
+        Code:Defer(complete, function()
+            return self.luaCompletionToken == token and self.luaBox == edit and edit:GetText() == text and
+                edit:GetCursorPosition() == cursor and edit.editBox:HasFocus()
+        end, publish)
+    end
 end
 
 function Editor:DrawLuaCompletion()
