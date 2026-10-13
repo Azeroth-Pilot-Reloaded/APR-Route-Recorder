@@ -17,7 +17,8 @@ local function isRegistered(event)
     return false
 end
 for _, event in ipairs({
-    "QUEST_ACCEPTED", "QUEST_REMOVED", "QUEST_TURNED_IN", "GOSSIP_SHOW", "GOSSIP_OPTIONS_REFRESHED",
+    "QUEST_ACCEPTED", "QUEST_REMOVED", "QUEST_TURNED_IN", "QUEST_DETAIL", "LOOT_READY", "LOOT_OPENED",
+    "BAG_UPDATE_DELAYED", "GOSSIP_SHOW", "GOSSIP_OPTIONS_REFRESHED",
     "HEARTHSTONE_BOUND", "UNIT_SPELLCAST_SUCCEEDED", "RAID_TARGET_UPDATE", "CHAT_MSG_TEXT_EMOTE",
     "PET_BATTLE_CLOSE", "PET_BATTLE_OPENING_START", "ADVENTURE_MAP_OPEN",
     "TAXIMAP_OPENED", "TAXIMAP_CLOSED", "PLAYER_CONTROL_LOST", "PLAYER_CONTROL_GAINED",
@@ -262,6 +263,92 @@ AprRC.saveQuestInfo = function() end
 TestEvent("QUEST_ACCEPTED", 778)
 assert(AprRCData.CurrentRoute.steps[1].DroppableQuest.Qid == 777)
 assert(AprRC:GetLastStep().PickUp[1] == 778)
+AprRC:FlushAPRRouteSync()
+TestEvent("QUEST_ACCEPTED", 777)
+assert(AprRC.pendingAPRRoutes and AprRC.pendingAPRRoutes[AprRCData.CurrentRoute.name],
+    "Updating an earlier drop step must publish the change to APR")
+assert(count() == 2 and AprRCData.CurrentRoute.steps[1].DropQuest == 777,
+    "Accepting a dropped quest must update its loot step even after another pickup")
+assert(#AprRC:GetLastStep().PickUp == 1, "A dropped quest leaked into a normal pickup")
+
+-- Accepting before BAG_UPDATE_DELAYED must still resolve the looted quest item.
+fresh()
+owned = 0
+TestEvent("LOOT_OPENED")
+owned = 1
+C_QuestLog.IsOnQuest = function(questID) return questID == 777 end
+TestEvent("QUEST_ACCEPTED", 777)
+assert(count() == 1 and AprRC:GetLastStep().DropQuest == 777 and not AprRC:GetLastStep().PickUp,
+    "A fast quest acceptance was recorded as a pickup")
+C_QuestLog.IsOnQuest = function() return false end
+
+-- Autoloot must retain the item count captured before LOOT_OPENED.
+fresh()
+owned = 0
+TestEvent("LOOT_READY")
+owned = 1
+TestEvent("LOOT_OPENED")
+TestEvent("BAG_UPDATE_DELAYED")
+TestEvent("QUEST_ACCEPTED", 777)
+assert(count() == 1 and AprRC:GetLastStep().DropQuest == 777,
+    "LOOT_OPENED overwrote the pre-autoloot inventory count")
+
+-- Older quest-starting items can lack a questID in container metadata.
+fresh()
+owned = 0
+C_Container.GetContainerItemQuestInfo = function() return { isQuestItem = false } end
+TestEvent("LOOT_OPENED")
+owned = 1
+TestEvent("BAG_UPDATE_DELAYED")
+assert(count() == 0, "Ordinary loot must not create a dropped quest")
+local getQuestID = GetQuestID
+GetQuestID = function() return 9828 end
+TestEvent("QUEST_DETAIL")
+TestEvent("QUEST_DETAIL", 124)
+assert(count() == 0, "An unrelated quest dialog must not be linked to pending loot")
+GetLootSlotLink = function() return "item:124:0" end
+TestEvent("LOOT_OPENED")
+GetLootSlotLink = function() return "item:123:0" end
+TestEvent("QUEST_DETAIL", 123)
+assert(count() == 1 and AprRC:GetLastStep().DroppableQuest.Qid == 9828,
+    "The quest-starting item in QUEST_DETAIL must resolve missing container metadata")
+AprRC:NewStep({ Note = "Between looting and accepting" })
+owned = 0 -- The quest-starting item is consumed on acceptance.
+TestEvent("QUEST_ACCEPTED", 9828)
+assert(count() == 2 and AprRCData.CurrentRoute.steps[1].DropQuest == 9828)
+assert(AprRCData.CurrentRoute.steps[1].DroppableQuest.Text == "Test mob")
+assert(AprRC:GetLastStep().Note == "Between looting and accepting")
+TestEvent("QUEST_ACCEPTED", 9828)
+assert(count() == 2, "Repeated acceptance must not duplicate the drop step")
+
+-- Viewing an item in loot without receiving it is insufficient evidence.
+fresh()
+owned = 0
+TestEvent("LOOT_OPENED")
+TestEvent("QUEST_DETAIL", 123)
+TestEvent("BAG_UPDATE_DELAYED")
+assert(count() == 0, "An unlooted item was recorded as a dropped quest")
+
+-- Pending loot must never cross recording sessions or routes.
+fresh()
+owned = 1
+TestEvent("QUEST_DETAIL", 123)
+TestEvent("BAG_UPDATE_DELAYED")
+assert(count() == 0, "Pending dropped loot leaked into a new route")
+TestEvent("QUEST_ACCEPTED", 9828)
+assert(count() == 1 and AprRC:GetLastStep().PickUp[1] == 9828)
+fresh()
+owned = 0
+TestEvent("LOOT_OPENED")
+AprRC.settings.profile.recordBarFrame.isRecording = false
+owned = 1
+TestEvent("QUEST_DETAIL", 123)
+assert(count() == 0, "Quest details recorded while the recorder was stopped")
+AprRC.settings.profile.recordBarFrame.isRecording = true
+TestEvent("QUEST_DETAIL", 123)
+assert(count() == 0, "Loot observed before stopping was reused after resuming")
+GetQuestID = getQuestID
+C_Container.GetContainerItemQuestInfo = function() return { questID = 777 } end
 
 -- Uncached item spells are loaded without ever emitting itemSpellID = 0.
 fresh()

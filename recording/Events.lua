@@ -145,12 +145,13 @@ end)
 function AprRC.event.functions.accept(event, questId)
     -- Pickup
     local function AddQuestToStep(questId)
-        if AprRC:HasStepOption("DroppableQuest") and AprRC:GetLastStep().DroppableQuest.Qid == questId then
-            local currentStep = AprRC:GetLastStep()
-            currentStep.DropQuest = questId
-            currentStep.DroppableQuest.Qid = questId
-            MarkAdventureMapOnStep(currentStep)
-            AprRC:ApplyCampaignQuestFlag(currentStep, questId)
+        local droppedStep = AprRC:ResolveDroppedQuestStep(questId)
+        if droppedStep then
+            droppedStep.DropQuest = questId
+            droppedStep.DroppableQuest.Qid = questId
+            MarkAdventureMapOnStep(droppedStep)
+            AprRC:ApplyCampaignQuestFlag(droppedStep, questId)
+            AprRC:NotifyRouteChanged()
             AprRC:saveQuestInfo()
             return
         end
