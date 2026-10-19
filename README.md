@@ -75,7 +75,7 @@
 > [!TIP]
 > **Start from a route you already know.** Use **Import from APR** to search loaded routes by name or route key and create an editable copy. Editor changes stay in a draft until saved; recording updates the recorded route independently.
 
-For APR field syntax and playback behavior, see the [APR Route Syntax wiki](https://github.com/Azeroth-Pilot-Reloaded/azeroth-pilot-reloaded/wiki/APR-Route-Syntax). The tables below describe the fields supported by this recorder.
+For APR field syntax and playback behavior, see the [APR Route Syntax wiki](https://azerothpilotreloaded.com/wiki/). The tables below describe the fields supported by this recorder.
 
 ---
 
@@ -343,7 +343,7 @@ The table includes navigation, display, and route options so you can see the com
 
 Conditions in the same block combine with AND. `AnyOf` expresses alternatives, `AllOf` allows multiple checks of the same kind, and `Not` inverts a complete block. Parallel-group conditions control when its steps are inserted; single `EquipItem`/`UseItem` actions also inherit live group conditions. Other groups retain activation-only conditions, and each step can have its own filters. `SkipIfCooldown` belongs directly on a step, outside reusable condition blocks. `questLogXP` is available in absolute XP tables for `Grind`, `Level`, `MinLevel`, `MaxLevel`, and `SkipForLvl`. Route-selection conditions support a narrower set of fields than step/group conditions.
 
-The Lua editor also preserves comments and accepts `_comment` step text. Step indices (`_index`) are generated automatically. For detailed syntax and APR options beyond the recorder's current editing coverage, use the [APR Route Syntax wiki](https://github.com/Azeroth-Pilot-Reloaded/azeroth-pilot-reloaded/wiki/APR-Route-Syntax).
+The Lua editor also preserves comments and accepts `_comment` step text. Step indices (`_index`) are generated automatically. For detailed syntax and APR options beyond the recorder's current editing coverage, use the [APR Route Syntax wiki](https://azerothpilotreloaded.com/wiki/).
 
 ---
 
@@ -371,8 +371,6 @@ This list contains workshop and addon utilities. Add actions and conditions thro
 ## Settings and support
 
 Open settings through **Tools → Settings** or `/aprrc settings`. Configure recording, command-bar appearance, coordinates, profiles, and quest-ID displays. Quest IDs can appear in quest-log details, tooltips, the objective tracker, map/minimap tooltips, and quest items in bags; by default they are shown while recording.
-
-See the [Route workshop guide](docs/RouteWorkshop.md) for the full editing, draft recovery, and APR integration workflow.
 
 ---
 
