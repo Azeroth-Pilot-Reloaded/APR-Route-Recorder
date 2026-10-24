@@ -33,8 +33,14 @@ local function event(self, name, ...)
 end
 function Native:SetScript(name, callback) self.scripts[name] = callback end
 function Native:GetScript(name) return self.scripts[name] end
+TestCombatLockdown = false
+InCombatLockdown = function() return TestCombatLockdown end
 function Native:EnableKeyboard(enabled) self.keyboardEnabled = enabled end
-function Native:SetPropagateKeyboardInput(enabled) self.propagateKeyboardInput = enabled end
+function Native:IsKeyboardEnabled() return self.keyboardEnabled == true end
+function Native:SetPropagateKeyboardInput(enabled)
+    assert(not InCombatLockdown(), "SetPropagateKeyboardInput is restricted during combat")
+    self.propagateKeyboardInput = enabled
+end
 function Native:HookScript(name, callback)
     local old = self.scripts[name]
     self.scripts[name] = function(...) if old then old(...) end; callback(...) end

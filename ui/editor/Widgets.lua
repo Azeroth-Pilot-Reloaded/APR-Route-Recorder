@@ -2,6 +2,56 @@ local GUI = LibStub("AceGUI-3.0")
 local UI = AprRC.editorUI
 UI.FormSpacing, UI.ColumnSpacing, UI.ActionStride = 8, 12, 38
 
+-- These listeners belong to ordinary, non-secure editor frames. Propagation
+-- changes are restricted in combat even on those frames; disabling their input
+-- remains legal and also releases a previously consumed key (propagation=false).
+local function StopKeyboardInput(frame)
+    frame:EnableKeyboard(false)
+    if not InCombatLockdown() then frame:SetPropagateKeyboardInput(true) end
+end
+
+local function RefreshKeyboardInput(frame)
+    StopKeyboardInput(frame)
+    if not InCombatLockdown() and frame.aprKeyboardHandler and frame:IsVisible() then
+        frame:EnableKeyboard(true)
+    end
+end
+
+local function KeyboardOnKeyDown(frame, key)
+    if InCombatLockdown() then frame:EnableKeyboard(false); return end
+    local handler = frame.aprKeyboardHandler
+    if not handler or not frame:IsVisible() or not frame:IsKeyboardEnabled() then return end
+    frame:SetPropagateKeyboardInput(true)
+    local handled = handler(frame, key)
+    -- Saving/navigating may release, hide or replace this listener. Do not
+    -- restore a consumed-key state after its owner has already cleaned it up.
+    if InCombatLockdown() then frame:EnableKeyboard(false); return end
+    if frame.aprKeyboardHandler == handler and frame:IsVisible() and frame:IsKeyboardEnabled() then
+        frame:SetPropagateKeyboardInput(not handled)
+    end
+end
+
+function UI.SetKeyboardHandler(frame, handler)
+    frame.aprKeyboardHandler = handler
+    if handler then
+        if not frame.aprKeyboardHooked then
+            frame.aprKeyboardHooked = true
+            frame:HookScript("OnShow", RefreshKeyboardInput)
+            frame:HookScript("OnHide", StopKeyboardInput)
+        end
+        frame:RegisterEvent("PLAYER_REGEN_DISABLED")
+        frame:RegisterEvent("PLAYER_REGEN_ENABLED")
+        frame:SetScript("OnEvent", RefreshKeyboardInput)
+        frame:SetScript("OnKeyDown", KeyboardOnKeyDown)
+    else
+        frame:UnregisterEvent("PLAYER_REGEN_DISABLED")
+        frame:UnregisterEvent("PLAYER_REGEN_ENABLED")
+        frame:SetScript("OnEvent", nil)
+        frame:SetScript("OnKeyDown", nil)
+    end
+    RefreshKeyboardInput(frame)
+end
+
 -- Forms keep a clear gap between sections, and hide empty validation labels.
 GUI:RegisterLayout("APRForm", function(content, children)
     if content.aprLayout then return end
@@ -293,9 +343,7 @@ GUI:RegisterWidgetType("APRSplitGroup", function()
     end
     function widget:OnRelease()
         divider:SetScript("OnUpdate", nil); self.dragging = nil; content.aprCompactPane = nil
-        frame:SetScript("OnKeyDown", nil)
-        frame:EnableKeyboard(false)
-        frame:SetPropagateKeyboardInput(true)
+        UI.SetKeyboardHandler(frame, nil)
     end
     function widget:OnWidthSet(width) content:SetWidth(width) end
     function widget:OnHeightSet(height) content:SetHeight(height) end

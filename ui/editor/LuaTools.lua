@@ -7,8 +7,7 @@ function Editor:InstallSaveShortcut(widget)
     local keyboard = frame.aprSaveKeyboard or CreateFrame("Frame", nil, frame)
     frame.aprSaveKeyboard, self.saveKeyboard = keyboard, keyboard
     keyboard:SetFrameLevel(frame:GetFrameLevel() + 100)
-    keyboard:EnableKeyboard(true); keyboard:SetPropagateKeyboardInput(true)
-    keyboard:SetScript("OnKeyDown", function(listener, key)
+    UI.SetKeyboardHandler(keyboard, function(listener, key)
         local handled = false
         local focused = GetCurrentKeyBoardFocus and GetCurrentKeyBoardFocus()
         local focus, inside = focused, focused == nil
@@ -21,7 +20,7 @@ function Editor:InstallSaveShortcut(widget)
             self.frame == widget and self.session and inside then
             handled = true; self:Save()
         end
-        listener:SetPropagateKeyboardInput(not handled)
+        return handled
     end)
 end
 

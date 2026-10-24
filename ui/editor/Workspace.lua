@@ -942,8 +942,7 @@ function Editor:Show()
         self:KeepDraftsOnClose()
         if self.timer then self:CancelTimer(self.timer); self.timer = nil end
         self:DetachLua()
-        self.saveKeyboard:EnableKeyboard(false); self.saveKeyboard:SetPropagateKeyboardInput(true)
-        self.saveKeyboard:SetScript("OnKeyDown", nil); self.saveKeyboard = nil
+        UI.SetKeyboardHandler(self.saveKeyboard, nil); self.saveKeyboard = nil
         self.followAPRCheckbox = nil
         AprRC.CommandBarSetting:CancelDrag()
         AprRC.CommandBar:DetachWorkshop(widget.frame)

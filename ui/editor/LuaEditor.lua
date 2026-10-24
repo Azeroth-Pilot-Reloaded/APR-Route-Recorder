@@ -15,8 +15,13 @@ GUI:RegisterWidgetType("APRLuaEditor", function()
     -- Capture commands above the native EditBox, before its text handling and
     -- WoW bindings. This listener is scoped to the code/search field's focus.
     local keyboard = CreateFrame("Frame", nil, widget.frame)
-    keyboard:SetPropagateKeyboardInput(true)
     widget.keyboardFrame = keyboard
+    local function HandleKeyboard(frame, key)
+        local focused = widget:HasFoldingFocus()
+        local handled = focused and widget:HandleEditorKey(key, true)
+        if not focused then widget:CancelFoldingChord() end
+        return handled
+    end
     local native = { get = box.GetText, set = box.SetText, cursor = box.GetCursorPosition,
         move = box.SetCursorPosition, highlight = box.HighlightText, insert = box.Insert }
     local acquire, release, disable = widget.OnAcquire, widget.OnRelease, widget.SetDisabled
@@ -679,8 +684,7 @@ GUI:RegisterWidgetType("APRLuaEditor", function()
         self.comparisonNumbers, self.comparisonMissing, self.comparisonSpans, self.sourceText = nil, nil, nil, nil
         acquire(self)
         box:EnableKeyboard(true)
-        keyboard:EnableKeyboard(true)
-        keyboard:SetPropagateKeyboardInput(true)
+        UI.SetKeyboardHandler(keyboard, HandleKeyboard)
         self:SetFoldingInput(nil)
         self:DisableButton(true)
         widget.scrollBG:SetBackdropColor(0.118, 0.118, 0.118, 1)
@@ -691,8 +695,7 @@ GUI:RegisterWidgetType("APRLuaEditor", function()
         self:CancelFoldingChord()
         self.foldingInput = nil
         self.commandHandler, self.commandInputs, self.diagnosticLines, self.selectedLines = nil, nil, nil, nil
-        keyboard:EnableKeyboard(false)
-        keyboard:SetPropagateKeyboardInput(true)
+        UI.SetKeyboardHandler(keyboard, nil)
         self.pendingCode = nil
         self.pendingIndent, self.tokens, self.visibleFolds, self.autoIndent = nil, nil, nil, nil
         self.cursorBuffer, self.cursorNative, self.cursorDisplay = nil, nil, nil
@@ -800,12 +803,6 @@ GUI:RegisterWidgetType("APRLuaEditor", function()
     box:SetScript("OnTabPressed", function()
         if widget.commandHandler and widget.commandHandler("TAB") then return end
         if not widget.readOnly then box:Insert("    ") end
-    end)
-    keyboard:SetScript("OnKeyDown", function(frame, key)
-        local focused = widget:HasFoldingFocus()
-        local handled = focused and widget:HandleEditorKey(key, true)
-        if not focused then widget:CancelFoldingChord() end
-        frame:SetPropagateKeyboardInput(not handled)
     end)
     box:HookScript("OnEditFocusGained", function() widget:SetFoldingInput(widget.foldingInput) end)
     box:HookScript("OnEditFocusLost", function() widget:CancelFoldingChord(); widget.commandInput = nil end)

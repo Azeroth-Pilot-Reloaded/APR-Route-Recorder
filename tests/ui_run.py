@@ -5,7 +5,7 @@ from lupa.lua51 import LuaRuntime
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def run():
+def run(keyboard_only=False):
     lua = LuaRuntime(unpack_returned_tuples=True)
 
     def load(path):
@@ -47,6 +47,10 @@ def run():
     load("ui/bars/CommandsBar.lua")
     load("ui/bars/CommandsBarSetting.lua")
     lua.execute('AprRC.CommandBar:OnInit()')
+    if keyboard_only:
+        load("ui/bars/RecorderBar.lua")
+        load("tests/keyboard_combat_smoke.lua")
+        return
     load("tests/ui_smoke.lua")
     load("ui/bars/RecorderBar.lua")
     load("tests/recorder_button_smoke.lua")
@@ -102,3 +106,4 @@ def run():
 
 if __name__ == "__main__":
     run()
+    run(keyboard_only=True)
