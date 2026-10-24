@@ -102,6 +102,15 @@ def run(keyboard_only=False):
     load("tests/quest_id_smoke.lua")
     load("ui/WorldMapCoordinates.lua")
     load("tests/world_map_coordinates_smoke.lua")
+    lua.execute('''
+        local window = LibStub("LibWindow-1.1")
+        function window.MakeDraggable(frame) frame.draggable = true end
+        APR.Color = {defaultLightBackdrop = {0, 0, 0, 1}}
+        APR.coordinate = {Frame = CreateFrame("Frame", "CoordinateScreenPanel", UIParent)}
+        function APR.coordinate:RoundCoords(x, y) return string.format("%.2f, %.2f", x, y) end
+    ''')
+    load("ui/bars/CoordinateFrame.lua")
+    load("tests/coordinate_panel_smoke.lua")
 
 
 if __name__ == "__main__":

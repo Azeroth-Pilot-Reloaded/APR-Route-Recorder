@@ -1,9 +1,8 @@
 local L = LibStub("AceLocale-3.0"):GetLocale("APR-Recorder")
-local _G = _G
 local LibWindow = LibStub("LibWindow-1.1")
 
 
--- Initialize APR Party  module
+-- The recorder owns its overlay independently of APR's coordinate panel.
 AprRC.coordinate = AprRC:NewModule("Coordinate")
 
 --Local constant
@@ -16,10 +15,10 @@ local fpsCounter = 0
 ------------------------------- Coordinate Frames -------------------------------------
 ---------------------------------------------------------------------------------------
 
-local CoordinateFrame = CreateFrame("Frame", "CoordinateScreenPanel", UIParent, "BackdropTemplate")
+local CoordinateFrame = CreateFrame("Frame", "AprRC_CoordinateScreenPanel", UIParent, "BackdropTemplate")
 CoordinateFrame:SetSize(FRAME_WIDTH, FRAME_HEIGHT)
 CoordinateFrame:SetFrameStrata("MEDIUM")
-CoordinateScreenPanel:EnableMouse(true)
+CoordinateFrame:EnableMouse(true)
 CoordinateFrame:SetClampedToScreen(true)
 CoordinateFrame:SetBackdrop({
     bgFile = "Interface\\BUTTONS\\WHITE8X8",
@@ -39,16 +38,20 @@ AprRC.textStyle:TrackFont(CoordinateFrame.Text)
 
 CoordinateFrame:SetScript("OnUpdate", function(self, elapsed)
     fpsCounter = fpsCounter + elapsed
-    if fpsCounter > frequency then
-        fpsCounter = fpsCounter - frequency
+    if fpsCounter >= frequency then
+        -- Sample once after a stall instead of replaying missed intervals.
+        fpsCounter = fpsCounter % frequency
 
         local y, x = UnitPosition("player")
+        local text
         if not x or not y then
-            local blank = ("-"):rep(8)
-            self.Text:SetText(blank)
+            text = ("-"):rep(8)
         else
-            self.Text:SetFormattedText("%s", APR.coordinate:RoundCoords(x, y, 2))
+            if self.lastX == x and self.lastY == y then return end
+            text = APR.coordinate:RoundCoords(x, y, 2)
         end
+        self.lastX, self.lastY = x, y
+        if self.lastText ~= text then self.Text:SetText(text); self.lastText = text end
     end
 end)
 CoordinateFrame:SetScript("OnMouseDown", function(self, button)
@@ -61,19 +64,19 @@ end)
 ---------------------------------------------------------------------------------------
 
 function AprRC.coordinate:OnInit()
-    LibWindow.RegisterConfig(CoordinateScreenPanel, AprRC.settings.profile.coordinateFrame)
-    CoordinateScreenPanel.RegisteredForLibWindow = true
-    LibWindow.MakeDraggable(CoordinateScreenPanel)
-    CoordinateScreenPanel:SetPoint("center", UIParent, "center", 0, 0)
+    LibWindow.RegisterConfig(CoordinateFrame, AprRC.settings.profile.coordinateFrame)
+    CoordinateFrame.RegisteredForLibWindow = true
+    LibWindow.MakeDraggable(CoordinateFrame)
+    CoordinateFrame:SetPoint("center", UIParent, "center", 0, 0)
 
     self:RefreshFrameAnchor()
 end
 
 function AprRC.coordinate:RefreshFrameAnchor()
     if (not AprRC.settings.profile.coordinateShow or not AprRC.settings.profile.enableAddon) then
-        CoordinateScreenPanel:Hide()
+        CoordinateFrame:Hide()
         return
     end
-    LibWindow.RestorePosition(CoordinateScreenPanel)
-    CoordinateScreenPanel:Show()
+    LibWindow.RestorePosition(CoordinateFrame)
+    CoordinateFrame:Show()
 end
