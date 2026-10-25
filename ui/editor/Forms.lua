@@ -641,7 +641,7 @@ function Form:Render(parent, schema, value, set, context, path, label)
             for _, key in ipairs(schema.required or {}) do required[key] = true end
         end
         local ordered = keys(fields)
-        local priority = { label = 1, expansion = 2, category = 3, mapID = 4, questID = 5, Qid = 5,
+        local priority = { label = 1, expansion = 2, category = 3, mapID = 4, gameVersion = 5, questID = 5, Qid = 5,
             slot = 5, itemID = 6, stat = 6, spellID = 7, itemSpellID = 8,
             Coord = 20, Zone = 21, Range = 22, ExtraLineText = 23 }
         local function rank(key)
@@ -655,11 +655,35 @@ function Form:Render(parent, schema, value, set, context, path, label)
             return rank(a) < rank(b)
         end)
         local columns, columnKind, columnRank
+        local sectionParent, currentSection = parent, nil
+        local function sectionFor(key)
+            if valueKind == "step" then
+                local order = rank(key)
+                if order == 10 then return "Step content" end
+                if order >= 40 then return "Conditions" end
+                if order >= 20 and order < 30 then return "Position and guidance" end
+                return "Options"
+            elseif valueKind == "route" then
+                if key == "label" or key == "mapID" or key == "expansion" or key == "category" or key == "gameVersion" then
+                    return "Route details"
+                end
+                return "Route behavior"
+            end
+        end
         for _, key in ipairs(ordered) do
+            if context.sections and (value[key] ~= nil or required[key]) and
+                (valueKind == "step" or valueKind == "route") then
+                local name = sectionFor(key)
+                if name ~= currentSection then
+                    sectionParent = UI.Disclosure(parent, name, valueKind .. "/" .. name, true)
+                    sectionParent:SetLayout("APRForm")
+                    currentSection, columns = name, nil
+                end
+            end
             local position = valueKind == "step" and (value.Coord ~= nil or value.Zone ~= nil)
             if position and key == "Coord" then
                 columns = nil
-                self:Position(parent, value, set, context, path, true)
+                self:Position(sectionParent, value, set, context, path, true)
             elseif not (position and key == "Zone") and (value[key] ~= nil or required[key]) then
                 local fieldPath = path .. "/" .. key
                 local fieldSchema = fields[key]
@@ -680,11 +704,11 @@ function Form:Render(parent, schema, value, set, context, path, label)
                 end
                 local function remove() value[key] = nil; changed(value, true) end
                 local scalarKind = self:ColumnKind(fieldSchema, fieldPath)
-                local target = parent
+                local target = sectionParent
                 if scalarKind then
                     if not columns or columnKind ~= scalarKind or
                         ((valueKind == "step" or valueKind == "route") and columnRank ~= rank(key)) then
-                        columns = UI.Group(parent)
+                        columns = UI.Group(sectionParent)
                         columns:SetLayout("APRColumns")
                         columns:SetUserData("maxColumns", 2)
                         columnKind, columnRank = scalarKind, rank(key)
@@ -692,18 +716,18 @@ function Form:Render(parent, schema, value, set, context, path, label)
                     target = columns
                 else columns = nil end
                 if fieldSchema == R.schemas.qpart then
-                    local group = UI.Group(parent, "")
+                    local group = UI.Group(sectionParent, "")
                     local body = UI.Group(group)
                     self:Render(body, fieldSchema, value[key], setField,
                         context, fieldPath, UI.Label(key))
                     if not required[key] then self:RemoveButton(group, body, remove) end
                 elseif context.inlineSections and not self:IsCompact(fieldSchema, fieldPath) then
-                    local body, childContext = self:InlineSection(parent, context, UI.Label(key), fieldPath,
+                    local body, childContext = self:InlineSection(sectionParent, context, UI.Label(key), fieldPath,
                         not required[key] and remove)
                     self:Render(body, fieldSchema, value[key], setField,
                         childContext, fieldPath, UI.Label(key))
                 elseif context.navigate and not self:IsCompact(fieldSchema, fieldPath) then
-                    self:NavigationRow(parent, fieldSchema, value[key], context, key, UI.Label(key), not required[key] and remove)
+                    self:NavigationRow(sectionParent, fieldSchema, value[key], context, key, UI.Label(key), not required[key] and remove)
                 else
                     local group = UI.Group(target, not self:IsCompact(fieldSchema, fieldPath) and UI.Label(key) or nil)
                     group:SetLayout("APRField")
@@ -725,6 +749,11 @@ function Form:Render(parent, schema, value, set, context, path, label)
         if next(entries) then
             UI.SearchSelect(parent, T("Add a field"), entries, nil, function(key)
                 if not key then return end
+                if context.sections and (valueKind == "step" or valueKind == "route") then
+                    local preferences = AprRC.settings.profile.editorFrame
+                    preferences.disclosures = preferences.disclosures or {}
+                    preferences.disclosures[valueKind .. "/" .. sectionFor(key)] = true
+                end
                 value[key] = self:Default(fields[key])
                 changed(value, true)
             end)

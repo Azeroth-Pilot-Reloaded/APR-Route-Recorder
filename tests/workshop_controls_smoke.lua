@@ -104,7 +104,11 @@ assert(Bar.frame:GetFrameLevel() > E.frame.frame:GetFrameLevel())
 
 Settings.query = ""
 Settings:Show(false)
-local entry = Settings.available.children[1].entry
+local function firstCommand()
+    for _, child in ipairs(Settings.available.children) do if child.entry then return child end end
+    error("Expected an available command")
+end
+local entry = firstCommand().entry
 local before = #Bar:GetCommands()
 local function drag(row, target, y)
     TestMouseDown, TestMouseOver, TestCursorY = true, target, y or 1000
@@ -115,7 +119,7 @@ local function drag(row, target, y)
     row.frame:GetScript("OnDragStop")(row.frame)
     assert(not Settings.dragging and not Settings.ghost:IsShown())
 end
-drag(Settings.available.children[1], Settings.selected.frame)
+drag(firstCommand(), Settings.selected.frame)
 assert(#Bar:GetCommands() == before + 1 and Settings:Find(entry.command) == 1)
 -- Reorder downward, accounting for the source being removed before insertion.
 drag(Settings.selected.children[1], Settings.selected.frame, 0)
@@ -128,7 +132,7 @@ assert(AprRC:DeepCompare(Bar:GetCommands(), snapshot), "Dropping outside must ca
 -- Empty bars, duplicates and closure during a drag must not lose commands.
 AprRCData.CommandBarCommands = {}
 Settings:DrawResults()
-drag(Settings.available.children[1], Settings.selected.frame)
+drag(firstCommand(), Settings.selected.frame)
 assert(#Bar:GetCommands() == 1)
 local first = Bar:GetCommands()[1]
 Settings:ApplyDrop(first, "selected", 1)

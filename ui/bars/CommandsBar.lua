@@ -89,21 +89,40 @@ function Bar:Run(command)
     return true
 end
 
+-- Both dimensions are constrained before building native buttons. Zero means
+-- automatic; old profiles keep their existing fixed primary dimension.
+function Bar:GetGrid(commands, size, gap)
+    local profile = AprRC.settings.profile.commandBarFrame
+    local vertical = profile.rotation == "VERTICAL"
+    local scale = math.max(0.01, frame:GetEffectiveScale() / UIParent:GetEffectiveScale())
+    local maxColumns = math.max(1, math.floor((UIParent:GetWidth() / scale - 20 + gap) / (size + gap)))
+    local maxRows = math.max(1, math.floor((UIParent:GetHeight() / scale - 20 + gap) / (size + gap)))
+    local requested = tonumber(profile.buttonsPerRow) or 6
+    if requested == 0 then
+        -- A small near-square palette grows with favorites and the viewport.
+        requested = math.ceil(math.sqrt(#commands + 1))
+    end
+    local primary = math.max(1, math.min(math.floor(requested), #commands + 1,
+        vertical and maxRows or maxColumns))
+    local secondary = vertical and maxColumns or maxRows
+    local lines = math.floor(tonumber(profile.maxLines) or 0)
+    if lines > 0 then secondary = math.max(1, math.min(lines, secondary)) end
+    return vertical, primary, primary * secondary
+end
+
 function Bar:UpdateFrame()
     local profile = AprRC.settings.profile.commandBarFrame
     local commands = self:GetCommands()
     local size = self:GetButtonSize()
     local gap = math.max(2, math.floor(size / 8))
-    local vertical = profile.rotation == "VERTICAL"
-    local requested = math.max(1, math.floor(tonumber(profile.buttonsPerRow) or 6))
-    local scale = frame:GetEffectiveScale() / UIParent:GetEffectiveScale()
-    local maxColumns = math.max(1, math.floor((UIParent:GetWidth() / scale - 20 + gap) / (size + gap)))
-    local maxRows = math.max(1, math.floor((UIParent:GetHeight() / scale - 20 + gap) / (size + gap)))
-    local primary = math.max(1, math.min(requested, #commands + 1, vertical and maxRows or maxColumns))
-    local slots = primary * (vertical and maxColumns or maxRows)
+    local vertical, primary, slots = self:GetGrid(commands, size, gap)
     local capacity = math.max(1, slots - 1) -- reserve the settings icon
     if #commands > capacity then capacity = math.max(1, slots - 3) end -- and page controls
     local pages = math.max(1, math.ceil(#commands / capacity))
+    -- If even the paging controls cannot fit, retain access through Settings.
+    -- Never grow outside the requested dimensions just to fit utility buttons.
+    if slots < 4 then capacity, pages = math.max(0, slots - 1), 1 end
+    self.pages, self.capacity = pages, capacity
     self.page = math.min(math.max(1, self.page or 1), pages)
     local first = (self.page - 1) * capacity + 1
     local count = math.max(0, math.min(capacity, #commands - first + 1))
@@ -192,6 +211,7 @@ function Bar:ResetToDefault()
     AprRCData.CommandBarCommands = AprRC.options:GetDefaultToolbarCommands()
     local profile = AprRC.settings.profile.commandBarFrame
     profile.rotation, profile.enabled, profile.buttonSize, profile.buttonsPerRow = "HORIZONTAL", true, 32, 6
+    profile.maxLines, profile.catalogCollapsed = 0, {}
     profile.snap = "NONE"
     profile.showBackdrop, profile.backdropColor = true, { 0.07, 0.055, 0.035, 0.85 }
     self.page = 1

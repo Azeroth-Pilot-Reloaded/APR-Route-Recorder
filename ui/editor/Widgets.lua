@@ -2,6 +2,42 @@ local GUI = LibStub("AceGUI-3.0")
 local UI = AprRC.editorUI
 UI.FormSpacing, UI.ColumnSpacing, UI.ActionStride = 8, 12, 38
 
+-- Read APR's current palette at use time. Older APR releases use the native
+-- WoW palette below; the recorder never changes shared AceGUI defaults.
+local palette = {
+    background = { 0.08, 0.065, 0.045, 0.98 }, surface = { 0.16, 0.13, 0.09, 1 },
+    border = { 0.53, 0.43, 0.24, 1 }, accent = { 1, 0.82, 0.28, 1 },
+    base = { 0.96, 0.94, 0.88, 1 }, muted = { 0.70, 0.67, 0.59, 1 },
+}
+function UI.ThemeColor(role)
+    return (APR.GetThemeColor and APR:GetThemeColor(role)) or palette[role] or palette.base
+end
+
+function UI.ThemeWindow(frame)
+    frame:SetBackdropColor(unpack(UI.ThemeColor("background")))
+    frame:SetBackdropBorderColor(unpack(UI.ThemeColor("border")))
+end
+
+-- Only layout changes when a disclosure opens: no draft mutation, widget
+-- reconstruction, route copies or serialization. The body keeps its inputs.
+GUI:RegisterLayout("APRDisclosure", function(content, children)
+    if content.aprLayout then return end
+    content.aprLayout = true
+    local width, height = content:GetWidth(), 0
+    for index, child in ipairs(children) do
+        if index == 1 or content.obj:GetUserData("expanded") then
+            child:SetWidth(width)
+            child.frame:ClearAllPoints()
+            child.frame:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -height)
+            child.frame:Show()
+            if child.DoLayout then child:DoLayout() end
+            height = height + child.frame:GetHeight() + UI.FormSpacing
+        else child.frame:Hide() end
+    end
+    content.obj:LayoutFinished(width, math.max(0, height - UI.FormSpacing))
+    content.aprLayout = nil
+end)
+
 -- These listeners belong to ordinary, non-secure editor frames. Propagation
 -- changes are restricted in combat even on those frames; disabling their input
 -- remains legal and also releases a previously consumed key (propagation=false).
