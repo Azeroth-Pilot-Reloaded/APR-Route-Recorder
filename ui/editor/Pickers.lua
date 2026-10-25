@@ -34,17 +34,19 @@ function Pickers:Resolve(schema, path)
     if objectiveQuest then return { kind = "objective", questID = tonumber(objectiveQuest) } end
     if valueKind == "objectiveKey" then return { kind = "objectiveKey" } end
     if valueKind == "text" or valueKind == "strings" then
+        if key == "Dungeon" or key == "dungeonKey" then return { kind = "dungeon" } end
+        if path:match("/SpellButton/[^/]+$") then return { kind = "spell" } end
         if key == "Note" or key == "text" or key == "Text" or key == "tooltipMessage"
             or key:match("^ExtraLineText%d*$") or key:match("^TrigText%d*$") then return { kind = "locale" } end
         return
     end
-    if valueKind ~= "id" and valueKind ~= "ids" and valueKind ~= "idOrIds" then return end
+    if valueKind ~= "id" and valueKind ~= "ids" and valueKind ~= "idOrIds" and valueKind ~= "spellOrSpells" then return end
     if counts[key] then return end
     if quests[key] or key:match("^Is.*Quest") then return { kind = "quest" } end
     if spells[key] or path:match("/SpellButton/[^/]+$") then return { kind = "spell" } end
     if items[key] or path:match("/Button/[^/]+$") then return { kind = "item" } end
     if key == "HasAura" or key == "DontHaveAura" then return { kind = "aura" } end
-    if key == "achievementID" or key == "HasAchievement" or key == "DontHaveAchievement" then return { kind = "achievement" } end
+    if key == "achievementID" or key == "sojournerAchievementID" or key == "HasAchievement" or key == "DontHaveAchievement" then return { kind = "achievement" } end
     if maps[key] then return { kind = "map" } end
     return { kind = "id", field = key }
 end
@@ -64,7 +66,20 @@ function Pickers:Open(spec, context, accept)
         submit(id)
     end
     local A = AprRC.autocomplete
-    if spec.kind == "locale" then
+    if spec.kind == "dungeon" then
+        local entries = {}
+        for _, catalog in pairs(APR.DungeonData or {}) do
+            for key, dungeon in pairs(catalog) do
+                entries[key] = type(dungeon.name) == "string" and dungeon.name or key
+            end
+        end
+        return A:ShowAutoComplete(UI.Text("PICKER_SELECT"), entries, function(text, key, frame)
+            local value = key or strtrim(text or "")
+            local valid, reason = R:ValidateValue("text", value)
+            if not valid then context.error(reason); return false end
+            frame:Hide(); submit(value)
+        end, function(match) return tostring(match.key) .. " - " .. match.value end, 650, 450, true)
+    elseif spec.kind == "locale" then
         return A:ShowLocaleAutoComplete(submit)
     elseif spec.kind == "spell" then
         return A:ShowSpellAutoComplete(nil, nil, numeric, true)

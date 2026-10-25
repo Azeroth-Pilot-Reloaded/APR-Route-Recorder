@@ -7,7 +7,10 @@ for _, field in ipairs({ "Button", "SpellButton" }) do
     for _, invalid in ipairs({ '{}', '0', '-1', '1.5', '"12345"', 'true', '{ 0 }', '{ 1.5 }',
         '{ "12345" }', '{ { 12345 } }', '{ [2] = 12345 }', '{ [1] = 12345, [3] = 67890 }',
         '{ itemID = 12345 }', '{ 1e999 }' }) do
-        assert(not R:Parse(definition, '{ ["5648"] = ' .. invalid .. ' }'), field .. " accepted " .. invalid)
+        local spellName = invalid == '"12345"' or invalid == '{ "12345" }'
+        if field ~= "SpellButton" or not spellName then
+            assert(not R:Parse(definition, '{ ["5648"] = ' .. invalid .. ' }'), field .. " accepted " .. invalid)
+        end
     end
     assert(not R:Parse(definition, '{ [5648] = { 12345 } }'), "Quest keys must remain strings")
     assert(not R:Parse(definition, '{ ["0-1"] = { 12345 } }'))
@@ -31,6 +34,8 @@ for _, field in ipairs({ "Button", "SpellButton" }) do
     assert(not R:AddStepButton(step, field, "5648", 0))
     assert(AprRC:DeepCompare(previous, step), "Invalid selections must not modify buttons")
 end
+assert(R:Parse(R.step.SpellButton, '{ ["42"] = "Healing Touch", ["42-1"] = { 2050, "Power Word: Fortitude" } }'))
+assert(not R:Parse(R.step.Button, '{ ["42"] = "Healing Touch" }'), "Item buttons still require numeric IDs")
 
 local Language = AprRC.luaLanguage
 for _, field in ipairs({ "Button", "SpellButton" }) do

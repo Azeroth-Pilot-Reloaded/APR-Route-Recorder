@@ -574,6 +574,8 @@ function Model:FieldSummary(key, value)
         return table.concat(result, ", ")
     end
     if key == "LootMoney" then return self:MoneyText(value.copper)
+    elseif key == "KillNPC" then return AprRC.options:NPCName(value.npcID) or value.name or ("#" .. tostring(value.npcID or "?"))
+    elseif key == "EnterInstance" or key == "LeaveInstance" then return value.dungeonKey
     elseif key == "Repair" then return "#" .. tostring(value.npcID or "?") .. " · " .. tostring(value.minDurability or 90) .. "%"
     elseif key == "TameBeast" then return AprRC.options:NPCName(value.npcID) or value.Text or value.text or ("#" .. tostring(value.npcID or "?"))
     elseif key == "Money" or key == "VendorMoney" then return (value.operator or ">=") .. " " .. self:MoneyText(value.copper)
@@ -626,7 +628,7 @@ local actionOrder = {
     "RouteCompleted", "PickUp", "Qpart", "QpartPart", "Done", "Waypoint", "Note",
     "UseFlightPath", "GetFP", "SetHS", "UseHS", "UseDalaHS", "UseGarrisonHS",
     "TakePortal", "Treasure", "Achievement", "Scenario", "EnterScenario", "DoScenario",
-    "LeaveScenario", "EnterInstance", "LeaveInstance", "UseItem", "UseSpell", "Grind",
+    "LeaveScenario", "EnterInstance", "LeaveInstance", "KillNPC", "UseItem", "UseSpell", "Grind",
     "Reputation", "BuyMerchant", "LootItems", "LootMoney", "LeaveQuests", "Emote", "ChromiePick",
     "LearnProfession", "WarMode", "ResetRoute", "VehicleExit", "MountVehicle",
     "ExitTutorial", "LeaveQuest", "DeathSkip", "SellItems", "Repair", "LearnSkill",
@@ -666,7 +668,7 @@ function Model:Summary(step)
         preview[1] = table.concat(titles, ", ")
         raw[1] = preview[1]
     end
-    for _, field in ipairs({ "LootMoney", "DestroyItems", "LearnSkill", "BankDeposit", "BankWithdraw", "Repair", "TameBeast", "EquipItem" }) do
+    for _, field in ipairs({ "LootMoney", "DestroyItems", "LearnSkill", "BankDeposit", "BankWithdraw", "Repair", "TameBeast", "EquipItem", "KillNPC", "EnterInstance", "LeaveInstance" }) do
         local actionDetail = self:FieldSummary(field, step[field])
         if actionDetail and actionDetail ~= "" then
             if field ~= key then actionDetail = summaryLabel(field) .. ": " .. actionDetail end

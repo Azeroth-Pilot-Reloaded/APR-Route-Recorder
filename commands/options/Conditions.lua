@@ -1,6 +1,15 @@
 local R = AprRC.options
 local S = R.schemas
 
+R:Register({
+    key = "InterfaceVersionExact",
+    command = "interfaceversionexact",
+    schema = "id",
+    example = "120100",
+    condition = true,
+    icon = "Interface\\Icons\\INV_Misc_Book_09",
+})
+
 -- Cooldown skips run on the active step, outside APR's reusable conditions.
 R:Register({
     key = "SkipIfCooldown",

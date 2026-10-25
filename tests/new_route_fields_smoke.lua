@@ -37,3 +37,44 @@ assert(value[1].seconds == 3.5 and value[1].spellID == 8690 and value[1].once ==
 LibStub("AceGUI-3.0"):Release(parent)
 assert(#UIErrors == 0, table.concat(UIErrors, "\n"))
 print("New route forms: repeatable drafts/undo, quest XP picker and spell cooldown editing passed.")
+
+local fields = UI.Form:Fields("routeConditions", {})
+assert(fields.InterfaceVersionExact == "id" and fields.AnyOf == AprRC.options.step.AnyOf.schema)
+assert(fields.MinLevel == "positive" and fields.KillNPC == nil)
+assert(UI.Form:Fields("route", {}).legacyLabels == "strings")
+assert(UI.Pickers:Resolve("text", "step/Dungeon").kind == "dungeon")
+assert(UI.Pickers:Resolve("text", "step/KillNPC/dungeonKey").kind == "dungeon")
+assert(UI.Pickers:Resolve("id", "route/sojournerAchievementID").kind == "achievement")
+
+local originalCatalog, originalShow = APR.DungeonData, AprRC.autocomplete.ShowAutoComplete
+APR.DungeonData = { forever = { SYNTHETIC = { name = "Practice dungeon", instanceID = 42 } } }
+local selectedKey, hidden
+AprRC.autocomplete.ShowAutoComplete = function(_, _, entries, accept)
+    assert(entries.SYNTHETIC == "Practice dungeon")
+    local frame = { Hide = function() hidden = true end }
+    accept("", "SYNTHETIC", frame)
+    return frame
+end
+UI.Pickers:Open({ kind = "dungeon" }, {}, function(value) selectedKey = value end)
+assert(selectedKey == "SYNTHETIC" and hidden)
+AprRC.autocomplete.ShowAutoComplete = function(_, _, entries, accept)
+    assert(not next(entries))
+    local frame = { Hide = function() end }
+    accept("  OTHER_CLIENT  ", nil, frame)
+    return frame
+end
+APR.DungeonData = nil
+UI.Pickers:Open({ kind = "dungeon" }, {}, function(value) selectedKey = value end)
+assert(selectedKey == "OTHER_CLIENT", "Absent client catalogs must still allow explicit dungeon keys")
+APR.DungeonData, AprRC.autocomplete.ShowAutoComplete = originalCatalog, originalShow
+
+local spells = { ["7-1"] = "Healing Touch" }
+local spellForm = AprRC:CreateWidget("SimpleGroup")
+UI.Form:Render(spellForm, AprRC.options.schemas.spellButtons, spells, function(value) spells = value end,
+    { modes = {}, pages = {}, changed = function() end, redraw = function() end,
+        error = function(message) error(message) end }, "step/SpellButton", "Spells")
+local spellInput = assert(find(spellForm, "step/SpellButton/7-1"))
+spellInput:Fire("OnTextChanged", "Healing Touch, 2050")
+assert(spells["7-1"][1] == "Healing Touch" and spells["7-1"][2] == 2050)
+LibStub("AceGUI-3.0"):Release(spellForm)
+print("Wiki forms: route eligibility fields, loaded/manual dungeon keys and mixed spell buttons passed.")

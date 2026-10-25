@@ -287,6 +287,9 @@ The table includes navigation, display, and route options so you can see the com
 | 🟠 **Action** | `ResetRoute` | Add a route-reset confirmation step. |
 | 🟠 **Action** | `Note` | Add an informational step with one or several text lines. |
 | 🟠 **Action** | `RouteCompleted` | Mark the route as finished; keep this as its final step. |
+| 🟠 **Action** | `KillNPC` | Wait for an observed dungeon boss death. Set `npcID`, `name`, and `dungeonKey`; new boss steps start with `InstanceQuest` and `NoArrow` to avoid unverified exterior navigation. |
+| 🟠 **Action** | `EnterInstance`, `LeaveInstance` | Use either `{ questID, mapID }` or `{ dungeonKey = "RFC" }` for APR dungeon checkpoints. |
+| 🔵 **Navigation** | `Dungeon` | Identify the APR dungeon catalog context on other interior steps. The picker uses APR's loaded dungeon catalogs; the key is independent of UI map IDs. |
 | 🔵 **Navigation** | `Coord`, `Coords`, `Zone` | Set or override world coordinates and map IDs, including multiple position variants. |
 | 🔵 **Navigation** | `Range`, `ZoneStepTrigger` | Set the waypoint radius or a coordinate-based completion trigger. |
 | 🔵 **Navigation** | `TakePortal` | Define a portal destination explicitly instead of using inferred capture. |
@@ -330,7 +333,7 @@ The table includes navigation, display, and route options so you can see the com
 | 🟢 **Condition** | `Skill`, `SkipForPrimaryProfessions` | Check skill ranks or skip once the specified number of primary professions is learned. |
 | 🟢 **Condition** | `QuestLineSkip`, `PickedLoa` | Apply questline-skip or selected-Loa rules. |
 | 🟢 **Condition** | `IsCampaignQuest` | Set or override the campaign quest flag. |
-| 🟢 **Condition** | `InterfaceVersion` | Require a minimum client interface version. |
+| 🟢 **Condition** | `InterfaceVersion`, `InterfaceVersionExact` | Require a minimum or exact client interface version. |
 | 🟢 **Condition** | `AnyOf`, `AllOf`, `Not` | Combine alternative conditions, require every condition block, or invert a block. |
 | ⚪ **Route** | `label`, `expansion`, `category`, `gameVersion`, `mapID` | Set route metadata in the **Route** tab. |
 | ⚪ **Route** | `conditions` | Set the supported route-selection filters. |
@@ -338,12 +341,17 @@ The table includes navigation, display, and route options so you can see the com
 | ⚪ **Route** | `parallelSteps`, `scenarios` | Define conditional parallel groups and scenario-specific step collections. |
 | ⚪ **Route** | `parallelSteps[].repeatable` | Enable another activation of a single `UseItem` action after the previous action was passed and its group conditions became false then true. Edit the checkbox in **Group conditions**. |
 | ⚪ **Route** | `XPConsumables` | Set the route's XP-consumable profile. |
+| ⚪ **Route** | `legacyLabels` | Preserve former route labels for APR's saved-name resolution. |
+| ⚪ **Route** | `autoStartOnMap`, `notSkippable`, `hiddenFromSelection`, `temporary` | Configure starter detection, starter skip protection, manual visibility, and temporary guides. Explicit `false` values are preserved. |
+| ⚪ **Route** | `sojournerAchievementID`, `delve` | Supply the campaign skip achievement or mark a Delve guide with `delve = {}`. |
 
 </details>
 
 Conditions in the same block combine with AND. `AnyOf` expresses alternatives, `AllOf` allows multiple checks of the same kind, and `Not` inverts a complete block. Parallel-group conditions control when its steps are inserted; single `EquipItem`/`UseItem` actions also inherit live group conditions. Other groups retain activation-only conditions, and each step can have its own filters. `SkipIfCooldown` belongs directly on a step, outside reusable condition blocks. `questLogXP` is available in absolute XP tables for `Grind`, `Level`, `MinLevel`, `MaxLevel`, and `SkipForLvl`. Route-selection conditions support a narrower set of fields than step/group conditions.
 
-The Lua editor also preserves comments and accepts `_comment` step text. Step indices (`_index`) are generated automatically. For detailed syntax and APR options beyond the recorder's current editing coverage, use the [APR Route Syntax wiki](https://azerothpilotreloaded.com/wiki/).
+Route `conditions` also accept `InterfaceVersionExact` and `AnyOf`. Alternatives inside route `AnyOf` use the step-condition syntax; direct route `Level`, `MinLevel`, `MaxLevel`, and `BeLvl` remain numeric. `UseItem.itemSpellID` may be omitted so APR resolves the item's use spell. `SpellButton` also accepts client-localized spell names, including lists mixing IDs and names; numeric IDs are preferable for sharing.
+
+The Lua editor also preserves comments and accepts `_comment` step text. Step indices (`_index`) are generated automatically. These fields follow the [APR Route Syntax wiki](https://azerothpilotreloaded.com/wiki/) and the local APR `wiki.md` reference, checked on 25 October 2026.
 
 ---
 
