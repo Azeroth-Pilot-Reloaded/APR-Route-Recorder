@@ -95,16 +95,20 @@ The workshop lets you build and review routes without writing Lua. Select a step
 | Route selector and recording controls | Create, select, or resume a route; start and stop recording. |
 | **Route** | Edit the label, map, expansion, category, game version, route conditions, dependencies, next routes, presets, and scenarios. |
 | **Steps** | Add, duplicate, move, delete, and edit main-route steps. Use **Previous step** and **Next step** in the inspector to move through the filtered list. |
-| **Parallel steps** | Create, duplicate, reorder, or delete groups. Edit group conditions and their steps with the same controls as the main route. |
+| **Parallel steps** | Select an activity by its action and step count, then switch between **When to activate** and **Edit steps**. Duplicate, reorder, and delete groups through the collapsible **Group actions** section. |
 | **Lua editor** | Edit the complete route definition, including metadata and parallel steps. See [Lua editor](#lua-editor) below. |
 | **Versions** | Compare saved, draft, and archived versions; merge changes, rebase a draft, or recover a version into a separate copy. Up to 40 distinct versions are kept per route. |
-| **Commands** | Search recording actions and options, launch them, and customize command-bar favorites, order, labels, orientation, and size. |
+| **Commands** | Search or filter collapsible command sections, launch commands, and customize favorites, order, labels, orientation, size, and grid dimensions. Each column shows up to 24 commands per page. Drag onto a page arrow and hold briefly to move a favorite between pages. |
 | **Tools** | Open coordinates, extra-line-text tools, recording actions, and addon settings. |
 | **Compact mode** / **Full width** | Switch between a single-pane layout and the full list/inspector layout. Window size and layout are remembered. |
 | **Follow recording** | Follow the newest captured step. Interaction pauses following for five seconds; focused inputs, dialogs, and pending edits keep it paused. |
 | **Follow APR** | Follow the current APR playback step, including parallel steps. When both follow modes apply to the same route, APR playback takes priority. |
 
 Forms include searchable quest, spell, and item selectors; class/race checkboxes; objective rows; and gold/silver/copper inputs. Class and race badges show restrictions at a glance. Undo and redo cover visual edits to both main and parallel steps.
+
+Route and step forms have collapsible sections whose state is remembered. **Save**, **Undo**, **Redo**, and **Player position** stay directly accessible; secondary controls are grouped under **Route actions** and **Step actions**. Adding a field opens its section automatically. Collapsing controls keeps their values and does not create an unsaved draft.
+
+The command bar can choose its dimensions automatically or use your preferred number of buttons per row/column and maximum rows/columns. Extra favorites remain accessible through paging or the Commands tab. The step list renders at most 40 rows and reuses its filtered index while navigating, including on routes with 20,000 steps. The workshop uses APR's active window palette when available and retains native WoW colors with older APR versions.
 
 > [!IMPORTANT]
 > **The inspector edits the selected step. Recording commands edit the last recorded step.** Commands that create a step reveal it even when automatic following is disabled.

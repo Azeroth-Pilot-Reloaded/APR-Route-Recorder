@@ -20,11 +20,51 @@ function Editor:SelectedStep()
     return self.session:GetSelected(self:StepGroup())
 end
 
+function Editor:StepMatches()
+    local steps, session = self:Steps(), self.session
+    local cached = self.stepMatches
+    if not cached or cached.steps ~= steps or cached.text ~= session.draftText or
+        cached.query ~= self.query or cached.filter ~= self.filter then
+        cached = { steps = steps, text = session.draftText, query = self.query, filter = self.filter,
+            matches = Model:Filter(steps, self.query, self.filter, UI.Label), positions = {} }
+        for position, index in ipairs(cached.matches) do cached.positions[index] = position end
+        self.stepMatches = cached
+    end
+    return cached.matches, cached.positions
+end
+
 function Editor:ResetParallelView()
     self.query, self.filter, self.page = "", "all", 1
     self.formModes, self.formPages, self.editGroupConditions = {}, {}, nil
     self.session:Persist()
     self:DrawTab()
+end
+
+function Editor:ParallelLabel(group, index)
+    local first = group.steps and group.steps[1]
+    local key = first and Model:StepKind(first)
+    return T("Parallel group") .. " " .. index .. " · " .. #(group.steps or {}) .. " " .. T("Steps") ..
+        (key and (" · " .. UI.Label(key)) or "")
+end
+
+function Editor:UpdateParallelPicker()
+    if self.tab ~= "parallel" or not self.parallelPicker then return end
+    local index = self.session.parallelGroup
+    local group = (self.session.draft.parallelSteps or {})[index]
+    if not group then return end
+    local picker = self.parallelPicker
+    local entries = picker.entries or picker.list
+    local caption = self:ParallelLabel(group, index)
+    if entries[index] == caption then return end
+    entries[index] = caption
+    if picker.type == "Dropdown" then
+        -- Native dropdowns hold at most ten groups; larger routes use the
+        -- searchable selector and only update this one label in its index.
+        local order = {}
+        for offset in ipairs(entries) do order[#order + 1] = offset end
+        picker:SetList(entries, order)
+    end
+    picker:SetValue(index)
 end
 
 function Editor:DrawParallelSteps()
@@ -33,23 +73,26 @@ function Editor:DrawParallelSteps()
     local groups = session.draft.parallelSteps or {}
     local group = groups[session.parallelGroup]
     local body = UI.Body(self.tabs)
-    local toolbar = UI.Toolbar(body)
+    local actions, toolbar, disclosure = UI.Disclosure(body, "Group actions", "parallelActions", false)
+    self.parallelActions = disclosure
     local entries = {}
-    for index in ipairs(groups) do entries[index] = T("Parallel group") .. " " .. index end
+    for index, entry in ipairs(groups) do
+        entries[index] = self:ParallelLabel(entry, index)
+    end
     self.parallelPicker = UI.Dropdown(toolbar, UI.Label("parallelSteps"), entries,
         group and session.parallelGroup or nil, function(index)
             session.parallelGroup, session.parallelSelected = index, 1
             self:ResetParallelView()
         end)
     self.parallelPicker:SetFullWidth(false)
-    self.parallelPicker:SetWidth(210)
+    self.parallelPicker:SetUserData("flex", 2)
     self.addGroup = UI.Button(toolbar, "Add group", function()
         session:InsertGroup(); self:ResetParallelView()
     end)
-    self.duplicateGroup = UI.IconButton(toolbar, "duplicate", "Duplicate group", function()
+    self.duplicateGroup = UI.IconButton(actions, "duplicate", "Duplicate group", function()
         if group then session:InsertGroup(group); self:ResetParallelView() end
     end)
-    self.deleteGroup = UI.IconButton(toolbar, "trash", "Delete group", function()
+    self.deleteGroup = UI.IconButton(actions, "trash", "Delete group", function()
         local index = session.parallelGroup
         self:Confirm(T("Delete this parallel group and all its steps? You can undo this change."), function()
             if self.session == session and (session.draft.parallelSteps or {})[index] == group then
@@ -57,24 +100,40 @@ function Editor:DrawParallelSteps()
             end
         end)
     end)
-    self.groupUp = UI.IconButton(toolbar, "up", "Move group up", function()
+    self.groupUp = UI.IconButton(actions, "up", "Move group up", function()
         if session:MoveGroup(session.parallelGroup, session.parallelGroup - 1) then self:ResetParallelView() end
     end)
-    self.groupDown = UI.IconButton(toolbar, "down", "Move group down", function()
+    self.groupDown = UI.IconButton(actions, "down", "Move group down", function()
         if session:MoveGroup(session.parallelGroup, session.parallelGroup + 1) then self:ResetParallelView() end
     end)
-    self.groupConditions = UI.Button(toolbar, "Group conditions", function()
+    local stages = UI.Toolbar(body)
+    stages:SetLayout("APRCompactToolbar")
+    self.groupConditions = UI.Button(stages, "When to activate", function()
         self.editGroupConditions = true
         self.formModes, self.formPages = {}, {}
         self:DrawInspector()
         self.inspector:SetScroll(0)
         self:ShowStepPane("inspector")
-    end, 190)
+    end, 155)
+    self.groupSteps = UI.Button(stages, "Edit steps", function()
+        self:MarkInteraction()
+        self.editGroupConditions = nil
+        self.formModes, self.formPages = {}, {}
+        self:DrawInspector()
+        self:ShowStepPane("inspector")
+    end, 130)
+    local count = 0
+    for _ in pairs(group and group.conditions or {}) do count = count + 1 end
+    local hint = UI.LabelWidget(stages, group and (count == 0 and T("Always active") or
+        (count .. " " .. T("Conditions"))) or "")
+    self.parallelHint = hint
+    hint:SetUserData("flex", 1)
     self.duplicateGroup:SetDisabled(not group)
     self.deleteGroup:SetDisabled(not group)
     self.groupUp:SetDisabled(not group or session.parallelGroup == 1)
     self.groupDown:SetDisabled(not group or session.parallelGroup == #groups)
     self.groupConditions:SetDisabled(not group)
+    self.groupSteps:SetDisabled(not group)
     if group then
         self:DrawSteps(body)
     else
@@ -194,7 +253,8 @@ function Editor:DrawSteps(parent)
         self:SelectStep(self:SelectedStep() + 1)
     end)
     self.inspector = UI.Scroll(detail)
-    local actions = UI.Toolbar(detail, true)
+    local actions, quick, disclosure = UI.Disclosure(detail, "Step actions", "stepActions", false, true)
+    self.stepActions = disclosure
     self.moveUp = UI.IconButton(actions, "up", "Move up", function() self:Move(-1) end)
     self.moveDown = UI.IconButton(actions, "down", "Move down", function() self:Move(1) end)
     self.duplicate = UI.IconButton(actions, "duplicate", "Duplicate", function()
@@ -213,7 +273,7 @@ function Editor:DrawSteps(parent)
             end
         end)
     end)
-    self.positionButton = UI.Button(actions, "Player position", function()
+    self.positionButton = UI.Button(quick, "Player position", function()
         local step = self:Steps()[self:SelectedStep()]
         local coord, zone = AprRC:GetPlayerCoord()
         if not coord then self:Message(T("Unable to read player coordinates."), true); return end
@@ -240,11 +300,8 @@ function Editor:SelectStep(index, openInspector, automatic)
     if self.fieldPicker then self.fieldPicker:Hide() end
     self.session:SetSelected(index, self:StepGroup())
     self.editGroupConditions = nil
-    local matches = Model:Filter(self:Steps(), self.query, self.filter, UI.Label)
-    local position
-    for offset, candidate in ipairs(matches) do
-        if candidate == index then position = offset; break end
-    end
+    local matches, positions = self:StepMatches()
+    local position = positions[index]
     if not position then self.query, self.filter, position = "", "all", index end
     self.page = math.ceil(position / PAGE_SIZE)
     self.session:Persist()
@@ -266,7 +323,8 @@ function Editor:ShowStepPane(pane)
 end
 
 function Editor:AfterStructureChange()
-    local matches = Model:Filter(self:Steps(), self.query, self.filter, UI.Label)
+    self:UpdateParallelPicker()
+    local matches = self:StepMatches()
     for position, index in ipairs(matches) do
         if index == self:SelectedStep() then self.page = math.ceil(position / PAGE_SIZE); break end
     end
@@ -292,7 +350,7 @@ function Editor:DrawList()
     self.list:PauseLayout()
     self.list:ReleaseChildren()
     local session = self.session
-    local matches = Model:Filter(self:Steps(), self.query, self.filter, UI.Label)
+    local matches = self:StepMatches()
     local pages = math.max(1, math.ceil(#matches / PAGE_SIZE))
     self.page = math.max(1, math.min(self.page or 1, pages))
     self.pageLabel:SetText(muted .. #matches .. " " .. T("Steps") .. "  ·  " .. self.page .. " / " .. pages .. "|r")

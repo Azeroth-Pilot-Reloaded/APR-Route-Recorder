@@ -37,6 +37,33 @@ function UI.Toolbar(parent, footer)
     return group
 end
 
+function UI.Disclosure(parent, label, key, defaultOpen, footer)
+    local section = UI.Toolbar(parent, footer)
+    section:SetLayout("APRDisclosure")
+    local preferences = AprRC.settings.profile.editorFrame
+    preferences.disclosures = preferences.disclosures or {}
+    local expanded = preferences.disclosures[key]
+    if expanded == nil then expanded = defaultOpen == true end
+    section:SetUserData("expanded", expanded)
+    section:SetUserData("disclosureKey", key)
+    local header = UI.Toolbar(section)
+    header:SetLayout("APRCompactToolbar")
+    local toggle = UI.IconButton(header, expanded and "down" or "next", label, function()
+        Editor:MarkInteraction()
+        GUI:ClearFocus()
+        local open = not section:GetUserData("expanded")
+        preferences.disclosures[key] = open
+        section:SetUserData("expanded", open)
+        section.toggle:SetIcon(open and "down" or "next")
+        section:DoLayout()
+        if Editor.frame then Editor.frame:DoLayout() end
+    end)
+    section.toggle = toggle
+    UI.LabelWidget(header, T(label)):SetUserData("flex", 1)
+    local body = UI.Toolbar(section)
+    return body, header, section
+end
+
 function Editor:Message(text, errorMessage)
     self.notice = (errorMessage and "|cffff7777" or "|cff82d9a0") .. tostring(text) .. "|r"
     if errorMessage then APR:PrintError(text) end
@@ -124,6 +151,13 @@ function Editor:UpdateStatus()
     SetStatusLabel(self.recordStatus, state)
     SetStatusLabel(self.summary, session and ("|cffedc36a" .. tostring(#session.draft.steps) .. " " .. T("Steps") .. "|r  ·  " ..
         (dirty and "|cffffcf66" .. T("Unsaved draft") or "|cff82d9a0" .. T("Saved")) .. "|r") or "")
+    if self.tab == "parallel" and self.parallelHint and session then
+        local group = (session.draft.parallelSteps or {})[session.parallelGroup]
+        local count = 0
+        for _ in pairs(group and group.conditions or {}) do count = count + 1 end
+        SetStatusLabel(self.parallelHint, group and (count == 0 and T("Always active") or
+            (count .. " " .. T("Conditions"))) or "")
+    end
     self.frame:SetStatusText(self.notice or self.safetyNotice or ((dirty or (session and session.followPaused)) and T("Follow pauses while you edit. Save or reload to resume.") or
         T("Drafts are kept when closing this window, switching routes or reloading the UI.")))
     if self.tab == "commands" then AprRC.CommandBarSetting:RefreshRunState() end
@@ -132,6 +166,7 @@ end
 function Editor:Changed()
     self.notice = nil
     self.session:Snapshot()
+    self:UpdateParallelPicker()
     self:UpdateStatus()
     -- Only rebuild the list; keep the inspector and its keyboard focus intact.
     self:DrawList()
@@ -177,6 +212,7 @@ function Editor:FormContext()
                 and self.formToken == token and (self.routeForm or self.inspector) == panel
         end,
         modes = self.formModes, pages = self.formPages,
+        sections = true,
         changed = function() self:Changed() end,
         redraw = function(focusPath)
             self:DrawInspector()
@@ -461,6 +497,8 @@ function Editor:SelectTab(tab)
 end
 
 function Editor:DrawTab()
+    self.stepMatches = nil
+    self.parallelHint = nil
     local reopenFind = self.tab == "lua" and self.luaFindBar ~= nil
     if self.fieldPicker then self.fieldPicker:Hide() end
     AprRC.TutoFrame:ClearPointer()
@@ -561,13 +599,10 @@ function Editor:HandleStepKey(key)
         self:ShowStepPane("inspector")
         return true
     elseif key == "UP" or key == "DOWN" then
-        local matches = Model:Filter(self:Steps(), self.query, self.filter, UI.Label)
+        local matches, positions = self:StepMatches()
         if #matches == 0 then return false end
         self:MarkInteraction()
-        local position
-        for offset, index in ipairs(matches) do
-            if index == self:SelectedStep() then position = offset; break end
-        end
+        local position = positions[self:SelectedStep()]
         local target = position and math.max(1, math.min(#matches, position + (key == "UP" and -1 or 1))) or
             (key == "UP" and #matches or 1)
         if matches[target] ~= self:SelectedStep() then self:SelectStep(matches[target]) end
@@ -646,6 +681,7 @@ function Editor:Refresh(forceFollow)
     self:SafetyTick()
     if self.descriptionsDirty and not self.confirm and not self.fieldPicker and not interacting(self.frame) then
         self.descriptionsDirty = nil
+        self.stepMatches = nil
         self:DrawList()
         if self.session then self:DrawInspector() end
     end
@@ -852,8 +888,7 @@ function Editor:Show()
     frame:SetStatusTable(status)
     local wasClamped = frame.frame:IsClampedToScreen()
     frame.frame:SetClampedToScreen(true)
-    frame.frame:SetBackdropColor(0.07, 0.055, 0.035, 0.98)
-    frame.frame:SetBackdropBorderColor(0.72, 0.58, 0.34, 1)
+    UI.ThemeWindow(frame.frame)
     local header = UI.Toolbar(frame)
     header:SetLayout("APRCompactToolbar")
     self.routeDropdown = UI.Dropdown(header, "", {}, nil, function(name) self:SelectRoute(name) end)
@@ -883,8 +918,9 @@ function Editor:Show()
         if not self.selectingTab then self:MarkInteraction(); self:SelectTab(tab) end
     end)
     frame:AddChild(self.tabs)
-    local footer = UI.Toolbar(frame, true)
-    self.saveButton = UI.Button(footer, "Save", function() self:Save() end, 135)
+    local footer, primary, section = UI.Disclosure(frame, "Route actions", "routeActions", false, true)
+    self.routeActions = section
+    self.saveButton = UI.Button(primary, "Save", function() self:Save() end, 110)
     self.saveButton:SetCallback("OnEnter", function(widget)
         GameTooltip:SetOwner(widget.frame, "ANCHOR_TOP")
         AprRC:AddTooltipLine(GameTooltip, T("SAVE_MERGE_HELP"), 1, 1, 1, true)
@@ -894,8 +930,8 @@ function Editor:Show()
     self.importButton = UI.Button(footer, "Import from APR", function() self:ImportDialog() end, 170)
     self.copyButton = UI.Button(footer, "Save a copy", function() self:NameDialog(true) end, 195)
     self.deleteRouteButton = UI.IconButton(footer, "trash", "Delete route", function() self:DeleteRoute() end)
-    self.undoButton = UI.IconButton(footer, "undo", "Undo", function() self:Undo(-1) end)
-    self.redoButton = UI.IconButton(footer, "redo", "Redo", function() self:Undo(1) end)
+    self.undoButton = UI.IconButton(primary, "undo", "Undo", function() self:Undo(-1) end)
+    self.redoButton = UI.IconButton(primary, "redo", "Redo", function() self:Undo(1) end)
     self.reloadButton = UI.IconButton(footer, "refresh", "Reload saved route", function()
         local session = self.session
         if not session then return end
@@ -959,6 +995,7 @@ function Editor:Show()
         widget.frame:SetClampedToScreen(wasClamped)
         if widget.frame.SetResizeBounds then widget.frame:SetResizeBounds(400, 200) else widget.frame:SetMinResize(400, 200) end
         self.frame, self.tabs, self.list, self.inspector, self.routeForm = nil, nil, nil, nil, nil
+        self.stepMatches = nil
         GUI:Release(widget)
     end)
     self:RefreshRoutes()
