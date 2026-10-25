@@ -116,8 +116,16 @@ function Model:Open(route)
     local saved = AprRCData.EditorDrafts and AprRCData.EditorDrafts[route.name]
     session:Reload(route)
     if saved then
+        local sourceText = session.base
         session.draft = AprRC:CopyData(saved.draft)
         session.base = saved.base
+        -- Baselines survive addon updates. Compare their data using today's
+        -- serializer so a change of field order or APR constants is not an edit.
+        local baseline, _, comments = AprRC:ParseLuaData(saved.base, true)
+        if type(baseline) == "table" and baseline.steps ~= nil then
+            baseline._luaComments = comments
+            session.base = Model:RouteText(baseline)
+        end
         session.baseIDs = saved.baseIDs
         session.hasDraftIDs = saved.hasDraftIDs
         Model:BindIDs(session.draft, saved.draftIDs)
@@ -130,6 +138,15 @@ function Model:Open(route)
         session.history, session.cursor = {}, 0
         session:Snapshot()
         session:ReconcileRaw()
+        -- A retained draft may already have been saved by another session. This
+        -- reconciliation runs once on restore, before the background reminders;
+        -- genuine edits, comments and incomplete Lua must remain recoverable.
+        local restoredText = session.draftText
+        if session:IsDirty() and session.raw then
+            local restored = session:Read()
+            restoredText = restored and Model:RouteText(restored)
+        end
+        if not session:IsDirty() or restoredText == sourceText then session:Reload(route, true) end
     end
     return session
 end
