@@ -20,6 +20,7 @@ def runtime():
 
 
 def run():
+    run_login_drafts()
     first = runtime()
     saved = first.execute('''
         local route = { name = "2393-Reload recovery", steps = {
@@ -93,6 +94,83 @@ def run():
         assert(AprRC.editorModel:RouteText(session.draft):find("--saved µ", 1, true))
     ''')
     print("Fresh-runtime reloads: draft conflicts, recorded tails, rebased identities and recovery history passed.")
+
+
+def run_login_drafts():
+    """A restored draft is pending work only when it still differs from saved data."""
+    for case in ("legacy_base", "saved_elsewhere", "raw_saved_elsewhere", "unchanged_with_capture",
+                 "real_edit", "legacy_real_edit", "invalid_lua", "comment_edit"):
+        first = runtime()
+        first.globals().LoginDraftCase = case
+        saved = first.execute('''
+            local Model = AprRC.editorModel
+            local route = { name = "2393-Login draft", conditions = { Class = 9 },
+                steps = { { Note = "Original" } } }
+            AprRCData = { CurrentRoute = route, Routes = { route }, QuestLookup = {} }
+            local session = Model:Open(route)
+            if LoginDraftCase == "legacy_base" or LoginDraftCase == "unchanged_with_capture" or LoginDraftCase == "legacy_real_edit" then
+                -- Older builds stored literal values/order instead of the current
+                -- formatted APR constants. These bases represent the same data.
+                local baseline = AprRC:CopyData(session.draft); baseline.name = nil
+                session.base = AprRC:SerializeData(baseline)
+                session:Snapshot()
+                if LoginDraftCase == "unchanged_with_capture" then
+                    route.steps[2] = { Note = "Captured after the no-op draft" }
+                elseif LoginDraftCase == "legacy_real_edit" then
+                    session.draft.steps[1].Note = "Manual edit"; session:Snapshot()
+                    route.steps[2] = { Note = "Concurrent capture" }
+                end
+            elseif LoginDraftCase == "comment_edit" then
+                session:SetRaw("--keep this note\\n" .. Model:RouteText(session.draft))
+                session:Persist()
+            else
+                session.draft.steps[1].Note = "Manual edit"; session:Snapshot()
+                if LoginDraftCase == "saved_elsewhere" or LoginDraftCase == "raw_saved_elsewhere" then
+                    route.steps[1].Note = "Manual edit"
+                    if LoginDraftCase == "raw_saved_elsewhere" then
+                        session:SetRaw(Model:RouteText(session.draft) .. "\\n")
+                        session:Persist()
+                    end
+                elseif LoginDraftCase == "invalid_lua" then
+                    route.steps[1].Note = "Manual edit"
+                    session:SetRaw("{ steps = { -- unfinished"); session:Persist()
+                else route.steps[2] = { Note = "Concurrent capture" } end
+            end
+            assert(AprRCData.EditorDrafts[route.name], "The fixture must persist a draft")
+            return AprRC:SerializeData(AprRCData)
+        ''')
+        second = runtime()
+        second.globals().SerializedState = saved
+        second.globals().LoginDraftCase = case
+        second.execute('''
+            AprRCData = assert(AprRC:ParseLuaData(SerializedState))
+            local Model, route = AprRC.editorModel, AprRCData.CurrentRoute
+            local before = Model:RouteText(route)
+            local session = Model:Open(route)
+            local realEdit = LoginDraftCase == "real_edit" or LoginDraftCase == "legacy_real_edit"
+            if realEdit or LoginDraftCase == "invalid_lua" or LoginDraftCase == "comment_edit" then
+                assert(session:IsDirty() and AprRCData.EditorDrafts[route.name],
+                    "Login must retain real edits: " .. LoginDraftCase)
+                if realEdit then
+                    assert(session.draft.steps[1].Note == "Manual edit" and session:IsStale())
+                    local plan = assert(session:MergePlan())
+                    assert(#plan.conflicts == 0 and session:ApplyMerge(plan, {}, true))
+                    assert(AprRCData.CurrentRoute.steps[1].Note == "Manual edit")
+                    assert(AprRCData.CurrentRoute.steps[2].Note == "Concurrent capture")
+                elseif LoginDraftCase == "invalid_lua" then assert(not session:Read())
+                else assert(session.raw:find("--keep this note", 1, true)) end
+            else
+                assert(not session:IsDirty(), "No-op restored draft would cause a login warning: " .. LoginDraftCase)
+                assert(not session:IsStale() and not AprRCData.EditorDrafts[route.name])
+                if LoginDraftCase == "unchanged_with_capture" then
+                    assert(session.draft.steps[2].Note == "Captured after the no-op draft")
+                end
+            end
+            if not realEdit then
+                assert(Model:RouteText(route) == before, "Reconciling login drafts must not mutate saved routes")
+            end
+        ''')
+    print("Login drafts: legacy baselines, already saved data, captures, real edits, comments and invalid Lua passed.")
 
 
 if __name__ == "__main__":
