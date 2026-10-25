@@ -11,6 +11,11 @@ S.coord = object({ x = "number", y = "number" }, { "x", "y" })
 S.coords = list(object({ x = "number", y = "number", Zone = "id" }, { "x", "y", "Zone" }))
 S.trigger = object({ x = "number", y = "number", Range = "positive" }, { "x", "y", "Range" })
 S.questMap = object({ questID = "id", mapID = "id" }, { "questID", "mapID" })
+-- Dungeon keys are APR catalog identifiers, not UI map IDs. Keep the key as
+-- text so a recorder can author routes for a different client/catalog version.
+S.dungeonCheckpoint = object({ dungeonKey = "text" }, { "dungeonKey" })
+S.instance = { kind = "union", choices = { S.questMap, S.dungeonCheckpoint } }
+S.killNPC = object({ npcID = "id", name = "text", dungeonKey = "text" }, { "npcID", "name", "dungeonKey" })
 S.treasure = object({ questID = "id", itemID = "id" }, { "questID" })
 S.drop = object({ Qid = "id", MobId = "id", Text = "text" }, { "Qid", "MobId", "Text" })
 S.group = object({ questID = "id", Number = "id" }, { "questID", "Number" })
@@ -28,7 +33,7 @@ S.scenario = object({
     criteriaIndex = "id",
     questID = "id"
 }, {})
-S.item = object({ questID = "id", itemID = "id", itemSpellID = "id" }, { "questID", "itemID", "itemSpellID" })
+S.item = object({ questID = "id", itemID = "id", itemSpellID = "id" }, { "questID", "itemID" })
 S.spell = object({ questID = "id", spellID = "id" }, { "questID", "spellID" })
 S.items = list(object({ questID = "id", itemID = "id", quantity = "id" }, { "itemID", "quantity" }))
 S.lootItems = list(object({ questID = "id", itemID = "id", quantity = "id" }, { "itemID" }))
@@ -212,6 +217,9 @@ S.emote = object({ npcID = "nonnegative", emote = "text", manual = "bool" }, { "
 S.buffs = list(object({ spellId = "id", tooltipMessage = "text" }, { "spellId" }))
 S.qpart = { kind = "map", key = "id", entry = "ids" }
 S.buttons = { kind = "map", key = "objectiveKey", entry = "idOrIds" }
+S.spellValue = { kind = "union", choices = { "id", "text" } }
+S.spellButtons = { kind = "map", key = "objectiveKey", entry = "spellOrSpells" }
+S.delve = object({})
 S.parallel = list(object({ conditions = "conditions", steps = "steps", repeatable = "bool" }, { "steps" }))
 S.scenarios = list(object({ scenarioID = "id", index = "id", label = "text", steps = "steps" }, { "scenarioID", "steps" }))
 S.anyOf = list("conditions")
@@ -251,6 +259,8 @@ S.race = {
 
 local routeConditions = {
     InterfaceVersion = true,
+    InterfaceVersionExact = true,
+    AnyOf = true,
     DontHaveSpell = true,
     IsQuestReadyForTurnIn = true,
     HasAchievement = true,
@@ -270,6 +280,7 @@ local routeConditions = {
     ClassSpec = true,
     Zones = true,
 }
+options.routeConditionFields = routeConditions
 
 function options:ValidateValue(schema, value, path, depth, previous, checkpoint)
     if checkpoint then checkpoint() end
@@ -316,9 +327,11 @@ function options:ValidateValue(schema, value, path, depth, previous, checkpoint)
         local values = schema.values or APR[schema.group] or {}
         for _, candidate in pairs(values) do if self:EnumValue(candidate) == value then return true end end
         return fail(L["unknown enum value"])
+    elseif kind == "spellOrSpells" and (type(value) == "number" or type(value) == "string") then
+        return child(S.spellValue, value, "spell")
     elseif kind == "idOrIds" and type(value) == "number" then
         return child("id", value, "id")
-    elseif kind == "list" or kind == "ids" or kind == "idOrIds" or kind == "strings" or kind == "steps" then
+    elseif kind == "list" or kind == "ids" or kind == "idOrIds" or kind == "spellOrSpells" or kind == "strings" or kind == "steps" then
         if type(value) ~= "table" then return fail(L["expected a list"]) end
         local size = 0
         for key in pairs(value) do
@@ -329,7 +342,7 @@ function options:ValidateValue(schema, value, path, depth, previous, checkpoint)
         for index = 1, size do
             if value[index] == nil then return fail(L["list indices must be consecutive"]) end
             local entrySchema = kind == "list" and schema.entry or kind == "strings" and "text" or
-            kind == "steps" and "step" or "id"
+            kind == "steps" and "step" or kind == "spellOrSpells" and S.spellValue or "id"
             local ok, reason = child(entrySchema, value[index], index)
             if not ok then return false, reason end
             if kind == "steps" and value[index].RouteCompleted and index ~= size then return fail(L

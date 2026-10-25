@@ -288,7 +288,7 @@ R:Register({
 R:Register({
     key = "EnterInstance",
     command = "enterinstance",
-    schema = S.questMap,
+    schema = S.instance,
     example = "{ questID = 12345, mapID = 2505 }",
     newStep = true,
     coord = true,
@@ -298,11 +298,21 @@ R:Register({
 R:Register({
     key = "LeaveInstance",
     command = "leaveinstance",
-    schema = S.questMap,
+    schema = S.instance,
     example = "{ questID = 12345, mapID = 2505 }",
     newStep = true,
     coord = true,
     icon = "Interface\\Icons\\Achievement_Dungeon_Heroic_GloryoftheRaider",
+})
+
+R:Register({
+    key = "KillNPC",
+    command = "killnpc",
+    schema = S.killNPC,
+    example = '{ npcID = 11520, name = "Taragaman the Hungerer", dungeonKey = "RFC" }',
+    newStep = true,
+    defaults = { InstanceQuest = true, NoArrow = true },
+    icon = "Interface\\Icons\\Ability_Warrior_OffensiveStance",
 })
 
 R:Register({

@@ -72,7 +72,7 @@ R:Register({
 R:Register({
     key = "SpellButton",
     command = "spellbutton",
-    schema = S.buttons,
+    schema = S.spellButtons,
     example = "{ [\"49939-1\"] = 294197, [\"5648\"] = { 1515, 136 } }",
     icon = "Interface\\Icons\\INV_Misc_EngGizmos_04",
 })

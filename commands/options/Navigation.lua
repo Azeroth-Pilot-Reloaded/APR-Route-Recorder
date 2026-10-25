@@ -2,6 +2,14 @@ local R = AprRC.options
 local S = R.schemas
 
 R:Register({
+    key = "Dungeon",
+    command = "dungeon",
+    schema = "text",
+    example = '"RFC"',
+    icon = "Interface\\Icons\\Achievement_Dungeon_Heroic_GloryoftheRaider",
+})
+
+R:Register({
     key = "SpellETA",
     command = "spelleta",
     schema = S.spellETA,

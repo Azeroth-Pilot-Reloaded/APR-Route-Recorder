@@ -388,14 +388,11 @@ function Form:Default(schema)
         return R:ActionDefaults(schema, result)
     end
     if valueKind == "text" or valueKind == "profile" or valueKind == "objectiveKey" then return "" end
-    if valueKind == "id" or valueKind == "idOrIds" or valueKind == "positive" or valueKind == "number" or valueKind == "nonnegative" or valueKind == "integer" then return 0 end
+    if valueKind == "id" or valueKind == "idOrIds" or valueKind == "spellOrSpells" or valueKind == "positive" or valueKind == "number" or valueKind == "nonnegative" or valueKind == "integer" then return 0 end
     return {}
 end
 
-local routeConditions = { InterfaceVersion = true, DontHaveSpell = true, IsQuestReadyForTurnIn = true,
-    HasAchievement = true, DontHaveAchievement = true, Faction = true, Race = true, Class = true,
-    ClassNot = true, Event = true, AlliedRace = true, IsQuestCompleted = true, IsQuestUncompleted = true,
-    Level = true, MinLevel = true, MaxLevel = true, BeLvl = true, ClassSpec = true, Zones = true }
+local routeConditions = R.routeConditionFields
 
 function Form:Fields(schema, value)
     local valueKind = kind(schema)
@@ -591,6 +588,10 @@ function Form:Render(parent, schema, value, set, context, path, label)
             entries[index] = T(names[kind(choice)] or "Value")
             if choice == R.schemas.itemCooldown then entries[index] = UI.Label("itemID") end
             if choice == R.schemas.spellCooldown then entries[index] = UI.Label("spellID") end
+            if schema == R.schemas.instance then
+                entries[index] = choice == R.schemas.dungeonCheckpoint and UI.Label("dungeonKey") or
+                    (UI.Label("questID") .. " / " .. UI.Label("mapID"))
+            end
         end
         UI.Dropdown(parent, T("Requirement type"), entries, selected, function(index)
             context.modes[path] = index
@@ -860,7 +861,7 @@ function Form:Render(parent, schema, value, set, context, path, label)
         widget:SetFullWidth(true)
         widget:DisableButton(true)
         if multiline then widget:SetNumLines(valueKind == "strings" and 2 or 4) end
-        local suffix = valueKind == "ids" or valueKind == "idOrIds"
+        local suffix = valueKind == "ids" or valueKind == "idOrIds" or valueKind == "spellOrSpells"
         widget:SetLabel(label)
         widget:SetUserData("fieldPath", path)
         local text = value
@@ -879,7 +880,7 @@ function Form:Render(parent, schema, value, set, context, path, label)
                 for entry in input:gmatch(valueKind == "strings" and "[^\r\n]+" or "[^,]+") do
                     result[#result + 1] = suffix and (tonumber(strtrim(entry)) or strtrim(entry)) or entry
                 end
-                if valueKind == "idOrIds" and type(value) ~= "table" and #result == 1 and not input:find(",", 1, true) then
+                if (valueKind == "idOrIds" or valueKind == "spellOrSpells") and type(value) ~= "table" and #result == 1 and not input:find(",", 1, true) then
                     result = result[1]
                 end
             elseif valueKind ~= "text" and valueKind ~= "objectiveKey" then
@@ -888,11 +889,11 @@ function Form:Render(parent, schema, value, set, context, path, label)
             changeWithValidation(result)
         end)
         UI.Pickers:AddButton(parent, schema, path, context, function(selected)
-            if valueKind == "idOrIds" and type(value) == "number" then
+            if (valueKind == "idOrIds" or valueKind == "spellOrSpells") and type(value) ~= "table" then
                 changed(selected, true)
             elseif suffix or valueKind == "strings" then
                 local entries = type(value) == "table" and AprRC:CopyData(value) or
-                    (type(value) == "number" and { value } or {})
+                    ((type(value) == "number" or valueKind == "spellOrSpells" and type(value) == "string") and { value } or {})
                 if not tContains(entries, selected) then entries[#entries + 1] = selected end
                 changed(entries, true)
             else

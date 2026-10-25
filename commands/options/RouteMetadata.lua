@@ -2,6 +2,44 @@ local R = AprRC.options
 local S = R.schemas
 
 R:Register({
+    key = "legacyLabels",
+    command = "route legacylabels",
+    schema = "strings",
+    example = '{ "Old route label" }',
+    scope = "route",
+    icon = "Interface\\Icons\\INV_Misc_Note_01",
+})
+
+for _, key in ipairs({ "autoStartOnMap", "notSkippable", "hiddenFromSelection", "temporary" }) do
+    R:Register({
+        key = key,
+        command = "route " .. key:lower(),
+        schema = "bool",
+        example = "true",
+        scope = "route",
+        icon = "Interface\\Icons\\INV_Misc_Map_01",
+    })
+end
+
+R:Register({
+    key = "sojournerAchievementID",
+    command = "route sojournerachievementid",
+    schema = "id",
+    example = "61576",
+    scope = "route",
+    icon = "Interface\\Icons\\Achievement_Quests_Completed_08",
+})
+
+R:Register({
+    key = "delve",
+    command = "route delve",
+    schema = S.delve,
+    example = "{}",
+    scope = "route",
+    icon = "Interface\\Icons\\INV_Misc_Map_01",
+})
+
+R:Register({
     key = "scenarios",
     command = "route scenarios",
     schema = S.scenarios,
