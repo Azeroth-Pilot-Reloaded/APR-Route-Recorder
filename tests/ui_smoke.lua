@@ -84,7 +84,7 @@ assert(E.session.draft.label == "Edited display name" and E.session.draft.XPCons
 assert(E:Save())
 healthy()
 TestRunTimers()
-assert(not E.exportButton and E.importButton)
+assert(not E.exportButton and not E.importButton)
 assert(APRData.CustomRoute[route.name .. " - Custom"].steps[1].Note == "Imported")
 E:ToggleRecording()
 assert(AprRCData.CurrentRoute.name == route.name and AprRC.settings.profile.recordBarFrame.isRecording)
