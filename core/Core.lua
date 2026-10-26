@@ -1,6 +1,3 @@
-local L = LibStub("AceLocale-3.0"):GetLocale("APR-Recorder")
-local L_APR = LibStub("AceLocale-3.0"):GetLocale("APR")
-
 AprRC = {}
 AprRC = _G.LibStub("AceAddon-3.0"):NewAddon(AprRC, "APR-Recorder", "AceEvent-3.0")
 

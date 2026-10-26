@@ -1,7 +1,6 @@
 local _G = _G
 local AceGUI = LibStub("AceGUI-3.0")
 local L = LibStub("AceLocale-3.0"):GetLocale("APR-Recorder")
-local L_APR = LibStub("AceLocale-3.0"):GetLocale("APR")
 
 AprRC.exportExtraLineText = AprRC:NewModule('ExportExtraLineText')
 
@@ -9,7 +8,7 @@ function AprRC.exportExtraLineText.Show()
     local frame = AprRC:CreateWidget("Frame")
     frame:SetTitle(L["Export"])
     frame:SetLayout("Flow")
-    frame:SetStatusText(L_APR["COPY_HELPER"])
+    frame:SetStatusText(AprRC:APRText("COPY_HELPER"))
     frame:SetCallback("OnClose", function(widget) AceGUI:Release(widget) end)
     frame:SetHeight(450)
 

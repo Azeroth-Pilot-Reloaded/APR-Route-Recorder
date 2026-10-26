@@ -548,8 +548,7 @@ function Editor:DrawTools()
     local panel = UI.Scroll(self.tabs)
     self.toolsTutorialButton = UI.Button(panel, "TUTORIAL_REPLAY", function() AprRC.TutoFrame:Show() end, 240)
     UI.Button(panel, "Help (wiki)", function()
-        local locale = LibStub("AceLocale-3.0"):GetLocale("APR")
-        APR.questionDialog:CreateEditBoxPopup(locale["COPY_HELPER"], locale["CLOSE"],
+        APR.questionDialog:CreateEditBoxPopup(AprRC:APRText("COPY_HELPER"), CLOSE,
             "https://github.com/Azeroth-Pilot-Reloaded/azeroth-pilot-reloaded/wiki/APR-Route-Syntax")
     end, 190)
     AprRC.textStyle:Draw(panel)
