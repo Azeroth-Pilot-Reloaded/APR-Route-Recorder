@@ -1,4 +1,13 @@
-local L = LibStub("AceLocale-3.0"):GetLocale("APR")
+local L = LibStub("AceLocale-3.0"):GetLocale("APR-Recorder")
+local L_APR = LibStub("AceLocale-3.0"):GetLocale("APR")
+
+-- APR's UI catalog changes independently of the recorder. Keep its current
+-- translations when present, without invoking AceLocale's missing-key handler.
+-- Every shared UI key also has a translated recorder fallback.
+function AprRC:APRText(key)
+    return rawget(L_APR, key) or L[key]
+end
+
 function AprRC:Debug(msg, data, force)
     if not AprRC.settings.profile.debug and not force then
         return

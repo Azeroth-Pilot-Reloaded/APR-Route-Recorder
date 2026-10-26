@@ -1,5 +1,4 @@
 local L = LibStub("AceLocale-3.0"):GetLocale("APR-Recorder")
-local L_APR = LibStub("AceLocale-3.0"):GetLocale("APR")
 local AceGUI = LibStub("AceGUI-3.0")
 
 AprRC.command = AprRC:NewModule("Command")
@@ -167,7 +166,7 @@ function AprRC.command:SlashCmd(input)
         print(L["Command bar reset to defaults"])
         return
     elseif inputText == "help" or inputText == "h" then
-        print(L_APR["COMMAND_LIST"] .. ":")
+        print(AprRC:APRText("COMMAND_LIST"))
         print("|cffeda55f/aprrc tutorial, tuto |r- " .. L["TUTORIAL_REPLAY"])
         AprRC.options:PrintHelp()
         print("|cffeda55f/aprrc achievement |r- " .. AprRC.editorUI.Label("HasAchievement"))
@@ -190,7 +189,7 @@ function AprRC.command:SlashCmd(input)
         print("|cffeda55f/aprrc forcereset |r- " .. L["Clear the Saved Variables"])
         print("|cffeda55f/aprrc gender |r- " .. AprRC.editorUI.Label("Gender"))
         print("|cffeda55f/aprrc grind |r- " .. AprRC.editorUI.Label("Grind"))
-        print("|cffeda55f/aprrc help, h |r- " .. L_APR["HELP_COMMAND"])
+        print("|cffeda55f/aprrc help, h |r- " .. AprRC:APRText("HELP_COMMAND"))
         print("|cffeda55f/aprrc instance |r- " .. AprRC.editorUI.Label("InstanceQuest"))
         print("|cffeda55f/aprrc isCompleted |r- " .. AprRC.editorUI.Label("IsQuestsCompletedOnAccount"))
         print("|cffeda55f/aprrc isQuestsCompleted |r- " .. AprRC.editorUI.Label("IsQuestsCompleted"))

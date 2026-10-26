@@ -2,7 +2,6 @@ local _G = _G
 
 -- Locale
 local L = LibStub("AceLocale-3.0"):GetLocale("APR-Recorder")
-local L_APR = LibStub("AceLocale-3.0"):GetLocale("APR")
 
 
 AprRC.settings = AprRC:NewModule("Settings", "AceConsole-3.0")
@@ -112,11 +111,11 @@ function AprRC.settings:createBlizzOptions()
         args = {
             discordButton = {
                 order = 1.1,
-                name = L_APR["JOIN_DISCORD"],
+                name = AprRC:APRText("JOIN_DISCORD"),
                 type = "execute",
                 width = 0.75,
                 func = function()
-                    APR.questionDialog:CreateEditBoxPopup(L_APR["COPY_HELPER"], L_APR["CLOSE"], AprRC.discord)
+                    APR.questionDialog:CreateEditBoxPopup(AprRC:APRText("COPY_HELPER"), CLOSE, AprRC.discord)
                 end
             },
             githubButton = {
@@ -125,7 +124,7 @@ function AprRC.settings:createBlizzOptions()
                 type = "execute",
                 width = 0.75,
                 func = function()
-                    APR.questionDialog:CreateEditBoxPopup(L_APR["COPY_HELPER"], L_APR["CLOSE"], AprRC.github)
+                    APR.questionDialog:CreateEditBoxPopup(AprRC:APRText("COPY_HELPER"), CLOSE, AprRC.github)
                 end
             },
             buttonOffset = {
@@ -136,12 +135,12 @@ function AprRC.settings:createBlizzOptions()
             },
             resetButton = {
                 order = 1.4,
-                name = L_APR["RESET_SETTINGS"],
+                name = AprRC:APRText("RESET_SETTINGS"),
                 type = "execute",
                 width = 0.75,
                 func = function()
                     APR.questionDialog:CreateQuestionPopup(
-                        L_APR["RESET_SETTINGS_CONFIRM"],
+                        L["Reset recorder settings and reload the interface?"],
                         nil,
                         function() AprRC.settings:ResetSettings() end
                     )
@@ -166,8 +165,8 @@ function AprRC.settings:createBlizzOptions()
                 inline = true,
                 args = {
                     enableMinimapButton = {
-                        name = L_APR["ENABLE_MINIMAP_BUTTON"],
-                        desc = L_APR["ENABLE_MINIMAP_BUTTON_DESC"],
+                        name = AprRC:APRText("ENABLE_MINIMAP_BUTTON"),
+                        desc = AprRC:APRText("ENABLE_MINIMAP_BUTTON_DESC"),
                         type = "toggle",
                         width = "full",
                         order = 3.1,
@@ -314,7 +313,7 @@ function AprRC.settings:createBlizzOptions()
                     enableAddon = {
                         order = 5.1,
                         type = "toggle",
-                        name = L_APR["ENABLE_ADDON"],
+                        name = AprRC:APRText("ENABLE_ADDON"),
                         width = "full",
                         get = GetProfileOption,
                         set = function(info, value)
@@ -325,7 +324,7 @@ function AprRC.settings:createBlizzOptions()
                     coordinateShow = {
                         order = 5.15,
                         type = "toggle",
-                        name = L_APR["COORD_COMMAND"],
+                        name = AprRC:APRText("COORD_COMMAND"),
                         width = "full",
                         get = GetProfileOption,
                         set = function(info, value)
@@ -339,7 +338,7 @@ function AprRC.settings:createBlizzOptions()
                     debug = {
                         order = 5.2,
                         type = "toggle",
-                        name = L_APR["DEBUG"],
+                        name = AprRC:APRText("DEBUG"),
                         width = "full",
                         get = GetProfileOption,
                         set = SetProfileOption,
@@ -359,7 +358,7 @@ function AprRC.settings:createBlizzOptions()
 
     -- add profile to bliz option
     aceConfig:RegisterOptionsTable(AprRC.title .. "/Profile", _G.LibStub("AceDBOptions-3.0"):GetOptionsTable(SettingsDB))
-    aceDialog:AddToBlizOptions(AprRC.title .. "/Profile", L_APR["PROFILES"], AprRC.title)
+    aceDialog:AddToBlizOptions(AprRC.title .. "/Profile", AprRC:APRText("PROFILES"), AprRC.title)
 
     local category, layout = Settings.RegisterCanvasLayoutCategory(AprRC, AprRC.title);
     AprRC.settings.category = category
@@ -382,14 +381,16 @@ function AprRC.settings:CreateMiniMapButton()
         OnTooltipShow = function(tooltip)
             local toggleAddon = ''
             if self.profile.enableAddon then
-                toggleAddon = "|ccce0000f " .. L_APR["DISABLE"] .. "|r"
+                toggleAddon = "|ccce0000f " .. AprRC:APRText("DISABLE") .. "|r"
             else
-                toggleAddon = "|cff00ff00 " .. L_APR["ENABLE"] .. "|r"
+                toggleAddon = "|cff00ff00 " .. AprRC:APRText("ENABLE") .. "|r"
             end
             AprRC:AddTooltipLine(tooltip, AprRC.title)
-            AprRC:AddTooltipLine(tooltip, L_APR["LEFT_CLICK"] .. ": |cffeda55f" .. AprRC.editorUI.Text("Route workshop") .. "|r",
+            AprRC:AddTooltipLine(tooltip, string.format(AprRC:APRText("LEFT_CLICK_ACTION"),
+                "|cffeda55f" .. AprRC.editorUI.Text("Route workshop") .. "|r"),
                 unpack(AprRC.Color.white))
-            AprRC:AddTooltipLine(tooltip, L_APR["RIGHT_CLICK"] .. ": " .. toggleAddon .. "|cffeda55f " .. L_APR["ADDON"] .. "|r",
+            AprRC:AddTooltipLine(tooltip, string.format(AprRC:APRText("RIGHT_CLICK_ACTION"),
+                toggleAddon .. "|cffeda55f " .. AprRC:APRText("ADDON") .. "|r"),
                 unpack(AprRC.Color.white))
         end
     })
@@ -413,7 +414,7 @@ function AprRC.settings:OpenSettings(name)
         else
             Settings.OpenToCategory(self.category.ID)
         end
-        AprRC.settings:OpenSettings(L_APR["PROFILES"])
+        AprRC.settings:OpenSettings(AprRC:APRText("PROFILES"))
     end
     if AprRC.Options then
         if SettingsPanel then
