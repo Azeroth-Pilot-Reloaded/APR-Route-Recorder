@@ -1,10 +1,25 @@
 local E, UI = AprRC.routeEditor, AprRC.editorUI
+local function button(dialog, text)
+    for _, child in ipairs(dialog.children) do
+        if child.type == "Button" and child.text:GetText() == UI.Text(text) then return child end
+    end
+end
+local function openImport()
+    assert(not E.importButton, "Import must not occupy the main workshop")
+    E:NameDialog()
+    local creation = assert(E.nameDialog)
+    assert(button(creation, "Save") and button(creation, CANCEL))
+    assert(button(creation, "Import from APR")):Fire("OnClick")
+    assert(not E.nameDialog and E.importDialog, "Only one creation dialog may remain open")
+end
 local original = { label = "Import source", steps = { { Note = "Original" } }, mapID = 84 }
 APR.RouteQuestStepList["84-Import-source"] = original
 E:Show()
 local recordingRoute = AprRCData.CurrentRoute
-E.importButton:Fire("OnClick")
+openImport()
 local dialog = assert(E.importDialog)
+E:NameDialog()
+assert(E.importDialog == dialog and not E.nameDialog, "New route must reuse an open import flow")
 local picker, submit
 for _, child in ipairs(dialog.children) do
     if child.type == "APRSearchSelect" then picker = child end
@@ -23,7 +38,11 @@ assert(E:Save())
 TestRunTimers()
 assert(original.steps[1].Note == "Original")
 assert(APRData.CustomRoute["84-Import-source - Custom"].steps[1].Note == "Edited copy")
-E.importButton:Fire("OnClick")
+-- Copying a route retains its dedicated flow without the import alternative.
+E:NameDialog(true)
+assert(not button(E.nameDialog, "Import from APR"))
+button(E.nameDialog, CANCEL):Fire("OnClick")
+openImport()
 TestCloseWorkshop()
 assert(not E.importDialog, "Import dialog leaked after workshop close")
 assert(#UIErrors == 0, table.concat(UIErrors, "\n"))

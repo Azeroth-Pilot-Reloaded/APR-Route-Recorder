@@ -356,6 +356,7 @@ function Editor:RefreshRoutes()
 end
 
 function Editor:NameDialog(copy)
+    if not copy and self.importDialog then self.importDialog:Show(); return end
     if self.nameDialog then self.nameDialog:Show(); return end
     local source
     if copy and self.session then
@@ -390,8 +391,14 @@ function Editor:NameDialog(copy)
         self:SelectRoute(route.name)
     end
     input:SetCallback("OnEnterPressed", create)
-    UI.Button(dialog, "Save", create)
-    UI.Button(dialog, CANCEL, function() dialog:Hide() end)
+    UI.Button(dialog, "Save", create, copy and 140 or 100)
+    if not copy then
+        UI.Button(dialog, "Import from APR", function()
+            dialog:Hide()
+            self:ImportDialog()
+        end, 190)
+    end
+    UI.Button(dialog, CANCEL, function() dialog:Hide() end, copy and 140 or 100)
     dialog:SetCallback("OnClose", function(widget) self.nameDialog = nil; GUI:Release(widget) end)
     input:SetFocus()
 end
@@ -927,7 +934,6 @@ function Editor:Show()
         GameTooltip:Show()
     end)
     self.saveButton:SetCallback("OnLeave", function() GameTooltip:Hide() end)
-    self.importButton = UI.Button(footer, "Import from APR", function() self:ImportDialog() end, 170)
     self.copyButton = UI.Button(footer, "Save a copy", function() self:NameDialog(true) end, 195)
     self.deleteRouteButton = UI.IconButton(footer, "trash", "Delete route", function() self:DeleteRoute() end)
     self.undoButton = UI.IconButton(primary, "undo", "Undo", function() self:Undo(-1) end)

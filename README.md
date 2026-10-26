@@ -73,7 +73,7 @@
 </table>
 
 > [!TIP]
-> **Start from a route you already know.** Use **Import from APR** to search loaded routes by name or route key and create an editable copy. Editor changes stay in a draft until saved; recording updates the recorded route independently.
+> **Start from a route you already know.** Open **New route**, then choose **Import from APR** to search loaded routes by name or route key and create an editable copy. Editor changes stay in a draft until saved; recording updates the recorded route independently.
 
 For APR field syntax and playback behavior, see the [APR Route Syntax wiki](https://azerothpilotreloaded.com/wiki/). The tables below describe the fields supported by this recorder.
 
