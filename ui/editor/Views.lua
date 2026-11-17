@@ -23,9 +23,11 @@ end
 function Editor:StepMatches()
     local steps, session = self:Steps(), self.session
     local cached = self.stepMatches
-    if not cached or cached.steps ~= steps or cached.text ~= session.draftText or
+    if not cached or cached.session ~= session or cached.draft ~= session.draft or cached.steps ~= steps or
+        cached.text ~= session.draftText or cached.descriptions ~= self.descriptionRevision or
         cached.query ~= self.query or cached.filter ~= self.filter then
-        cached = { steps = steps, text = session.draftText, query = self.query, filter = self.filter,
+        cached = { session = session, draft = session.draft, steps = steps, text = session.draftText,
+            descriptions = self.descriptionRevision, query = self.query, filter = self.filter,
             matches = Model:Filter(steps, self.query, self.filter, UI.Label), positions = {} }
         for position, index in ipairs(cached.matches) do cached.positions[index] = position end
         self.stepMatches = cached
@@ -253,8 +255,8 @@ function Editor:DrawSteps(parent)
         self:SelectStep(self:SelectedStep() + 1)
     end)
     self.inspector = UI.Scroll(detail)
-    local actions, quick, disclosure = UI.Disclosure(detail, "Step actions", "stepActions", false, true)
-    self.stepActions = disclosure
+    local actions = UI.Toolbar(detail, true)
+    self.stepActions = actions
     self.moveUp = UI.IconButton(actions, "up", "Move up", function() self:Move(-1) end)
     self.moveDown = UI.IconButton(actions, "down", "Move down", function() self:Move(1) end)
     self.duplicate = UI.IconButton(actions, "duplicate", "Duplicate", function()
@@ -273,7 +275,7 @@ function Editor:DrawSteps(parent)
             end
         end)
     end)
-    self.positionButton = UI.Button(quick, "Player position", function()
+    self.positionButton = UI.Button(actions, "Player position", function()
         local step = self:Steps()[self:SelectedStep()]
         local coord, zone = AprRC:GetPlayerCoord()
         if not coord then self:Message(T("Unable to read player coordinates."), true); return end
@@ -324,10 +326,9 @@ end
 
 function Editor:AfterStructureChange()
     self:UpdateParallelPicker()
-    local matches = self:StepMatches()
-    for position, index in ipairs(matches) do
-        if index == self:SelectedStep() then self.page = math.ceil(position / PAGE_SIZE); break end
-    end
+    local _, positions = self:StepMatches()
+    local position = positions[self:SelectedStep()]
+    if position then self.page = math.ceil(position / PAGE_SIZE) end
     self.formModes, self.formPages, self.editGroupConditions = {}, {}, nil
     self:DrawList()
     self:DrawInspector()

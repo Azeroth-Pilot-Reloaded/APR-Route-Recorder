@@ -10,7 +10,10 @@ itemEvents:RegisterEvent("GET_ITEM_INFO_RECEIVED")
 itemEvents:SetScript("OnEvent", function(_, _, id, success)
     if Model.pendingItemNames and Model.pendingItemNames[id] then
         Model.pendingItemNames[id] = nil
-        if success then Editor.descriptionsDirty = true end
+        if success then
+            Editor.descriptionsDirty = true
+            Editor.descriptionRevision = (Editor.descriptionRevision or 0) + 1
+        end
     end
 end)
 
@@ -687,7 +690,6 @@ function Editor:Refresh(forceFollow)
     self:SafetyTick()
     if self.descriptionsDirty and not self.confirm and not self.fieldPicker and not interacting(self.frame) then
         self.descriptionsDirty = nil
-        self.stepMatches = nil
         self:DrawList()
         if self.session then self:DrawInspector() end
     end
