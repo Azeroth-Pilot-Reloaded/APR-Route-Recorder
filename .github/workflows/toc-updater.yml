@@ -2,7 +2,7 @@ name: Update TOC Interface versions
 
 on:
   schedule:
-    - cron: '17 4 * * *'
+    - cron: "17 4 * * *"
   workflow_dispatch:
 
 permissions:
@@ -23,12 +23,12 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v7.0.0
         with:
-          python-version: '3.13'
+          python-version: "3.13"
 
       - name: Test the updater
         run: |
           python -m py_compile .github/scripts/toc-updater.py
-          python -m unittest discover -s .github/scripts -p 'toc_updater_tests.py'
+          python -m unittest discover -s tests/scripts -p 'test_toc_updater.py'
 
       - name: Resolve Blizzard builds and update APR-Recorder.toc
         run: python .github/scripts/toc-updater.py --ptr
@@ -54,7 +54,8 @@ jobs:
           commit-message: Update supported WoW Interface versions
           title: Update supported WoW Interface versions
           body: |
-            Automated update of `## Interface` in `APR-Recorder.toc`.
+            Automated update of `## Interface`, `## Interface-Retail` and `## X-Interface` in `APR-Recorder.toc`.
 
             Builds were resolved from Blizzard's HTTPS product feeds for Retail and its PTR channels.
-            Existing supported Interface versions are preserved, and the updater's regression tests and whitespace validation completed successfully.
+            Existing supported versions (including Camelot) are preserved in `## Interface`; Retail metadata only includes Retail versions.
+            The updater's regression tests and whitespace validation completed successfully.

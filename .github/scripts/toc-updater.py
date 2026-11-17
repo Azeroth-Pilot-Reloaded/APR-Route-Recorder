@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Update APR Route Recorder's TOC from Blizzard's official version feed."""
+"""Update APR Route Recorder's TOC from Blizzard's official product-version feed."""
 
 from __future__ import annotations
 
@@ -18,6 +18,14 @@ PRODUCT_PATTERN = re.compile(r"^[a-z0-9_]+$")
 INTERFACE_PATTERN = re.compile(r"^[1-9]\d{4,}$")
 INTERFACE_LINE_PATTERN = re.compile(
     r"^(?P<prefix>## Interface:[ \t]*)(?P<value>[^\r\n]*)(?P<ending>\r?\n|$)",
+    re.MULTILINE,
+)
+X_INTERFACE_LINE_PATTERN = re.compile(
+    r"^(?P<prefix>## X-Interface:[ \t]*)(?P<value>[^\r\n]*)(?P<ending>\r?\n|$)",
+    re.MULTILINE,
+)
+RETAIL_INTERFACE_LINE_PATTERN = re.compile(
+    r"^(?P<prefix>## Interface-Retail:[ \t]*)(?P<value>[^\r\n]*)(?P<ending>\r?\n|$)",
     re.MULTILINE,
 )
 
@@ -88,6 +96,18 @@ def parse_interface_list(value: str) -> set[int]:
     return versions
 
 
+def find_single_line(pattern: re.Pattern[str], content: str, label: str) -> re.Match[str]:
+    matches = list(pattern.finditer(content))
+    if len(matches) != 1:
+        raise ValueError(f"Expected exactly one {label} line, found {len(matches)}")
+    return matches[0]
+
+
+def replace_line(content: str, match: re.Match[str], value: str) -> str:
+    replacement = f"{match.group('prefix')}{value}{match.group('ending')}"
+    return content[: match.start()] + replacement + content[match.end() :]
+
+
 def update_toc_content(content: str, discovered: Iterable[int]) -> str:
     """Add discovered versions without ever removing supported versions."""
     discovered_versions = set(discovered)
@@ -96,17 +116,46 @@ def update_toc_content(content: str, discovered: Iterable[int]) -> str:
     for interface in discovered_versions:
         validate_interface(interface)
 
-    matches = list(INTERFACE_LINE_PATTERN.finditer(content))
-    if len(matches) != 1:
-        raise ValueError(
-            f"Expected exactly one ## Interface line, found {len(matches)}"
-        )
-    match = matches[0]
+    interface_match = find_single_line(
+        INTERFACE_LINE_PATTERN, content, "## Interface"
+    )
+    x_interface_match = find_single_line(
+        X_INTERFACE_LINE_PATTERN, content, "## X-Interface"
+    )
 
-    merged = parse_interface_list(match.group("value")) | discovered_versions
-    value = ", ".join(str(version) for version in sorted(merged))
-    replacement = f"{match.group('prefix')}{value}{match.group('ending')}"
-    return content[: match.start()] + replacement + content[match.end() :]
+    existing = parse_interface_list(interface_match.group("value"))
+    x_interface_value = x_interface_match.group("value").strip()
+    if not INTERFACE_PATTERN.fullmatch(x_interface_value) or int(x_interface_value) <= 0:
+        raise ValueError(f"Invalid ## X-Interface value: {x_interface_value!r}")
+
+    merged = existing | discovered_versions
+    retail_match = None
+    retail_versions = merged
+    if RETAIL_INTERFACE_LINE_PATTERN.search(content):
+        retail_match = find_single_line(RETAIL_INTERFACE_LINE_PATTERN, content, "## Interface-Retail")
+        # Preserve every supported version in the general Interface line.
+        # Only Retail metadata excludes versions declared for other clients.
+        other_versions: set[int] = set()
+        for client, value in re.findall(r"^## Interface-([^:]+):[ \t]*([^\r\n]+)", content, re.MULTILINE):
+            if client.lower() != "retail":
+                other_versions.update(parse_interface_list(value))
+        if discovered_versions & other_versions:
+            raise ValueError("A non-Retail interface cannot be added by the Retail TOC updater")
+        retail_versions = (parse_interface_list(retail_match.group("value")) | merged) - other_versions
+    interface_value = ", ".join(str(version) for version in sorted(merged))
+
+    # Replace the later match first so offsets for the earlier one remain valid.
+    replacements = [
+        (interface_match, interface_value),
+        (x_interface_match, str(max(retail_versions))),
+    ]
+    if retail_match is not None:
+        replacements.append((retail_match, ", ".join(str(v) for v in sorted(retail_versions))))
+    for match, value in sorted(
+        replacements, key=lambda replacement: replacement[0].start(), reverse=True
+    ):
+        content = replace_line(content, match, value)
+    return content
 
 
 def read_text_preserving_newlines(path: Path) -> str:
@@ -144,10 +193,7 @@ def update_toc(path: Path, products: Iterable[str], region: str = "us") -> bool:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--toc",
-        type=Path,
-        default=Path("APR-Recorder.toc"),
-        help="TOC file to update",
+        "--toc", type=Path, default=Path("APR-Recorder.toc"), help="TOC file to update"
     )
     parser.add_argument("--region", default="us", help="Blizzard region to select")
     parser.add_argument("--ptr", action="store_true", help="Include Retail PTR products")

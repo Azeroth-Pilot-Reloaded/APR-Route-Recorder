@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regression tests for the APR Route Recorder TOC updater."""
+"""Regression tests for the TOC updater."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from pathlib import Path
 from unittest import mock
 
 
-SCRIPT = Path(__file__).with_name("toc-updater.py")
+SCRIPT = Path(__file__).resolve().parents[2] / ".github/scripts/toc-updater.py"
 SPEC = importlib.util.spec_from_file_location("toc_updater", SCRIPT)
 assert SPEC and SPEC.loader
 toc_updater = importlib.util.module_from_spec(SPEC)
@@ -57,29 +57,72 @@ class TocUpdaterTests(unittest.TestCase):
     def test_preserves_existing_versions_and_adds_new_ones(self) -> None:
         original = (
             "## Interface: 110207, 120000, 120001\r\n"
-            "## Title: APR Route Recorder\r\n"
+            "## X-Interface: 120001\r\n\r\n"
+            "## Title: APR\r\n"
         )
         expected = (
             "## Interface: 110207, 120000, 120001, 120005, 120100\r\n"
-            "## Title: APR Route Recorder\r\n"
+            "## X-Interface: 120100\r\n\r\n"
+            "## Title: APR\r\n"
         )
         self.assertEqual(
             expected, toc_updater.update_toc_content(original, {120005, 120100})
         )
 
-    def test_an_older_ptr_does_not_change_the_toc(self) -> None:
-        original = "## Interface: 120007, 120100\n## Title: APR Route Recorder\n"
+    def test_an_older_ptr_never_downgrades_x_interface(self) -> None:
+        original = "## Interface: 120007, 120100\n## X-Interface: 120100\n"
         self.assertEqual(
             original, toc_updater.update_toc_content(original, {120007})
         )
 
     def test_rejects_zero_interfaces(self) -> None:
-        original = "## Interface: 120100\n## Title: APR Route Recorder\n"
+        original = "## Interface: 120100\n## X-Interface: 120100\n"
         with self.assertRaisesRegex(ValueError, "Invalid TOC Interface"):
             toc_updater.update_toc_content(original, {0})
 
+    def test_rejects_discovered_non_retail_interface(self) -> None:
+        original = ("## Interface: 16001, 120100\n## Interface-Retail: 120100\n"
+                    "## Interface-Camelot: 16001\n## X-Interface: 120100\n")
+        with self.assertRaisesRegex(ValueError, "non-Retail"):
+            toc_updater.update_toc_content(original, {16001})
+
+    def test_mixed_interface_is_unchanged_without_new_retail_versions(self) -> None:
+        original = (
+            "## Interface: 16001, 110207, 120100, 120105\r\n"
+            "## Interface-Retail: 110207, 120100, 120105\r\n"
+            "## X-Interface: 120105\r\n"
+            "## Interface-Camelot: 16001\r\n\r\n"
+            "## Title: APR\r\n"
+        )
+        self.assertEqual(
+            original, toc_updater.update_toc_content(original, {120100, 120105})
+        )
+
+    def test_updates_retail_metadata_and_preserves_other_clients(self) -> None:
+        # General Interface and Retail metadata have different preservation rules.
+        cases = (
+            ("retail fallback", "120100", "120100", "Camelot", 16001, "120100, 120105"),
+            ("mixed fallback", "16001, 120100", "120100", "Camelot", 16001, "16001, 120100, 120105"),
+            ("mixed retail", "120100, 16001", "120100, 16001", "Camelot", 16001, "16001, 120100, 120105"),
+            ("higher non-retail version", "120100, 990001", "120100", "Custom", 990001, "120100, 120105, 990001"),
+        )
+        for name, general, retail, client, version, expected_general in cases:
+            for newline in ("\n", "\r\n"):
+                with self.subTest(case=name, newline=repr(newline)):
+                    original = newline.join((
+                        f"## Interface: {general}", f"## Interface-Retail: {retail}",
+                        "## X-Interface: 120100", f"## Interface-{client}: {version}", "",
+                    ))
+                    expected = newline.join((
+                        f"## Interface: {expected_general}", "## Interface-Retail: 120100, 120105",
+                        "## X-Interface: 120105", f"## Interface-{client}: {version}", "",
+                    ))
+                    updated = toc_updater.update_toc_content(original, {120105})
+                    self.assertEqual(expected, updated)
+                    self.assertEqual(updated, toc_updater.update_toc_content(updated, {120105}))
+
     def test_failed_product_lookup_does_not_touch_the_toc(self) -> None:
-        original = "## Interface: 120100\n## Title: APR Route Recorder\n"
+        original = "## Interface: 120100\n## X-Interface: 120100\n"
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "APR-Recorder.toc"
             path.write_text(original, encoding="utf-8")

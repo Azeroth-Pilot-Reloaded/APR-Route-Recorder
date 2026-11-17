@@ -7,11 +7,15 @@ on:
     inputs:
       release_tag:
         description: 'Release tag to notify'
-        required: false
+        required: true
         type: string
+
+permissions:
+  contents: read
 
 jobs:
   notify-discord:
+    if: github.repository == 'Azeroth-Pilot-Reloaded/APR-Route-Recorder'
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -27,21 +31,15 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install requests python-dotenv
 
-      - name: Get release body if manual
-        id: get_release_body
-        if: ${{ github.event.inputs.release_tag != '' }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          release_body=$(gh release view "${{ github.event.inputs.release_tag }}" --json body -q ".body")
-          echo "release_body<<EOF" >> $GITHUB_ENV
-          echo "$release_body" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-
       - name: Post release notes to Discord
         env:
+          GH_TOKEN: ${{ github.token }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           RELEASE_TAG: ${{ github.event.release.tag_name || github.event.inputs.release_tag }}
-          RELEASE_BODY: ${{ env.release_body || github.event.release.body }}
+          RELEASE_BODY: ${{ github.event.release.body }}
         run: |
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            RELEASE_BODY="$(gh release view "$RELEASE_TAG" --json body --jq '.body')"
+            export RELEASE_BODY
+          fi
           python .github/scripts/post_discord.py
