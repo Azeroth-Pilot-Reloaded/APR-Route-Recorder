@@ -25,7 +25,7 @@ local spells = { spellID = true, spellId = true, spellIDs = true, itemSpellID = 
 local items = { itemID = true, itemIDs = true, items = true }
 local maps = { mapID = true, Zone = true, Zones = true, SkipInZones = true }
 local counts = { quantity = true, Number = true, level = true, slot = true, index = true,
-    InterfaceVersion = true, RaidIcon = true }
+    InterfaceVersion = true }
 
 function Pickers:Resolve(schema, path)
     local valueKind = kind(schema)
@@ -42,9 +42,13 @@ function Pickers:Resolve(schema, path)
     end
     if valueKind ~= "id" and valueKind ~= "ids" and valueKind ~= "idOrIds" and valueKind ~= "spellOrSpells" then return end
     if counts[key] then return end
+    if path:match("/FillerPreviewImages/[^/]+/key$") or path:match("/FillerPreviewImages/key$") then
+        return { kind = "quest" }
+    end
     if quests[key] or key:match("^Is.*Quest") then return { kind = "quest" } end
     if spells[key] or path:match("/SpellButton/[^/]+$") then return { kind = "spell" } end
     if items[key] or path:match("/Button/[^/]+$") then return { kind = "item" } end
+    if key == "RaidIcon" then return { kind = "id", field = "npcID" } end
     if key == "HasAura" or key == "DontHaveAura" then return { kind = "aura" } end
     if key == "achievementID" or key == "sojournerAchievementID" or key == "HasAchievement" or key == "DontHaveAchievement" then return { kind = "achievement" } end
     if maps[key] then return { kind = "map" } end

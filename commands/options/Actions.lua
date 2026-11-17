@@ -2,6 +2,15 @@ local R = AprRC.options
 local S = R.schemas
 
 R:Register({
+    key = "SkillGoal",
+    command = "skillgoal",
+    schema = S.skillGoal,
+    example = "{ skillID = 185, rank = 50 }",
+    newStep = true,
+    icon = "Interface\\Icons\\INV_Misc_Book_09",
+})
+
+R:Register({
     key = "EquipItem",
     command = "equipitem",
     schema = S.equipItem,

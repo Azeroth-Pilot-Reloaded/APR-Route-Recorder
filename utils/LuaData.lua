@@ -265,7 +265,7 @@ end
 -- inline. The route context emits APR constants and one nextRoute target per line.
 -- Pass "steps" for a legacy step-only route, or "inline" for a compact value.
 -- Optional positions map step tables to zero-based byte ranges in the output.
-local routeOrder = { "label", "expansion", "gameVersion", "category", "mapID", "conditions", "nextRoute", "prefab" }
+local routeOrder = { "label", "expansion", "gameVersion", "category", "levelRange", "mapID", "conditions", "nextRoute", "prefab" }
 local conditionConstants = { Race = "RACES", Class = "Classes", ClassNot = "Classes",
     ClassSpec = "Specs", Event = "EVENTS" }
 

@@ -28,6 +28,9 @@ function AprRC:NormalizeRouteClasses(route)
     end
     conditions(route.conditions)
     steps(route.steps)
+    for _, scenario in ipairs(type(route.scenarios) == "table" and route.scenarios or {}) do
+        if type(scenario) == "table" then steps(scenario.steps) end
+    end
     for _, group in ipairs(type(route.parallelSteps) == "table" and route.parallelSteps or {}) do
         if type(group) == "table" then
             conditions(group.conditions)
@@ -62,6 +65,7 @@ function AprRC:BuildRouteDefinition(route)
     end
     normalize(result.steps)
     for _, group in ipairs(result.parallelSteps or {}) do normalize(group.steps or {}) end
+    for _, scenario in ipairs(result.scenarios or {}) do normalize(scenario.steps or {}) end
     return self:NormalizeRouteClasses(result)
 end
 
@@ -87,6 +91,11 @@ function AprRC:ReadRouteDefinition(text, name, previous, validationBaseline)
     if type(result.parallelSteps) == "table" then
         for _, group in ipairs(result.parallelSteps) do
             if type(group) == "table" then normalize(group.steps) end
+        end
+    end
+    if type(result.scenarios) == "table" then
+        for _, scenario in ipairs(result.scenarios) do
+            if type(scenario) == "table" then normalize(scenario.steps) end
         end
     end
     local baseline = validationBaseline or previous

@@ -1,5 +1,18 @@
 local L = LibStub("AceLocale-3.0"):NewLocale("APR-Recorder", "deDE")
 if not L then return end
+L["FIELD_SkillGoal"] = "Fertigkeitsrang erreichen"
+L["FIELD_MapMarkers"] = "Feste Suchorte"
+L["FIELD_FillerPreviewImages"] = "Bilder für Nebenquests"
+L["FIELD_ItemTarget"] = "Gegenstandsziel"
+L["FIELD_levelRange"] = "Angezeigte Charakterstufen"
+L["FIELD_min"] = "Minimale Charakterstufe"
+L["FIELD_max"] = "Maximale Charakterstufe"
+L["FIELD_instanceID"] = "Weltinstanz-ID"
+L["FIELD_quantityFromSkill"] = "Menge nach Fertigkeitsrang"
+L["FIELD_isSupply"] = "Waffen- / Verbrauchsmaterialvorrat"
+L["FIELD_optional"] = "Optionaler Kauf"
+L["FIELD_objectiveIndex"] = "Zielindex"
+L["Minimum level must not exceed maximum level"] = "Die Mindeststufe darf die Höchststufe nicht überschreiten"
 L["Search Lua"] = "Lua durchsuchen"
 L["No matches"] = "Keine Treffer"
 L["Ctrl+F to search. Enter / Shift+Enter: next / previous. Esc: close."] = "Strg+F: suchen. Eingabe / Umschalt+Eingabe: nächster / vorheriger Treffer. Esc: schließen."

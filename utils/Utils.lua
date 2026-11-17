@@ -560,13 +560,13 @@ end
 function AprRC:CustomSortStepKeys(step)
     local keys = self:CustomSortKeys(step)
     local actions = { DropQuest = true, Group = true, GroupTask = true,
-        MountVehicle = true, VehicleExit = true, EquipItem = true }
+        MountVehicle = true, VehicleExit = true, EquipItem = true, SkillGoal = true }
     for _, list in ipairs({ APR.mainStepOptions or {}, APR.secondaryStepOptions or {} }) do
         for _, key in ipairs(list) do actions[key] = true end
     end
     local groups = {
         DroppableQuest = 2, Fillers = 3, Note = 4, ExtraLine = 4, _comment = 4,
-        Coord = 5, Coords = 5, Range = 6,
+        Coord = 5, Coords = 5, MapMarkers = 5, Range = 6,
         Gossip = 7, GossipOptionIDs = 7, GossipETA = 7,
         Button = 8, SpellButton = 8, ExtraActionB = 8,
         conditions = 10, skipForLvl = 10, InterfaceVersionExact = 10,

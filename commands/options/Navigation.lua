@@ -2,6 +2,22 @@ local R = AprRC.options
 local S = R.schemas
 
 R:Register({
+    key = "MapMarkers",
+    command = "mapmarkers",
+    schema = S.mapMarkers,
+    example = "{ { x = 4298.4, y = -864.1 }, { x = 4320.2, y = -890.5, mapID = 84 } }",
+    icon = "Interface\\Icons\\INV_Misc_Map_01",
+})
+
+R:Register({
+    key = "instanceID",
+    command = "instanceid",
+    schema = "nonnegative",
+    example = "0",
+    icon = "Interface\\Icons\\INV_Misc_Map_01",
+})
+
+R:Register({
     key = "Dungeon",
     command = "dungeon",
     schema = "text",

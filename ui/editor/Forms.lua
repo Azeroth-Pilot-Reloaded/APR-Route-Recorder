@@ -74,6 +74,12 @@ end
 -- an edit writes the displayed list/object through the original setter.
 function Form:Unified(schema, value)
     if schema == "level" then schema = R.schemas.level end
+    if schema == R.schemas.raidIcons then
+        return schema.choices[2], type(value) == "table" and value or (value ~= nil and { value } or {})
+    end
+    if schema == R.schemas.raidIconTarget then
+        return R.schemas.raidIconEntry, type(value) == "table" and value or { npcID = value or 0 }
+    end
     if schema == R.schemas.equippedItem or schema == R.schemas.equippedItemStat then
         return schema.choices[1], type(value) == "table" and (value.slot and { value } or value) or {}
     end
@@ -155,7 +161,7 @@ end
 function Form:Summary(schema, value)
     schema, value = self:Unified(schema, value)
     if type(value) ~= "table" then return tostring(value) end
-    for _, key in ipairs({ "Money", "VendorMoney", "LootMoney", "DestroyItems", "LearnSkill", "Skill", "ItemCount", "Collection", "EquippedItem", "EquipItem", "Repair", "TameBeast" }) do
+    for _, key in ipairs({ "Money", "VendorMoney", "LootMoney", "DestroyItems", "LearnSkill", "SkillGoal", "Skill", "ItemCount", "Collection", "EquippedItem", "EquipItem", "Repair", "TameBeast" }) do
         if self:Unified(R.step[key].schema) == schema then
             local detail = AprRC.editorModel:FieldSummary(key, value)
             if detail and detail ~= "" then return detail end
