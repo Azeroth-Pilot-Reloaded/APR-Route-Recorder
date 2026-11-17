@@ -657,22 +657,14 @@ function Form:Render(parent, schema, value, set, context, path, label)
         local columns, columnKind, columnRank
         local sectionParent, currentSection = parent, nil
         local function sectionFor(key)
-            if valueKind == "step" then
-                local order = rank(key)
-                if order == 10 then return "Step content" end
-                if order >= 40 then return "Conditions" end
-                if order >= 20 and order < 30 then return "Position and guidance" end
-                return "Options"
-            elseif valueKind == "route" then
-                if key == "label" or key == "mapID" or key == "expansion" or key == "category" or key == "gameVersion" then
-                    return "Route details"
-                end
-                return "Route behavior"
+            if key == "label" or key == "mapID" or key == "expansion" or key == "category" or key == "gameVersion" then
+                return "Route details"
             end
+            return "Route behavior"
         end
         for _, key in ipairs(ordered) do
-            if context.sections and (value[key] ~= nil or required[key]) and
-                (valueKind == "step" or valueKind == "route") then
+            local position = valueKind == "step" and (value.Coord ~= nil or value.Zone ~= nil)
+            if context.sections and valueKind == "route" and (value[key] ~= nil or required[key]) then
                 local name = sectionFor(key)
                 if name ~= currentSection then
                     sectionParent = UI.Disclosure(parent, name, valueKind .. "/" .. name, true)
@@ -680,7 +672,6 @@ function Form:Render(parent, schema, value, set, context, path, label)
                     currentSection, columns = name, nil
                 end
             end
-            local position = valueKind == "step" and (value.Coord ~= nil or value.Zone ~= nil)
             if position and key == "Coord" then
                 columns = nil
                 self:Position(sectionParent, value, set, context, path, true)
@@ -749,7 +740,7 @@ function Form:Render(parent, schema, value, set, context, path, label)
         if next(entries) then
             UI.SearchSelect(parent, T("Add a field"), entries, nil, function(key)
                 if not key then return end
-                if context.sections and (valueKind == "step" or valueKind == "route") then
+                if context.sections and valueKind == "route" then
                     local preferences = AprRC.settings.profile.editorFrame
                     preferences.disclosures = preferences.disclosures or {}
                     preferences.disclosures[valueKind .. "/" .. sectionFor(key)] = true

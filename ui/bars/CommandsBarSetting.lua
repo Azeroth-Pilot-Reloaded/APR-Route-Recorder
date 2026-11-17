@@ -71,10 +71,12 @@ function Settings:DropTarget()
     elseif self.available.frame:IsMouseOver() then return "available" end
 end
 
-function Settings:FinishDrag()
+function Settings:FinishDrag(row)
     local drag = self.dragging
+    -- Pooled rows can receive their old native mouse-up after a page change.
+    -- The ghost owns completion once the source row has been released.
+    if not drag or (row and drag.row ~= row) or IsMouseButtonDown("LeftButton") then return end
     self:CancelDrag()
-    if not drag then return end
     local target, slot = self:DropTarget()
     if drag and target then self:ApplyDrop(drag.entry, target, slot) end
 end
@@ -116,18 +118,28 @@ function Settings:UpdateDrag(elapsed)
     local x, y = GetCursorPosition()
     local scale = UIParent:GetEffectiveScale()
     self.ghost:ClearAllPoints(); self.ghost:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", x / scale + 16, y / scale + 12)
-    -- Hovering a favorite page arrow carries the same drag across pages. The
+    -- Hovering either column's page arrow carries the same drag across pages. The
     -- source row may be released; only its immutable command entry is retained.
-    local paging = self.selectedPaging
-    local direction = paging and not paging.previous.disabled and paging.previous.frame:IsMouseOver() and -1 or
-        (paging and not paging.next.disabled and paging.next.frame:IsMouseOver() and 1 or nil)
-    if direction then
-        self.pageHoverTime = self.pageHover == direction and (self.pageHoverTime or 0) + elapsed or elapsed
-        self.pageHover = direction
+    local hovered, direction, pageKey, scroll
+    for _, column in ipairs({ { self.selectedPaging, "selectedPage", self.selected },
+        { self.catalogPaging, "catalogPage", self.available } }) do
+        local paging = column[1]
+        if paging then
+            for _, candidate in ipairs({ { paging.previous, -1 }, { paging.next, 1 } }) do
+                local button = candidate[1]
+                if not button.disabled and button.frame:IsMouseOver() then
+                    hovered, direction, pageKey, scroll = button, candidate[2], column[2], column[3]
+                end
+            end
+        end
+    end
+    if hovered then
+        self.pageHoverTime = self.pageHover == hovered and (self.pageHoverTime or 0) + elapsed or elapsed
+        self.pageHover = hovered
         if self.pageHoverTime >= 0.6 then
             self.pageHoverTime = 0
-            self.selectedPage = (self.selectedPage or 1) + direction
-            self:DrawResults(true); self.selected:SetScroll(0)
+            self[pageKey] = (self[pageKey] or 1) + direction
+            self:DrawResults(true); scroll:SetScroll(0)
         end
     else self.pageHover, self.pageHoverTime = nil, nil end
     local target, slot = self:DropTarget()
@@ -173,7 +185,7 @@ function Settings:DrawResults(keepDrag)
         row:SetCallback("OnToggle", function() self:ToggleFavorite(entry) end)
         row:SetCallback("OnRun", function() AprRC.CommandBar:Run(entry.command) end)
         row:SetCallback("OnDragStart", function() self:StartDrag(row) end)
-        row:SetCallback("OnDragStop", function() self:FinishDrag() end)
+        row:SetCallback("OnDragStop", function() self:FinishDrag(row) end)
         row.run:SetUserData("command", entry.command)
         self.runButtons[#self.runButtons + 1] = row.run
         parent:AddChild(row)

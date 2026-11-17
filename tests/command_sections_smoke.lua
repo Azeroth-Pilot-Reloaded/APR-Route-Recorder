@@ -48,6 +48,27 @@ Settings.catalogPaging.next:Fire("OnClick")
 assert(Settings.catalogPage == 2 and #commands(Settings.available) <= 24)
 assert(#Bar:GetCommands() == 0)
 
+-- Catalog arrows also accept a held drag. Moving to a different arrow resets
+-- the dwell timer; stale native mouse-up must not end a still-held drag.
+local source = commands(Settings.available)[1]
+local catalogEntry = source.entry
+TestMouseDown, TestMouseOver = true, Settings.catalogPaging.previous.frame
+Settings:StartDrag(source)
+Settings:UpdateDrag(0.3)
+source:Fire("OnDragStop")
+assert(Settings.dragging, "A stale mouse-up cannot finish a held drag")
+TestMouseOver = Settings.catalogPaging.next.frame
+Settings:UpdateDrag(0.31)
+assert(Settings.catalogPage == 2, "Dwell time belongs to one arrow")
+Settings:UpdateDrag(0.3)
+assert(Settings.catalogPage == 3 and Settings.dragging and not Settings.dragging.row)
+TestMouseDown, TestMouseOver, TestCursorY = false, Settings.selected.frame, 10000
+source:Fire("OnDragStop")
+assert(Settings.dragging, "A released source row cannot finish a cross-page drag")
+Settings:UpdateDrag(0.01)
+assert(not Settings.dragging and Bar:GetCommands()[1].command == catalogEntry.command)
+TestMouseOver = nil
+
 AprRCData.CommandBarCommands = AprRC.options:GetToolbarCatalog()
 Settings:DrawResults()
 assert(#Settings.selected.children == 24 and #Settings.runButtons <= 48)
@@ -75,6 +96,23 @@ Settings:UpdateDrag(0.01)
 assert(not Settings.dragging and Bar:GetCommands()[24].command == dragged.command,
     "Dragging across a page boundary must preserve insertion order and release the ghost")
 TestMouseOver = nil
+
+-- Escape cancels without changing order, and reopening a tab cannot resurrect
+-- a drag whose source widgets have already returned to the pool.
+local snapshot = AprRC:CopyData(Bar:GetCommands())
+TestMouseDown = true
+Settings:StartDrag(Settings.selected.children[1])
+local isKeyDown = IsKeyDown
+IsKeyDown = function(key) return key == "ESCAPE" end
+Settings:UpdateDrag(0.1)
+IsKeyDown = isKeyDown
+assert(not Settings.dragging and not Settings.ghost:IsShown() and not Settings.dropLine:IsShown())
+assert(AprRC:DeepCompare(snapshot, Bar:GetCommands()))
+Settings:StartDrag(Settings.selected.children[1])
+Editor:SelectTab("tools"); Editor:SelectTab("commands")
+TestMouseDown = false
+Settings:FinishDrag()
+assert(not Settings.dragging and AprRC:DeepCompare(snapshot, Bar:GetCommands()))
 
 -- Respect both user dimensions, even when all command categories are pinned.
 profile.rotation, profile.buttonsPerRow, profile.maxLines = "HORIZONTAL", 3, 2
