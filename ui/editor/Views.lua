@@ -450,10 +450,12 @@ function Editor:DrawInspector()
         local step = not self.editGroupConditions and self:Steps()[self:SelectedStep()]
         self.stepPrevious:SetDisabled(not step or self:SelectedStep() <= 1)
         self.stepNext:SetDisabled(not step or self:SelectedStep() >= #self:Steps())
-        self.moveUp:SetDisabled(not step or self:SelectedStep() == 1 or step.RouteCompleted)
-        self.moveDown:SetDisabled(not step or self:SelectedStep() == #self:Steps() or step.RouteCompleted or
-            (self:Steps()[self:SelectedStep() + 1] or {}).RouteCompleted)
-        self.duplicate:SetDisabled(not step or step.RouteCompleted)
+        local last = self:Steps()[#self:Steps()]
+        local final = step and step.RouteCompleted and self:SelectedStep() == #self:Steps()
+        self.moveUp:SetDisabled(not step or self:SelectedStep() == 1 or final)
+        self.moveDown:SetDisabled(not step or self:SelectedStep() == #self:Steps() or
+            (last and last.RouteCompleted and self:SelectedStep() + 1 == #self:Steps()))
+        self.duplicate:SetDisabled(not step or (step.RouteCompleted and not AprRC.options:HasStepConditions(step)))
         self.delete:SetDisabled(not step)
         self.positionButton:SetDisabled(not step)
         self.moveTo:SetDisabled(not step)

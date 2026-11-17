@@ -1,5 +1,18 @@
 local L = LibStub("AceLocale-3.0"):NewLocale("APR-Recorder", "koKR")
 if not L then return end
+L["FIELD_SkillGoal"] = "기술 숙련도 달성"
+L["FIELD_MapMarkers"] = "고정 탐색 위치"
+L["FIELD_FillerPreviewImages"] = "보조 퀘스트 이미지"
+L["FIELD_ItemTarget"] = "아이템 대상"
+L["FIELD_levelRange"] = "표시할 캐릭터 레벨"
+L["FIELD_min"] = "최소 캐릭터 레벨"
+L["FIELD_max"] = "최대 캐릭터 레벨"
+L["FIELD_instanceID"] = "월드 인스턴스 ID"
+L["FIELD_quantityFromSkill"] = "기술 숙련도에 따른 수량"
+L["FIELD_isSupply"] = "무기 / 소모품 보급"
+L["FIELD_optional"] = "선택적 구매"
+L["FIELD_objectiveIndex"] = "목표 인덱스"
+L["Minimum level must not exceed maximum level"] = "최소 레벨은 최대 레벨을 초과할 수 없습니다"
 L["Search Lua"] = "Lua 검색"
 L["No matches"] = "검색 결과 없음"
 L["Ctrl+F to search. Enter / Shift+Enter: next / previous. Esc: close."] = "Ctrl+F: 검색. Enter / Shift+Enter: 다음 / 이전. Esc: 닫기."

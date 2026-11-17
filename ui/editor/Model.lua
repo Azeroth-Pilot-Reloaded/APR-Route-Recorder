@@ -387,10 +387,11 @@ function Session:Insert(step, after, group)
     if not step or (group and not (self.draft.parallelSteps or {})[group]) then return false end
     local steps = self:GetSteps(group)
     local index = math.min((after or #steps) + 1, #steps + 1)
-    if steps[#steps] and steps[#steps].RouteCompleted then
-        if step.RouteCompleted then return false end
+    local conditional = AprRC.options:HasStepConditions(step)
+    if steps[#steps] and steps[#steps].RouteCompleted and not AprRC.options:HasStepConditions(steps[#steps]) then
+        if step.RouteCompleted and not conditional then return false end
         index = math.min(index, #steps)
-    elseif step.RouteCompleted then
+    elseif step.RouteCompleted and not conditional then
         index = #steps + 1
     end
     table.insert(steps, index, AprRC:CopyData(step))
@@ -403,7 +404,7 @@ end
 function Session:Move(index, destination, group)
     local steps = self:GetSteps(group)
     if not steps[index] or not steps[destination] then return false end
-    if steps[index].RouteCompleted or steps[destination].RouteCompleted then return false end
+    if steps[#steps].RouteCompleted and (index == #steps or destination == #steps) then return false end
     table.insert(steps, destination, table.remove(steps, index))
     self:SetSelected(destination, group)
     self:Reindex(group)
@@ -609,7 +610,7 @@ function Model:FieldSummary(key, value)
         end
         local text = value.itemID and self:ItemText(value.itemID) or ""
         return (value.invert and "≠ " or "") .. text
-    elseif key == "Skill" then return self:SkillText(value) .. " " .. (value.operator or ">=") .. " " .. tostring(value.rank or 1)
+    elseif key == "Skill" or key == "SkillGoal" then return self:SkillText(value) .. " " .. (value.operator or ">=") .. " " .. tostring(value.rank or 1)
     elseif key == "LearnSkill" then
         local result = {}
         for _, id in ipairs(value.spellIDs or (value.spellID and { value.spellID }) or {}) do
@@ -649,7 +650,7 @@ local actionOrder = {
     "Reputation", "BuyMerchant", "LootItems", "LootMoney", "LeaveQuests", "Emote", "ChromiePick",
     "LearnProfession", "WarMode", "ResetRoute", "VehicleExit", "MountVehicle",
     "ExitTutorial", "LeaveQuest", "DeathSkip", "SellItems", "Repair", "LearnSkill",
-    "BankDeposit", "BankWithdraw", "DestroyItems", "TameBeast", "EquipItem",
+    "BankDeposit", "BankWithdraw", "DestroyItems", "TameBeast", "EquipItem", "SkillGoal",
 }
 local questActions = { PickUp = true, Qpart = true, QpartPart = true, Done = true, LeaveQuests = true,
     LeaveQuest = true, ExitTutorial = true }
@@ -685,7 +686,7 @@ function Model:Summary(step)
         preview[1] = table.concat(titles, ", ")
         raw[1] = preview[1]
     end
-    for _, field in ipairs({ "LootMoney", "DestroyItems", "LearnSkill", "BankDeposit", "BankWithdraw", "Repair", "TameBeast", "EquipItem", "KillNPC", "EnterInstance", "LeaveInstance" }) do
+    for _, field in ipairs({ "LootMoney", "DestroyItems", "LearnSkill", "SkillGoal", "BankDeposit", "BankWithdraw", "Repair", "TameBeast", "EquipItem", "KillNPC", "EnterInstance", "LeaveInstance" }) do
         local actionDetail = self:FieldSummary(field, step[field])
         if actionDetail and actionDetail ~= "" then
             if field ~= key then actionDetail = summaryLabel(field) .. ": " .. actionDetail end

@@ -270,7 +270,7 @@ function options:AddToolbarCommands(list)
     end
 end
 
-local navigation = { Coord = true, Coords = true, Zone = true, Range = true, ZoneStepTrigger = true,
+local navigation = { Coord = true, Coords = true, MapMarkers = true, instanceID = true, Zone = true, Range = true, ZoneStepTrigger = true,
     Waypoint = true, WaypointDB = true, NonSkippableWaypoint = true, SingleWaypointDisplayDistance = true,
     TakePortal = true, NodeID = true, Name = true, Boat = true, NoArrow = true, NoAutoFlightMap = true,
     InstanceQuest = true, IsAdventureMap = true, ETA = true, GossipETA = true, SpellETA = true,

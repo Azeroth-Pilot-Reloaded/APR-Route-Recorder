@@ -320,7 +320,7 @@ R:Register({
 R:Register({
     key = "IsQuestReadyForTurnIn",
     command = "isquestreadyforturnin",
-    schema = "id",
+    schema = "idOrIds",
     example = "93384",
     condition = true,
     icon = "Interface\\Icons\\INV_Misc_QuestionMark",
@@ -488,7 +488,6 @@ R:Register({
     command = "iscampaignquest",
     schema = "bool",
     example = "true",
-    condition = true,
     icon = "Interface\\Icons\\Achievement_Quests_Completed_08",
 })
 

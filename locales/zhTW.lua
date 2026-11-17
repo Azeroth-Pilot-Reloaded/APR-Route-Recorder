@@ -1,5 +1,18 @@
 local L = LibStub("AceLocale-3.0"):NewLocale("APR-Recorder", "zhTW")
 if not L then return end
+L["FIELD_SkillGoal"] = "達到技能等級"
+L["FIELD_MapMarkers"] = "固定搜尋位置"
+L["FIELD_FillerPreviewImages"] = "支線任務圖片"
+L["FIELD_ItemTarget"] = "物品目標"
+L["FIELD_levelRange"] = "顯示的角色等級"
+L["FIELD_min"] = "最低角色等級"
+L["FIELD_max"] = "最高角色等級"
+L["FIELD_instanceID"] = "世界副本 ID"
+L["FIELD_quantityFromSkill"] = "依技能等級計算數量"
+L["FIELD_isSupply"] = "武器 / 消耗品補給"
+L["FIELD_optional"] = "選擇性購買"
+L["FIELD_objectiveIndex"] = "目標索引"
+L["Minimum level must not exceed maximum level"] = "最低等級不能超過最高等級"
 L["Search Lua"] = "搜尋 Lua"
 L["No matches"] = "沒有符合的結果"
 L["Ctrl+F to search. Enter / Shift+Enter: next / previous. Esc: close."] = "Ctrl+F：搜尋。Enter / Shift+Enter：下一個 / 上一個。Esc：關閉。"

@@ -2,6 +2,22 @@ local R = AprRC.options
 local S = R.schemas
 
 R:Register({
+    key = "ItemTarget",
+    command = "itemtarget",
+    schema = { kind = "enum", values = { "player" } },
+    example = '"player"',
+    icon = "Interface\\Icons\\INV_Misc_EngGizmos_04",
+})
+
+R:Register({
+    key = "FillerPreviewImages",
+    command = "fillerpreviewimages",
+    schema = S.fillerPreviewImages,
+    example = '{ [93552] = { "routeHelper\\\\93552.jpg" } }',
+    icon = "Interface\\Icons\\INV_Misc_Spyglass_03",
+})
+
+R:Register({
     key = "Bloodlust",
     command = "bloodlust",
     schema = "bool",
@@ -138,8 +154,8 @@ R:Register({
 R:Register({
     key = "RaidIcon",
     command = "raidicon",
-    schema = "id",
-    example = "241743",
+    schema = S.raidIcons,
+    example = "{ { npcID = 241743, questID = 12345, objectiveIndex = 1 }, 241744 }",
     hidden = true,
 })
 

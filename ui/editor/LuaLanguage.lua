@@ -112,12 +112,12 @@ function Language:Analyze(text, baseline, checkpoint)
                     end
                 end
                 if #errors == before then validate("step", step, "", old, step) end
-                if step.RouteCompleted and index ~= #values then add(L["RouteCompleted must be last"], step, "RouteCompleted") end
+                if not R:IsCompletionPositionValid(values, index) then add(L["RouteCompleted must be last"], step, "RouteCompleted") end
                 local node = map[step]
                 if node then
                     local title = step.Note or step.ExtraLineText
                     if not title then
-                        for _, key in ipairs({ "PickUp", "Done", "Qpart", "Waypoint", "Use", "LearnSkill" }) do
+                        for _, key in ipairs({ "PickUp", "Done", "Qpart", "Waypoint", "Use", "LearnSkill", "SkillGoal" }) do
                             if step[key] then title = key; break end
                         end
                     end

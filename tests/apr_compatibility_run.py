@@ -37,7 +37,7 @@ APR.worldCoordinateConverter.ConvertMapCoordinate = function() return { x = 1, y
 ''')
 for name in ("Routes/Midnight/Midnight-Speedrun-alt.lua", "Routes/Midnight/Midnight-Eversong-Woods.lua", "Routes/delves.lua"):
     load(APR_ROOT / name)
-for path in sorted((APR_ROOT / "Routes/Forever").glob("*.lua")):
+for path in sorted((APR_ROOT / "Routes/Forever").rglob("*.lua")):
     load(path)
 lua.execute('''
 local entries = AprRC:GetImportableAPRRoutes()
@@ -76,7 +76,7 @@ for key in pairs(entries) do
     for index, step in ipairs(source.steps or {}) do
         assert(saved.steps[index].SkipForPrimaryProfessions == step.SkipForPrimaryProfessions)
     end
-    assert(AprRC:DeepCompare(saved.scenarios, expected.scenarios))
+    assert(SameStepData(saved.scenarios, expected.scenarios))
     assert(saved.mapID == source.mapID)
     assert(AprRC:DeepCompare(saved.nextRoute, expected.nextRoute))
     -- Imported legacy fields also survive concurrent recording and a rebase.
@@ -88,7 +88,9 @@ for key in pairs(entries) do
     table.insert(route.steps, insertion, { Note = "Captured while editing an APR import" })
     AprRC:NotifyRouteChanged(route.name)
     local plan = assert(session:MergePlan())
-    assert(#plan.conflicts == 0 and session:ApplyMerge(plan, {}, false))
+    assert(#plan.conflicts == 0, "Unexpected merge conflicts for " .. key)
+    local applied, reason = session:ApplyMerge(plan, {}, false)
+    assert(applied, "Merge rejected for " .. key .. ": " .. tostring(reason))
     assert(session:IsDirty() and not session:IsStale())
     assert(session:Save())
     TestRunTimers()

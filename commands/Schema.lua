@@ -9,6 +9,8 @@ end
 local function list(entry) return { kind = "list", entry = entry } end
 S.coord = object({ x = "number", y = "number" }, { "x", "y" })
 S.coords = list(object({ x = "number", y = "number", Zone = "id" }, { "x", "y", "Zone" }))
+S.mapMarkers = list(object({ x = "number", y = "number", mapID = "id", instanceID = "nonnegative" }, { "x", "y" }))
+S.levelRange = object({ min = "id", max = "id" })
 S.trigger = object({ x = "number", y = "number", Range = "positive" }, { "x", "y", "Range" })
 S.questMap = object({ questID = "id", mapID = "id" }, { "questID", "mapID" })
 -- Dungeon keys are APR catalog identifiers, not UI map IDs. Keep the key as
@@ -35,8 +37,16 @@ S.scenario = object({
 }, {})
 S.item = object({ questID = "id", itemID = "id", itemSpellID = "id" }, { "questID", "itemID" })
 S.spell = object({ questID = "id", spellID = "id" }, { "questID", "spellID" })
-S.items = list(object({ questID = "id", itemID = "id", quantity = "id" }, { "itemID", "quantity" }))
-S.lootItems = list(object({ questID = "id", itemID = "id", quantity = "id" }, { "itemID" }))
+S.items = list(object({ questID = "id", itemID = "id", quantity = "id", isSupply = "bool", optional = "bool" },
+    { "itemID", "quantity" }))
+S.skillQuantity = object({ skill = { kind = "union", choices = { "id", "text" } }, skillID = "id", name = "text",
+    rank = "id" }, { "rank" })
+S.skillGoal = object({ skillID = "id", rank = "id" }, { "skillID", "rank" })
+S.lootItems = list(object({ questID = "id", itemID = "id", quantity = "id", quantityFromSkill = S.skillQuantity }, { "itemID" }))
+S.raidIconEntry = object({ npcID = "id", questID = "id", objectiveIndex = "id" }, { "npcID" })
+S.raidIconTarget = { kind = "union", choices = { "id", S.raidIconEntry } }
+S.raidIcons = { kind = "union", choices = { "id", list(S.raidIconTarget) } }
+S.fillerPreviewImages = { kind = "map", key = "id", entry = "strings" }
 S.lootMoney = object({ copper = "id", includeEquipped = "bool", equippedSlots = "ids" }, { "copper" })
 S.itemAction = object({ items = "ids", text = "text" }, { "items" })
 S.learnSkill = object({ spellID = "id", spellIDs = "ids", allAvailable = "bool", npcID = "id", text = "text" })
@@ -72,6 +82,7 @@ S.equipmentSlot = {
 
 S.sellItems = object({ questID = "id", items = "ids", junk = "bool", npcID = "id", text = "text",
     equippedSlots = list(S.equipmentSlot) })
+S.lootMoney.fields.equippedSlots = list(S.equipmentSlot)
 S.equipItem = object({ itemID = "id", slot = S.equipmentSlot }, { "itemID", "slot" })
 local cooldownOperator = { kind = "enum", values = { "<", ">" } }
 S.itemCooldown = object({ itemID = "id", operator = cooldownOperator, seconds = "number", once = "bool" },
@@ -282,6 +293,21 @@ local routeConditions = {
 }
 options.routeConditionFields = routeConditions
 
+function options:HasStepConditions(step)
+    for key, definition in pairs(self.step) do
+        if definition.condition and step[key] ~= nil then return true end
+    end
+    return false
+end
+
+-- Conditional shortcuts may finish a route early, with an unconditional
+-- completion marker covering the remaining path.
+function options:IsCompletionPositionValid(steps, index)
+    local step, last = steps[index], steps[#steps]
+    return type(step) == "table" and (not step.RouteCompleted or index == #steps or
+        (self:HasStepConditions(step) and type(last) == "table" and last.RouteCompleted == true and not self:HasStepConditions(last)))
+end
+
 function options:ValidateValue(schema, value, path, depth, previous, checkpoint)
     if checkpoint then checkpoint() end
     -- Imported APR definitions can contain legacy or newer fields. Preserve
@@ -291,6 +317,23 @@ function options:ValidateValue(schema, value, path, depth, previous, checkpoint)
     path = path or "value"
     if depth > 40 then return false, path .. ": " .. L["Nesting limit exceeded"] end
     local kind = type(schema) == "table" and schema.kind or schema
+    -- Merge/export regenerate indexes. An otherwise unchanged imported step
+    -- retains its legacy payload, just as it does before reindexing.
+    if kind == "step" and type(value) == "table" and type(previous) == "table" then
+        local unchanged = true
+        for key, entry in pairs(value) do
+            if key ~= "_index" and not AprRC:DeepCompare(entry, previous[key], checkpoint) then unchanged = false; break end
+        end
+        if unchanged then
+            for key in pairs(previous) do
+                if key ~= "_index" and value[key] == nil then unchanged = false; break end
+            end
+        end
+        if unchanged then
+            if value._index == nil then return true end
+            return self:ValidateValue("id", value._index, path .. "._index", depth, nil, checkpoint)
+        end
+    end
     local function fail(message) return false, path .. ": " .. message end
     local function child(childSchema, entry, key)
         local old = type(previous) == "table" and previous[key] or nil
@@ -345,7 +388,7 @@ function options:ValidateValue(schema, value, path, depth, previous, checkpoint)
             kind == "steps" and "step" or kind == "spellOrSpells" and S.spellValue or "id"
             local ok, reason = child(entrySchema, value[index], index)
             if not ok then return false, reason end
-            if kind == "steps" and value[index].RouteCompleted and index ~= size then return fail(L
+            if kind == "steps" and not self:IsCompletionPositionValid(value, index) then return fail(L
                 ["RouteCompleted must be last"]) end
         end
         if size == 0 and kind ~= "steps" and schema ~= S.anyOf and schema ~= S.allOf then return fail(L
@@ -404,8 +447,12 @@ function options:ValidateValue(schema, value, path, depth, previous, checkpoint)
             ["spellID or itemID is required"]) end
         if schema == S.itemCount and not (value.itemID or value.itemIDs) then return fail(L
             ["itemID or itemIDs is required"]) end
-        if schema == S.skill and not (value.skill or value.skillID or value.name) then return fail(L
+        if (schema == S.skill or schema == S.skillQuantity) and not (value.skill or value.skillID or value.name) then return fail(L
             ["skill, skillID or name is required"]) end
+        if schema == S.levelRange then
+            if not (value.min or value.max) then return fail(L["A value is required"]) end
+            if value.min and value.max and value.min > value.max then return fail(L["Minimum level must not exceed maximum level"]) end
+        end
         if schema == S.scenario and not (value.criteriaID or value.criteriaIndex or value.stepID or value.scenarioID) then
             return fail(L["a scenario, step or criterion ID is required"])
         end

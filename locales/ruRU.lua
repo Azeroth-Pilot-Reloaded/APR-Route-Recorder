@@ -1,5 +1,18 @@
 local L = LibStub("AceLocale-3.0"):NewLocale("APR-Recorder", "ruRU")
 if not L then return end
+L["FIELD_SkillGoal"] = "Достичь ранга навыка"
+L["FIELD_MapMarkers"] = "Фиксированные места поиска"
+L["FIELD_FillerPreviewImages"] = "Изображения побочных заданий"
+L["FIELD_ItemTarget"] = "Цель предмета"
+L["FIELD_levelRange"] = "Отображаемые уровни персонажа"
+L["FIELD_min"] = "Минимальный уровень персонажа"
+L["FIELD_max"] = "Максимальный уровень персонажа"
+L["FIELD_instanceID"] = "ID мирового экземпляра"
+L["FIELD_quantityFromSkill"] = "Количество по рангу навыка"
+L["FIELD_isSupply"] = "Запас оружия / расходников"
+L["FIELD_optional"] = "Необязательная покупка"
+L["FIELD_objectiveIndex"] = "Индекс цели"
+L["Minimum level must not exceed maximum level"] = "Минимальный уровень не должен превышать максимальный"
 L["Search Lua"] = "Поиск в Lua"
 L["No matches"] = "Совпадений нет"
 L["Ctrl+F to search. Enter / Shift+Enter: next / previous. Esc: close."] = "Ctrl+F: поиск. Enter / Shift+Enter: следующее / предыдущее. Esc: закрыть."

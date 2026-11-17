@@ -269,13 +269,15 @@ The table includes navigation, display, and route options so you can see the com
 | 🟠 **Action** | `PickUpDB`, `QpartDB`, `DoneDB` | Add alternative quest IDs to an existing `PickUp`, `Qpart`, or `Done` action. |
 | 🟠 **Action** | `QpartPart`, `TrigText`, `TrigText2`, … | Split an objective into guided sub-parts and provide progress/completion text. |
 | 🟠 **Action** | `Fillers` | Add optional quest objectives alongside the main route. |
-| 🟠 **Action** | `LootItems` | Wait for listed item quantities; optional quest IDs can link completion to a quest. |
+| 🟠 **Action** | `LootItems` | Wait for listed item quantities; optional quest IDs can link completion to a quest. `quantityFromSkill = { skill = "cooking", rank = 50 }` collects the remaining amount for a skill target; optional `quantity` caps it. |
 | 🟠 **Action** | `LootMoney` | Add a money-collection target, with optional equipped-item vendor value. |
 | 🟠 **Action** | `Grind` | Add a level/XP target using a number, an absolute XP table, or an APR level profile. Absolute XP tables accept `questLogXP`, a list of completed quests still in the log whose current rewards reduce the target. Example: `Grind = { level = 60, xp = 0, questLogXP = { 4901, 4508 } }`. |
 | 🟠 **Action** | `EquipItem` | Add an item to equip in a specified slot; completes when the slot contains the item. Example: `EquipItem = { itemID = 2030, slot = 16 }`. |
 | 🟠 **Action** | `Reputation` | Add a standing, renown, or friendship target. |
 | 🟠 **Action** | `UseItem`, `UseSpell` | Add an item-use or spell-cast step linked to a quest. |
 | 🟠 **Action** | `LearnSkill` | Add trainer spells or all available services, optionally restricted to an NPC. |
+| 🟠 **Action** | `SkillGoal` | Wait for an actual learned skill rank: `SkillGoal = { skillID = 185, rank = 50 }`. Crafting stays manual. Use `Skill` to filter another action instead. |
+| 🟠 **Action** | `BuyMerchant` | Edit purchased quantities. Mark weapon upgrades or consumable replenishment with `isSupply = true` to respect APR's automation opt-in. `optional = true` separately permits unavailable or unaffordable purchases to be omitted. |
 | 🟠 **Action** | `SellItems` | Add selected items, gray junk, or equipped slots to a merchant sale step. |
 | 🟠 **Action** | `Repair` | Open the declared NPC's vendor option and repair automatically, independently of general auto-gossip/auto-repair settings. APR skips the step when every durable equipped item reaches `minDurability` (default 90%) and shows `REPAIR` in both panels. Example: `Repair = { npcID = 3331, minDurability = 90 }`. |
 | 🟠 **Action** | `BankDeposit`, `BankWithdraw` | Add item transfers to or from the character bank. |
@@ -290,11 +292,12 @@ The table includes navigation, display, and route options so you can see the com
 | 🟠 **Action** | `NpcDismount` | Dismount for interaction with a specified NPC. |
 | 🟠 **Action** | `ResetRoute` | Add a route-reset confirmation step. |
 | 🟠 **Action** | `Note` | Add an informational step with one or several text lines. |
-| 🟠 **Action** | `RouteCompleted` | Mark the route as finished; keep this as its final step. |
+| 🟠 **Action** | `RouteCompleted` | End an ordinary route with an unconditional final marker. Conditional early completion shortcuts are also supported when that final marker remains. |
 | 🟠 **Action** | `KillNPC` | Wait for an observed dungeon boss death. Set `npcID`, `name`, and `dungeonKey`; new boss steps start with `InstanceQuest` and `NoArrow` to avoid unverified exterior navigation. |
 | 🟠 **Action** | `EnterInstance`, `LeaveInstance` | Use either `{ questID, mapID }` or `{ dungeonKey = "RFC" }` for APR dungeon checkpoints. |
 | 🔵 **Navigation** | `Dungeon` | Identify the APR dungeon catalog context on other interior steps. The picker uses APR's loaded dungeon catalogs; the key is independent of UI map IDs. |
 | 🔵 **Navigation** | `Coord`, `Coords`, `Zone` | Set or override world coordinates and map IDs, including multiple position variants. |
+| 🔵 **Navigation** | `MapMarkers`, `instanceID` | Show simultaneous static search locations using world `x`/`y` coordinates, with optional marker `mapID` and `instanceID`. They do not move the arrow or complete the step; omit map percentages. |
 | 🔵 **Navigation** | `Range`, `ZoneStepTrigger` | Set the waypoint radius or a coordinate-based completion trigger. |
 | 🔵 **Navigation** | `TakePortal` | Define a portal destination explicitly instead of using inferred capture. |
 | 🔵 **Navigation** | `NodeID`, `Name`, `Boat` | Correct or configure flight-path details. `NodeID` and `Boat` require `UseFlightPath`. |
@@ -309,7 +312,9 @@ The table includes navigation, display, and route options so you can see the com
 | 🟣 **Display** | `ExtraLineText`, `ExtraLineText2`, … | Add helper lines using APR localization keys or literal text. |
 | 🟣 **Display** | `ExtraLine`, `Gossip` | Edit legacy helper-text and dialogue-position fields. Use `GossipOptionIDs` for new dialogue data. |
 | 🟣 **Display** | `Buffs`, `Bloodlust` | Add buff recommendations or a Bloodlust/Heroism reminder. |
-| 🟣 **Display** | `PreviewImages` | Add image previews. |
+| 🟣 **Display** | `PreviewImages`, `FillerPreviewImages` | Add main-step images or bind images to a filler quest, for example `FillerPreviewImages = { [93552] = { "routeHelper\\93552.jpg" } }`. |
+| 🟣 **Display** | `ItemTarget` | Set `"player"` for self-targeted item buttons; omit for normal targeting. |
+| 🟣 **Display** | `RaidIcon` | Accept an NPC ID, a list of IDs, or mixed entries such as `{ { npcID = 241743, questID = 12345, objectiveIndex = 1 }, 241744 }`. |
 | 🟣 **Display** | `MerchantNPC`, `DenyNPC` | Restrict a purchase to an NPC or close unwanted NPC dialogue. |
 | 🟣 **Display** | `NoAutoAccept`, `NoAutoTurnIn`, `Dontskipvid` | Require manual quest interactions or keep videos/cutscenes visible. |
 | 🟣 **Display** | `InVehicle`, `ExtraActionB`, `UseGlider`, `RaidIcon`, `GossipOptionIDs` | Set vehicle guidance, special controls, target markers, or dialogue IDs explicitly. |
@@ -324,7 +329,7 @@ The table includes navigation, display, and route options so you can see the com
 | 🟢 **Condition** | `HasAura`, `DontHaveAura` | Require an aura to be present or absent. |
 | 🟢 **Condition** | `HasSpell`, `DontHaveSpell` | Require known or unknown player/pet spells. |
 | 🟢 **Condition** | `IsQuestOnQuest`, `IsQuestNotOnQuest` | Require a quest to be present in or absent from the character's log. |
-| 🟢 **Condition** | `IsQuestReadyForTurnIn` | Require a quest to be ready for hand-in or already completed by the character. |
+| 🟢 **Condition** | `IsQuestReadyForTurnIn` | Require one quest, or every quest in a nonempty ID list, to be ready for hand-in or already completed by the character. |
 | 🟢 **Condition** | `IsQuestCompleted`, `IsQuestUncompleted` | Test one quest's character completion state. |
 | 🟢 **Condition** | `IsOneOfQuestsCompleted`, `IsOneOfQuestsUncompleted` | Require at least one listed quest completed, or none completed. |
 | 🟢 **Condition** | `IsQuestsCompleted`, `IsQuestsUncompleted` | Require all listed quests completed, or at least one still incomplete. |
@@ -336,10 +341,11 @@ The table includes navigation, display, and route options so you can see the com
 | 🟢 **Condition** | `EquippedItem`, `EquippedItemStat` | Check equipment slots/items or compare an equipped item's quality, level, or stat. |
 | 🟢 **Condition** | `Skill`, `SkipForPrimaryProfessions` | Check skill ranks or skip once the specified number of primary professions is learned. |
 | 🟢 **Condition** | `QuestLineSkip`, `PickedLoa` | Apply questline-skip or selected-Loa rules. |
-| 🟢 **Condition** | `IsCampaignQuest` | Set or override the campaign quest flag. |
+| 🟣 **Display** | `IsCampaignQuest` | Set or override the campaign quest flag. |
 | 🟢 **Condition** | `InterfaceVersion`, `InterfaceVersionExact` | Require a minimum or exact client interface version. |
 | 🟢 **Condition** | `AnyOf`, `AllOf`, `Not` | Combine alternative conditions, require every condition block, or invert a block. |
 | ⚪ **Route** | `label`, `expansion`, `category`, `gameVersion`, `mapID` | Set route metadata in the **Route** tab. |
+| ⚪ **Route** | `levelRange` | Display character levels in APR's route list, for example `{ min = 1, max = 60 }`. This does not restrict route access or represent profession skill ranks. |
 | ⚪ **Route** | `conditions` | Set the supported route-selection filters. |
 | ⚪ **Route** | `requiredRoute`, `nextRoute`, `prefab` | Configure dependencies, suggested next routes, and preset membership. |
 | ⚪ **Route** | `parallelSteps`, `scenarios` | Define conditional parallel groups and scenario-specific step collections. |
@@ -353,7 +359,9 @@ The table includes navigation, display, and route options so you can see the com
 
 Conditions in the same block combine with AND. `AnyOf` expresses alternatives, `AllOf` allows multiple checks of the same kind, and `Not` inverts a complete block. Parallel-group conditions control when its steps are inserted; single `EquipItem`/`UseItem` actions also inherit live group conditions. Other groups retain activation-only conditions, and each step can have its own filters. `SkipIfCooldown` belongs directly on a step, outside reusable condition blocks. `questLogXP` is available in absolute XP tables for `Grind`, `Level`, `MinLevel`, `MaxLevel`, and `SkipForLvl`. Route-selection conditions support a narrower set of fields than step/group conditions.
 
-Route `conditions` also accept `InterfaceVersionExact` and `AnyOf`. Alternatives inside route `AnyOf` use the step-condition syntax; direct route `Level`, `MinLevel`, `MaxLevel`, and `BeLvl` remain numeric. `UseItem.itemSpellID` may be omitted so APR resolves the item's use spell. `SpellButton` also accepts client-localized spell names, including lists mixing IDs and names; numeric IDs are preferable for sharing.
+Route `conditions` also accept `InterfaceVersionExact` and `AnyOf`. Alternatives inside route `AnyOf` use the step-condition syntax and APR's route-selection policy; direct route `Level`, `MinLevel`, `MaxLevel`, and `BeLvl` remain numeric. `UseItem.itemSpellID` may be omitted so APR resolves the item's use spell. `SpellButton` also accepts client-localized spell names, including lists mixing IDs and names; numeric IDs are preferable for sharing.
+
+`LearnProfession` and `LearnSkill` can omit `Coord` and `Coords` so APR selects a reachable trainer from its service catalogue. Explicit authored coordinates take precedence, and arriving at a trainer does not complete the learning objective.
 
 The Lua editor also preserves comments and accepts `_comment` step text. Step indices (`_index`) are generated automatically. These fields follow the [APR Route Syntax wiki](https://azerothpilotreloaded.com/wiki/) and the local APR `wiki.md` reference, checked on 25 October 2026.
 

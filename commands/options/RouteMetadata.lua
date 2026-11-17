@@ -2,6 +2,15 @@ local R = AprRC.options
 local S = R.schemas
 
 R:Register({
+    key = "levelRange",
+    command = "route levelrange",
+    schema = S.levelRange,
+    example = "{ min = 1, max = 60 }",
+    scope = "route",
+    icon = "Interface\\Icons\\INV_Misc_Book_09",
+})
+
+R:Register({
     key = "legacyLabels",
     command = "route legacylabels",
     schema = "strings",
